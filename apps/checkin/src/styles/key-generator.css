@@ -1,89 +1,91 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
+.kg-app {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   padding: 20px;
 }
 
-.app {
+.kg-app *,
+.kg-app *::before,
+.kg-app *::after {
+  box-sizing: border-box;
+}
+
+.kg-container {
   max-width: 500px;
   margin: 0 auto;
 }
 
-.header {
+.kg-header {
   text-align: center;
   color: white;
   margin-bottom: 30px;
 }
 
-.header h1 {
+.kg-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 10px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.header p {
+.kg-header p {
   font-size: 1.1rem;
   opacity: 0.9;
 }
 
-.main {
+.kg-main {
   background: white;
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
-.key-generator {
+.kg-key-generator {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.form {
+.kg-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.form-group {
+.kg-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.kg-form-group label {
   font-weight: 600;
   color: #374151;
   font-size: 0.95rem;
 }
 
-.form-group input {
+.kg-form-group input {
   padding: 14px 16px;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.2s ease;
+  background: white;
+  color: #111827;
 }
 
-.form-group input:focus {
+.kg-form-group input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-.form-group input::placeholder {
+.kg-form-group input::placeholder {
   color: #9ca3af;
 }
 
-.submit-btn {
+.kg-submit-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -96,72 +98,17 @@ body {
   margin-top: 8px;
 }
 
-.submit-btn:hover:not(:disabled) {
+.kg-submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-.submit-btn:disabled {
+.kg-submit-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.result {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 24px;
-}
-
-.result h3 {
-  color: #374151;
-  margin-bottom: 16px;
-  font-size: 1.1rem;
-}
-
-.key-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #f3f4f6;
-  padding: 16px;
-  border-radius: 10px;
-}
-
-.key-code {
-  flex: 1;
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #667eea;
-  letter-spacing: 3px;
-  text-align: center;
-}
-
-.copy-btn {
-  background: #667eea;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 80px;
-}
-
-.copy-btn:hover {
-  background: #5a6fd6;
-}
-
-.key-note {
-  margin-top: 12px;
-  font-size: 0.85rem;
-  color: #6b7280;
-  text-align: center;
-}
-
-/* Modal Styles */
-.modal-overlay {
+.kg-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
@@ -173,7 +120,7 @@ body {
   padding: 20px;
 }
 
-.modal-content {
+.kg-modal-content {
   background: white;
   border-radius: 20px;
   padding: 32px;
@@ -181,10 +128,10 @@ body {
   width: 100%;
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: modalSlideIn 0.3s ease;
+  animation: kgModalSlideIn 0.3s ease;
 }
 
-@keyframes modalSlideIn {
+@keyframes kgModalSlideIn {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
@@ -195,7 +142,7 @@ body {
   }
 }
 
-.modal-close {
+.kg-modal-close {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -213,29 +160,29 @@ body {
   transition: all 0.2s ease;
 }
 
-.modal-close:hover {
+.kg-modal-close:hover {
   background: #e4e6eb;
   color: #050505;
 }
 
-.modal-header {
+.kg-modal-header {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.modal-header h2 {
+.kg-modal-header h2 {
   font-size: 1.25rem;
   color: #050505;
   margin-bottom: 8px;
 }
 
-.participant-name {
+.kg-participant-name {
   font-size: 1.5rem;
   font-weight: 700;
   color: #667eea;
 }
 
-.qr-container {
+.kg-qr-container {
   display: flex;
   justify-content: center;
   padding: 20px;
@@ -244,7 +191,7 @@ body {
   margin-bottom: 20px;
 }
 
-.key-display-modal {
+.kg-key-display-modal {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -252,7 +199,7 @@ body {
   margin-bottom: 20px;
 }
 
-.key-label {
+.kg-key-label {
   font-size: 0.85rem;
   color: #65676b;
   font-weight: 600;
@@ -260,7 +207,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-.key-code-modal {
+.kg-key-code-modal {
   font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   font-size: 2rem;
   font-weight: 700;
@@ -272,13 +219,13 @@ body {
   background-clip: text;
 }
 
-.modal-actions {
+.kg-modal-actions {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.action-btn {
+.kg-action-btn {
   flex: 1;
   display: flex;
   align-items: center;
@@ -293,26 +240,26 @@ body {
   transition: all 0.2s ease;
 }
 
-.action-btn.copy-btn {
+.kg-action-btn.kg-copy-btn {
   background: #f0f2f5;
   color: #050505;
 }
 
-.action-btn.copy-btn:hover {
+.kg-action-btn.kg-copy-btn:hover {
   background: #e4e6eb;
 }
 
-.action-btn.download-btn {
+.kg-action-btn.kg-download-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.action-btn.download-btn:hover {
+.kg-action-btn.kg-download-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.modal-note {
+.kg-modal-note {
   text-align: center;
   font-size: 0.85rem;
   color: #65676b;
@@ -320,31 +267,23 @@ body {
 }
 
 @media (max-width: 480px) {
-  .header h1 {
+  .kg-header h1 {
     font-size: 2rem;
   }
-  
-  .main {
+
+  .kg-main {
     padding: 24px;
   }
-  
-  .key-display {
-    flex-direction: column;
-  }
-  
-  .key-code {
-    font-size: 1.3rem;
-  }
-  
-  .modal-content {
+
+  .kg-modal-content {
     padding: 24px;
   }
-  
-  .key-code-modal {
+
+  .kg-key-code-modal {
     font-size: 1.5rem;
   }
-  
-  .modal-actions {
+
+  .kg-modal-actions {
     flex-direction: column;
   }
 }

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { generateUniqueKey, type UserInfo } from '../utils/generateKey'
+import { generateUniqueKey, type KeyInput } from '@conference/key-utils'
 
 function KeyGenerator() {
-  const [formData, setFormData] = useState<UserInfo>({
+  const [formData, setFormData] = useState<KeyInput>({
     lastName: '',
     firstName: '',
-    birthDate: '',
+    birthDate: ''
   })
   const [generatedKey, setGeneratedKey] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
@@ -14,17 +14,16 @@ function KeyGenerator() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }))
-    // 입력이 변경되면 생성된 키 초기화
     setGeneratedKey('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.lastName || !formData.firstName || !formData.birthDate) {
       alert('모든 필드를 입력해주세요.')
       return
@@ -62,19 +61,19 @@ function KeyGenerator() {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const img = new Image()
-    
+
     img.onload = () => {
       canvas.width = img.width
       canvas.height = img.height
       ctx?.drawImage(img, 0, 0)
-      
+
       const pngFile = canvas.toDataURL('image/png')
       const downloadLink = document.createElement('a')
       downloadLink.download = `${formData.lastName}${formData.firstName}_${generatedKey}.png`
       downloadLink.href = pngFile
       downloadLink.click()
     }
-    
+
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
   }
 
@@ -82,13 +81,12 @@ function KeyGenerator() {
     setShowModal(false)
   }
 
-  // QR 코드에 저장될 데이터 (KEY:XXXXXXXX 형식)
   const qrValue = `KEY:${generatedKey}`
 
   return (
-    <div className="key-generator">
-      <form onSubmit={handleSubmit} className="form">
-        <div className="form-group">
+    <div className="kg-key-generator">
+      <form onSubmit={handleSubmit} className="kg-form">
+        <div className="kg-form-group">
           <label htmlFor="lastName">성 (Last Name)</label>
           <input
             type="text"
@@ -101,7 +99,7 @@ function KeyGenerator() {
           />
         </div>
 
-        <div className="form-group">
+        <div className="kg-form-group">
           <label htmlFor="firstName">이름 (First Name)</label>
           <input
             type="text"
@@ -114,7 +112,7 @@ function KeyGenerator() {
           />
         </div>
 
-        <div className="form-group">
+        <div className="kg-form-group">
           <label htmlFor="birthDate">생년월일</label>
           <input
             type="date"
@@ -126,27 +124,27 @@ function KeyGenerator() {
           />
         </div>
 
-        <button type="submit" className="submit-btn" disabled={isLoading}>
+        <button type="submit" className="kg-submit-btn" disabled={isLoading}>
           {isLoading ? '생성 중...' : '키 생성하기'}
         </button>
       </form>
 
-      {/* QR Code Modal */}
       {showModal && generatedKey && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={closeModal}>
+        <div className="kg-modal-overlay" onClick={closeModal}>
+          <div className="kg-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="kg-modal-close" onClick={closeModal}>
               ×
             </button>
-            
-            <div className="modal-header">
+
+            <div className="kg-modal-header">
               <h2>QR 코드가 생성되었습니다</h2>
-              <p className="participant-name">
-                {formData.lastName}{formData.firstName}
+              <p className="kg-participant-name">
+                {formData.lastName}
+                {formData.firstName}
               </p>
             </div>
-            
-            <div className="qr-container">
+
+            <div className="kg-qr-container">
               <QRCodeSVG
                 id="qr-code-svg"
                 value={qrValue}
@@ -157,22 +155,36 @@ function KeyGenerator() {
                 fgColor="#000000"
               />
             </div>
-            
-            <div className="key-display-modal">
-              <span className="key-label">고유 키</span>
-              <code className="key-code-modal">{generatedKey}</code>
+
+            <div className="kg-key-display-modal">
+              <span className="kg-key-label">고유 키</span>
+              <code className="kg-key-code-modal">{generatedKey}</code>
             </div>
-            
-            <div className="modal-actions">
-              <button className="action-btn copy-btn" onClick={handleCopyKey}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+
+            <div className="kg-modal-actions">
+              <button className="kg-action-btn kg-copy-btn" onClick={handleCopyKey}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
                 키 복사
               </button>
-              <button className="action-btn download-btn" onClick={handleDownloadQR}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <button className="kg-action-btn kg-download-btn" onClick={handleDownloadQR}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -180,8 +192,8 @@ function KeyGenerator() {
                 QR 다운로드
               </button>
             </div>
-            
-            <p className="modal-note">
+
+            <p className="kg-modal-note">
               이 QR 코드를 스캔하면 체크인 앱에서 참가자를 바로 찾을 수 있습니다.
             </p>
           </div>

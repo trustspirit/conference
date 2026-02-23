@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@conference/firebase": "workspace:*",
+    "@conference/key-utils": "workspace:*",
     "@tanstack/react-query": "^5.90.16",
     "firebase": "^12.9.0",
     "chart.js": "^4.5.1",

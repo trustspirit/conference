@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "survey_responses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "surveyId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -24,7 +24,9 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      registration: ${{ steps.filter.outputs.registration }}
+      registration-hosting: ${{ steps.filter.outputs.registration-hosting }}
+      registration-rules: ${{ steps.filter.outputs.registration-rules }}
+      registration-indexes: ${{ steps.filter.outputs.registration-indexes }}
       checkin: ${{ steps.filter.outputs.checkin }}
       finance-hosting: ${{ steps.filter.outputs.finance-hosting }}
       finance-functions: ${{ steps.filter.outputs.finance-functions }}
@@ -39,8 +41,18 @@ jobs:
         id: filter
         with:
           filters: |
-            registration:
-              - 'apps/registration/**'
+            registration-hosting:
+              - 'apps/registration/src/**'
+              - 'apps/registration/public/**'
+              - 'apps/registration/index.html'
+              - 'apps/registration/package.json'
+              - 'apps/registration/vite.config.*'
+              - 'apps/registration/tsconfig*.json'
+              - 'apps/registration/tailwind.config.*'
+            registration-rules:
+              - 'apps/registration/firestore.rules'
+            registration-indexes:
+              - 'apps/registration/firestore.indexes.json'
             checkin:
               - 'apps/checkin/**'
             finance-hosting:
@@ -67,7 +79,11 @@ jobs:
   # ─── Deploy Registration ──────────────────────────────────────────
   deploy-registration:
     needs: detect-changes
-    if: needs.detect-changes.outputs.registration == 'true' || needs.detect-changes.outputs.shared == 'true'
+    if: |
+      needs.detect-changes.outputs.registration-hosting == 'true' ||
+      needs.detect-changes.outputs.registration-rules == 'true' ||
+      needs.detect-changes.outputs.registration-indexes == 'true' ||
+      needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     environment: registration
 
@@ -85,6 +101,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
+        if: needs.detect-changes.outputs.registration-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
         run: pnpm turbo build --filter=@conference/registration
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -98,10 +115,25 @@ jobs:
         run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
 
       - name: Deploy Hosting
+        if: needs.detect-changes.outputs.registration-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
         working-directory: apps/registration
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Firestore Rules
+        if: needs.detect-changes.outputs.registration-rules == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Firestore Indexes
+        if: needs.detect-changes.outputs.registration-indexes == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only firestore:indexes --project ${{ secrets.FIREBASE_PROJECT_ID }}
 
   # ─── Deploy Checkin ───────────────────────────────────────────────
   deploy-checkin:

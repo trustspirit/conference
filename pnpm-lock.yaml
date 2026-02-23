@@ -20,6 +20,9 @@ importers:
       '@conference/firebase':
         specifier: workspace:*
         version: link:../../packages/firebase
+      '@conference/key-utils':
+        specifier: workspace:*
+        version: link:../../packages/key-utils
       '@tanstack/react-query':
         specifier: ^5.90.16
         version: 5.90.21(react@19.2.4)
@@ -273,6 +276,15 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@25.3.0)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)
+
+  packages/key-utils:
+    devDependencies:
+      '@conference/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
 packages:
 
