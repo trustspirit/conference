@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       registration-hosting: ${{ steps.filter.outputs.registration-hosting }}
+      registration-functions: ${{ steps.filter.outputs.registration-functions }}
       checkin-hosting: ${{ steps.filter.outputs.checkin-hosting }}
       checkin-rules: ${{ steps.filter.outputs.checkin-rules }}
       checkin-indexes: ${{ steps.filter.outputs.checkin-indexes }}
@@ -49,6 +50,8 @@ jobs:
               - 'apps/registration/vite.config.*'
               - 'apps/registration/tsconfig*.json'
               - 'apps/registration/tailwind.config.*'
+            registration-functions:
+              - 'apps/registration/functions/**'
             checkin-hosting:
               - 'apps/checkin/src/**'
               - 'apps/checkin/public/**'
@@ -82,11 +85,12 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'turbo.json'
 
-  # ─── Deploy Registration (hosting only, shares checkin-ba4b8 project) ─
+  # ─── Deploy Registration (hosting + functions, shares checkin-ba4b8 project) ─
   deploy-registration:
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.registration-hosting == 'true' ||
+      needs.detect-changes.outputs.registration-functions == 'true' ||
       needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     environment: registration
@@ -104,7 +108,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install functions dependencies
+        if: needs.detect-changes.outputs.registration-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration/functions
+        run: npm ci
+
       - name: Build
+        if: needs.detect-changes.outputs.registration-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
         run: pnpm turbo build --filter=@conference/registration
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -114,14 +124,27 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
 
+      - name: Build functions
+        if: needs.detect-changes.outputs.registration-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration/functions
+        run: npm run build
+
       - name: Setup Google credentials
         run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
 
       - name: Deploy Hosting
+        if: needs.detect-changes.outputs.registration-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
         working-directory: apps/registration
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Functions
+        if: needs.detect-changes.outputs.registration-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
 
   # ─── Deploy Checkin (hosting + firestore rules/indexes) ─────────
   deploy-checkin:
