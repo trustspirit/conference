@@ -50,6 +50,7 @@ pnpm turbo build --filter=@conference/finance
 
 | 앱 | 문서 |
 |----|------|
+| Registration | [README](apps/registration/README.md) |
 | Checkin | [README](apps/checkin/README.md), [사용자 가이드](apps/checkin/USER_GUIDE.md) |
 | Finance | [README](apps/finance/README.md), [설정 가이드](apps/finance/SETUP.md) |
 
