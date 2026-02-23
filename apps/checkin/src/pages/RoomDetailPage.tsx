@@ -602,7 +602,7 @@ function RoomDetailPage(): React.ReactElement {
         }
         onConfirm={handleSetLeader}
         title={leaderConfirm.isRemoving ? t('room.removeLeader') : t('room.setLeader')}
-        message={
+        description={
           leaderConfirm.isRemoving
             ? t('room.confirmRemoveLeader')
             : t('room.confirmSetLeader', { name: leaderConfirm.participantName })

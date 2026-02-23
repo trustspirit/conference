@@ -11,7 +11,7 @@ import {
   increment,
   writeBatch
 } from 'firebase/firestore'
-import { db, convertTimestamp } from '@conference/firebase'
+import { db, convertTimestamp, Timestamp } from '@conference/firebase'
 import type { BusRoute } from '../../types'
 
 export const BUSES_COLLECTION = 'buses'
@@ -27,9 +27,9 @@ const convertToBusRoute = (id: string, data: Record<string, unknown>): BusRoute 
   contactPhone: data.contactPhone as string | undefined,
   notes: data.notes as string | undefined,
   participantCount: (data.participantCount as number) || 0,
-  arrivedAt: data.arrivedAt ? convertTimestamp(data.arrivedAt) : undefined,
-  createdAt: convertTimestamp(data.createdAt),
-  updatedAt: convertTimestamp(data.updatedAt)
+  arrivedAt: data.arrivedAt ? convertTimestamp(data.arrivedAt as Timestamp | Date | undefined) : undefined,
+  createdAt: convertTimestamp(data.createdAt as Timestamp | Date | undefined),
+  updatedAt: convertTimestamp(data.updatedAt as Timestamp | Date | undefined)
 })
 
 // Get all bus routes

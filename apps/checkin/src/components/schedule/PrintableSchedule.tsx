@@ -1,12 +1,12 @@
 import React, { forwardRef } from 'react'
-import type { ScheduleEvent } from '../../types'
+import type { ScheduleEvent, ScheduleViewMode } from '../../types'
 import { getEventColorStyles } from '../../utils/scheduleColors'
 import { formatTime, formatDate, getWeekDates, getEventsForDay, isSameDay } from './scheduleUtils'
 
 interface PrintableScheduleProps {
   schedules: ScheduleEvent[]
   selectedDate: Date
-  viewMode: 'week' | 'day'
+  viewMode: ScheduleViewMode
   title?: string
 }
 

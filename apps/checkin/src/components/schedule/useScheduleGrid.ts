@@ -183,7 +183,7 @@ export function createTimeRange(
   endHours: number,
   endMinutes: number,
   dayIndex?: number
-): TimeRange | TimeRangeWithDay {
+): TimeRange | TimeRangeWithIndex {
   // Normalize so start is always before end
   const startTotal = startHours * 60 + startMinutes
   const endTotal = endHours * 60 + endMinutes
@@ -219,6 +219,6 @@ export function shouldShowHover(
  * Clamp time to valid schedule range
  */
 export function clampTime(hours: number, minutes: number): { hours: number; minutes: number } {
-  const clampedHours = clampHours(hours)
+  const clampedHours = Math.max(0, Math.min(23, hours))
   return { hours: clampedHours, minutes }
 }

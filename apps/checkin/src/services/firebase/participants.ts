@@ -348,7 +348,7 @@ export const addParticipant = async (data: CreateParticipantData): Promise<Parti
     email: data.email,
     gender: data.gender || '',
     age: data.age || 0,
-    birthDate: data.birthDate || null,
+    birthDate: data.birthDate || undefined,
     stake: data.stake || '',
     ward: data.ward || '',
     phoneNumber: data.phoneNumber || '',

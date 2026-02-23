@@ -72,17 +72,17 @@ Storage 경로 구조:
 ## 6. 로컬 개발
 
 ```bash
-# 의존성 설치
-npm install
+# 의존성 설치 (모노레포 루트에서)
+pnpm install
 
 # Cloud Functions 의존성 설치
 cd functions && npm install && cd ..
 
 # 개발 서버 실행 (Firebase 프로덕션 연결)
-npm run dev
+pnpm dev
 
 # 개발 서버 실행 (Firebase 에뮬레이터 연결)
-npm run dev:emulator
+pnpm dev:emulator
 ```
 
 브라우저에서 `http://localhost:5173` 접속
@@ -150,23 +150,12 @@ npm run seed:clear
 
 ### 자동 배포 (GitHub Actions)
 
-`main` 브랜치에 push하면 GitHub Actions가 자동으로 빌드 및 배포합니다.
+`main` 브랜치에 push하면 모노레포 루트의 GitHub Actions 워크플로우가 변경된 부분만 선별적으로 배포합니다.
 
-워크플로우 파일: `.github/workflows/deploy.yml`
+- 워크플로우: `/.github/workflows/deploy.yml` (모노레포 루트)
+- 시크릿 설정: [`/SETUP.md`](../../SETUP.md)
 
-**필요한 GitHub Secrets:**
-
-| Secret | 설명 |
-|--------|------|
-| `VITE_FIREBASE_API_KEY` | Firebase API 키 |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth 도메인 |
-| `VITE_FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage 버킷 |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase 메시징 Sender ID |
-| `VITE_FIREBASE_APP_ID` | Firebase 앱 ID |
-| `GCP_SA_KEY` | GCP 서비스 계정 JSON 키 (Firebase CLI 인증용) |
-
-> `docs/`, `scripts/`, `*.md`, `.gitignore` 변경 시에는 배포가 트리거되지 않습니다.
+Finance 앱은 변경 경로에 따라 hosting, functions, firestore rules/indexes, storage rules를 개별적으로 배포합니다.
 
 ### 수동 배포
 
@@ -252,9 +241,7 @@ npm run migrate:three-step:emulator
 ## 프로젝트 구조
 
 ```
-finanace/
-├── .github/workflows/      # GitHub Actions CI/CD
-│   └── deploy.yml            # main push 시 자동 빌드/배포
+finance/
 ├── src/
 │   ├── components/          # 공통 UI 컴포넌트
 │   │   ├── AdminRequestModals # 승인/반려 모달

@@ -591,7 +591,7 @@ function GroupDetailPage(): React.ReactElement {
         }
         onConfirm={handleSetLeader}
         title={leaderConfirm.isRemoving ? t('group.removeLeader') : t('group.setLeader')}
-        message={
+        description={
           leaderConfirm.isRemoving
             ? t('group.confirmRemoveLeader')
             : t('group.confirmSetLeader', { name: leaderConfirm.participantName })

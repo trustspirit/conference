@@ -149,7 +149,7 @@ function ScheduleWeekView({
       isDragging.current = false
       justFinishedDragging.current = true
 
-      const date = weekDates[typedDragSelection.dayIndex]
+      const date = weekDates[typedDragSelection.dayIndex!]
 
       // Calculate start and end times
       const startTotal = typedDragSelection.startHours * 60 + typedDragSelection.startMinutes

@@ -1,4 +1,4 @@
-import type { ScheduleEvent } from '../types'
+import type { ScheduleEvent, ScheduleViewMode } from '../types'
 
 // Format date for display
 const formatDate = (date: Date): string => {
@@ -81,7 +81,7 @@ export const exportScheduleToCSV = (
 export const generateScheduleText = (
   schedules: ScheduleEvent[],
   selectedDate: Date,
-  viewMode: 'week' | 'day'
+  viewMode: ScheduleViewMode
 ): string => {
   const dates = viewMode === 'week' ? getWeekDates(selectedDate) : [selectedDate]
 
@@ -132,7 +132,7 @@ export const generateScheduleText = (
 export const copyScheduleToClipboard = async (
   schedules: ScheduleEvent[],
   selectedDate: Date,
-  viewMode: 'week' | 'day'
+  viewMode: ScheduleViewMode
 ): Promise<boolean> => {
   try {
     const text = generateScheduleText(schedules, selectedDate, viewMode)

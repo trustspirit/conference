@@ -1,0 +1,234 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'docs/**'
+      - '**/docs/**'
+      - '**/README.md'
+      - '**/SETUP.md'
+      - '**/USER_GUIDE.md'
+      - '**/scripts/**'
+      - '.gitignore'
+      - '.prettierrc'
+      - '.prettierignore'
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─── Detect which apps/packages changed ───────────────────────────
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      registration: ${{ steps.filter.outputs.registration }}
+      checkin: ${{ steps.filter.outputs.checkin }}
+      finance-hosting: ${{ steps.filter.outputs.finance-hosting }}
+      finance-functions: ${{ steps.filter.outputs.finance-functions }}
+      finance-rules: ${{ steps.filter.outputs.finance-rules }}
+      finance-indexes: ${{ steps.filter.outputs.finance-indexes }}
+      finance-storage: ${{ steps.filter.outputs.finance-storage }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            registration:
+              - 'apps/registration/**'
+            checkin:
+              - 'apps/checkin/**'
+            finance-hosting:
+              - 'apps/finance/src/**'
+              - 'apps/finance/public/**'
+              - 'apps/finance/index.html'
+              - 'apps/finance/package.json'
+              - 'apps/finance/vite.config.*'
+              - 'apps/finance/tsconfig*.json'
+              - 'apps/finance/tailwind.config.*'
+            finance-functions:
+              - 'apps/finance/functions/**'
+            finance-rules:
+              - 'apps/finance/firestore.rules'
+            finance-indexes:
+              - 'apps/finance/firestore.indexes.json'
+            finance-storage:
+              - 'apps/finance/storage.rules'
+            shared:
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+
+  # ─── Deploy Registration ──────────────────────────────────────────
+  deploy-registration:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.registration == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    environment: registration
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm turbo build --filter=@conference/registration
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
+      - name: Setup Google credentials
+        run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+
+      - name: Deploy Hosting
+        working-directory: apps/registration
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+  # ─── Deploy Checkin ───────────────────────────────────────────────
+  deploy-checkin:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.checkin == 'true' || needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    environment: checkin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm turbo build --filter=@conference/checkin
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
+      - name: Setup Google credentials
+        run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+
+      - name: Deploy Hosting
+        working-directory: apps/checkin
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Firestore Rules
+        working-directory: apps/checkin
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+  # ─── Deploy Finance ───────────────────────────────────────────────
+  deploy-finance:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.finance-hosting == 'true' ||
+      needs.detect-changes.outputs.finance-functions == 'true' ||
+      needs.detect-changes.outputs.finance-rules == 'true' ||
+      needs.detect-changes.outputs.finance-indexes == 'true' ||
+      needs.detect-changes.outputs.finance-storage == 'true' ||
+      needs.detect-changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    environment: finance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install functions dependencies
+        if: needs.detect-changes.outputs.finance-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance/functions
+        run: npm ci
+
+      - name: Build
+        if: needs.detect-changes.outputs.finance-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
+        run: pnpm turbo build --filter=@conference/finance
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+
+      - name: Build functions
+        if: needs.detect-changes.outputs.finance-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance/functions
+        run: npm run build
+
+      - name: Setup Google credentials
+        run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
+
+      - name: Deploy Hosting
+        if: needs.detect-changes.outputs.finance-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Functions
+        if: needs.detect-changes.outputs.finance-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+
+      - name: Deploy Firestore Rules
+        if: needs.detect-changes.outputs.finance-rules == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Firestore Indexes
+        if: needs.detect-changes.outputs.finance-indexes == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only firestore:indexes --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Storage Rules
+        if: needs.detect-changes.outputs.finance-storage == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/finance
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only storage --project ${{ secrets.FIREBASE_PROJECT_ID }}

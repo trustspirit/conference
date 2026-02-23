@@ -2,6 +2,7 @@
   "extends": "@conference/config/tsconfig.base",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["vite/client"],
     "paths": {}
   },
   "include": ["src/**/*"]

@@ -9,7 +9,7 @@ export interface ConfirmDialogProps {
   description: string
   confirmText?: string
   cancelText?: string
-  variant?: 'danger' | 'warning' | 'info'
+  variant?: 'danger' | 'warning' | 'info' | 'primary'
   confirmationPhrase?: string // If set, user must type this phrase to confirm
   isLoading?: boolean
 }
@@ -26,6 +26,11 @@ const variantStyles = {
     button: 'bg-[#F57C00] hover:bg-[#EF6C00]'
   },
   info: {
+    icon: 'text-[#1877F2]',
+    iconBg: 'bg-[#E7F3FF]',
+    button: 'bg-[#1877F2] hover:bg-[#166FE5]'
+  },
+  primary: {
     icon: 'text-[#1877F2]',
     iconBg: 'bg-[#E7F3FF]',
     button: 'bg-[#1877F2] hover:bg-[#166FE5]'
