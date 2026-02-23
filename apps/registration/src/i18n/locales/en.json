@@ -1,0 +1,91 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "active": "Active",
+    "inactive": "Inactive",
+    "signOut": "Sign Out",
+    "back": "← Back"
+  },
+  "auth": {
+    "admin": "Admin",
+    "signInDesc": "Sign in to manage surveys",
+    "signInWithGoogle": "Sign in with Google",
+    "signingIn": "Signing in...",
+    "signInFailed": "Login failed. Please try again."
+  },
+  "register": {
+    "update": "Update",
+    "register": "Register",
+    "submitting": "Submitting...",
+    "form": {
+      "name": "Name *",
+      "email": "Email *",
+      "phone": "Phone",
+      "gender": "Gender",
+      "genderSelect": "Select",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "age": "Age",
+      "stake": "Stake",
+      "ward": "Ward"
+    },
+    "error": {
+      "surveyNotAvailable": "This survey is not available.",
+      "invalidToken": "Invalid or missing access token.",
+      "invalidCode": "Invalid personal code.",
+      "failedLoad": "Failed to load survey.",
+      "submissionFailed": "Submission failed. Please try again."
+    },
+    "success": {
+      "registered": "Registered!",
+      "updated": "Updated!",
+      "registeredDesc": "Your registration has been submitted successfully.",
+      "updatedDesc": "Your registration has been updated successfully.",
+      "personalCode": "Your Personal Code",
+      "codeHint": "Save this code! You can use it to edit your registration later.",
+      "editLink": "Edit my registration"
+    }
+  },
+  "survey": {
+    "title": "Surveys",
+    "newSurvey": "+ New Survey",
+    "noSurveys": "No surveys yet. Create one to get started.",
+    "copyLink": "Copy Link",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "deleteConfirm": "Delete this survey?",
+    "responses": "responses",
+    "notFound": "Survey not found",
+    "noDescription": "No description",
+    "copyRegLink": "Copy Registration Link",
+    "responsesTitle": "Responses",
+    "noResponses": "No responses yet.",
+    "create": {
+      "title": "Create Survey",
+      "titleLabel": "Title *",
+      "descriptionLabel": "Description",
+      "creating": "Creating...",
+      "create": "Create"
+    },
+    "table": {
+      "number": "#",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "ward": "Ward",
+      "code": "Code",
+      "date": "Date"
+    }
+  },
+  "admin": {
+    "title": "Registration Admin"
+  },
+  "toast": {
+    "linkCopied": "Link copied to clipboard",
+    "surveyActivated": "Survey activated",
+    "surveyDeactivated": "Survey deactivated",
+    "surveyDeleted": "Survey deleted"
+  }
+}

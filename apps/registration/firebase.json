@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "checkin-ba4b8-registration",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
@@ -8,9 +9,5 @@
         "destination": "/index.html"
       }
     ]
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
   }
 }

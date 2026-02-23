@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getSurveyById } from '../services/surveys'
 import { submitRegistration, getResponseByCode, updateRegistration } from '../services/responses'
 import RegistrationForm from '../components/RegistrationForm'
 import type { Survey, SurveyResponse, RegistrationData } from '../types'
 
 function RegisterPage(): React.ReactElement {
+  const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -24,12 +26,12 @@ function RegisterPage(): React.ReactElement {
       try {
         const s = await getSurveyById(surveyId)
         if (!s || !s.isActive) {
-          setError('This survey is not available.')
+          setError(t('register.error.surveyNotAvailable'))
           setLoading(false)
           return
         }
         if (s.shareToken && s.shareToken !== token) {
-          setError('Invalid or missing access token.')
+          setError(t('register.error.invalidToken'))
           setLoading(false)
           return
         }
@@ -40,11 +42,11 @@ function RegisterPage(): React.ReactElement {
           if (resp) {
             setExistingResponse(resp)
           } else {
-            setError('Invalid personal code.')
+            setError(t('register.error.invalidCode'))
           }
         }
       } catch {
-        setError('Failed to load survey.')
+        setError(t('register.error.failedLoad'))
       } finally {
         setLoading(false)
       }
@@ -64,7 +66,7 @@ function RegisterPage(): React.ReactElement {
         navigate(`/register/${surveyId}/success?token=${token}&code=${result.personalCode}`)
       }
     } catch {
-      setError('Submission failed. Please try again.')
+      setError(t('register.error.submissionFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -103,7 +105,7 @@ function RegisterPage(): React.ReactElement {
             initialData={existingResponse?.data}
             onSubmit={handleSubmit}
             isLoading={submitting}
-            submitLabel={existingResponse ? 'Update' : 'Register'}
+            submitLabel={existingResponse ? t('register.update') : t('register.register')}
           />
         </div>
       </div>

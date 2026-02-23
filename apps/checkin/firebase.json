@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "checkin-ba4b8",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
@@ -10,6 +11,7 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

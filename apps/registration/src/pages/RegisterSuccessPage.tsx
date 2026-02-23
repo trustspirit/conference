@@ -1,7 +1,9 @@
 import React from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 function RegisterSuccessPage(): React.ReactElement {
+  const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
   const [searchParams] = useSearchParams()
   const code = searchParams.get('code')
@@ -17,20 +19,20 @@ function RegisterSuccessPage(): React.ReactElement {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {updated ? 'Updated!' : 'Registered!'}
+          {updated ? t('register.success.updated') : t('register.success.registered')}
         </h1>
         <p className="text-gray-600 mb-6">
-          {updated ? 'Your registration has been updated successfully.' : 'Your registration has been submitted successfully.'}
+          {updated ? t('register.success.updatedDesc') : t('register.success.registeredDesc')}
         </p>
         {code && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-700 mb-2 font-medium">Your Personal Code</p>
+            <p className="text-sm text-blue-700 mb-2 font-medium">{t('register.success.personalCode')}</p>
             <p className="text-3xl font-mono font-bold text-blue-900 tracking-wider">{code}</p>
-            <p className="text-xs text-blue-600 mt-2">Save this code! You can use it to edit your registration later.</p>
+            <p className="text-xs text-blue-600 mt-2">{t('register.success.codeHint')}</p>
           </div>
         )}
         <a href={`/register/${surveyId}?token=${token}&code=${code}`} className="text-blue-600 hover:underline text-sm font-medium">
-          Edit my registration
+          {t('register.success.editLink')}
         </a>
       </div>
     </div>
