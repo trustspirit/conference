@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-primary: var(--survey-primary);
+  --color-primary-hover: var(--survey-primary-hover);
+  --color-primary-light: var(--survey-primary-light);
+  --color-primary-text: var(--survey-primary-text);
+}
+
+:root {
+  --survey-primary: #2563eb;
+  --survey-primary-hover: #1d4ed8;
+  --survey-primary-light: #eff6ff;
+  --survey-primary-text: #1e40af;
+}
+
 @keyframes slide-in {
   from {
     opacity: 0;

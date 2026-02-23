@@ -13,7 +13,8 @@
     "signInDesc": "Sign in to manage surveys",
     "signInWithGoogle": "Sign in with Google",
     "signingIn": "Signing in...",
-    "signInFailed": "Login failed. Please try again."
+    "signInFailed": "Login failed. Please try again.",
+    "notAuthorized": "You are not authorized to access the admin panel."
   },
   "register": {
     "update": "Update",
@@ -46,6 +47,14 @@
       "personalCode": "Your Personal Code",
       "codeHint": "Save this code! You can use it to edit your registration later.",
       "editLink": "Edit my registration"
+    },
+    "findCode": {
+      "link": "Forgot your code?",
+      "title": "Find My Code",
+      "desc": "Enter the email you registered with to retrieve your personal code.",
+      "submit": "Find Code",
+      "notFound": "No registration found with this email.",
+      "error": "An error occurred. Please try again."
     }
   },
   "survey": {
@@ -79,13 +88,137 @@
       "date": "Date"
     }
   },
+  "home": {
+    "title": "Registration",
+    "codePlaceholder": "Enter your personal code",
+    "openSurvey": "Open My Registration",
+    "codeNotFound": "No registration found with this code.",
+    "findCode": "Forgot your code?",
+    "findCodeDesc": "Enter your email to find your code.",
+    "emailPlaceholder": "email@example.com",
+    "findCodeSubmit": "Find Code",
+    "findCodeNotFound": "No registration found with this email.",
+    "findCodeError": "An error occurred. Please try again.",
+    "adminLink": "Admin Panel",
+    "adminLogin": "Admin Login"
+  },
   "admin": {
-    "title": "Registration Admin"
+    "title": "Registration Admin",
+    "manageAdmins": "Manage Admins"
+  },
+  "adminManage": {
+    "title": "Admin Management",
+    "addTitle": "Add Admin",
+    "emailPlaceholder": "Google account email",
+    "add": "Add",
+    "addHint": "Only added Google accounts can access the admin panel.",
+    "added": "Admin added",
+    "addFailed": "Failed to add admin",
+    "listTitle": "Admins",
+    "noAdmins": "No admins registered. Anyone can log in.",
+    "removeConfirm": "Remove {{email}} from admins?",
+    "removed": "Admin removed"
   },
   "toast": {
     "linkCopied": "Link copied to clipboard",
     "surveyActivated": "Survey activated",
     "surveyDeactivated": "Survey deactivated",
     "surveyDeleted": "Survey deleted"
+  },
+  "builder": {
+    "editSurvey": "Edit Survey",
+    "tabQuestions": "Questions",
+    "tabTheme": "Theme",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Survey saved",
+    "saveFailed": "Failed to save survey",
+    "createFailed": "Failed to create survey",
+    "untitledSurvey": "Untitled Survey",
+    "titlePlaceholder": "Survey title",
+    "descPlaceholder": "Survey description (optional)",
+    "labelPlaceholder": "Question",
+    "descriptionPlaceholder": "Description (optional)",
+    "sectionTitlePlaceholder": "Section title",
+    "required": "Required",
+    "widthFull": "Full width",
+    "widthHalf": "Half width",
+    "group": "Group",
+    "groupPlaceholder": "Group name",
+    "inputFormat": "Format",
+    "inputFormatText": "Text",
+    "inputFormatNumber": "Number",
+    "inputFormatEmail": "Email",
+    "inputFormatTel": "Phone",
+    "addField": "Add question",
+    "addSection": "Add section",
+    "options": "Options",
+    "optionPlaceholder": "Option {{n}}",
+    "addOption": "Add option",
+    "noMapping": "No mapping",
+    "participantField": "Participant field",
+    "participantFields": {
+      "name": "Name",
+      "email": "Email",
+      "phoneNumber": "Phone number",
+      "gender": "Gender",
+      "age": "Age",
+      "birthDate": "Birth date",
+      "stake": "Stake",
+      "ward": "Ward",
+      "isPaid": "Paid",
+      "memo": "Memo"
+    },
+    "fieldType": {
+      "short_text": "Short text",
+      "long_text": "Long text",
+      "radio": "Multiple choice",
+      "checkbox": "Checkboxes",
+      "dropdown": "Dropdown",
+      "linear_scale": "Linear scale",
+      "grid": "Grid",
+      "date": "Date",
+      "time": "Time",
+      "section": "Section",
+      "church_info": "Unit (Ward/Stake)"
+    },
+    "churchInfoLocked": "Fixed field",
+    "addChurchInfo": "Add Unit (Ward/Stake)",
+    "churchInfoNonMember": "Non-member",
+    "churchInfoOther": "Other",
+    "churchInfoStakePlaceholder": "Enter stake/district name",
+    "churchInfoWardPlaceholder": "Enter ward/branch name",
+    "linearScale": {
+      "min": "Min value",
+      "max": "Max value",
+      "minLabel": "Min label",
+      "maxLabel": "Max label",
+      "labelPlaceholder": "Label (optional)"
+    },
+    "grid": {
+      "rows": "Rows",
+      "columns": "Columns",
+      "rowPlaceholder": "Row {{n}}",
+      "colPlaceholder": "Column {{n}}",
+      "addRow": "Add row",
+      "addColumn": "Add column",
+      "allowMultiple": "Allow multiple selections per row"
+    },
+    "theme": {
+      "title": "Theme",
+      "primaryColor": "Primary Color",
+      "headerImage": "Header Image",
+      "headerImagePlaceholder": "https://example.com/image.jpg",
+      "uploadImage": "Upload Image",
+      "orEnterUrl": "or enter URL",
+      "removeImage": "Remove",
+      "fileTooLarge": "File must be under 1.5MB",
+      "invalidFileType": "Only JPG and PNG files are allowed",
+      "reset": "Reset to default",
+      "preview": "Preview",
+      "showPreview": "Show Preview",
+      "hidePreview": "Hide Preview"
+    }
   }
 }

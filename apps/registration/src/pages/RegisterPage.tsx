@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getSurveyById } from '../services/surveys'
-import { submitRegistration, getResponseByCode, updateRegistration } from '../services/responses'
+import { submitRegistration, getResponseByCode, updateRegistration, submitDynamicRegistration, updateDynamicRegistration } from '../services/responses'
+import { Spinner } from '../components/ui'
 import RegistrationForm from '../components/RegistrationForm'
+import DynamicForm from '../components/form-renderer/DynamicForm'
+import ThemeProvider from '../components/ThemeProvider'
+import FormHeader from '../components/form-renderer/FormHeader'
+import FindCodeModal from '../components/FindCodeModal'
 import type { Survey, SurveyResponse, RegistrationData } from '../types'
 
 function RegisterPage(): React.ReactElement {
@@ -19,6 +24,7 @@ function RegisterPage(): React.ReactElement {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showFindCode, setShowFindCode] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -54,8 +60,9 @@ function RegisterPage(): React.ReactElement {
     load()
   }, [surveyId, editCode])
 
-  const handleSubmit = async (data: RegistrationData) => {
+  const handleLegacySubmit = async (data: RegistrationData) => {
     if (!surveyId) return
+    setError(null)
     setSubmitting(true)
     try {
       if (existingResponse) {
@@ -72,44 +79,93 @@ function RegisterPage(): React.ReactElement {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-      </div>
-    )
+  const handleDynamicSubmit = async (data: Record<string, unknown>) => {
+    if (!surveyId || !survey?.fields) return
+    setError(null)
+    setSubmitting(true)
+    try {
+      if (existingResponse) {
+        await updateDynamicRegistration(existingResponse.id, existingResponse.participantId, data, survey.fields)
+        navigate(`/register/${surveyId}/success?token=${token}&code=${existingResponse.personalCode}&updated=true`)
+      } else {
+        const result = await submitDynamicRegistration(surveyId, data, survey.fields)
+        navigate(`/register/${surveyId}/success?token=${token}&code=${result.personalCode}`)
+      }
+    } catch {
+      setError(t('register.error.submissionFailed'))
+    } finally {
+      setSubmitting(false)
+    }
   }
+
+  if (loading) return <Spinner />
 
   if (error && !survey) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-md text-center">
           <p className="text-red-500 font-medium">{error}</p>
         </div>
       </div>
     )
   }
 
+  const useDynamic = survey?.fields && survey.fields.length > 0
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{survey?.title}</h1>
-          {survey?.description && <p className="text-gray-600">{survey.description}</p>}
-        </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
-        )}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <RegistrationForm
-            initialData={existingResponse?.data}
-            onSubmit={handleSubmit}
-            isLoading={submitting}
-            submitLabel={existingResponse ? t('register.update') : t('register.register')}
+    <ThemeProvider theme={survey?.theme}>
+      <div className="min-h-screen bg-gray-100 sm:py-10 sm:px-4">
+        <div className="max-w-2xl mx-auto sm:shadow-lg sm:rounded-xl overflow-hidden">
+          <FormHeader
+            title={survey?.title || ''}
+            description={survey?.description}
+            theme={survey?.theme}
           />
+
+          {error && (
+            <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+          )}
+
+          {useDynamic ? (
+            <DynamicForm
+              fields={survey!.fields!}
+              initialData={existingResponse?.data as Record<string, unknown> | undefined}
+              onSubmit={handleDynamicSubmit}
+              isLoading={submitting}
+              submitLabel={existingResponse ? t('register.update') : t('register.register')}
+            />
+          ) : (
+            <div className="bg-white border border-gray-200 sm:rounded-b-xl p-8">
+              <RegistrationForm
+                initialData={existingResponse?.data as RegistrationData | undefined}
+                onSubmit={handleLegacySubmit}
+                isLoading={submitting}
+                submitLabel={existingResponse ? t('register.update') : t('register.register')}
+              />
+            </div>
+          )}
+
+          {/* Find code link */}
+          <div className="py-4 text-center">
+            <button
+              type="button"
+              onClick={() => setShowFindCode(true)}
+              className="text-sm text-gray-400 hover:text-primary transition-colors"
+            >
+              {t('register.findCode.link')}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showFindCode && surveyId && (
+        <FindCodeModal
+          surveyId={surveyId}
+          token={token}
+          onClose={() => setShowFindCode(false)}
+        />
+      )}
+    </ThemeProvider>
   )
 }
 

@@ -13,7 +13,8 @@
     "signInDesc": "설문을 관리하려면 로그인하세요",
     "signInWithGoogle": "Google로 로그인",
     "signingIn": "로그인 중...",
-    "signInFailed": "로그인에 실패했습니다. 다시 시도해주세요."
+    "signInFailed": "로그인에 실패했습니다. 다시 시도해주세요.",
+    "notAuthorized": "관리자 페이지에 접근할 수 없는 계정입니다."
   },
   "register": {
     "update": "수정하기",
@@ -46,6 +47,14 @@
       "personalCode": "개인 코드",
       "codeHint": "이 코드를 저장하세요! 나중에 등록 정보를 수정할 때 사용할 수 있습니다.",
       "editLink": "등록 정보 수정하기"
+    },
+    "findCode": {
+      "link": "코드를 잊으셨나요?",
+      "title": "내 코드 찾기",
+      "desc": "등록 시 사용한 이메일을 입력하면 개인 코드를 찾을 수 있습니다.",
+      "submit": "코드 찾기",
+      "notFound": "해당 이메일로 등록된 정보가 없습니다.",
+      "error": "오류가 발생했습니다. 다시 시도해주세요."
     }
   },
   "survey": {
@@ -79,13 +88,137 @@
       "date": "날짜"
     }
   },
+  "home": {
+    "title": "등록",
+    "codePlaceholder": "개인 코드를 입력하세요",
+    "openSurvey": "내 등록 정보 열기",
+    "codeNotFound": "해당 코드로 등록된 정보가 없습니다.",
+    "findCode": "코드를 잊으셨나요?",
+    "findCodeDesc": "등록 시 사용한 이메일을 입력하세요.",
+    "emailPlaceholder": "email@example.com",
+    "findCodeSubmit": "코드 찾기",
+    "findCodeNotFound": "해당 이메일로 등록된 정보가 없습니다.",
+    "findCodeError": "오류가 발생했습니다. 다시 시도해주세요.",
+    "adminLink": "관리자 페이지",
+    "adminLogin": "관리자 로그인"
+  },
   "admin": {
-    "title": "등록 관리"
+    "title": "등록 관리",
+    "manageAdmins": "관리자 관리"
+  },
+  "adminManage": {
+    "title": "관리자 관리",
+    "addTitle": "관리자 추가",
+    "emailPlaceholder": "Google 계정 이메일",
+    "add": "추가",
+    "addHint": "추가된 Google 계정만 관리자 페이지에 접근할 수 있습니다.",
+    "added": "관리자가 추가되었습니다",
+    "addFailed": "관리자 추가에 실패했습니다",
+    "listTitle": "관리자 목록",
+    "noAdmins": "등록된 관리자가 없습니다. 누구나 로그인 가능합니다.",
+    "removeConfirm": "{{email}}을(를) 관리자에서 제거하시겠습니까?",
+    "removed": "관리자가 제거되었습니다"
   },
   "toast": {
     "linkCopied": "링크가 클립보드에 복사되었습니다",
     "surveyActivated": "설문이 활성화되었습니다",
     "surveyDeactivated": "설문이 비활성화되었습니다",
     "surveyDeleted": "설문이 삭제되었습니다"
+  },
+  "builder": {
+    "editSurvey": "설문 편집",
+    "tabQuestions": "질문",
+    "tabTheme": "테마",
+    "edit": "편집",
+    "save": "저장",
+    "saving": "저장 중...",
+    "saved": "설문이 저장되었습니다",
+    "saveFailed": "설문 저장에 실패했습니다",
+    "createFailed": "설문 생성에 실패했습니다",
+    "untitledSurvey": "제목 없는 설문",
+    "titlePlaceholder": "설문 제목",
+    "descPlaceholder": "설문 설명 (선택사항)",
+    "labelPlaceholder": "질문",
+    "descriptionPlaceholder": "설명 (선택사항)",
+    "sectionTitlePlaceholder": "섹션 제목",
+    "required": "필수",
+    "widthFull": "전체 너비",
+    "widthHalf": "반 너비",
+    "group": "그룹",
+    "groupPlaceholder": "그룹명",
+    "inputFormat": "형식",
+    "inputFormatText": "텍스트",
+    "inputFormatNumber": "숫자",
+    "inputFormatEmail": "이메일",
+    "inputFormatTel": "전화번호",
+    "addField": "질문 추가",
+    "addSection": "섹션 추가",
+    "options": "선택지",
+    "optionPlaceholder": "선택지 {{n}}",
+    "addOption": "선택지 추가",
+    "noMapping": "매핑 없음",
+    "participantField": "참가자 필드",
+    "participantFields": {
+      "name": "이름",
+      "email": "이메일",
+      "phoneNumber": "전화번호",
+      "gender": "성별",
+      "age": "나이",
+      "birthDate": "생년월일",
+      "stake": "스테이크",
+      "ward": "와드",
+      "isPaid": "납부 여부",
+      "memo": "메모"
+    },
+    "fieldType": {
+      "short_text": "단답형",
+      "long_text": "장문형",
+      "radio": "객관식",
+      "checkbox": "체크박스",
+      "dropdown": "드롭다운",
+      "linear_scale": "직선 배율",
+      "grid": "그리드",
+      "date": "날짜",
+      "time": "시간",
+      "section": "섹션",
+      "church_info": "소속 (와드/스테이크)"
+    },
+    "churchInfoLocked": "고정 필드",
+    "addChurchInfo": "소속 (와드/스테이크) 추가",
+    "churchInfoNonMember": "비회원",
+    "churchInfoOther": "기타",
+    "churchInfoStakePlaceholder": "스테이크/지방부 이름 입력",
+    "churchInfoWardPlaceholder": "와드/지부 이름 입력",
+    "linearScale": {
+      "min": "최솟값",
+      "max": "최댓값",
+      "minLabel": "최솟값 라벨",
+      "maxLabel": "최댓값 라벨",
+      "labelPlaceholder": "라벨 (선택사항)"
+    },
+    "grid": {
+      "rows": "행",
+      "columns": "열",
+      "rowPlaceholder": "행 {{n}}",
+      "colPlaceholder": "열 {{n}}",
+      "addRow": "행 추가",
+      "addColumn": "열 추가",
+      "allowMultiple": "행마다 복수 선택 허용"
+    },
+    "theme": {
+      "title": "테마",
+      "primaryColor": "메인 색상",
+      "headerImage": "헤더 이미지",
+      "headerImagePlaceholder": "https://example.com/image.jpg",
+      "uploadImage": "이미지 업로드",
+      "orEnterUrl": "또는 URL 입력",
+      "removeImage": "삭제",
+      "fileTooLarge": "파일 크기는 1.5MB 이하여야 합니다",
+      "invalidFileType": "JPG, PNG 파일만 허용됩니다",
+      "reset": "기본값으로 초기화",
+      "preview": "미리보기",
+      "showPreview": "미리보기",
+      "hidePreview": "미리보기 닫기"
+    }
   }
 }

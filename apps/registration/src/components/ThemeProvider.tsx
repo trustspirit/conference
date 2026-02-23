@@ -1,0 +1,86 @@
+import React, { useMemo } from 'react'
+import type { SurveyTheme } from '../types'
+
+interface ThemeProviderProps {
+  theme?: SurveyTheme
+  children: React.ReactNode
+}
+
+function hexToHSL(hex: string): { h: number; s: number; l: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (!result) return null
+
+  const r = parseInt(result[1], 16) / 255
+  const g = parseInt(result[2], 16) / 255
+  const b = parseInt(result[3], 16) / 255
+
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+
+  if (max === min) return { h: 0, s: 0, l }
+
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  let h = 0
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6
+  else if (max === g) h = ((b - r) / d + 2) / 6
+  else h = ((r - g) / d + 4) / 6
+
+  return { h: h * 360, s, l }
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1
+    if (t > 1) t -= 1
+    if (t < 1 / 6) return p + (q - p) * 6 * t
+    if (t < 1 / 2) return q
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+    return p
+  }
+
+  if (s === 0) {
+    const val = Math.round(l * 255).toString(16).padStart(2, '0')
+    return `#${val}${val}${val}`
+  }
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+  const p = 2 * l - q
+  const hNorm = h / 360
+  const r = Math.round(hue2rgb(p, q, hNorm + 1 / 3) * 255).toString(16).padStart(2, '0')
+  const g = Math.round(hue2rgb(p, q, hNorm) * 255).toString(16).padStart(2, '0')
+  const b = Math.round(hue2rgb(p, q, hNorm - 1 / 3) * 255).toString(16).padStart(2, '0')
+  return `#${r}${g}${b}`
+}
+
+function generateThemeColors(hex: string) {
+  const hsl = hexToHSL(hex)
+  if (!hsl) return null
+
+  return {
+    primary: hex,
+    hover: hslToHex(hsl.h, hsl.s, Math.max(0, hsl.l - 0.07)),
+    light: hslToHex(hsl.h, Math.min(1, hsl.s * 0.8), 0.95),
+    text: hslToHex(hsl.h, hsl.s, Math.max(0, hsl.l - 0.15)),
+  }
+}
+
+function ThemeProvider({ theme, children }: ThemeProviderProps): React.ReactElement {
+  const style = useMemo(() => {
+    if (!theme?.primaryColor) return undefined
+    const colors = generateThemeColors(theme.primaryColor)
+    if (!colors) return undefined
+    return {
+      '--survey-primary': colors.primary,
+      '--survey-primary-hover': colors.hover,
+      '--survey-primary-light': colors.light,
+      '--survey-primary-text': colors.text,
+    } as React.CSSProperties
+  }, [theme?.primaryColor])
+
+  return <div style={style}>{children}</div>
+}
+
+export { generateThemeColors }
+export default ThemeProvider
