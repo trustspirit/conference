@@ -161,7 +161,6 @@ function RegisterPage(): React.ReactElement {
       {showFindCode && surveyId && (
         <FindCodeModal
           surveyId={surveyId}
-          token={token}
           onClose={() => setShowFindCode(false)}
         />
       )}

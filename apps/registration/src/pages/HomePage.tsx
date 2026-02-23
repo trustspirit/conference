@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { authUserAtom, authLoadingAtom } from '../stores/authStore'
 import { onAuthChange, signInWithGoogle, signOut } from '../services/firebase'
 import { findResponseByCode, findResponsesByEmail } from '../services/responses'
+import { sendPersonalCodeEmail } from '../services/email'
 import { getSurveyById } from '../services/surveys'
 import { Spinner, Button, Input } from '../components/ui'
 
@@ -14,17 +15,15 @@ function HomePage(): React.ReactElement {
   const [user, setUser] = useAtom(authUserAtom)
   const [loading, setLoading] = useAtom(authLoadingAtom)
 
-  // Code lookup
   const [code, setCode] = useState('')
   const [codeLoading, setCodeLoading] = useState(false)
   const [codeError, setCodeError] = useState<string | null>(null)
 
-  // Find code by email
   const [showFindCode, setShowFindCode] = useState(false)
   const [email, setEmail] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [foundCode, setFoundCode] = useState<{ code: string; surveyId: string; token: string } | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthChange((firebaseUser) => {
@@ -63,22 +62,21 @@ function HomePage(): React.ReactElement {
 
     setEmailLoading(true)
     setEmailError(null)
-    setFoundCode(null)
     try {
       const responses = await findResponsesByEmail(email)
       if (responses.length > 0) {
-        const resp = responses[0]
-        const survey = await getSurveyById(resp.surveyId)
-        setFoundCode({
-          code: resp.personalCode,
-          surveyId: resp.surveyId,
-          token: survey?.shareToken || '',
-        })
+        await sendPersonalCodeEmail(email, responses[0].surveyId)
+        setEmailSent(true)
       } else {
         setEmailError(t('home.findCodeNotFound'))
       }
-    } catch {
-      setEmailError(t('home.findCodeError'))
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code
+      if (code === 'functions/resource-exhausted') {
+        setEmailError(t('register.findCode.rateLimited'))
+      } else {
+        setEmailError(t('home.findCodeError'))
+      }
     } finally {
       setEmailLoading(false)
     }
@@ -89,7 +87,6 @@ function HomePage(): React.ReactElement {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-4">
-        {/* Main card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,7 +95,6 @@ function HomePage(): React.ReactElement {
           </div>
           <h1 className="text-xl font-bold text-gray-900 text-center mb-6">{t('home.title')}</h1>
 
-          {/* Code input */}
           <form onSubmit={handleCodeSubmit} className="space-y-3">
             <Input
               value={code}
@@ -113,32 +109,27 @@ function HomePage(): React.ReactElement {
             </Button>
           </form>
 
-          {/* Find code toggle */}
           <div className="mt-5 text-center">
             <button
               type="button"
-              onClick={() => { setShowFindCode(!showFindCode); setEmailError(null); setFoundCode(null) }}
+              onClick={() => { setShowFindCode(!showFindCode); setEmailError(null); setEmailSent(false) }}
               className="text-xs text-gray-400 hover:text-primary transition-colors"
             >
               {t('home.findCode')}
             </button>
           </div>
 
-          {/* Find code by email */}
           {showFindCode && (
             <div className="mt-4 pt-4 border-t border-gray-100">
-              {foundCode ? (
-                <div className="text-center space-y-3">
-                  <div className="bg-primary-light border border-primary/20 rounded-lg p-3">
-                    <p className="text-xs text-primary-text mb-1">{t('register.success.personalCode')}</p>
-                    <p className="text-2xl font-mono font-bold text-gray-900 tracking-wider">{foundCode.code}</p>
+              {emailSent ? (
+                <div className="text-center">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
-                  <a
-                    href={`/register/${foundCode.surveyId}?token=${foundCode.token}&code=${foundCode.code}`}
-                    className="text-primary hover:underline text-sm font-medium"
-                  >
-                    {t('register.success.editLink')}
-                  </a>
+                  <p className="text-sm text-gray-700">{t('register.findCode.sent')}</p>
+                  <p className="text-xs text-gray-400">{email}</p>
                 </div>
               ) : (
                 <form onSubmit={handleEmailSubmit} className="space-y-3">
@@ -159,7 +150,6 @@ function HomePage(): React.ReactElement {
           )}
         </div>
 
-        {/* Admin section */}
         <div className="text-center space-y-1.5">
           {user ? (
             <>

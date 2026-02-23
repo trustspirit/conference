@@ -16,6 +16,7 @@ import StatisticsPage from './pages/StatisticsPage'
 import BusesPage from './pages/BusesPage'
 import BusDetailPage from './pages/BusDetailPage'
 import SchedulePage from './pages/SchedulePage'
+import AdminManagePage from './pages/AdminManagePage'
 import AddParticipantModal from './components/AddParticipantModal'
 import ToastContainer from './components/ToastContainer'
 import {
@@ -191,6 +192,13 @@ function App(): React.ReactElement {
                   >
                     {t('nav.auditLog')}
                   </NavLink>
+                  <NavLink
+                    to="/admin-manage"
+                    onClick={() => setIsManageMenuOpen(false)}
+                    className="block px-4 py-2 text-[#050505] hover:bg-[#F0F2F5] text-sm font-medium"
+                  >
+                    {t('nav.adminManage')}
+                  </NavLink>
                 </div>
               )}
             </div>
@@ -270,6 +278,7 @@ function App(): React.ReactElement {
           <Route path="/audit-log" element={<AuditLogPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin-manage" element={<AdminManagePage />} />
         </Routes>
       </main>
 

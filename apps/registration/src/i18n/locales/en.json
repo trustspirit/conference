@@ -54,7 +54,9 @@
       "desc": "Enter the email you registered with to retrieve your personal code.",
       "submit": "Find Code",
       "notFound": "No registration found with this email.",
-      "error": "An error occurred. Please try again."
+      "error": "An error occurred. Please try again.",
+      "sent": "Your code has been sent to your email.",
+      "rateLimited": "Too many requests. Please try again later."
     }
   },
   "survey": {

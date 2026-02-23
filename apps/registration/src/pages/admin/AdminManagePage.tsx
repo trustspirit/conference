@@ -5,6 +5,7 @@ import { useSetAtom } from 'jotai'
 import { addToastAtom } from '../../stores/toastStore'
 import { getAdmins, addAdmin, removeAdmin, type AdminEntry } from '../../services/admins'
 import { Button, Input, Spinner } from '../../components/ui'
+import AdminNavbar from '../../components/admin/AdminNavbar'
 
 function AdminManagePage(): React.ReactElement {
   const { t } = useTranslation()
@@ -53,12 +54,7 @@ function AdminManagePage(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm px-6 h-14 flex items-center gap-4">
-        <Button variant="link" size="sm" className="p-0" onClick={() => navigate('/admin')}>
-          {t('common.back')}
-        </Button>
-        <h1 className="text-lg font-bold text-gray-900">{t('adminManage.title')}</h1>
-      </nav>
+      <AdminNavbar />
 
       <main className="max-w-lg mx-auto p-6 space-y-6">
         {/* Add admin */}

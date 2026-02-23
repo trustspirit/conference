@@ -1,4 +1,4 @@
-export { app, db, convertTimestamp, Timestamp } from '@conference/firebase'
+export { app, db, functions, convertTimestamp, Timestamp } from '@conference/firebase'
 export { auth, signInWithGoogle, signOut, onAuthChange } from '@conference/firebase'
 export type { User } from '@conference/firebase'
 

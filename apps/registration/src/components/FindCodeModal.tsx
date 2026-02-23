@@ -1,19 +1,18 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Input } from './ui'
-import { getResponseByEmail } from '../services/responses'
+import { sendPersonalCodeEmail } from '../services/email'
 
 interface FindCodeModalProps {
   surveyId: string
-  token: string | null
   onClose: () => void
 }
 
-function FindCodeModal({ surveyId, token, onClose }: FindCodeModalProps): React.ReactElement {
+function FindCodeModal({ surveyId, onClose }: FindCodeModalProps): React.ReactElement {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [foundCode, setFoundCode] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,17 +21,19 @@ function FindCodeModal({ surveyId, token, onClose }: FindCodeModalProps): React.
 
     setLoading(true)
     setError(null)
-    setFoundCode(null)
 
     try {
-      const response = await getResponseByEmail(surveyId, email)
-      if (response) {
-        setFoundCode(response.personalCode)
-      } else {
+      await sendPersonalCodeEmail(email, surveyId)
+      setSent(true)
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code
+      if (code === 'functions/resource-exhausted') {
+        setError(t('register.findCode.rateLimited'))
+      } else if (code === 'functions/not-found') {
         setError(t('register.findCode.notFound'))
+      } else {
+        setError(t('register.findCode.error'))
       }
-    } catch {
-      setError(t('register.findCode.error'))
     } finally {
       setLoading(false)
     }
@@ -44,21 +45,16 @@ function FindCodeModal({ surveyId, token, onClose }: FindCodeModalProps): React.
         <h2 className="text-lg font-bold text-gray-900 mb-1">{t('register.findCode.title')}</h2>
         <p className="text-sm text-gray-500 mb-5">{t('register.findCode.desc')}</p>
 
-        {foundCode ? (
+        {sent ? (
           <div className="text-center">
-            <div className="bg-primary-light border border-primary/20 rounded-xl p-4 mb-4">
-              <p className="text-sm text-primary-text mb-1 font-medium">{t('register.success.personalCode')}</p>
-              <p className="text-3xl font-mono font-bold text-gray-900 tracking-wider">{foundCode}</p>
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <a
-              href={`/register/${surveyId}?token=${token}&code=${foundCode}`}
-              className="text-primary hover:underline text-sm font-medium"
-            >
-              {t('register.success.editLink')}
-            </a>
-            <div className="mt-4">
-              <Button variant="ghost" size="sm" onClick={onClose}>{t('common.cancel')}</Button>
-            </div>
+            <p className="text-sm text-gray-700 mb-1">{t('register.findCode.sent')}</p>
+            <p className="text-xs text-gray-400 mb-4">{email}</p>
+            <Button variant="ghost" size="sm" onClick={onClose}>{t('common.cancel')}</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

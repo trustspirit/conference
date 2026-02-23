@@ -31,6 +31,7 @@
     "time": "Time",
     "move": "Move",
     "remove": "Remove",
+    "removing": "Removing...",
     "members": "members",
     "membersTitle": "Members",
     "occupants": "Occupants",
@@ -62,6 +63,7 @@
     "more": "More",
     "importCSV": "Import CSV",
     "auditLog": "Audit Log",
+    "adminManage": "Admin Management",
     "settings": "Settings"
   },
   "user": {
@@ -599,6 +601,23 @@
     "signingIn": "Signing in...",
     "signInFailed": "Sign-in failed. Please try again.",
     "signOut": "Sign Out"
+  },
+  "admin": {
+    "title": "Admin Management",
+    "subtitle": "Manage administrators who can access the checkin app",
+    "addAdmin": "Add Admin",
+    "emailPlaceholder": "Enter email address",
+    "adding": "Adding...",
+    "currentAdmins": "Current Admins",
+    "noAdmins": "No admins registered",
+    "noAdminsDesc": "Without admins, all users can access the app",
+    "addedAt": "Added on {{date}}",
+    "confirmRemove": "Remove \"{{email}}\" from admins?",
+    "loadFailed": "Failed to load admin list",
+    "invalidEmail": "Invalid email address",
+    "duplicateEmail": "Email is already registered",
+    "addFailed": "Failed to add admin",
+    "removeFailed": "Failed to remove admin"
   },
   "print": {
     "roomAssignment": "Room Assignment",

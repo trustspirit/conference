@@ -31,6 +31,7 @@
     "time": "시간",
     "move": "이동",
     "remove": "제거",
+    "removing": "제거 중...",
     "members": "명",
     "membersTitle": "멤버",
     "occupants": "입실자",
@@ -62,6 +63,7 @@
     "more": "더보기",
     "importCSV": "CSV 가져오기",
     "auditLog": "변경 이력",
+    "adminManage": "관리자 관리",
     "settings": "설정"
   },
   "user": {
@@ -599,6 +601,23 @@
     "signingIn": "로그인 중...",
     "signInFailed": "로그인에 실패했습니다. 다시 시도해주세요.",
     "signOut": "로그아웃"
+  },
+  "admin": {
+    "title": "관리자 관리",
+    "subtitle": "체크인 앱에 접근할 수 있는 관리자를 관리합니다",
+    "addAdmin": "관리자 추가",
+    "emailPlaceholder": "이메일 주소를 입력하세요",
+    "adding": "추가 중...",
+    "currentAdmins": "현재 관리자",
+    "noAdmins": "등록된 관리자가 없습니다",
+    "noAdminsDesc": "관리자가 없으면 모든 사용자가 접근할 수 있습니다",
+    "addedAt": "{{date}} 추가됨",
+    "confirmRemove": "\"{{email}}\" 관리자를 제거하시겠습니까?",
+    "loadFailed": "관리자 목록을 불러오는데 실패했습니다",
+    "invalidEmail": "유효하지 않은 이메일 주소입니다",
+    "duplicateEmail": "이미 등록된 이메일입니다",
+    "addFailed": "관리자 추가에 실패했습니다",
+    "removeFailed": "관리자 제거에 실패했습니다"
   },
   "print": {
     "roomAssignment": "객실 배정표",

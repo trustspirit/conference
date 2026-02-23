@@ -5,9 +5,9 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { authUserAtom } from '../../stores/authStore'
 import { addToastAtom } from '../../stores/toastStore'
 import { getAllSurveys, createSurvey, deleteSurvey, updateSurvey } from '../../services/surveys'
-import { signOut } from '../../services/firebase'
 import { getDefaultFields } from '../../services/surveyDefaults'
 import { Button, Spinner } from '../../components/ui'
+import AdminNavbar from '../../components/admin/AdminNavbar'
 import SurveyCard from '../../components/admin/SurveyCard'
 import type { Survey } from '../../types'
 
@@ -70,14 +70,7 @@ function SurveyListPage(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm px-6 h-14 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-primary">{t('admin.title')}</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">{user?.displayName || user?.email}</span>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/admins')}>{t('admin.manageAdmins')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => signOut()}>{t('common.signOut')}</Button>
-        </div>
-      </nav>
+      <AdminNavbar />
       <main className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{t('survey.title')}</h2>

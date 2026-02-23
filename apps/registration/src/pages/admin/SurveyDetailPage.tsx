@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
 import { addToastAtom } from '../../stores/toastStore'
 import { getSurveyById } from '../../services/surveys'
 import { getResponsesBySurvey } from '../../services/responses'
 import { Button, Spinner } from '../../components/ui'
+import AdminNavbar from '../../components/admin/AdminNavbar'
 import ResponseTable from '../../components/admin/ResponseTable'
 import type { Survey, SurveyResponse } from '../../types'
 
 function SurveyDetailPage(): React.ReactElement {
   const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
+  const navigate = useNavigate()
   const addToast = useSetAtom(addToastAtom)
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [responses, setResponses] = useState<SurveyResponse[]>([])
@@ -49,17 +51,18 @@ function SurveyDetailPage(): React.ReactElement {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm px-6 h-14 flex items-center gap-4">
-        <Button variant="link" size="sm" className="p-0" onClick={() => window.history.back()}>
-          {t('common.back')}
-        </Button>
-        <h1 className="text-xl font-bold text-gray-900">{survey.title}</h1>
-      </nav>
+      <AdminNavbar />
       <main className="max-w-5xl mx-auto p-6">
+        <div className="mb-4">
+          <Button variant="link" size="sm" className="p-0" onClick={() => navigate('/admin')}>
+            {t('common.back')}
+          </Button>
+        </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex items-center justify-between">
           <div>
-            <p className="text-gray-600">{survey.description || t('survey.noDescription')}</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <h2 className="text-lg font-bold text-gray-900">{survey.title}</h2>
+            <p className="text-sm text-gray-500 mt-1">{survey.description || t('survey.noDescription')}</p>
+            <p className="text-xs text-gray-400 mt-1">
               {survey.isActive ? t('common.active') : t('common.inactive')} · {responses.length} {t('survey.responses')}
             </p>
           </div>
