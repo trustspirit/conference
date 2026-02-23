@@ -84,6 +84,7 @@ jobs:
               - 'packages/**'
               - 'pnpm-lock.yaml'
               - 'turbo.json'
+              - '.github/workflows/deploy.yml'
 
   # ─── Deploy Registration (hosting + functions, shares checkin-ba4b8 project) ─
   deploy-registration:
