@@ -1,0 +1,113 @@
+export type UserRole = 'user' | 'finance_ops' | 'approver_ops' | 'finance_prep' | 'approver_prep' | 'session_director' | 'logistic_admin' | 'executive' | 'admin' | 'super_admin'
+
+export interface ProjectBudgetConfig {
+  totalBudget: number
+  byCode: Record<number, number>
+}
+
+export interface Project {
+  id: string
+  name: string
+  description: string
+  createdAt: Date
+  createdBy: { uid: string; name: string; email: string }
+  budgetConfig: ProjectBudgetConfig
+  documentNo: string
+  directorApprovalThreshold: number
+  budgetWarningThreshold?: number
+  memberUids: string[]
+  isActive: boolean
+  deletedAt?: Date | null
+}
+
+export interface GlobalSettings {
+  defaultProjectId: string
+}
+
+export interface AppUser {
+  uid: string
+  email: string
+  name: string
+  displayName: string
+  phone: string
+  bankName: string
+  bankAccount: string
+  defaultCommittee: Committee
+  signature: string
+  bankBookImage: string
+  bankBookPath: string
+  bankBookUrl: string
+  /** @deprecated legacy Drive field — kept for existing data compatibility */
+  bankBookDriveId?: string
+  /** @deprecated legacy Drive field — kept for existing data compatibility */
+  bankBookDriveUrl?: string
+  role: UserRole
+  projectIds: string[]
+}
+
+export type Committee = 'operations' | 'preparation'
+
+export type RequestStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled' | 'cancelled' | 'force_rejected'
+
+export interface RequestItem {
+  description: string
+  budgetCode: number
+  amount: number
+}
+
+export interface Receipt {
+  fileName: string
+  storagePath: string
+  url: string
+  /** @deprecated legacy Drive field — kept for existing data compatibility */
+  driveFileId?: string
+  /** @deprecated legacy Drive field — kept for existing data compatibility */
+  driveUrl?: string
+}
+
+export interface PaymentRequest {
+  id: string
+  projectId: string
+  createdAt: Date
+  status: RequestStatus
+  payee: string
+  phone: string
+  bankName: string
+  bankAccount: string
+  date: string
+  session: string
+  committee: Committee
+  items: RequestItem[]
+  totalAmount: number
+  receipts: Receipt[]
+  requestedBy: { uid: string; name: string; email: string }
+  reviewedBy: { uid: string; name: string; email: string } | null
+  reviewedAt: Date | null
+  approvedBy: { uid: string; name: string; email: string } | null
+  approvalSignature: string | null
+  approvedAt: Date | null
+  rejectionReason: string | null
+  settlementId: string | null
+  originalRequestId: string | null
+  comments: string
+}
+
+export interface Settlement {
+  id: string
+  projectId: string
+  createdAt: Date
+  createdBy: { uid: string; name: string; email: string }
+  payee: string
+  phone: string
+  bankName: string
+  bankAccount: string
+  session: string
+  committee: Committee
+  items: RequestItem[]
+  totalAmount: number
+  receipts: Receipt[]
+  requestIds: string[]
+  requestedBySignature: string | null
+  approvedBy: { uid: string; name: string; email: string } | null
+  approvalSignature: string | null
+}

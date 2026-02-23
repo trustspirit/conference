@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Surveys: public read, authenticated write
+    match /surveys/{surveyId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Survey responses: public create/read/update, authenticated delete
+    match /survey_responses/{responseId} {
+      allow create: if true;
+      allow read, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // Participants: public create, authenticated for everything else
+    match /participants/{participantId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // All other collections: authenticated only
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

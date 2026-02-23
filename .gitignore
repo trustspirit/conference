@@ -1,13 +1,43 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+out/
+
+# Environment variables
 .env
 .env.local
 .env.*.local
+
+# Firebase
 .firebase/
-*.log
-.DS_Store
+
+# Turbo
 .turbo/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
 .vscode/
 .idea/
 *.sw?
+*.swp
+*.swo
+*~
+
+# Test
 coverage/
+
+# Firebase Functions service account (sensitive)
+functions/service-account.json
+
+# TypeScript build info
+*.tsbuildinfo
