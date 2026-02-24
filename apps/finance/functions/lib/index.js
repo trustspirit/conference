@@ -54,8 +54,8 @@ function createTransporter() {
         },
     });
 }
-const APP_URL = 'https://finance-96f46.web.app';
-const STORAGE_BUCKET = 'finance-96f46.firebasestorage.app';
+const APP_URL = process.env.APP_URL;
+const STORAGE_BUCKET = process.env.STORAGE_BUCKET;
 const bucket = admin.storage().bucket(STORAGE_BUCKET);
 async function uploadFileToStorage(file, storagePath) {
     if (!file.data.includes(',')) {
@@ -244,6 +244,9 @@ const COMMITTEE_LABELS = {
     operations: '운영위원회',
     preparation: '준비위원회',
 };
+function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function formatCurrency(amount) {
     return amount.toLocaleString('ko-KR') + '원';
 }
@@ -294,7 +297,7 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
               <h2 style="color: #2563eb; margin-bottom: 16px;">새 신청서가 접수되었습니다</h2>
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
-                <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${payee} (${requestedBy.name})</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)} (${escapeHtml(requestedBy.name)})</td></tr>
                 <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
               </table>
               <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 검토하기</a></p>
@@ -321,7 +324,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
           <h2 style="color: #16a34a; margin-bottom: 16px;">신청서가 승인되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280;">승인자</td><td style="padding: 8px 0;">${approvedBy?.name || '-'}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">승인자</td><td style="padding: 8px 0;">${approvedBy ? escapeHtml(approvedBy.name) : '-'}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">승인 일시</td><td style="padding: 8px 0;">${formatDate(approvedAt)}</td></tr>
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
@@ -337,7 +340,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
           <h2 style="color: #dc2626; margin-bottom: 16px;">신청서가 반려되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #dc2626;">${rejectionReason || '-'}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #dc2626;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
         </div>
@@ -352,7 +355,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
         <h2 style="color: #ea580c; margin-bottom: 16px;">승인된 신청서가 반려되었습니다</h2>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
           <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
-          <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #ea580c;">${rejectionReason || '-'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #ea580c;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
         </table>
         <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #ea580c; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
       </div>
@@ -412,7 +415,7 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
                 <h2 style="color: #16a34a; margin-bottom: 16px;">검토 완료 — 승인이 필요합니다</h2>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                   <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${payee}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)}</td></tr>
                   <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
                 </table>
                 <p style="margin-top: 20px;"><a href="${APP_URL}/request/${reqId}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 승인하기</a></p>
@@ -464,7 +467,7 @@ function buildWeeklyDigestEmail(userName, sections) {
         html: `
       <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #2563eb; margin-bottom: 16px;">주간 처리 현황</h2>
-        <p style="margin-bottom: 16px;">${userName}님, 처리가 필요한 건이 있습니다.</p>
+        <p style="margin-bottom: 16px;">${escapeHtml(userName)}님, 처리가 필요한 건이 있습니다.</p>
         <ul style="margin-bottom: 20px; padding-left: 20px;">${sectionHtml}</ul>
         <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">확인하기</a></p>
       </div>
