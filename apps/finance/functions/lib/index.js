@@ -40,6 +40,7 @@ const firestore_1 = require("firebase-functions/v2/firestore");
 const params_1 = require("firebase-functions/params");
 const admin = __importStar(require("firebase-admin"));
 const nodemailer = __importStar(require("nodemailer"));
+const node_crypto_1 = require("node:crypto");
 admin.initializeApp();
 // --- Email notification secrets & config ---
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
@@ -63,12 +64,18 @@ async function uploadFileToStorage(file, storagePath) {
     const base64Data = file.data.split(',')[1];
     const buffer = Buffer.from(base64Data, 'base64');
     const mimeType = file.data.split(';')[0].split(':')[1];
+    const downloadToken = (0, node_crypto_1.randomUUID)();
     const fileRef = bucket.file(storagePath);
     await fileRef.save(buffer, {
-        metadata: { contentType: mimeType },
+        metadata: {
+            contentType: mimeType,
+            metadata: {
+                firebaseStorageDownloadTokens: downloadToken,
+            },
+        },
     });
-    await fileRef.makePublic();
-    const url = `https://storage.googleapis.com/${bucket.name}/${storagePath.split('/').map(encodeURIComponent).join('/')}`;
+    const encodedPath = encodeURIComponent(storagePath);
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
     return {
         fileName: file.name,
         storagePath,

@@ -4,6 +4,7 @@ import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/fire
 import { defineSecret } from 'firebase-functions/params'
 import * as admin from 'firebase-admin'
 import * as nodemailer from 'nodemailer'
+import { randomUUID } from 'node:crypto'
 
 admin.initializeApp()
 
@@ -44,13 +45,19 @@ async function uploadFileToStorage(file: FileInput, storagePath: string): Promis
   const buffer = Buffer.from(base64Data, 'base64')
   const mimeType = file.data.split(';')[0].split(':')[1]
 
+  const downloadToken = randomUUID()
   const fileRef = bucket.file(storagePath)
   await fileRef.save(buffer, {
-    metadata: { contentType: mimeType },
+    metadata: {
+      contentType: mimeType,
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+      },
+    },
   })
 
-  await fileRef.makePublic()
-  const url = `https://storage.googleapis.com/${bucket.name}/${storagePath.split('/').map(encodeURIComponent).join('/')}`
+  const encodedPath = encodeURIComponent(storagePath)
+  const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`
 
   return {
     fileName: file.name,
