@@ -103,7 +103,20 @@
     "average": "Average",
     "noChartData": "No chart data available",
     "textResponses": "Response List",
-    "noTextResponses": "No responses yet"
+    "noTextResponses": "No responses yet",
+    "exportPDF": "Export PDF",
+    "reportTitle": "Export Report",
+    "selectAll": "Select All",
+    "dailyTrendAlwaysIncluded": "Daily Registration Trend (always included)",
+    "exporting": "Generating PDF...",
+    "exportSuccess": "PDF report downloaded",
+    "fieldTypeRadio": "Choice",
+    "fieldTypeCheckbox": "Multi-select",
+    "fieldTypeDropdown": "Dropdown",
+    "fieldTypeScale": "Scale",
+    "fieldTypeChurch": "Church Info",
+    "fieldTypeText": "Text",
+    "reportGenerated": "Generated"
   },
   "home": {
     "title": "Registration",

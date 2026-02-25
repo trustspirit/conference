@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2'
 import {
@@ -14,6 +14,7 @@ import {
   Filler,
 } from 'chart.js'
 import StatCard from './StatCard'
+import ReportFieldSelector from './ReportFieldSelector'
 import {
   getDailyRegistrationCounts,
   getTodayCount,
@@ -38,6 +39,7 @@ interface SurveyStatsProps {
 
 function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElement {
   const { t } = useTranslation()
+  const [showReportModal, setShowReportModal] = useState(false)
 
   const todayCount = useMemo(() => getTodayCount(responses), [responses])
 
@@ -214,10 +216,21 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
   return (
     <div>
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <StatCard label={t('dashboard.totalResponses')} value={responses.length} />
-        <StatCard label={t('dashboard.today')} value={todayCount} />
-        <StatCard label={t('dashboard.avgPerDay')} value={avgPerDay} />
+      <div className="flex items-start gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+          <StatCard label={t('dashboard.totalResponses')} value={responses.length} />
+          <StatCard label={t('dashboard.today')} value={todayCount} />
+          <StatCard label={t('dashboard.avgPerDay')} value={avgPerDay} />
+        </div>
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          {t('dashboard.exportPDF')}
+        </button>
       </div>
 
       {/* Daily trend */}
@@ -261,6 +274,13 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
           })}
         </div>
       )}
+
+      <ReportFieldSelector
+        survey={survey}
+        responses={responses}
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+      />
     </div>
   )
 }

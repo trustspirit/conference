@@ -103,7 +103,20 @@
     "average": "평균",
     "noChartData": "차트 데이터가 없습니다",
     "textResponses": "응답 목록",
-    "noTextResponses": "응답이 없습니다"
+    "noTextResponses": "응답이 없습니다",
+    "exportPDF": "PDF 내보내기",
+    "reportTitle": "리포트 내보내기",
+    "selectAll": "전체 선택",
+    "dailyTrendAlwaysIncluded": "일별 등록 추이 (항상 포함)",
+    "exporting": "PDF 생성 중...",
+    "exportSuccess": "PDF 리포트가 다운로드되었습니다",
+    "fieldTypeRadio": "선택형",
+    "fieldTypeCheckbox": "복수선택",
+    "fieldTypeDropdown": "드롭다운",
+    "fieldTypeScale": "척도",
+    "fieldTypeChurch": "소속",
+    "fieldTypeText": "텍스트",
+    "reportGenerated": "생성일"
   },
   "home": {
     "title": "등록",
