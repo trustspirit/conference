@@ -4,9 +4,8 @@ import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { authUserAtom, authLoadingAtom } from '../stores/authStore'
 import { onAuthChange, signInWithGoogle, signOut } from '../services/firebase'
-import { findResponseByCode, findResponsesByEmail } from '../services/responses'
-import { sendPersonalCodeEmail } from '../services/email'
-import { getSurveyById } from '../services/surveys'
+import { findCodeByEmail } from '../services/email'
+import { lookupByCode } from '../services/responses'
 import { Spinner, Button, Input } from '../components/ui'
 
 function HomePage(): React.ReactElement {
@@ -40,17 +39,19 @@ function HomePage(): React.ReactElement {
     setCodeLoading(true)
     setCodeError(null)
     try {
-      const resp = await findResponseByCode(code)
-      if (resp) {
-        const survey = await getSurveyById(resp.surveyId)
-        if (survey) {
-          navigate(`/register/${resp.surveyId}?token=${survey.shareToken}&code=${resp.personalCode}`)
-          return
-        }
+      const result = await lookupByCode(code)
+      if (result) {
+        navigate(`/register/${result.surveyId}?code=${result.personalCode}`)
+        return
       }
       setCodeError(t('home.codeNotFound'))
-    } catch {
-      setCodeError(t('home.codeNotFound'))
+    } catch (err: unknown) {
+      const errCode = (err as { code?: string })?.code
+      if (errCode === 'functions/resource-exhausted') {
+        setCodeError(t('register.findCode.rateLimited'))
+      } else {
+        setCodeError(t('home.codeNotFound'))
+      }
     } finally {
       setCodeLoading(false)
     }
@@ -63,16 +64,12 @@ function HomePage(): React.ReactElement {
     setEmailLoading(true)
     setEmailError(null)
     try {
-      const responses = await findResponsesByEmail(email)
-      if (responses.length > 0) {
-        await sendPersonalCodeEmail(email, responses[0].surveyId)
-        setEmailSent(true)
-      } else {
-        setEmailError(t('home.findCodeNotFound'))
-      }
+      await findCodeByEmail(email)
+      // Always show success — don't reveal whether email is registered
+      setEmailSent(true)
     } catch (err: unknown) {
-      const code = (err as { code?: string })?.code
-      if (code === 'functions/resource-exhausted') {
+      const errCode = (err as { code?: string })?.code
+      if (errCode === 'functions/resource-exhausted') {
         setEmailError(t('register.findCode.rateLimited'))
       } else {
         setEmailError(t('home.findCodeError'))

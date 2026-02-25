@@ -26,6 +26,7 @@ jobs:
     outputs:
       registration-hosting: ${{ steps.filter.outputs.registration-hosting }}
       registration-functions: ${{ steps.filter.outputs.registration-functions }}
+      registration-storage: ${{ steps.filter.outputs.registration-storage }}
       checkin-hosting: ${{ steps.filter.outputs.checkin-hosting }}
       checkin-functions: ${{ steps.filter.outputs.checkin-functions }}
       checkin-rules: ${{ steps.filter.outputs.checkin-rules }}
@@ -53,6 +54,8 @@ jobs:
               - 'apps/registration/tailwind.config.*'
             registration-functions:
               - 'apps/registration/functions/**'
+            registration-storage:
+              - 'apps/registration/storage.rules'
             checkin-hosting:
               - 'apps/checkin/src/**'
               - 'apps/checkin/public/**'
@@ -95,6 +98,7 @@ jobs:
     if: |
       needs.detect-changes.outputs.registration-hosting == 'true' ||
       needs.detect-changes.outputs.registration-functions == 'true' ||
+      needs.detect-changes.outputs.registration-storage == 'true' ||
       needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     environment: registration
@@ -149,6 +153,13 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+
+      - name: Deploy Storage Rules
+        if: needs.detect-changes.outputs.registration-storage == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/registration
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only storage --project ${{ secrets.FIREBASE_PROJECT_ID }}
 
   # ─── Deploy Checkin (hosting + firestore rules/indexes) ─────────
   deploy-checkin:

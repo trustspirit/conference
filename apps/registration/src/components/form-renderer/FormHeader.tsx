@@ -1,5 +1,6 @@
 import React from 'react'
 import type { SurveyTheme } from '../../types'
+import { sanitizeCssUrl } from '../../utils/sanitizeUrl'
 
 interface FormHeaderProps {
   title: string
@@ -8,13 +9,13 @@ interface FormHeaderProps {
 }
 
 function FormHeader({ title, description, theme }: FormHeaderProps): React.ReactElement {
-  const hasImage = !!theme?.headerImageUrl
+  const safeImageUrl = sanitizeCssUrl(theme?.headerImageUrl || '')
 
-  if (hasImage) {
+  if (safeImageUrl) {
     return (
       <div
         className="relative h-48 sm:h-56 bg-cover bg-center sm:rounded-t-xl overflow-hidden"
-        style={{ backgroundImage: `url(${theme!.headerImageUrl})` }}
+        style={{ backgroundImage: `url(${safeImageUrl})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-8 pb-6">

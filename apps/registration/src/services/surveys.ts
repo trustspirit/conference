@@ -14,11 +14,9 @@ import type { Survey, SurveyField, SurveyTheme } from '../types'
 
 const generateShareToken = (): string => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  let token = ''
-  for (let i = 0; i < 16; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return token
+  const arr = new Uint8Array(16)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, (b) => chars[b % chars.length]).join('')
 }
 
 const mapSurveyDoc = (docSnap: { id: string; data: () => Record<string, unknown> }): Survey => {

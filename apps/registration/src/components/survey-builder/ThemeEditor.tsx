@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, Input, Label } from '../ui'
 import { uploadHeaderImage } from '../../services/storage'
 import type { SurveyTheme } from '../../types'
+import { sanitizeCssUrl } from '../../utils/sanitizeUrl'
 
 interface ThemeEditorProps {
   surveyId: string
@@ -112,7 +113,7 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
             <div className="space-y-2">
               <div
                 className="h-24 bg-cover bg-center rounded-lg border border-gray-200 relative group"
-                style={{ backgroundImage: `url(${theme.headerImageUrl})` }}
+                style={{ backgroundImage: `url(${sanitizeCssUrl(theme.headerImageUrl || '')})` }}
               >
                 <button
                   type="button"
