@@ -1,7 +1,7 @@
 import type { KeyInput } from './types'
 import { splitName } from './splitName'
 
-const SECRET_KEY = 'your-secret-key-here-change-this'
+const SECRET_KEY = import.meta.env.VITE_KEY_SECRET || 'dev-fallback-key'
 
 async function sha256(message: string): Promise<string> {
   const msgBuffer = new TextEncoder().encode(message)

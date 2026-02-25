@@ -27,6 +27,7 @@ import {
   cleanupListenersAtom
 } from './stores/dataStore'
 import { userNameAtom } from './stores/userStore'
+import { userRoleAtom } from './stores/authStore'
 
 function App(): React.ReactElement {
   const { t } = useTranslation()
@@ -42,6 +43,7 @@ function App(): React.ReactElement {
   const setupRealtimeListeners = useSetAtom(setupRealtimeListenersAtom)
   const cleanupListeners = useSetAtom(cleanupListenersAtom)
   const userName = useAtomValue(userNameAtom)
+  const userRole = useAtomValue(userRoleAtom)
 
   useEffect(() => {
     setupRealtimeListeners()
@@ -192,13 +194,15 @@ function App(): React.ReactElement {
                   >
                     {t('nav.auditLog')}
                   </NavLink>
-                  <NavLink
-                    to="/admin-manage"
-                    onClick={() => setIsManageMenuOpen(false)}
-                    className="block px-4 py-2 text-[#050505] hover:bg-[#F0F2F5] text-sm font-medium"
-                  >
-                    {t('nav.adminManage')}
-                  </NavLink>
+                  {userRole === 'admin' && (
+                    <NavLink
+                      to="/admin-manage"
+                      onClick={() => setIsManageMenuOpen(false)}
+                      className="block px-4 py-2 text-[#050505] hover:bg-[#F0F2F5] text-sm font-medium"
+                    >
+                      {t('nav.adminManage')}
+                    </NavLink>
+                  )}
                 </div>
               )}
             </div>

@@ -37,6 +37,11 @@ function ImportPage(): React.ReactElement {
             return
           }
 
+          if (results.data.length > 5000) {
+            setError(t('import.tooManyRows', { count: results.data.length }))
+            return
+          }
+
           // Map common column name variations
           const mappedData = results.data.map((row) => {
             const mapped: CSVParticipantRow = {

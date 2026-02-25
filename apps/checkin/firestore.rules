@@ -1,27 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Surveys: public read, authenticated write
+    function isAuthorized() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/checkin_admins/$(request.auth.token.email));
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/checkin_admins/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/checkin_admins/$(request.auth.token.email)).data.role != 'staff';
+    }
+
+    // Surveys: public read (registration form), admin write
     match /surveys/{surveyId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Survey responses: public create/read/update, authenticated delete
+    // Survey responses: public create/read/update (registration), admin delete
     match /survey_responses/{responseId} {
       allow create, read, update: if true;
-      allow delete: if request.auth != null;
+      allow delete: if isAdmin();
     }
 
-    // Participants: public create, authenticated for everything else
+    // Participants: public create (registration), authorized for everything else
     match /participants/{participantId} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if isAuthorized();
     }
 
-    // All other collections: authenticated only
+    // Admin list: any authenticated user can read (needed for auth check), admin only write
+    match /checkin_admins/{adminId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // All other collections: authorized users (admin + staff)
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAuthorized();
     }
   }
 }

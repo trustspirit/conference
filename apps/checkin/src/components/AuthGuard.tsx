@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
-import { authUserAtom, authLoadingAtom } from '../stores/authStore'
+import { authUserAtom, authLoadingAtom, userRoleAtom } from '../stores/authStore'
 import { onAuthChange, signOut } from '../services/firebase'
-import { isAdmin } from '../services/admins'
+import { getUserRole } from '../services/admins'
 import LoginPage from './LoginPage'
 
 function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElement {
   const [user, setUser] = useAtom(authUserAtom)
   const [loading, setLoading] = useAtom(authLoadingAtom)
+  const [, setUserRole] = useAtom(userRoleAtom)
   const [adminChecked, setAdminChecked] = useState(false)
   const [isAuthorized, setIsAuthorized] = useState(false)
 
@@ -18,27 +19,30 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
       if (!firebaseUser) {
         setAdminChecked(false)
         setIsAuthorized(false)
+        setUserRole(null)
       }
     })
     return () => unsubscribe()
-  }, [setUser, setLoading])
+  }, [setUser, setLoading, setUserRole])
 
   useEffect(() => {
     if (!user?.email) {
       setAdminChecked(false)
       setIsAuthorized(false)
+      setUserRole(null)
       return
     }
     let cancelled = false
     setAdminChecked(false)
-    isAdmin(user.email).then((result) => {
+    getUserRole(user.email).then((role) => {
       if (!cancelled) {
-        setIsAuthorized(result)
+        setIsAuthorized(role !== null)
+        setUserRole(role)
         setAdminChecked(true)
       }
     })
     return () => { cancelled = true }
-  }, [user])
+  }, [user, setUserRole])
 
   if (loading) {
     return (

@@ -87,6 +87,7 @@ export interface AuditLogEntry {
   id: string
   timestamp: string
   userName: string
+  userEmail: string
   action: 'create' | 'update' | 'delete' | 'check_in' | 'check_out' | 'assign' | 'import'
   targetType: 'participant' | 'group' | 'room' | 'bus'
   targetId: string

@@ -14,6 +14,7 @@ import {
 } from '../stores/scheduleStore'
 import { changeLanguage, getCurrentLanguage } from '../i18n'
 import { ConfirmDialog, SectionCard } from '../components/ui'
+import { userRoleAtom } from '../stores/authStore'
 
 function SettingsPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -24,6 +25,7 @@ function SettingsPage(): React.ReactElement {
   const eventPeriodEnd = useAtomValue(eventPeriodEndAtom)
   const setEventPeriod = useSetAtom(setEventPeriodAtom)
   const clearEventPeriod = useSetAtom(clearEventPeriodAtom)
+  const userRole = useAtomValue(userRoleAtom)
   const [currentLang, setCurrentLang] = useState(getCurrentLanguage())
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
@@ -229,42 +231,44 @@ function SettingsPage(): React.ReactElement {
         </div>
       </SectionCard>
 
-      {/* Data Management */}
-      <SectionCard
-        title={t('settings.dataManagement')}
-        description={t('settings.resetDataDesc')}
-        variant="danger"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#FA383E]/20 rounded-full flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-[#FA383E]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
+      {/* Data Management - Admin only */}
+      {userRole === 'admin' && (
+        <SectionCard
+          title={t('settings.dataManagement')}
+          description={t('settings.resetDataDesc')}
+          variant="danger"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#FA383E]/20 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-[#FA383E]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-[#050505]">{t('settings.resetData')}</p>
+                <p className="text-sm text-[#65676B]">{t('settings.resetDataWarning')}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-[#050505]">{t('settings.resetData')}</p>
-              <p className="text-sm text-[#65676B]">{t('settings.resetDataWarning')}</p>
-            </div>
+            <button
+              onClick={() => setShowResetDialog(true)}
+              className="px-4 py-2 bg-[#FA383E] text-white rounded-md font-semibold hover:bg-[#E53935] transition-colors"
+            >
+              {t('settings.resetData')}
+            </button>
           </div>
-          <button
-            onClick={() => setShowResetDialog(true)}
-            className="px-4 py-2 bg-[#FA383E] text-white rounded-md font-semibold hover:bg-[#E53935] transition-colors"
-          >
-            {t('settings.resetData')}
-          </button>
-        </div>
-      </SectionCard>
+        </SectionCard>
+      )}
 
       {/* Reset Data Confirmation Dialog */}
       <ConfirmDialog

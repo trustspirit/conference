@@ -1,9 +1,8 @@
 import {
   collection,
-  doc,
   getDocs,
-  setDoc,
   deleteDoc,
+  doc,
   query,
   orderBy,
   Timestamp,
@@ -14,7 +13,8 @@ import {
   Unsubscribe,
   writeBatch
 } from 'firebase/firestore'
-import { db } from '@conference/firebase'
+import { db, functions } from '@conference/firebase'
+import { httpsCallable } from 'firebase/functions'
 import type { AuditLogEntry } from '../types'
 
 export type { AuditLogEntry }
@@ -29,6 +29,8 @@ const convertTimestamp = (timestamp: Timestamp | Date | string | undefined): str
   return timestamp
 }
 
+const writeAuditLogFn = httpsCallable(functions, 'writeAuditLog')
+
 export const writeAuditLog = async (
   userName: string,
   action: AuditLogEntry['action'],
@@ -38,21 +40,14 @@ export const writeAuditLog = async (
   changes?: AuditLogEntry['changes']
 ): Promise<boolean> => {
   try {
-
-    const auditLogsRef = collection(db, AUDIT_LOGS_COLLECTION)
-    const newLogRef = doc(auditLogsRef)
-
-    const entry = {
-      timestamp: Timestamp.now(),
+    await writeAuditLogFn({
       userName,
       action,
       targetType,
       targetId,
       targetName,
       changes: changes || null
-    }
-
-    await setDoc(newLogRef, entry)
+    })
     return true
   } catch (error) {
     console.error('Failed to write audit log:', error)
@@ -79,6 +74,7 @@ export const readAuditLogs = async (): Promise<AuditLogEntry[]> => {
         id: docSnap.id,
         timestamp: convertTimestamp(data.timestamp),
         userName: data.userName,
+        userEmail: data.userEmail || '',
         action: data.action,
         targetType: data.targetType,
         targetId: data.targetId,
@@ -117,6 +113,7 @@ export const readAuditLogsPaginated = async (
         id: docSnap.id,
         timestamp: convertTimestamp(d.timestamp),
         userName: d.userName,
+        userEmail: d.userEmail || '',
         action: d.action,
         targetType: d.targetType,
         targetId: d.targetId,
@@ -150,6 +147,7 @@ export const subscribeToAuditLogs = (
         id: docSnap.id,
         timestamp: convertTimestamp(data.timestamp),
         userName: data.userName,
+        userEmail: data.userEmail || '',
         action: data.action,
         targetType: data.targetType,
         targetId: data.targetId,

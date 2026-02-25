@@ -27,6 +27,7 @@ jobs:
       registration-hosting: ${{ steps.filter.outputs.registration-hosting }}
       registration-functions: ${{ steps.filter.outputs.registration-functions }}
       checkin-hosting: ${{ steps.filter.outputs.checkin-hosting }}
+      checkin-functions: ${{ steps.filter.outputs.checkin-functions }}
       checkin-rules: ${{ steps.filter.outputs.checkin-rules }}
       checkin-indexes: ${{ steps.filter.outputs.checkin-indexes }}
       finance-hosting: ${{ steps.filter.outputs.finance-hosting }}
@@ -60,6 +61,8 @@ jobs:
               - 'apps/checkin/vite.config.*'
               - 'apps/checkin/tsconfig*.json'
               - 'apps/checkin/tailwind.config.*'
+            checkin-functions:
+              - 'apps/checkin/functions/**'
             checkin-rules:
               - 'apps/checkin/firestore.rules'
             checkin-indexes:
@@ -152,6 +155,7 @@ jobs:
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.checkin-hosting == 'true' ||
+      needs.detect-changes.outputs.checkin-functions == 'true' ||
       needs.detect-changes.outputs.checkin-rules == 'true' ||
       needs.detect-changes.outputs.checkin-indexes == 'true' ||
       needs.detect-changes.outputs.shared == 'true'
@@ -171,6 +175,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install functions dependencies
+        if: needs.detect-changes.outputs.checkin-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/checkin/functions
+        run: npm ci
+
       - name: Build
         if: needs.detect-changes.outputs.checkin-hosting == 'true' || needs.detect-changes.outputs.shared == 'true'
         run: pnpm turbo build --filter=@conference/checkin
@@ -181,6 +190,12 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_KEY_SECRET: ${{ secrets.VITE_KEY_SECRET }}
+
+      - name: Build functions
+        if: needs.detect-changes.outputs.checkin-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/checkin/functions
+        run: npm run build
 
       - name: Setup Google credentials
         run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp-sa-key.json
@@ -191,6 +206,13 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+
+      - name: Deploy Functions
+        if: needs.detect-changes.outputs.checkin-functions == 'true' || needs.detect-changes.outputs.shared == 'true'
+        working-directory: apps/checkin
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
+        run: npx firebase-tools deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
 
       - name: Deploy Firestore Rules
         if: needs.detect-changes.outputs.checkin-rules == 'true' || needs.detect-changes.outputs.shared == 'true'
