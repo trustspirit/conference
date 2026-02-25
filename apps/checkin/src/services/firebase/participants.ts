@@ -464,7 +464,7 @@ export const checkInParticipant = async (participantId: string): Promise<CheckIn
   const checkIns: CheckInRecord[] = data.checkIns || []
 
   const newCheckIn: CheckInRecord = {
-    id: `checkin_${Date.now()}`,
+    id: crypto.randomUUID(),
     checkInTime: new Date()
   }
 

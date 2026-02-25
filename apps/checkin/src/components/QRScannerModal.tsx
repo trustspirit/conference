@@ -9,7 +9,6 @@ import { userNameAtom } from '../stores/userStore'
 import {
   checkInParticipant,
   checkOutParticipant,
-  getParticipantById,
   searchParticipants
 } from '../services/firebase'
 import { writeAuditLog } from '../services/auditLog'
@@ -17,6 +16,7 @@ import type { Participant } from '../types'
 import { CheckInStatus } from '../types'
 import { getCheckInStatusFromParticipant } from './CheckInStatusBadge'
 import { isValidParticipantKey } from '../utils/generateParticipantKey'
+import { getErrorMessage } from '../utils/errorMessage'
 
 interface QRScannerModalProps {
   isOpen: boolean
@@ -73,7 +73,7 @@ function QRScannerModal({
       setIsScanning(true)
     } catch (err) {
       console.error('Failed to start scanner:', err)
-      setCameraError(err instanceof Error ? err.message : t('qr.cameraError'))
+      setCameraError(getErrorMessage(err, t('qr.cameraError')))
     }
   }
 
@@ -106,55 +106,32 @@ function QRScannerModal({
     }
 
     try {
-      // Parse QR data
-      let participantId: string | null = null
+      // Parse QR data - only accept KEY format
       let searchKey: string | null = null
 
-      try {
-        const qrData = JSON.parse(decodedText)
-        if (qrData.type === 'checkin' && qrData.id) {
-          participantId = qrData.id
+      // KEY:XXXXXXXX format (from key-generator and participant QR)
+      if (decodedText.startsWith('KEY:')) {
+        const key = decodedText.substring(4)
+        if (isValidParticipantKey(key)) {
+          searchKey = key
         }
-      } catch {
-        // Try simple format: CHECKIN:id
-        if (decodedText.startsWith('CHECKIN:')) {
-          participantId = decodedText.substring(8)
-        }
-        // Try KEY:XXXXXXXX format (from key-generator)
-        else if (decodedText.startsWith('KEY:')) {
-          const key = decodedText.substring(4)
-          if (isValidParticipantKey(key)) {
-            searchKey = key
-          }
-        }
-        // Try direct key format (8 char alphanumeric)
-        else if (isValidParticipantKey(decodedText)) {
-          searchKey = decodedText
-        }
+      }
+      // Direct key format (8 char alphanumeric)
+      else if (isValidParticipantKey(decodedText)) {
+        searchKey = decodedText
+      }
+
+      if (!searchKey) {
+        setError(t('qr.invalidQRCode'))
+        resumeScanning()
+        return
       }
 
       let participant: Participant | undefined
 
-      // Search by participant ID
-      if (participantId) {
-        participant = participants.find((p) => p.id === participantId)
-        // If not in local state, try fetching from Firebase
-        if (!participant) {
-          participant = (await getParticipantById(participantId)) || undefined
-        }
-      }
-      // Search by unique key
-      else if (searchKey) {
-        const searchResults = await searchParticipants(searchKey)
-        if (searchResults.length > 0) {
-          participant = searchResults[0]
-        }
-      }
-
-      if (!participantId && !searchKey) {
-        setError(t('qr.invalidQRCode'))
-        resumeScanning()
-        return
+      const searchResults = await searchParticipants(searchKey)
+      if (searchResults.length > 0) {
+        participant = searchResults[0]
       }
 
       if (!participant) {
@@ -238,7 +215,7 @@ function QRScannerModal({
       console.error('Check-in error:', err)
       addToast({
         type: 'error',
-        message: err instanceof Error ? err.message : t('toast.actionFailed')
+        message: getErrorMessage(err, t('toast.actionFailed'))
       })
     } finally {
       setIsProcessing(false)

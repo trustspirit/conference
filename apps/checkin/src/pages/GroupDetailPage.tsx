@@ -13,6 +13,7 @@ import { userNameAtom } from '../stores/userStore'
 import { writeAuditLog } from '../services/auditLog'
 import type { Group } from '../types'
 import { DetailPageSkeleton } from '../components'
+import { getErrorMessage } from '../utils/errorMessage'
 import { LeaderBadge, ConfirmDialog } from '../components/ui'
 
 function GroupDetailPage(): React.ReactElement {
@@ -108,7 +109,7 @@ function GroupDetailPage(): React.ReactElement {
       console.error('Update group error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.updateGroupFailed')
+        message: getErrorMessage(error, t('toast.updateGroupFailed'))
       })
     } finally {
       setIsSaving(false)
@@ -134,7 +135,7 @@ function GroupDetailPage(): React.ReactElement {
       console.error('Remove participant error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.removeParticipantFailed')
+        message: getErrorMessage(error, t('toast.removeParticipantFailed'))
       })
     }
   }
@@ -163,7 +164,7 @@ function GroupDetailPage(): React.ReactElement {
       console.error('Move participant error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.moveParticipantFailed')
+        message: getErrorMessage(error, t('toast.moveParticipantFailed'))
       })
     }
   }

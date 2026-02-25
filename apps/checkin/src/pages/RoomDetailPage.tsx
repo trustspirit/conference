@@ -13,6 +13,7 @@ import { userNameAtom } from '../stores/userStore'
 import { writeAuditLog } from '../services/auditLog'
 import type { Room, RoomGenderType, RoomType } from '../types'
 import { DetailPageSkeleton } from '../components'
+import { getErrorMessage } from '../utils/errorMessage'
 import { LeaderBadge, ConfirmDialog } from '../components/ui'
 
 function RoomDetailPage(): React.ReactElement {
@@ -117,7 +118,7 @@ function RoomDetailPage(): React.ReactElement {
       console.error('Update room error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.updateRoomFailed')
+        message: getErrorMessage(error, t('toast.updateRoomFailed'))
       })
     } finally {
       setIsSaving(false)
@@ -143,7 +144,7 @@ function RoomDetailPage(): React.ReactElement {
       console.error('Remove participant error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.removeParticipantFailed')
+        message: getErrorMessage(error, t('toast.removeParticipantFailed'))
       })
     }
   }
@@ -175,7 +176,7 @@ function RoomDetailPage(): React.ReactElement {
       console.error('Move participant error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.moveParticipantFailed')
+        message: getErrorMessage(error, t('toast.moveParticipantFailed'))
       })
     }
   }

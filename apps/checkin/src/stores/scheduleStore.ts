@@ -10,6 +10,7 @@ import {
 } from '../services/firebase'
 import type { CreateScheduleData, UpdateScheduleData } from '../services/firebase'
 import { addToastAtom } from './toastStore'
+import { getErrorMessage } from '../utils/errorMessage'
 
 // Schedule events state
 export const schedulesAtom = atom<ScheduleEvent[]>([])
@@ -136,7 +137,7 @@ export const fetchSchedulesAtom = atom(null, async (_get, set) => {
   } catch (error) {
     console.error('Error fetching schedules:', error)
     set(addToastAtom, {
-      message: error instanceof Error ? error.message : 'Failed to fetch schedules',
+      message: getErrorMessage(error, 'Failed to fetch schedules'),
       type: 'error'
     })
   } finally {
@@ -155,7 +156,7 @@ export const createScheduleAtom = atom(
     } catch (error) {
       console.error('Error creating schedule:', error)
       set(addToastAtom, {
-        message: error instanceof Error ? error.message : 'Failed to create schedule',
+        message: getErrorMessage(error, 'Failed to create schedule'),
         type: 'error'
       })
       return null
@@ -174,7 +175,7 @@ export const updateScheduleAtom = atom(
     } catch (error) {
       console.error('Error updating schedule:', error)
       set(addToastAtom, {
-        message: error instanceof Error ? error.message : 'Failed to update schedule',
+        message: getErrorMessage(error, 'Failed to update schedule'),
         type: 'error'
       })
       return false
@@ -191,7 +192,7 @@ export const deleteScheduleAtom = atom(null, async (_get, set, id: string): Prom
   } catch (error) {
     console.error('Error deleting schedule:', error)
     set(addToastAtom, {
-      message: error instanceof Error ? error.message : 'Failed to delete schedule',
+      message: getErrorMessage(error, 'Failed to delete schedule'),
       type: 'error'
     })
     return false

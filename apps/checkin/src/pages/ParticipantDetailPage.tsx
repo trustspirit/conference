@@ -20,6 +20,7 @@ import { DetailPageSkeleton, ParticipantQRCode } from '../components'
 import { ConfirmDialog, PhoneInput, LeaderBadge } from '../components/ui'
 import { formatPhoneNumber } from '../utils/phoneFormat'
 import { generateKeyFromParticipant } from '../utils/generateParticipantKey'
+import { getErrorMessage } from '../utils/errorMessage'
 
 interface EditFormData {
   name: string
@@ -427,7 +428,7 @@ function ParticipantDetailPage(): React.ReactElement {
       setIsEditing(false)
       await sync()
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('toast.updateFailed')
+      const message = getErrorMessage(error, t('toast.updateFailed'))
       addToast({ type: 'error', message })
     } finally {
       setIsSaving(false)

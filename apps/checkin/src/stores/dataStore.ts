@@ -10,6 +10,7 @@ import {
   isFirebaseConfigured
 } from '../services/firebase'
 import { addToastAtom } from './toastStore'
+import { getErrorMessage } from '../utils/errorMessage'
 
 export const participantsAtom = atom<Participant[]>([])
 export const groupsAtom = atom<Group[]>([])
@@ -48,7 +49,7 @@ export const syncAtom = atom(null, async (get, set, showToast: boolean = false) 
   } catch (error) {
     console.error('Sync error:', error)
     set(addToastAtom, {
-      message: error instanceof Error ? error.message : 'Sync failed',
+      message: getErrorMessage(error, 'Sync failed'),
       type: 'error'
     })
   } finally {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { moveParticipantsToRoom } from '../services/firebase'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
 import type { Room } from '../types'
+import { getErrorMessage } from '../utils/errorMessage'
 
 export function useRoomsTabLogic() {
   const { t } = useTranslation()
@@ -65,7 +66,7 @@ export function useRoomsTabLogic() {
         setSelectedRoomMembers(new Set())
         setShowMoveToRoomModal(false)
       } catch (error) {
-        setMoveError(error instanceof Error ? error.message : t('toast.moveParticipantFailed'))
+        setMoveError(getErrorMessage(error, t('toast.moveParticipantFailed')))
       } finally {
         setIsMoving(false)
       }

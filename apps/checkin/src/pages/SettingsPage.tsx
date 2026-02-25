@@ -13,6 +13,7 @@ import {
   clearEventPeriodAtom
 } from '../stores/scheduleStore'
 import { changeLanguage, getCurrentLanguage } from '../i18n'
+import { getErrorMessage } from '../utils/errorMessage'
 import { ConfirmDialog, SectionCard } from '../components/ui'
 import { userRoleAtom } from '../stores/authStore'
 
@@ -105,7 +106,7 @@ function SettingsPage(): React.ReactElement {
     } catch (error) {
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('settings.resetDataFailed')
+        message: getErrorMessage(error, t('settings.resetDataFailed'))
       })
     } finally {
       setIsResetting(false)

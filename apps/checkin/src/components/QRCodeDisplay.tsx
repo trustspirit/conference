@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useTranslation } from 'react-i18next'
 
 interface QRCodeDisplayProps {
-  participantId: string
+  participantKey: string | null
   participantName: string
   size?: number
   showDownload?: boolean
@@ -11,7 +11,7 @@ interface QRCodeDisplayProps {
 }
 
 function QRCodeDisplay({
-  participantId,
+  participantKey,
   participantName,
   size = 180,
   showDownload = true,
@@ -19,15 +19,20 @@ function QRCodeDisplay({
 }: QRCodeDisplayProps): React.ReactElement {
   const { t } = useTranslation()
 
-  // QR 코드에 저장될 데이터
-  const qrData = JSON.stringify({
-    type: 'checkin',
-    id: participantId,
-    v: 1 // version for future compatibility
-  })
+  if (!participantKey) {
+    return (
+      <div className="flex flex-col items-center">
+        <div className="bg-[#F0F2F5] p-4 rounded-lg border border-[#DADDE1] text-center" style={{ width: size, height: size }}>
+          <p className="text-sm text-[#65676B] mt-8">{t('participant.noBirthDateForKey')}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const qrValue = `KEY:${participantKey}`
 
   const handleDownload = () => {
-    const svg = document.getElementById(`qr-${participantId}`)
+    const svg = document.getElementById(`qr-${participantKey}`)
     if (!svg) return
 
     const svgData = new XMLSerializer().serializeToString(svg)
@@ -51,7 +56,7 @@ function QRCodeDisplay({
   }
 
   const handlePrint = () => {
-    const svg = document.getElementById(`qr-${participantId}`)
+    const svg = document.getElementById(`qr-${participantKey}`)
     if (!svg) return
 
     const svgData = new XMLSerializer().serializeToString(svg)
@@ -114,8 +119,8 @@ function QRCodeDisplay({
     <div className="flex flex-col items-center">
       <div className="bg-white p-4 rounded-lg border border-[#DADDE1]">
         <QRCodeSVG
-          id={`qr-${participantId}`}
-          value={qrData}
+          id={`qr-${participantKey}`}
+          value={qrValue}
           size={size}
           level="M"
           includeMargin={true}

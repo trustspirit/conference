@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { moveParticipantsToGroup } from '../services/firebase'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
 import type { Group } from '../types'
+import { getErrorMessage } from '../utils/errorMessage'
 
 export function useGroupsTabLogic() {
   const { t } = useTranslation()
@@ -65,7 +66,7 @@ export function useGroupsTabLogic() {
         setSelectedGroupMembers(new Set())
         setShowMoveToGroupModal(false)
       } catch (error) {
-        setMoveError(error instanceof Error ? error.message : t('toast.moveParticipantFailed'))
+        setMoveError(getErrorMessage(error, t('toast.moveParticipantFailed')))
       } finally {
         setIsMoving(false)
       }

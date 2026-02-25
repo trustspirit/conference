@@ -19,6 +19,7 @@ import {
   QRScannerModal
 } from '../components'
 import { formatPhoneNumber } from '../utils/phoneFormat'
+import { getErrorMessage } from '../utils/errorMessage'
 import { LeaderBadge } from '../components/ui'
 import { groupsAtom, roomsAtom } from '../stores/dataStore'
 
@@ -151,7 +152,7 @@ function HomePage(): React.ReactElement {
       console.error('Check-in/out error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.actionFailed')
+        message: getErrorMessage(error, t('toast.actionFailed'))
       })
     } finally {
       setActionLoadingId(null)
@@ -185,7 +186,7 @@ function HomePage(): React.ReactElement {
       console.error('Payment toggle error:', error)
       addToast({
         type: 'error',
-        message: error instanceof Error ? error.message : t('toast.actionFailed')
+        message: getErrorMessage(error, t('toast.actionFailed'))
       })
     } finally {
       setActionLoadingId(null)
