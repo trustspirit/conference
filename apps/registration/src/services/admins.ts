@@ -18,8 +18,6 @@ export const getAdmins = async (): Promise<AdminEntry[]> => {
 
 export const isAdmin = async (email: string): Promise<boolean> => {
   const admins = await getAdmins()
-  // If no admins exist yet, allow anyone (first-time setup)
-  if (admins.length === 0) return true
   return admins.some((a) => a.email.toLowerCase() === email.toLowerCase())
 }
 
@@ -31,5 +29,9 @@ export const addAdmin = async (email: string): Promise<void> => {
 }
 
 export const removeAdmin = async (email: string): Promise<void> => {
+  const admins = await getAdmins()
+  if (admins.length <= 1) {
+    throw new Error('최소 1명의 관리자가 필요합니다.')
+  }
   await deleteDoc(doc(db, ADMINS_COLLECTION, email.toLowerCase().trim()))
 }

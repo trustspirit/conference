@@ -18,9 +18,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Survey responses: public create/read/update (registration), admin delete
+    // Survey responses: public create/read (registration), guarded update, admin delete
     match /survey_responses/{responseId} {
-      allow create, read, update: if true;
+      allow create: if true
+        && request.resource.data.email is string && request.resource.data.email.size() <= 200
+        && request.resource.data.surveyId is string
+        && request.resource.data.personalCode is string && request.resource.data.personalCode.size() == 8;
+      allow read: if true;
+      allow update: if true
+        && request.resource.data.surveyId == resource.data.surveyId
+        && request.resource.data.personalCode == resource.data.personalCode
+        && request.resource.data.email == resource.data.email;
       allow delete: if isAdmin();
     }
 
@@ -28,14 +36,24 @@ service cloud.firestore {
     match /participants/{participantId} {
       allow create: if true
         && request.resource.data.name is string && request.resource.data.name.size() <= 100
-        && request.resource.data.email is string && request.resource.data.email.size() <= 200;
+        && request.resource.data.email is string && request.resource.data.email.size() <= 200
+        && request.resource.data.checkIns is list && request.resource.data.checkIns.size() == 0
+        && request.resource.data.groupId == ''
+        && request.resource.data.roomId == '';
       allow read, update, delete: if isAuthorized();
     }
 
-    // Admin list: any authenticated user can read (needed for auth check), admin only write
+    // Checkin admin list: any authenticated user can read (needed for auth check), admin only write
     match /checkin_admins/{adminId} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
+    }
+
+    // Registration admin list: any authenticated user can read, registration admins can write
+    match /registration_admins/{adminId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        exists(/databases/$(database)/documents/registration_admins/$(request.auth.token.email));
     }
 
     // All other collections: authorized users (admin + staff)

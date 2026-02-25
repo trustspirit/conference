@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -6,9 +6,17 @@ function RegisterSuccessPage(): React.ReactElement {
   const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
   const [searchParams] = useSearchParams()
-  const code = searchParams.get('code')
   const token = searchParams.get('token')
   const updated = searchParams.get('updated')
+  const [code, setCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('registrationCode')
+    if (stored) {
+      setCode(stored)
+      sessionStorage.removeItem('registrationCode')
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">
@@ -31,7 +39,7 @@ function RegisterSuccessPage(): React.ReactElement {
             <p className="text-xs text-primary mt-2">{t('register.success.codeHint')}</p>
           </div>
         )}
-        <a href={`/register/${surveyId}?token=${token}&code=${code}`} className="text-primary hover:underline text-sm font-medium">
+        <a href={`/register/${surveyId}?token=${token}`} className="text-primary hover:underline text-sm font-medium">
           {t('register.success.editLink')}
         </a>
       </div>

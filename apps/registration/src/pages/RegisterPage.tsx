@@ -67,10 +67,12 @@ function RegisterPage(): React.ReactElement {
     try {
       if (existingResponse) {
         await updateRegistration(existingResponse.id, existingResponse.participantId, data)
-        navigate(`/register/${surveyId}/success?token=${token}&code=${existingResponse.personalCode}&updated=true`)
+        sessionStorage.setItem('registrationCode', existingResponse.personalCode)
+        navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
         const result = await submitRegistration(surveyId, data)
-        navigate(`/register/${surveyId}/success?token=${token}&code=${result.personalCode}`)
+        sessionStorage.setItem('registrationCode', result.personalCode)
+        navigate(`/register/${surveyId}/success?token=${token}`)
       }
     } catch {
       setError(t('register.error.submissionFailed'))
@@ -86,10 +88,12 @@ function RegisterPage(): React.ReactElement {
     try {
       if (existingResponse) {
         await updateDynamicRegistration(existingResponse.id, existingResponse.participantId, data, survey.fields)
-        navigate(`/register/${surveyId}/success?token=${token}&code=${existingResponse.personalCode}&updated=true`)
+        sessionStorage.setItem('registrationCode', existingResponse.personalCode)
+        navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
         const result = await submitDynamicRegistration(surveyId, data, survey.fields)
-        navigate(`/register/${surveyId}/success?token=${token}&code=${result.personalCode}`)
+        sessionStorage.setItem('registrationCode', result.personalCode)
+        navigate(`/register/${surveyId}/success?token=${token}`)
       }
     } catch {
       setError(t('register.error.submissionFailed'))
