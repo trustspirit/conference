@@ -90,6 +90,21 @@
       "date": "Date"
     }
   },
+  "dashboard": {
+    "totalSurveys": "Total Surveys",
+    "totalResponses": "Total Responses",
+    "activeSurveys": "Active Surveys",
+    "todayResponses": "Today",
+    "dailyTrend": "Daily Registration Trend",
+    "surveyComparison": "Responses by Survey",
+    "avgPerDay": "Avg/Day",
+    "statistics": "Statistics",
+    "responses": "Responses",
+    "average": "Average",
+    "noChartData": "No chart data available",
+    "textResponses": "Response List",
+    "noTextResponses": "No responses yet"
+  },
   "home": {
     "title": "Registration",
     "codePlaceholder": "Enter your personal code",

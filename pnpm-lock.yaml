@@ -184,6 +184,9 @@ importers:
       '@conference/firebase':
         specifier: workspace:*
         version: link:../../packages/firebase
+      chart.js:
+        specifier: ^4.5.1
+        version: 4.5.1
       firebase:
         specifier: ^12.9.0
         version: 12.9.0
@@ -199,6 +202,9 @@ importers:
       react:
         specifier: ^19.2.4
         version: 19.2.4
+      react-chartjs-2:
+        specifier: ^5.3.1
+        version: 5.3.1(chart.js@4.5.1)(react@19.2.4)
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)

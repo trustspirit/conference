@@ -90,6 +90,21 @@
       "date": "날짜"
     }
   },
+  "dashboard": {
+    "totalSurveys": "총 설문",
+    "totalResponses": "총 응답",
+    "activeSurveys": "활성 설문",
+    "todayResponses": "오늘 등록",
+    "dailyTrend": "일별 등록 추이",
+    "surveyComparison": "설문별 응답 수",
+    "avgPerDay": "일 평균",
+    "statistics": "통계",
+    "responses": "응답 목록",
+    "average": "평균",
+    "noChartData": "차트 데이터가 없습니다",
+    "textResponses": "응답 목록",
+    "noTextResponses": "응답이 없습니다"
+  },
   "home": {
     "title": "등록",
     "codePlaceholder": "개인 코드를 입력하세요",

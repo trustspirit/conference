@@ -6,7 +6,8 @@ import {
   query,
   where,
   orderBy,
-  writeBatch
+  writeBatch,
+  QueryDocumentSnapshot
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions, SURVEY_RESPONSES_COLLECTION, PARTICIPANTS_COLLECTION, convertTimestamp, Timestamp } from './firebase'
@@ -178,20 +179,9 @@ export const updateDynamicRegistration = async (
   await batch.commit()
 }
 
-// ─── Read operations (still client-side for edit flow) ────────────
+// ─── Response document mapping helper ─────────────────────────────
 
-export const getResponseByCode = async (
-  surveyId: string,
-  personalCode: string
-): Promise<SurveyResponse | null> => {
-  const q = query(
-    collection(db, SURVEY_RESPONSES_COLLECTION),
-    where('surveyId', '==', surveyId),
-    where('personalCode', '==', personalCode)
-  )
-  const snapshot = await getDocs(q)
-  if (snapshot.empty) return null
-  const docSnap = snapshot.docs[0]
+const mapResponseDoc = (docSnap: QueryDocumentSnapshot): SurveyResponse => {
   const d = docSnap.data()
   return {
     id: docSnap.id,
@@ -205,6 +195,31 @@ export const getResponseByCode = async (
   }
 }
 
+// ─── Read operations (still client-side for edit flow) ────────────
+
+export const getAllResponses = async (): Promise<SurveyResponse[]> => {
+  const q = query(
+    collection(db, SURVEY_RESPONSES_COLLECTION),
+    orderBy('createdAt', 'desc')
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(mapResponseDoc)
+}
+
+export const getResponseByCode = async (
+  surveyId: string,
+  personalCode: string
+): Promise<SurveyResponse | null> => {
+  const q = query(
+    collection(db, SURVEY_RESPONSES_COLLECTION),
+    where('surveyId', '==', surveyId),
+    where('personalCode', '==', personalCode)
+  )
+  const snapshot = await getDocs(q)
+  if (snapshot.empty) return null
+  return mapResponseDoc(snapshot.docs[0])
+}
+
 export const getResponsesBySurvey = async (surveyId: string): Promise<SurveyResponse[]> => {
   const q = query(
     collection(db, SURVEY_RESPONSES_COLLECTION),
@@ -212,17 +227,5 @@ export const getResponsesBySurvey = async (surveyId: string): Promise<SurveyResp
     orderBy('createdAt', 'desc')
   )
   const snapshot = await getDocs(q)
-  return snapshot.docs.map((docSnap) => {
-    const d = docSnap.data()
-    return {
-      id: docSnap.id,
-      surveyId: d.surveyId,
-      personalCode: d.personalCode,
-      participantId: d.participantId,
-      email: d.email,
-      data: d.data,
-      createdAt: convertTimestamp(d.createdAt),
-      updatedAt: convertTimestamp(d.updatedAt)
-    }
-  })
+  return snapshot.docs.map(mapResponseDoc)
 }

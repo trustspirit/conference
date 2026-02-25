@@ -9,7 +9,9 @@ import { getDefaultFields } from '../../services/surveyDefaults'
 import { Button, Spinner } from '../../components/ui'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import SurveyCard from '../../components/admin/SurveyCard'
-import type { Survey } from '../../types'
+import DashboardOverview from '../../components/admin/DashboardOverview'
+import { getAllResponses } from '../../services/responses'
+import type { Survey, SurveyResponse } from '../../types'
 
 function SurveyListPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -19,11 +21,13 @@ function SurveyListPage(): React.ReactElement {
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [allResponses, setAllResponses] = useState<SurveyResponse[]>([])
 
   const loadSurveys = async () => {
     try {
-      const data = await getAllSurveys()
+      const [data, responses] = await Promise.all([getAllSurveys(), getAllResponses()])
       setSurveys(data)
+      setAllResponses(responses)
     } finally {
       setLoading(false)
     }
@@ -78,6 +82,9 @@ function SurveyListPage(): React.ReactElement {
             {creating ? t('survey.create.creating') : t('survey.newSurvey')}
           </Button>
         </div>
+        {!loading && surveys.length > 0 && (
+          <DashboardOverview surveys={surveys} allResponses={allResponses} />
+        )}
         {loading ? (
           <Spinner />
         ) : surveys.length === 0 ? (

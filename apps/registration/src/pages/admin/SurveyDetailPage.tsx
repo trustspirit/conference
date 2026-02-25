@@ -8,6 +8,7 @@ import { getResponsesBySurvey } from '../../services/responses'
 import { Button, Spinner } from '../../components/ui'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import ResponseTable from '../../components/admin/ResponseTable'
+import SurveyStats from '../../components/admin/SurveyStats'
 import type { Survey, SurveyResponse } from '../../types'
 
 function SurveyDetailPage(): React.ReactElement {
@@ -18,6 +19,7 @@ function SurveyDetailPage(): React.ReactElement {
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [responses, setResponses] = useState<SurveyResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'statistics' | 'responses'>('statistics')
 
   useEffect(() => {
     const load = async () => {
@@ -73,8 +75,36 @@ function SurveyDetailPage(): React.ReactElement {
             <Button onClick={copyLink}>{t('survey.copyRegLink')}</Button>
           </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">{t('survey.responsesTitle')}</h2>
-        <ResponseTable responses={responses} fields={survey.fields} />
+        <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+          <button
+            onClick={() => setActiveTab('statistics')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'statistics'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('dashboard.statistics')}
+          </button>
+          <button
+            onClick={() => setActiveTab('responses')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'responses'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t('dashboard.responses')} ({responses.length})
+          </button>
+        </div>
+        {activeTab === 'statistics' ? (
+          <SurveyStats survey={survey} responses={responses} />
+        ) : (
+          <>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">{t('survey.responsesTitle')}</h2>
+            <ResponseTable responses={responses} fields={survey.fields} />
+          </>
+        )}
       </main>
     </div>
   )
