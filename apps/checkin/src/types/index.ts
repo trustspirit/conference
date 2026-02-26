@@ -83,18 +83,6 @@ export interface CSVParticipantRow {
   [key: string]: string | undefined
 }
 
-export interface AuditLogEntry {
-  id: string
-  timestamp: string
-  userName: string
-  userEmail: string
-  action: 'create' | 'update' | 'delete' | 'check_in' | 'check_out' | 'assign' | 'import'
-  targetType: 'participant' | 'group' | 'room' | 'bus'
-  targetId: string
-  targetName: string
-  changes?: Record<string, { from: unknown; to: unknown }>
-}
-
 // Bus/Region for transportation management
 export interface BusRoute {
   id: string

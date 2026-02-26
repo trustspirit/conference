@@ -3,7 +3,7 @@ import { useAtom } from 'jotai'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { authUserAtom, authLoadingAtom, userRoleAtom } from '../stores/authStore'
 import { onAuthChange, signOut, db } from '../services/firebase'
-import { getUserRole } from '../services/admins'
+import { getUserRole } from '../services/firebase'
 import LoginPage from './LoginPage'
 
 function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElement {

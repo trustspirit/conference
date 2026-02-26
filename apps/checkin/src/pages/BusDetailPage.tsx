@@ -4,7 +4,6 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
 import {
   getBusRouteById,
   updateBusRoute,
@@ -14,7 +13,6 @@ import {
   markBusAsArrived,
   cancelBusArrival
 } from '../services/firebase'
-import { writeAuditLog } from '../services/auditLog'
 import type { BusRoute, Participant } from '../types'
 import { MoveToModal } from '../components'
 import { ConfirmDialog } from '../components/ui'
@@ -28,7 +26,6 @@ function BusDetailPage(): React.ReactElement {
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const [bus, setBus] = useState<BusRoute | null>(null)
   const [allBuses, setAllBuses] = useState<BusRoute[]>([])
@@ -99,7 +96,6 @@ function BusDetailPage(): React.ReactElement {
         notes: editForm.notes.trim() || undefined
       })
 
-      await writeAuditLog(userName || 'Unknown', 'update', 'bus', bus.id, bus.name)
       addToast({ type: 'success', message: t('bus.busUpdated') })
       setIsEditing(false)
       loadData()
@@ -116,14 +112,6 @@ function BusDetailPage(): React.ReactElement {
 
     try {
       await removeParticipantFromBus(participant.id)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'update',
-        'participant',
-        participant.id,
-        participant.name,
-        { bus: { from: bus?.name || null, to: null } }
-      )
       addToast({ type: 'success', message: t('bus.participantRemoved') })
       loadData()
       sync()
@@ -154,9 +142,6 @@ function BusDetailPage(): React.ReactElement {
 
     try {
       await moveParticipantsToBus(selectedParticipants, targetBusId, targetBus.name)
-      await writeAuditLog(userName || 'Unknown', 'update', 'bus', targetBusId, targetBus.name, {
-        movedParticipants: { from: bus?.name || null, to: targetBus.name }
-      })
       addToast({
         type: 'success',
         message: t('bus.movedToBus', { name: targetBus.name, count: selectedParticipants.length })
@@ -183,10 +168,6 @@ function BusDetailPage(): React.ReactElement {
         await markBusAsArrived(id)
         addToast({ type: 'success', message: t('bus.busArrived') })
       }
-
-      await writeAuditLog(userName || 'Unknown', 'update', 'bus', id, bus.name, {
-        arrived: { from: isCancel, to: !isCancel }
-      })
 
       loadData()
       sync()

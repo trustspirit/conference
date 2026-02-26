@@ -14,8 +14,6 @@ import {
 import { participantsAtom, groupsAtom, roomsAtom, syncAtom } from '../stores/dataStore'
 import type { Group, Room, CheckInRecord } from '../types'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
-import { writeAuditLog } from '../services/auditLog'
 import { DetailPageSkeleton, ParticipantQRCode } from '../components'
 import { ConfirmDialog, PhoneInput, LeaderBadge } from '../components/ui'
 import { formatPhoneNumber } from '../utils/phoneFormat'
@@ -44,7 +42,6 @@ function ParticipantDetailPage(): React.ReactElement {
   const rooms = useAtomValue(roomsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isCheckingIn, setIsCheckingIn] = useState(false)
@@ -103,13 +100,6 @@ function ParticipantDetailPage(): React.ReactElement {
     setIsCheckingIn(true)
     try {
       await checkInParticipant(participant.id)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'check_in',
-        'participant',
-        participant.id,
-        participant.name
-      )
       await sync()
     } catch (error) {
       console.error('Check-in error:', error)
@@ -122,13 +112,6 @@ function ParticipantDetailPage(): React.ReactElement {
     if (!participant) return
     try {
       await checkOutParticipant(participant.id, checkInId)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'check_out',
-        'participant',
-        participant.id,
-        participant.name
-      )
       await sync()
     } catch (error) {
       console.error('Check-out error:', error)
@@ -141,14 +124,6 @@ function ParticipantDetailPage(): React.ReactElement {
     try {
       const newStatus = !participant.isPaid
       await updateParticipant(participant.id, { isPaid: newStatus })
-      await writeAuditLog(
-        userName || 'Unknown',
-        'update',
-        'participant',
-        participant.id,
-        participant.name,
-        { isPaid: { from: participant.isPaid, to: newStatus } }
-      )
       addToast({
         type: 'success',
         message: t('toast.paymentUpdated', {
@@ -189,14 +164,6 @@ function ParticipantDetailPage(): React.ReactElement {
     setIsSavingMemo(true)
     try {
       await updateParticipant(participant.id, { memo: newMemo })
-      await writeAuditLog(
-        userName || 'Unknown',
-        'update',
-        'participant',
-        participant.id,
-        participant.name,
-        { memo: { from: oldMemo || null, to: newMemo || null } }
-      )
       addToast({ type: 'success', message: t('participant.memoUpdated') })
       await sync()
       setIsEditingMemo(false)
@@ -211,18 +178,7 @@ function ParticipantDetailPage(): React.ReactElement {
   const handleGroupAssign = async (group: Group) => {
     if (!participant) return
     try {
-      const oldGroup = participant.groupName
       await assignParticipantToGroup(participant.id, group.id, group.name)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participant.id,
-        participant.name,
-        {
-          group: { from: oldGroup || null, to: group.name }
-        }
-      )
       await sync()
       setShowGroupSelect(false)
     } catch (error) {
@@ -233,19 +189,8 @@ function ParticipantDetailPage(): React.ReactElement {
   const handleNewGroup = async () => {
     if (!newGroupName.trim() || !participant) return
     try {
-      const oldGroup = participant.groupName
       const group = await createOrGetGroup(newGroupName.trim())
       await assignParticipantToGroup(participant.id, group.id, group.name)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participant.id,
-        participant.name,
-        {
-          group: { from: oldGroup || null, to: group.name }
-        }
-      )
       await sync()
       setNewGroupName('')
       setShowGroupSelect(false)
@@ -261,18 +206,7 @@ function ParticipantDetailPage(): React.ReactElement {
       return
     }
     try {
-      const oldRoom = participant.roomNumber
       await assignParticipantToRoom(participant.id, room.id, room.roomNumber)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participant.id,
-        participant.name,
-        {
-          room: { from: oldRoom || null, to: room.roomNumber }
-        }
-      )
       await sync()
       setShowRoomSelect(false)
     } catch (error) {
@@ -283,19 +217,8 @@ function ParticipantDetailPage(): React.ReactElement {
   const handleNewRoom = async () => {
     if (!newRoomNumber.trim() || !participant) return
     try {
-      const oldRoom = participant.roomNumber
       const room = await createOrGetRoom(newRoomNumber.trim(), newRoomCapacity)
       await assignParticipantToRoom(participant.id, room.id, room.roomNumber)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participant.id,
-        participant.name,
-        {
-          room: { from: oldRoom || null, to: room.roomNumber }
-        }
-      )
       await sync()
       setNewRoomNumber('')
       setNewRoomCapacity(4)
@@ -412,17 +335,6 @@ function ParticipantDetailPage(): React.ReactElement {
         isPaid: editForm.isPaid,
         memo: editForm.memo.trim() || undefined
       })
-
-      if (Object.keys(changes).length > 0) {
-        await writeAuditLog(
-          userName || 'Unknown',
-          'update',
-          'participant',
-          participant.id,
-          participant.name,
-          changes
-        )
-      }
 
       addToast({ type: 'success', message: t('participant.updateSuccess') })
       setIsEditing(false)

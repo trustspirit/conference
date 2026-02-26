@@ -4,7 +4,6 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
 import {
   createOrGetGroup,
   deleteGroup,
@@ -12,7 +11,6 @@ import {
   subscribeToGroups,
   updateGroup
 } from '../services/firebase'
-import { writeAuditLog } from '../services/auditLog'
 import { readFileAsText } from '../utils/fileReader'
 import { useGroupFilter, useBatchedInfiniteScrollWithRealtime } from '../hooks'
 import type { Group } from '../types'
@@ -35,7 +33,6 @@ function GroupsPage(): React.ReactElement {
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   // Batched infinite scroll pagination with realtime sync
   const {
@@ -104,7 +101,6 @@ function GroupsPage(): React.ReactElement {
         expectedCapacity: capacity,
         tags: newGroupTags.length > 0 ? newGroupTags : undefined
       })
-      await writeAuditLog(userName || 'Unknown', 'create', 'group', group.id, group.name)
       addToast({ type: 'success', message: t('group.groupCreated', { name: group.name }) })
       setNewGroupName('')
       setNewGroupCapacity('')
@@ -138,7 +134,6 @@ function GroupsPage(): React.ReactElement {
     if (!confirm(t('group.confirmDelete', { name: group.name }))) return
     try {
       await deleteGroup(group.id)
-      await writeAuditLog(userName || 'Unknown', 'delete', 'group', group.id, group.name)
       addToast({ type: 'success', message: t('group.groupDeleted', { name: group.name }) })
       refresh()
       sync()
@@ -171,7 +166,6 @@ function GroupsPage(): React.ReactElement {
       if (!name) continue
       try {
         const group = await createOrGetGroup({ name, tags })
-        await writeAuditLog(userName || 'Unknown', 'import', 'group', group.id, group.name)
         created++
       } catch {
         console.error(`Failed to create group: ${name}`)
@@ -205,7 +199,6 @@ function GroupsPage(): React.ReactElement {
       if (!name) continue
       try {
         const group = await createOrGetGroup({ name, tags })
-        await writeAuditLog(userName || 'Unknown', 'import', 'group', group.id, group.name)
         created++
       } catch {
         console.error(`Failed to create group: ${name}`)
@@ -230,9 +223,6 @@ function GroupsPage(): React.ReactElement {
       await updateGroup(group.id, {
         leaderId: participantId,
         leaderName: participantName
-      })
-      await writeAuditLog(userName || 'Unknown', 'update', 'group', group.id, group.name, {
-        leader: { from: group.leaderName || null, to: participantName }
       })
       addToast({
         type: 'success',

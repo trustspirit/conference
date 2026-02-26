@@ -80,8 +80,8 @@ export { resetAllData } from './dataReset'
 export type { ResetResult } from './dataReset'
 
 // Users
-export { fetchUsers, saveUser, removeUser, subscribeToUsers } from './users'
-export type { AppUser } from './users'
+export { getUsers, getUserByEmail, getUserRole, setUserRole, removeUserRole } from './users'
+export type { AppUser, UserRole } from './users'
 
 // Bus Routes
 export {

@@ -1,103 +1,74 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
-  setDoc,
-  deleteDoc,
+  updateDoc,
+  deleteField,
   query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp
+  where,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { USERS_COLLECTION } from './collections'
 
+export type UserRole = 'admin' | 'staff'
+
 export interface AppUser {
-  id: string
+  uid: string
+  email: string
   name: string
-  createdAt: Date
-  lastUsedAt: Date
+  photoURL: string
+  role?: UserRole
+  createdAt?: Date
 }
 
-/**
- * Fetch all saved users from Firestore
- */
-export async function fetchUsers(): Promise<AppUser[]> {
-
-  const usersRef = collection(db, USERS_COLLECTION)
-  const q = query(usersRef, orderBy('lastUsedAt', 'desc'))
-  const snapshot = await getDocs(q)
-
+export async function getUsers(): Promise<AppUser[]> {
+  const snapshot = await getDocs(collection(db, USERS_COLLECTION))
   return snapshot.docs.map((docSnap) => {
     const data = docSnap.data()
     return {
-      id: docSnap.id,
-      name: data.name,
-      createdAt: data.createdAt?.toDate() || new Date(),
-      lastUsedAt: data.lastUsedAt?.toDate() || new Date()
+      uid: docSnap.id,
+      email: data.email || '',
+      name: data.name || '',
+      photoURL: data.photoURL || '',
+      role: data.role as UserRole | undefined,
+      createdAt: data.createdAt?.toDate?.() || undefined,
     }
   })
 }
 
-/**
- * Add or update a user in Firestore
- */
-export async function saveUser(name: string): Promise<AppUser> {
-
-  const usersRef = collection(db, USERS_COLLECTION)
-
-  // Use name as document ID (normalized)
-  const docId = name.toLowerCase().replace(/\s+/g, '_')
-  const userRef = doc(usersRef, docId)
-
-  // Update name and lastUsedAt, set createdAt only if new
-  await setDoc(
-    userRef,
-    {
-      name,
-      lastUsedAt: serverTimestamp(),
-      createdAt: serverTimestamp()
-    },
-    { merge: true }
+export async function getUserByEmail(email: string): Promise<AppUser | null> {
+  const q = query(
+    collection(db, USERS_COLLECTION),
+    where('email', '==', email.toLowerCase().trim())
   )
-
+  const snapshot = await getDocs(q)
+  if (snapshot.empty) return null
+  const docSnap = snapshot.docs[0]
+  const data = docSnap.data()
   return {
-    id: docId,
-    name,
-    createdAt: new Date(),
-    lastUsedAt: new Date()
+    uid: docSnap.id,
+    email: data.email || '',
+    name: data.name || '',
+    photoURL: data.photoURL || '',
+    role: data.role as UserRole | undefined,
+    createdAt: data.createdAt?.toDate?.() || undefined,
   }
 }
 
-/**
- * Remove a user from Firestore
- */
-export async function removeUser(userId: string): Promise<void> {
-
-  const userRef = doc(db, USERS_COLLECTION, userId)
-  await deleteDoc(userRef)
+export async function getUserRole(email: string): Promise<UserRole | null> {
+  const user = await getUserByEmail(email)
+  return user?.role ?? null
 }
 
-/**
- * Subscribe to real-time user updates
- */
-export function subscribeToUsers(callback: (users: AppUser[]) => void): () => void {
+export async function setUserRole(uid: string, role: UserRole): Promise<void> {
+  const userRef = doc(db, USERS_COLLECTION, uid)
+  const snap = await getDoc(userRef)
+  if (!snap.exists()) throw new Error('User not found')
+  await updateDoc(userRef, { role })
+}
 
-  const usersRef = collection(db, USERS_COLLECTION)
-  const q = query(usersRef, orderBy('lastUsedAt', 'desc'))
-
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const users = snapshot.docs.map((docSnap) => {
-      const data = docSnap.data()
-      return {
-        id: docSnap.id,
-        name: data.name,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        lastUsedAt: data.lastUsedAt?.toDate() || new Date()
-      }
-    })
-    callback(users)
-  })
-
-  return unsubscribe
+export async function removeUserRole(uid: string): Promise<void> {
+  const userRef = doc(db, USERS_COLLECTION, uid)
+  await updateDoc(userRef, { role: deleteField() })
 }

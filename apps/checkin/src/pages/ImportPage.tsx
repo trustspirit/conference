@@ -5,9 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Papa from 'papaparse'
 import { importParticipantsFromCSV } from '../services/firebase'
 import type { CSVParticipantRow } from '../types'
-import { userNameAtom } from '../stores/userStore'
 import { participantsAtom } from '../stores/dataStore'
-import { writeAuditLog } from '../services/auditLog'
 import { readFileAsText } from '../utils/fileReader'
 
 function ImportPage(): React.ReactElement {
@@ -17,7 +15,6 @@ function ImportPage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<CSVParticipantRow[]>([])
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const userName = useAtomValue(userNameAtom)
   const existingParticipants = useAtomValue(participantsAtom)
 
   const handleFileSelect = async () => {
@@ -154,14 +151,6 @@ function ImportPage(): React.ReactElement {
     try {
       const importResult = await importParticipantsFromCSV(preview)
       setResult(importResult)
-
-      await writeAuditLog(
-        userName || 'Unknown',
-        'import',
-        'participant',
-        `batch_${Date.now()}`,
-        `CSV Import (${importResult.created} created, ${importResult.updated} updated)`
-      )
 
       setPreview([])
     } catch (err) {

@@ -1,9 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { useSetAtom, useAtomValue } from 'jotai'
+import { useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { syncAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
 import {
   createOrGetBusRoute,
   deleteBusRoute,
@@ -14,7 +13,6 @@ import {
   subscribeToBuses
 } from '../services/firebase'
 import { useBatchedInfiniteScrollWithRealtime } from './useBatchedInfiniteScrollWithRealtime'
-import { writeAuditLog } from '../services/auditLog'
 import type { BusRoute } from '../types'
 
 interface UseBusManagementReturn {
@@ -51,7 +49,6 @@ export function useBusManagement(): UseBusManagementReturn {
   const { t } = useTranslation()
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const { displayedItems: buses, isLoading, hasMore, loadMore, refresh } =
     useBatchedInfiniteScrollWithRealtime<BusRoute>({
@@ -99,7 +96,6 @@ export function useBusManagement(): UseBusManagementReturn {
           notes: data.notes?.trim() || undefined
         })
 
-        await writeAuditLog(userName || 'Unknown', 'create', 'bus', bus.id, bus.name)
         addToast({ type: 'success', message: t('bus.busCreated', { name: bus.name }) })
 
         refresh()
@@ -112,7 +108,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, refresh, loadRegions, sync]
+    [addToast, t, refresh, loadRegions, sync]
   )
 
   const handleDeleteBus = useCallback(
@@ -126,7 +122,6 @@ export function useBusManagement(): UseBusManagementReturn {
 
       try {
         await deleteBusRoute(bus.id)
-        await writeAuditLog(userName || 'Unknown', 'delete', 'bus', bus.id, bus.name)
         addToast({ type: 'success', message: t('bus.busDeleted', { name: bus.name }) })
         refresh()
         loadRegions()
@@ -137,7 +132,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, refresh, loadRegions, sync]
+    [addToast, t, refresh, loadRegions, sync]
   )
 
   const handleArrivalToggle = useCallback(
@@ -151,10 +146,6 @@ export function useBusManagement(): UseBusManagementReturn {
           addToast({ type: 'success', message: t('bus.busArrived') })
         }
 
-        await writeAuditLog(userName || 'Unknown', 'update', 'bus', busId, busName, {
-          arrived: { from: isCancel, to: !isCancel }
-        })
-
         refresh()
         sync()
         return true
@@ -164,7 +155,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, refresh, sync]
+    [addToast, t, refresh, sync]
   )
 
   // Parse time string to comparable value

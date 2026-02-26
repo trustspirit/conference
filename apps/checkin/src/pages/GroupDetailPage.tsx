@@ -9,8 +9,6 @@ import {
   assignParticipantToGroup
 } from '../services/firebase'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
-import { writeAuditLog } from '../services/auditLog'
 import type { Group } from '../types'
 import { DetailPageSkeleton } from '../components'
 import { getErrorMessage } from '../utils/errorMessage'
@@ -25,7 +23,6 @@ function GroupDetailPage(): React.ReactElement {
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -98,10 +95,6 @@ function GroupDetailPage(): React.ReactElement {
         tags: editTags.length > 0 ? editTags : null
       })
 
-      if (Object.keys(changes).length > 0) {
-        await writeAuditLog(userName || 'Unknown', 'update', 'group', id, group.name, changes)
-      }
-
       await sync()
       setIsEditing(false)
       addToast({ type: 'success', message: t('group.groupUpdated') })
@@ -121,14 +114,6 @@ function GroupDetailPage(): React.ReactElement {
 
     try {
       await removeParticipantFromGroup(participantId)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participantId,
-        participantName,
-        { group: { from: group?.name, to: null } }
-      )
       await sync()
       addToast({ type: 'success', message: t('group.participantRemoved') })
     } catch (error) {
@@ -149,14 +134,6 @@ function GroupDetailPage(): React.ReactElement {
 
     try {
       await assignParticipantToGroup(participantId, targetGroup.id, targetGroup.name)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participantId,
-        participantName,
-        { group: { from: group.name, to: targetGroup.name } }
-      )
       await sync()
       setMovingParticipantId(null)
       addToast({ type: 'success', message: t('group.movedTo', { name: targetGroup.name }) })
@@ -178,13 +155,6 @@ function GroupDetailPage(): React.ReactElement {
       await updateGroup(id, {
         leaderId: isRemoving ? null : participantId,
         leaderName: isRemoving ? null : participantName
-      })
-
-      await writeAuditLog(userName || 'Unknown', 'update', 'group', id, group.name, {
-        leader: {
-          from: group.leaderName || null,
-          to: isRemoving ? null : participantName
-        }
       })
 
       await sync()

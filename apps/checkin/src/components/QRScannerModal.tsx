@@ -5,13 +5,11 @@ import { useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { participantsAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
 import {
   checkInParticipant,
   checkOutParticipant,
   searchParticipants
 } from '../services/firebase'
-import { writeAuditLog } from '../services/auditLog'
 import type { Participant } from '../types'
 import { CheckInStatus } from '../types'
 import { getCheckInStatusFromParticipant } from './CheckInStatusBadge'
@@ -38,7 +36,6 @@ function QRScannerModal({
   const navigate = useNavigate()
   const participants = useAtomValue(participantsAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const [isScanning, setIsScanning] = useState(false)
   const [scannedParticipant, setScannedParticipant] = useState<ScannedParticipant | null>(null)
@@ -181,26 +178,12 @@ function QRScannerModal({
         const activeCheckIn = participant.checkIns.find((ci) => !ci.checkOutTime)
         if (activeCheckIn) {
           await checkOutParticipant(participant.id, activeCheckIn.id)
-          await writeAuditLog(
-            userName || 'Unknown',
-            'check_out',
-            'participant',
-            participant.id,
-            participant.name
-          )
           addToast({ type: 'success', message: t('toast.checkOutSuccess') })
           playSound('checkout')
         }
       } else {
         // Check in
         await checkInParticipant(participant.id)
-        await writeAuditLog(
-          userName || 'Unknown',
-          'check_in',
-          'participant',
-          participant.id,
-          participant.name
-        )
         addToast({ type: 'success', message: t('toast.checkInSuccess') })
         playSound('checkin')
       }

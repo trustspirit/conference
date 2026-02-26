@@ -8,8 +8,6 @@ import {
   checkOutParticipant,
   updateParticipant
 } from '../services/firebase'
-import { writeAuditLog } from '../services/auditLog'
-import { userNameAtom } from '../stores/userStore'
 import { addToastAtom } from '../stores/toastStore'
 import type { Participant } from '../types'
 import { CheckInStatus } from '../types'
@@ -35,7 +33,6 @@ function HomePage(): React.ReactElement {
   const navigate = useNavigate()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
-  const userName = useAtomValue(userNameAtom)
   const addToast = useSetAtom(addToastAtom)
   const groups = useAtomValue(groupsAtom)
   const rooms = useAtomValue(roomsAtom)
@@ -124,25 +121,11 @@ function HomePage(): React.ReactElement {
         const activeCheckIn = participant.checkIns.find((ci) => !ci.checkOutTime)
         if (activeCheckIn) {
           await checkOutParticipant(participant.id, activeCheckIn.id)
-          await writeAuditLog(
-            userName || 'Unknown',
-            'check_out',
-            'participant',
-            participant.id,
-            participant.name
-          )
           addToast({ type: 'success', message: t('toast.checkOutSuccess') })
         }
       } else {
         // Check in
         await checkInParticipant(participant.id)
-        await writeAuditLog(
-          userName || 'Unknown',
-          'check_in',
-          'participant',
-          participant.id,
-          participant.name
-        )
         addToast({ type: 'success', message: t('toast.checkInSuccess') })
       }
 
@@ -167,14 +150,6 @@ function HomePage(): React.ReactElement {
     try {
       const newPaidStatus = !participant.isPaid
       await updateParticipant(participant.id, { isPaid: newPaidStatus })
-      await writeAuditLog(
-        userName || 'Unknown',
-        'update',
-        'participant',
-        participant.id,
-        participant.name,
-        { isPaid: { from: participant.isPaid, to: newPaidStatus } }
-      )
       addToast({
         type: 'success',
         message: newPaidStatus ? t('toast.markedAsPaid') : t('toast.markedAsUnpaid')

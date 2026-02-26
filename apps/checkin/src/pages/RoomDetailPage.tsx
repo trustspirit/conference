@@ -9,8 +9,6 @@ import {
   assignParticipantToRoom
 } from '../services/firebase'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
-import { writeAuditLog } from '../services/auditLog'
 import type { Room, RoomGenderType, RoomType } from '../types'
 import { DetailPageSkeleton } from '../components'
 import { getErrorMessage } from '../utils/errorMessage'
@@ -25,7 +23,6 @@ function RoomDetailPage(): React.ReactElement {
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -100,17 +97,6 @@ function RoomDetailPage(): React.ReactElement {
         roomType: editRoomType || null
       })
 
-      if (Object.keys(changes).length > 0) {
-        await writeAuditLog(
-          userName || 'Unknown',
-          'update',
-          'room',
-          id,
-          `Room ${room.roomNumber}`,
-          changes
-        )
-      }
-
       await sync()
       setIsEditing(false)
       addToast({ type: 'success', message: t('room.roomUpdated') })
@@ -130,14 +116,6 @@ function RoomDetailPage(): React.ReactElement {
 
     try {
       await removeParticipantFromRoom(participantId)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participantId,
-        participantName,
-        { room: { from: room?.roomNumber, to: null } }
-      )
       await sync()
       addToast({ type: 'success', message: t('room.participantRemoved') })
     } catch (error) {
@@ -158,14 +136,6 @@ function RoomDetailPage(): React.ReactElement {
 
     try {
       await assignParticipantToRoom(participantId, targetRoom.id, targetRoom.roomNumber)
-      await writeAuditLog(
-        userName || 'Unknown',
-        'assign',
-        'participant',
-        participantId,
-        participantName,
-        { room: { from: room.roomNumber, to: targetRoom.roomNumber } }
-      )
       await sync()
       setMovingParticipantId(null)
       addToast({
@@ -190,13 +160,6 @@ function RoomDetailPage(): React.ReactElement {
       await updateRoom(id, {
         leaderId: isRemoving ? null : participantId,
         leaderName: isRemoving ? null : participantName
-      })
-
-      await writeAuditLog(userName || 'Unknown', 'update', 'room', id, `Room ${room.roomNumber}`, {
-        leader: {
-          from: room.leaderName || null,
-          to: isRemoving ? null : participantName
-        }
       })
 
       await sync()

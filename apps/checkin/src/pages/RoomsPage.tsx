@@ -4,7 +4,6 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
-import { userNameAtom } from '../stores/userStore'
 import {
   createOrGetRoom,
   deleteRoom,
@@ -12,7 +11,6 @@ import {
   subscribeToRooms,
   updateRoom
 } from '../services/firebase'
-import { writeAuditLog } from '../services/auditLog'
 import { readFileAsText } from '../utils/fileReader'
 import { useRoomFilter, useBatchedInfiniteScrollWithRealtime } from '../hooks'
 import type { Room, RoomGenderType, RoomType } from '../types'
@@ -35,7 +33,6 @@ function RoomsPage(): React.ReactElement {
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
   const addToast = useSetAtom(addToastAtom)
-  const userName = useAtomValue(userNameAtom)
 
   // Batched infinite scroll pagination with realtime sync
   const {
@@ -110,7 +107,6 @@ function RoomsPage(): React.ReactElement {
         genderType: newGenderType || undefined,
         roomType: newRoomType || undefined
       })
-      await writeAuditLog(userName || 'Unknown', 'create', 'room', room.id, room.roomNumber)
       addToast({ type: 'success', message: t('room.roomCreated', { number: room.roomNumber }) })
       setNewRoomNumber('')
       setNewRoomCapacity(4)
@@ -135,7 +131,6 @@ function RoomsPage(): React.ReactElement {
     if (!confirm(warningMsg)) return
     try {
       await deleteRoom(room.id)
-      await writeAuditLog(userName || 'Unknown', 'delete', 'room', room.id, room.roomNumber)
       addToast({ type: 'success', message: t('room.roomDeleted', { number: room.roomNumber }) })
       refresh()
       sync()
@@ -183,7 +178,6 @@ function RoomsPage(): React.ReactElement {
           genderType,
           roomType
         })
-        await writeAuditLog(userName || 'Unknown', 'import', 'room', room.id, room.roomNumber)
         created++
       } catch {
         console.error(`Failed to create room: ${roomNumber}`)
@@ -224,7 +218,6 @@ function RoomsPage(): React.ReactElement {
           genderType,
           roomType
         })
-        await writeAuditLog(userName || 'Unknown', 'import', 'room', room.id, room.roomNumber)
         created++
       } catch {
         console.error(`Failed to create room: ${roomNumber}`)
@@ -249,9 +242,6 @@ function RoomsPage(): React.ReactElement {
       await updateRoom(room.id, {
         leaderId: participantId,
         leaderName: participantName
-      })
-      await writeAuditLog(userName || 'Unknown', 'update', 'room', room.id, room.roomNumber, {
-        leader: { from: room.leaderName || null, to: participantName }
       })
       addToast({
         type: 'success',

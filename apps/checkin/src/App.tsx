@@ -7,7 +7,6 @@ import ParticipantDetailPage from './pages/ParticipantDetailPage'
 import ParticipantsListPage from './pages/ParticipantsListPage'
 import ImportPage from './pages/ImportPage'
 import SettingsPage from './pages/SettingsPage'
-import AuditLogPage from './pages/AuditLogPage'
 import GroupsPage from './pages/GroupsPage'
 import RoomsPage from './pages/RoomsPage'
 import RoomDetailPage from './pages/RoomDetailPage'
@@ -187,13 +186,6 @@ function App(): React.ReactElement {
               </button>
               {isManageMenuOpen && (
                 <div className="absolute top-full left-0 mt-1 bg-white border border-[#DADDE1] rounded-lg shadow-lg py-1 min-w-[160px] z-50">
-                  <NavLink
-                    to="/audit-log"
-                    onClick={() => setIsManageMenuOpen(false)}
-                    className="block px-4 py-2 text-[#050505] hover:bg-[#F0F2F5] text-sm font-medium"
-                  >
-                    {t('nav.auditLog')}
-                  </NavLink>
                   {userRole === 'admin' && (
                     <NavLink
                       to="/admin-manage"
@@ -279,7 +271,6 @@ function App(): React.ReactElement {
           <Route path="/buses/:id" element={<BusDetailPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/import" element={<ImportPage />} />
-          <Route path="/audit-log" element={<AuditLogPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/admin-manage" element={<AdminManagePage />} />
