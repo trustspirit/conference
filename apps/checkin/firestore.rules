@@ -56,9 +56,9 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/registration_admins/$(request.auth.token.email));
     }
 
-    // Users: authenticated users can create/update their own document, authorized users can read all
+    // Users: authenticated users can read/create/update their own document, authorized users can read all
     match /users/{userId} {
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
       allow read: if isAuthorized();
     }
 
