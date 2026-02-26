@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { authUserAtom, authLoadingAtom, userRoleAtom } from '../stores/authStore'
-import { onAuthChange, signOut } from '../services/firebase'
+import { onAuthChange, signOut, db } from '../services/firebase'
 import { getUserRole } from '../services/admins'
 import LoginPage from './LoginPage'
 
@@ -34,11 +35,27 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
     }
     let cancelled = false
     setAdminChecked(false)
-    getUserRole(user.email).then((role) => {
-      if (!cancelled) {
-        setIsAuthorized(role !== null)
-        setUserRole(role)
-        setAdminChecked(true)
+    getUserRole(user.email).then(async (role) => {
+      if (cancelled) return
+      setIsAuthorized(role !== null)
+      setUserRole(role)
+      setAdminChecked(true)
+
+      // Create user document in Firestore if it doesn't exist
+      if (role !== null) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid))
+          if (!userDoc.exists()) {
+            await setDoc(doc(db, 'users', user.uid), {
+              uid: user.uid,
+              email: user.email || '',
+              name: user.displayName || '',
+              photoURL: user.photoURL || '',
+            })
+          }
+        } catch (err) {
+          console.error('Failed to create user document:', err)
+        }
       }
     })
     return () => { cancelled = true }
