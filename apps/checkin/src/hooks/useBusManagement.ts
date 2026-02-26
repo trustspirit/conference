@@ -1,17 +1,19 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useSetAtom, useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { syncAtom } from '../stores/dataStore'
 import { addToastAtom } from '../stores/toastStore'
 import { userNameAtom } from '../stores/userStore'
 import {
-  getAllBusRoutes,
   createOrGetBusRoute,
   deleteBusRoute,
   getAllRegions,
   markBusAsArrived,
-  cancelBusArrival
+  cancelBusArrival,
+  getBusesPaginated,
+  subscribeToBuses
 } from '../services/firebase'
+import { useBatchedInfiniteScrollWithRealtime } from './useBatchedInfiniteScrollWithRealtime'
 import { writeAuditLog } from '../services/auditLog'
 import type { BusRoute } from '../types'
 
@@ -19,7 +21,8 @@ interface UseBusManagementReturn {
   buses: BusRoute[]
   regions: string[]
   isLoading: boolean
-  loadData: () => Promise<void>
+  hasMore: boolean
+  loadMore: () => Promise<void>
   handleAddBus: (data: CreateBusData) => Promise<boolean>
   handleDeleteBus: (bus: BusRoute) => Promise<boolean>
   handleArrivalToggle: (busId: string, busName: string, isCancel: boolean) => Promise<boolean>
@@ -50,25 +53,33 @@ export function useBusManagement(): UseBusManagementReturn {
   const addToast = useSetAtom(addToastAtom)
   const userName = useAtomValue(userNameAtom)
 
-  const [buses, setBuses] = useState<BusRoute[]>([])
+  const { displayedItems: buses, isLoading, hasMore, loadMore, refresh } =
+    useBatchedInfiniteScrollWithRealtime<BusRoute>({
+      fetchBatchSize: 1000,
+      displayBatchSize: 100,
+      fetchFunction: getBusesPaginated,
+      getItemId: (bus) => bus.id,
+      subscribeFunction: (callback) => subscribeToBuses(callback)
+    })
+
   const [regions, setRegions] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [selectedRegion, setSelectedRegion] = useState<string>('all')
   const [showArrivedBuses, setShowArrivedBuses] = useState(true)
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true)
+  // Load regions separately (lightweight call)
+  const loadRegions = useCallback(async () => {
     try {
-      const [busData, regionData] = await Promise.all([getAllBusRoutes(), getAllRegions()])
-      setBuses(busData)
+      const regionData = await getAllRegions()
       setRegions(regionData)
     } catch (error) {
-      console.error('Failed to load buses:', error)
-      addToast({ type: 'error', message: t('bus.loadFailed') })
-    } finally {
-      setIsLoading(false)
+      console.error('Failed to load regions:', error)
     }
-  }, [addToast, t])
+  }, [])
+
+  // Initial region load
+  useEffect(() => {
+    loadRegions()
+  }, [loadRegions])
 
   const handleAddBus = useCallback(
     async (data: CreateBusData): Promise<boolean> => {
@@ -91,7 +102,8 @@ export function useBusManagement(): UseBusManagementReturn {
         await writeAuditLog(userName || 'Unknown', 'create', 'bus', bus.id, bus.name)
         addToast({ type: 'success', message: t('bus.busCreated', { name: bus.name }) })
 
-        loadData()
+        refresh()
+        loadRegions()
         sync()
         return true
       } catch (error) {
@@ -100,7 +112,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, loadData, sync]
+    [addToast, t, userName, refresh, loadRegions, sync]
   )
 
   const handleDeleteBus = useCallback(
@@ -116,7 +128,8 @@ export function useBusManagement(): UseBusManagementReturn {
         await deleteBusRoute(bus.id)
         await writeAuditLog(userName || 'Unknown', 'delete', 'bus', bus.id, bus.name)
         addToast({ type: 'success', message: t('bus.busDeleted', { name: bus.name }) })
-        loadData()
+        refresh()
+        loadRegions()
         sync()
         return true
       } catch {
@@ -124,7 +137,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, loadData, sync]
+    [addToast, t, userName, refresh, loadRegions, sync]
   )
 
   const handleArrivalToggle = useCallback(
@@ -142,7 +155,7 @@ export function useBusManagement(): UseBusManagementReturn {
           arrived: { from: isCancel, to: !isCancel }
         })
 
-        loadData()
+        refresh()
         sync()
         return true
       } catch (error) {
@@ -151,7 +164,7 @@ export function useBusManagement(): UseBusManagementReturn {
         return false
       }
     },
-    [addToast, t, userName, loadData, sync]
+    [addToast, t, userName, refresh, sync]
   )
 
   // Parse time string to comparable value
@@ -201,7 +214,8 @@ export function useBusManagement(): UseBusManagementReturn {
     buses,
     regions,
     isLoading,
-    loadData,
+    hasMore,
+    loadMore,
     handleAddBus,
     handleDeleteBus,
     handleArrivalToggle,

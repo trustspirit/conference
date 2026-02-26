@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -26,7 +26,8 @@ function BusesPage(): React.ReactElement {
     buses,
     regions,
     isLoading,
-    loadData,
+    hasMore,
+    loadMore,
     handleAddBus,
     handleDeleteBus,
     handleArrivalToggle,
@@ -58,9 +59,16 @@ function BusesPage(): React.ReactElement {
   const [newContactPhone, setNewContactPhone] = useState('')
   const [newNotes, setNewNotes] = useState('')
 
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (!loadMoreRef.current || !hasMore || isLoading) return
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      { threshold: 0.1 }
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, loadMore])
 
   const onAddBusSubmit = async () => {
     const success = await handleAddBus({
@@ -296,6 +304,13 @@ function BusesPage(): React.ReactElement {
                 </div>
               </div>
             ))}
+        </div>
+      )}
+
+      {/* Load More Sentinel */}
+      {hasMore && (
+        <div ref={loadMoreRef} className="py-4 text-center text-sm text-[#65676B]">
+          Loading more buses...
         </div>
       )}
 

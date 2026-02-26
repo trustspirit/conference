@@ -9,7 +9,10 @@ import {
   orderBy,
   where,
   increment,
-  writeBatch
+  writeBatch,
+  limit,
+  startAfter,
+  onSnapshot
 } from 'firebase/firestore'
 import { db, convertTimestamp, Timestamp } from '@conference/firebase'
 import type { BusRoute } from '../../types'
@@ -332,4 +335,52 @@ export async function moveParticipantsToBus(
   }
 
   await batch.commit()
+}
+
+/**
+ * Fetches bus routes with pagination support
+ * @param lastItem The last bus route from previous fetch (for cursor-based pagination)
+ * @param batchSize Number of bus routes to fetch
+ * @returns Object with data array and hasMore boolean
+ */
+export const getBusesPaginated = async (
+  lastItem: BusRoute | null,
+  batchSize: number
+): Promise<{ data: BusRoute[]; hasMore: boolean }> => {
+  const busesRef = collection(db, BUSES_COLLECTION)
+
+  let q = query(busesRef, orderBy('createdAt', 'desc'), limit(batchSize + 1))
+
+  if (lastItem) {
+    const lastDocRef = doc(db, BUSES_COLLECTION, lastItem.id)
+    const lastDocSnap = await getDoc(lastDocRef)
+
+    if (lastDocSnap.exists()) {
+      q = query(busesRef, orderBy('createdAt', 'desc'), startAfter(lastDocSnap), limit(batchSize + 1))
+    }
+  }
+
+  const snapshot = await getDocs(q)
+  const docs = snapshot.docs
+  const hasMore = docs.length > batchSize
+  const resultDocs = hasMore ? docs.slice(0, batchSize) : docs
+
+  const buses = resultDocs.map((docSnap) => convertToBusRoute(docSnap.id, docSnap.data()))
+
+  return { data: buses, hasMore }
+}
+
+/**
+ * Subscribe to real-time bus route updates
+ */
+export const subscribeToBuses = (onData: (data: BusRoute[]) => void): (() => void) => {
+  const busesRef = collection(db, BUSES_COLLECTION)
+  const q = query(busesRef, orderBy('createdAt', 'desc'))
+
+  return onSnapshot(q, (snapshot) => {
+    const buses = snapshot.docs.map((docSnap) =>
+      convertToBusRoute(docSnap.id, docSnap.data())
+    )
+    onData(buses)
+  })
 }

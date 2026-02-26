@@ -1,16 +1,24 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { useAtomValue } from 'jotai'
 import { Tooltip, ExpandArrow, MemberSelectionTable, MoveToModal } from '../'
 import { useGroupsTabLogic } from '../../hooks'
-import { groupsAtom, isLoadingAtom } from '../../stores/dataStore'
+import { useBatchedInfiniteScrollWithRealtime } from '../../hooks/useBatchedInfiniteScrollWithRealtime'
+import { getGroupsPaginated, subscribeToGroups } from '../../services/firebase'
+import type { Group } from '../../types'
 
 export function GroupsTab() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const groups = useAtomValue(groupsAtom)
-  const isLoading = useAtomValue(isLoadingAtom)
+
+  const { displayedItems: groups, isLoading, hasMore, loadMore } =
+    useBatchedInfiniteScrollWithRealtime<Group>({
+      fetchBatchSize: 1000,
+      displayBatchSize: 100,
+      fetchFunction: getGroupsPaginated,
+      getItemId: (group) => group.id,
+      subscribeFunction: (callback) => subscribeToGroups(callback)
+    })
 
   const {
     expandedGroupId,
@@ -28,6 +36,17 @@ export function GroupsTab() {
     setHoveredGroupId,
     getGroupMembers
   } = useGroupsTabLogic()
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasMore || isLoading) return
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      { threshold: 0.1 }
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, loadMore])
 
   const navigateToParticipant = (participantId: string) => {
     navigate(`/participant/${participantId}`)
@@ -123,6 +142,11 @@ export function GroupsTab() {
               })}
             </tbody>
           </table>
+          {hasMore && (
+            <div ref={loadMoreRef} className="py-4 text-center text-sm text-[#65676B]">
+              Loading more groups...
+            </div>
+          )}
           {groups.length === 0 && !isLoading && (
             <div className="text-center py-8 text-[#65676B]">{t('group.noGroupsCreated')}</div>
           )}

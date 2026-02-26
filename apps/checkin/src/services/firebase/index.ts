@@ -97,6 +97,8 @@ export {
   moveParticipantsToBus,
   markBusAsArrived,
   cancelBusArrival,
+  getBusesPaginated,
+  subscribeToBuses,
   BUSES_COLLECTION
 } from './buses'
 export type { CreateBusRouteOptions, UpdateBusRouteData } from './buses'

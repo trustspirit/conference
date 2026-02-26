@@ -1,16 +1,24 @@
-import React from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { useAtomValue } from 'jotai'
 import { Tooltip, ExpandArrow, MemberSelectionTable, OccupancyBar, MoveToModal } from '../'
 import { useRoomsTabLogic } from '../../hooks'
-import { roomsAtom, isLoadingAtom } from '../../stores/dataStore'
+import { useBatchedInfiniteScrollWithRealtime } from '../../hooks/useBatchedInfiniteScrollWithRealtime'
+import { getRoomsPaginated, subscribeToRooms } from '../../services/firebase'
+import type { Room } from '../../types'
 
 export function RoomsTab() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const rooms = useAtomValue(roomsAtom)
-  const isLoading = useAtomValue(isLoadingAtom)
+
+  const { displayedItems: rooms, isLoading, hasMore, loadMore } =
+    useBatchedInfiniteScrollWithRealtime<Room>({
+      fetchBatchSize: 1000,
+      displayBatchSize: 100,
+      fetchFunction: getRoomsPaginated,
+      getItemId: (room) => room.id,
+      subscribeFunction: (callback) => subscribeToRooms(callback)
+    })
 
   const {
     expandedRoomId,
@@ -28,6 +36,17 @@ export function RoomsTab() {
     setHoveredRoomId,
     getRoomMembers
   } = useRoomsTabLogic()
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasMore || isLoading) return
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      { threshold: 0.1 }
+    )
+    observer.observe(loadMoreRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, isLoading, loadMore])
 
   const navigateToParticipant = (participantId: string) => {
     navigate(`/participant/${participantId}`)
@@ -136,6 +155,11 @@ export function RoomsTab() {
               })}
             </tbody>
           </table>
+          {hasMore && (
+            <div ref={loadMoreRef} className="py-4 text-center text-sm text-[#65676B]">
+              Loading more rooms...
+            </div>
+          )}
           {rooms.length === 0 && !isLoading && (
             <div className="text-center py-8 text-[#65676B]">{t('room.noRoomsCreated')}</div>
           )}
