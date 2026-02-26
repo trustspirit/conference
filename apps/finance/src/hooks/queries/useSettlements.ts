@@ -23,7 +23,7 @@ import {
 } from "firebase/firestore";
 import { db } from '@conference/firebase';
 import { queryKeys } from "./queryKeys";
-import type { Settlement } from "../../types";
+import type { Settlement, Committee } from "../../types";
 
 const PAGE_SIZE = 20;
 
@@ -43,14 +43,15 @@ export function useSettlements(projectId: string | undefined) {
   });
 }
 
-export function useInfiniteSettlements(projectId: string | undefined) {
+export function useInfiniteSettlements(projectId: string | undefined, committee?: Committee) {
   return useInfiniteQuery({
-    queryKey: queryKeys.settlements.infinite(projectId!),
+    queryKey: queryKeys.settlements.infinite(projectId!, committee),
     queryFn: async ({ pageParam }) => {
       const constraints: QueryConstraint[] = [
         where("projectId", "==", projectId),
         orderBy("createdAt", "desc"),
       ];
+      if (committee) constraints.push(where("committee", "==", committee));
       if (pageParam) constraints.push(startAfter(pageParam));
       constraints.push(limit(PAGE_SIZE));
 

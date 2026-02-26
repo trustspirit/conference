@@ -263,7 +263,8 @@
     "roleChangeFailed": "권한 변경에 실패했습니다.",
     "me": "(나)",
     "deleteUser": "삭제",
-    "deleteConfirm": "이 사용자를 삭제하시겠습니까?"
+    "deleteConfirm": "이 사용자를 삭제하시겠습니까?",
+    "deletingUser": "사용자를 삭제하는 중입니다..."
   },
   "settings": {
     "title": "설정",

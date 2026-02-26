@@ -16,7 +16,7 @@ export const queryKeys = {
   settlements: {
     all: (projectId: string) => ['settlements', projectId] as const,
     detail: (id: string) => ['settlements', id] as const,
-    infinite: (projectId: string) => ['settlements', projectId, 'infinite'] as const,
+    infinite: (projectId: string, committee?: string) => ['settlements', projectId, 'infinite', committee] as const,
   },
   users: {
     all: () => ['users'] as const,

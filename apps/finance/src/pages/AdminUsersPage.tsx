@@ -10,6 +10,7 @@ import EmptyState from '../components/EmptyState'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import Select from '../components/Select'
 import { TrashIcon } from '../components/Icons'
+import ProcessingOverlay from '../components/ProcessingOverlay'
 
 function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void }) {
   const { t } = useTranslation()
@@ -180,6 +181,7 @@ export default function AdminUsersPage() {
 
   return (
     <Layout>
+      <ProcessingOverlay open={deleteUser.isPending} text={t('users.deletingUser')} />
       <PageHeader title={t('users.title')} />
       {loading ? (
         <Spinner />

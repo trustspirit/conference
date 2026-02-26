@@ -1,10 +1,11 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useInfiniteSettlements } from '../hooks/queries/useSettlements'
 import { formatFirestoreDate } from '../lib/utils'
-import { Settlement } from '../types'
+import { Settlement, Committee } from '../types'
 import { canAccessSettlement } from '../lib/roles'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -12,22 +13,31 @@ import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 
+type CommitteeFilter = 'all' | Committee
+
 export default function SettlementListPage() {
   const { t } = useTranslation()
   const { appUser } = useAuth()
   const { currentProject } = useProject()
   const canProcess = canAccessSettlement(appUser?.role || 'user')
+  const [committeeFilter, setCommitteeFilter] = useState<CommitteeFilter>('all')
   const {
     data,
     isLoading: loading,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useInfiniteSettlements(currentProject?.id)
+  } = useInfiniteSettlements(currentProject?.id, committeeFilter === 'all' ? undefined : committeeFilter)
 
   const settlements = data?.pages.flatMap(p => p.items) ?? []
 
   const formatDate = (s: Settlement) => formatFirestoreDate(s.createdAt)
+
+  const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
+    { value: 'all', label: t('status.all') },
+    { value: 'operations', label: t('committee.operationsShort') },
+    { value: 'preparation', label: t('committee.preparationShort') },
+  ]
 
   return (
     <Layout>
@@ -35,6 +45,22 @@ export default function SettlementListPage() {
         title={t('settlement.listTitle')}
         action={canProcess ? { label: t('settlement.newSettlement'), to: '/admin/settlement/new', variant: 'purple' } : undefined}
       />
+
+      <div className="flex gap-2 mb-4">
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setCommitteeFilter(tab.value)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              committeeFilter === tab.value
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <Spinner />
