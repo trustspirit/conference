@@ -35,29 +35,31 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
     }
     let cancelled = false
     setAdminChecked(false)
-    getUserRole(user.email).then(async (role) => {
+
+    const init = async () => {
+      // Create user document first (before role check) so admins can assign roles later
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (!userDoc.exists()) {
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email: user.email || '',
+            name: user.displayName || '',
+            photoURL: user.photoURL || '',
+          })
+        }
+      } catch (err) {
+        console.error('Failed to create user document:', err)
+      }
+
+      const role = await getUserRole(user.email!)
       if (cancelled) return
       setIsAuthorized(role !== null)
       setUserRole(role)
       setAdminChecked(true)
+    }
 
-      // Create user document in Firestore if it doesn't exist
-      if (role !== null) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid))
-          if (!userDoc.exists()) {
-            await setDoc(doc(db, 'users', user.uid), {
-              uid: user.uid,
-              email: user.email || '',
-              name: user.displayName || '',
-              photoURL: user.photoURL || '',
-            })
-          }
-        } catch (err) {
-          console.error('Failed to create user document:', err)
-        }
-      }
-    })
+    init()
     return () => { cancelled = true }
   }, [user, setUserRole])
 
