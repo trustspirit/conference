@@ -120,7 +120,7 @@ jobs:
       needs.detect-changes.outputs.firestore-rules == 'true' ||
       needs.detect-changes.outputs.firestore-indexes == 'true'
     runs-on: ubuntu-latest
-    environment: checkin
+    environment: firestore
 
     steps:
       - uses: actions/checkout@v4
