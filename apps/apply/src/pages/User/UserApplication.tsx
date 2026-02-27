@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
 import { useAuth } from '../../contexts/AuthContext'
+import { Input, Select, Textarea, Checkbox, Label } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import type { Gender } from '../../types'
 
@@ -79,38 +80,41 @@ export default function UserApplication() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.name', 'Name')}</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={isLocked} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100" required />
+          <Label>{t('application.name', 'Name')}</Label>
+          <Input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={isLocked} required />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.age', 'Age')}</label>
-            <input type="number" value={age} onChange={(e) => setAge(e.target.value)} disabled={isLocked} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100" required />
+            <Label>{t('application.age', 'Age')}</Label>
+            <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} disabled={isLocked} required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.gender', 'Gender')}</label>
-            <select value={gender} onChange={(e) => setGender(e.target.value as Gender)} disabled={isLocked} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100">
+            <Label>{t('application.gender', 'Gender')}</Label>
+            <Select value={gender} onChange={(e) => setGender(e.target.value as Gender)} disabled={isLocked}>
               <option value="male">{t('gender.male', 'Male')}</option>
               <option value="female">{t('gender.female', 'Female')}</option>
-            </select>
+            </Select>
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.email', 'Email')}</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLocked} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100" required />
+          <Label>{t('application.email', 'Email')}</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLocked} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.phone', 'Phone')}</label>
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isLocked} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100" required />
+          <Label>{t('application.phone', 'Phone')}</Label>
+          <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isLocked} required />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.moreInfo', 'Additional Info')}</label>
-          <textarea value={moreInfo} onChange={(e) => setMoreInfo(e.target.value)} disabled={isLocked} rows={4} className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100" />
+          <Label>{t('application.moreInfo', 'Additional Info')}</Label>
+          <Textarea value={moreInfo} onChange={(e) => setMoreInfo(e.target.value)} disabled={isLocked} rows={4} />
         </div>
-        <div className="flex items-center gap-2">
-          <input type="checkbox" checked={servedMission} onChange={(e) => setServedMission(e.target.checked)} disabled={isLocked} id="servedMission" />
-          <label htmlFor="servedMission" className="text-sm text-gray-700">{t('application.servedMission', 'Previously served a mission')}</label>
-        </div>
+        <Checkbox
+          id="servedMission"
+          checked={servedMission}
+          onChange={(e) => setServedMission(e.target.checked)}
+          disabled={isLocked}
+          label={t('application.servedMission', 'Previously served a mission')}
+        />
         {!isLocked && (
           <button
             type="submit"

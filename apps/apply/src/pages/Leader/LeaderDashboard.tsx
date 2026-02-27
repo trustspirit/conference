@@ -18,7 +18,7 @@ export default function LeaderDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('leader.dashboard', 'Leader Dashboard')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('leader.dashboard.title', '리더 대시보드')}</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <div className="rounded-xl border border-gray-200 bg-white p-6">

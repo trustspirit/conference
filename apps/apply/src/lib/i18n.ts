@@ -12,7 +12,7 @@ i18n
       en: { translation: enTranslations },
       ko: { translation: koTranslations },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'ko',
     defaultNS: 'translation',
     interpolation: {
       escapeValue: false,

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useUsers, useUpdateUserRole, useUpdateLeaderStatus, useDeleteUser } from '../../hooks/queries/useUsers'
+import { Select } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import type { UserRole, LeaderStatus } from '../../types'
 
@@ -54,17 +55,17 @@ export default function AdminRoles() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <select
+                  <Select
                     value={user.role || ''}
                     onChange={(e) => handleRoleChange(user.uid, e.target.value as UserRole)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1"
+                    style={{ width: 'auto', fontSize: '0.875rem', padding: '0.25rem 1.75rem 0.25rem 0.5rem' }}
                   >
                     {ROLES.map((r) => (
                       <option key={r} value={r}>
                         {r}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {user.leaderStatus === 'pending' && (

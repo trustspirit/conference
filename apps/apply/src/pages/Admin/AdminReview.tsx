@@ -31,7 +31,7 @@ export default function AdminReview() {
 
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('admin.review', 'Review Applications')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('admin.review.title', '신청서 검토')}</h1>
 
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.applications', 'Applications')}</h2>

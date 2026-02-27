@@ -27,7 +27,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('admin.dashboard', 'Dashboard')}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('admin.dashboard.title', '대시보드')}</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label={t('admin.totalApplications', 'Total Applications')} value={stats.totalApplications} />
         <StatCard label={t('admin.awaiting', 'Awaiting Review')} value={stats.awaitingApplications} color="yellow" />

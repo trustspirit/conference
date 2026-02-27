@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
+import { Input, Select, Label } from '../../components/form'
 import type { UserRole } from '../../types'
 import { getDefaultRoute } from '../../lib/roles'
 
@@ -38,42 +39,25 @@ export default function CompleteProfilePage() {
         <h1 className="text-2xl font-bold text-gray-900">{t('auth.completeProfile', 'Complete Your Profile')}</h1>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.role', 'Role')}</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            required
-          >
+          <Label>{t('auth.role', 'Role')}</Label>
+          <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} required>
             <option value="">{t('auth.selectRole', 'Select a role')}</option>
             {ROLE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {t(opt.labelKey)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.stake', 'Stake')}</label>
-          <input
-            type="text"
-            value={stake}
-            onChange={(e) => setStake(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            required
-          />
+          <Label>{t('auth.stake', 'Stake')}</Label>
+          <Input type="text" value={stake} onChange={(e) => setStake(e.target.value)} required />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.ward', 'Ward')}</label>
-          <input
-            type="text"
-            value={ward}
-            onChange={(e) => setWard(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            required
-          />
+          <Label>{t('auth.ward', 'Ward')}</Label>
+          <Input type="text" value={ward} onChange={(e) => setWard(e.target.value)} required />
         </div>
 
         <button

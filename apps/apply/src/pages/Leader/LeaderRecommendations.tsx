@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useMyRecommendations, useCreateRecommendation, useDeleteRecommendation, useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
 import { useAuth } from '../../contexts/AuthContext'
+import { Input, Select, Textarea, Checkbox, Label } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import type { Gender, RecommendationStatus } from '../../types'
 import { useState } from 'react'
@@ -71,7 +72,7 @@ export default function LeaderRecommendations() {
   return (
     <div className="mx-auto max-w-4xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('leader.recommendations', 'Recommendations')}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('leader.recommendations.title', '추천서')}</h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
@@ -84,42 +85,43 @@ export default function LeaderRecommendations() {
         <form onSubmit={handleCreate} className="mb-8 rounded-xl bg-white shadow border border-gray-200 p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.name', 'Name')}</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" required />
+              <Label>{t('application.name', 'Name')}</Label>
+              <Input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.age', 'Age')}</label>
-              <input type="number" value={age} onChange={(e) => setAge(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" required />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.email', 'Email')}</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.phone', 'Phone')}</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" required />
+              <Label>{t('application.age', 'Age')}</Label>
+              <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} required />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.gender', 'Gender')}</label>
-              <select value={gender} onChange={(e) => setGender(e.target.value as Gender)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
+              <Label>{t('application.email', 'Email')}</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <Label>{t('application.phone', 'Phone')}</Label>
+              <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>{t('application.gender', 'Gender')}</Label>
+              <Select value={gender} onChange={(e) => setGender(e.target.value as Gender)}>
                 <option value="male">{t('gender.male', 'Male')}</option>
                 <option value="female">{t('gender.female', 'Female')}</option>
-              </select>
+              </Select>
             </div>
             <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" checked={servedMission} onChange={(e) => setServedMission(e.target.checked)} />
-                {t('application.servedMission', 'Previously served a mission')}
-              </label>
+              <Checkbox
+                checked={servedMission}
+                onChange={(e) => setServedMission(e.target.checked)}
+                label={t('application.servedMission', 'Previously served a mission')}
+              />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('application.moreInfo', 'Additional Info')}</label>
-            <textarea value={moreInfo} onChange={(e) => setMoreInfo(e.target.value)} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+            <Label>{t('application.moreInfo', 'Additional Info')}</Label>
+            <Textarea value={moreInfo} onChange={(e) => setMoreInfo(e.target.value)} rows={3} />
           </div>
           <button
             type="submit"

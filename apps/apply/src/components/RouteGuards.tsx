@@ -67,8 +67,9 @@ export function RequireApplicant({ children }: { children: React.ReactNode }) {
 }
 
 export function PublicOnly({ children }: { children: React.ReactNode }) {
-  const { user, appUser, loading } = useAuth()
+  const { user, appUser, loading, needsProfile } = useAuth()
   if (loading) return <LoadingScreen />
+  if (user && needsProfile) return <Navigate to={ROUTES.COMPLETE_PROFILE} replace />
   if (user && appUser?.role) return <Navigate to={getDefaultRoute(appUser.role)} replace />
   return <>{children}</>
 }
