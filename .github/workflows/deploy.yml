@@ -34,8 +34,6 @@ jobs:
       hub-hosting: ${{ steps.filter.outputs.hub-hosting }}
       apply-hosting: ${{ steps.filter.outputs.apply-hosting }}
       apply-functions: ${{ steps.filter.outputs.apply-functions }}
-      apply-rules: ${{ steps.filter.outputs.apply-rules }}
-      apply-indexes: ${{ steps.filter.outputs.apply-indexes }}
       finance-hosting: ${{ steps.filter.outputs.finance-hosting }}
       finance-functions: ${{ steps.filter.outputs.finance-functions }}
       finance-rules: ${{ steps.filter.outputs.finance-rules }}
@@ -107,10 +105,6 @@ jobs:
               - 'apps/apply/tailwind.config.*'
             apply-functions:
               - 'apps/apply/functions/**'
-            apply-rules:
-              - 'apps/apply/firestore.rules'
-            apply-indexes:
-              - 'apps/apply/firestore.indexes.json'
             finance-storage:
               - 'apps/finance/storage.rules'
             shared:
@@ -305,14 +299,12 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only firestore:indexes --project ${{ secrets.FIREBASE_PROJECT_ID }}
 
-  # ─── Deploy Apply (hosting + functions + firestore, shares checkin-ba4b8 project) ─
+  # ─── Deploy Apply (hosting + functions, shares checkin-ba4b8 project) ─
   deploy-apply:
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.apply-hosting == 'true' ||
       needs.detect-changes.outputs.apply-functions == 'true' ||
-      needs.detect-changes.outputs.apply-rules == 'true' ||
-      needs.detect-changes.outputs.apply-indexes == 'true' ||
       needs.detect-changes.outputs.shared == 'true'
     runs-on: ubuntu-latest
     environment: apply
@@ -367,20 +359,6 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
         run: npx firebase-tools deploy --only functions:apply --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
-
-      - name: Deploy Firestore Rules
-        if: needs.detect-changes.outputs.apply-rules == 'true'
-        working-directory: apps/apply
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
-        run: npx firebase-tools deploy --only firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
-
-      - name: Deploy Firestore Indexes
-        if: needs.detect-changes.outputs.apply-indexes == 'true'
-        working-directory: apps/apply
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa-key.json
-        run: npx firebase-tools deploy --only firestore:indexes --project ${{ secrets.FIREBASE_PROJECT_ID }}
 
   # ─── Deploy Finance ───────────────────────────────────────────────
   deploy-finance:
