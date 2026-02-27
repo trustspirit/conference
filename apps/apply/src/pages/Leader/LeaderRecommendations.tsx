@@ -7,7 +7,6 @@ import {
   useDeleteRecommendation,
   useUpdateRecommendationStatus,
 } from '../../hooks/queries/useRecommendations'
-import { useApplications } from '../../hooks/queries/useApplications'
 import { useRecommendationComments, useCreateComment, useDeleteComment } from '../../hooks/queries/useRecommendationComments'
 import { useAuth } from '../../contexts/AuthContext'
 import { Input, Select, Textarea, Label } from '../../components/form'
@@ -25,7 +24,6 @@ export default function LeaderRecommendations() {
   const { t } = useTranslation()
   const { appUser } = useAuth()
   const { data: recommendations, isLoading } = useMyRecommendations()
-  const { data: applications } = useApplications()
   const createRec = useCreateRecommendation()
   const updateRec = useUpdateRecommendation()
   const deleteRec = useDeleteRecommendation()
@@ -141,8 +139,7 @@ export default function LeaderRecommendations() {
       if (editingId) {
         await updateRec.mutateAsync({ id: editingId, ...data, status: 'submitted' as RecommendationStatus })
       } else {
-        const id = await createRec.mutateAsync(data)
-        await updateStatus.mutateAsync({ id, status: 'submitted' as RecommendationStatus })
+        await createRec.mutateAsync({ ...data, status: 'submitted' as RecommendationStatus })
       }
       resetForm()
     } catch {
@@ -161,11 +158,8 @@ export default function LeaderRecommendations() {
     updateStatus.mutate({ id, status })
   }
 
-  // Check if an application already exists for this recommendation
   const hasLinkedApplication = (rec: LeaderRecommendation) => {
-    return applications?.some(
-      (app) => app.email === rec.email && app.email
-    )
+    return !!rec.linkedApplicationId
   }
 
   const isLocked = (rec: LeaderRecommendation) => rec.status === 'approved' || rec.status === 'rejected'

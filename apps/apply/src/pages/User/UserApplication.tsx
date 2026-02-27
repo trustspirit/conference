@@ -62,29 +62,44 @@ export default function UserApplication() {
     return t('application.subtitle.start')
   }
 
+  const getFormData = () => ({
+    name,
+    age: Number(age),
+    email,
+    phone,
+    stake: appUser?.stake || '',
+    ward: appUser?.ward || '',
+    gender,
+    moreInfo,
+    servedMission,
+  })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const data = {
-      name,
-      age: Number(age),
-      email,
-      phone,
-      stake: appUser?.stake || '',
-      ward: appUser?.ward || '',
-      gender,
-      moreInfo,
-      servedMission,
-    }
-
+    const data = getFormData()
     try {
       if (hasApp && existingApp) {
-        await updateApp.mutateAsync({ id: existingApp.id, ...data })
+        await updateApp.mutateAsync({ id: existingApp.id, ...data, status: 'awaiting' })
       } else {
-        await createApp.mutateAsync(data)
+        await createApp.mutateAsync({ ...data, status: 'awaiting' })
       }
       setEditing(false)
     } catch {
       alert(t('application.messages.failedToSubmit'))
+    }
+  }
+
+  const handleSaveDraft = async () => {
+    const data = getFormData()
+    try {
+      if (hasApp && existingApp) {
+        await updateApp.mutateAsync({ id: existingApp.id, ...data })
+      } else {
+        await createApp.mutateAsync({ ...data, status: 'draft' })
+      }
+      setEditing(false)
+    } catch {
+      alert(t('application.messages.failedToSave'))
     }
   }
 
@@ -239,6 +254,14 @@ export default function UserApplication() {
                 className="rounded-lg bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {createApp.isPending || updateApp.isPending ? t('common.saving') : t('application.actions.submit', '신청서 제출')}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={createApp.isPending || updateApp.isPending}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                {t('application.actions.saveDraft', '초안 저장')}
               </button>
               {hasApp && (
                 <button

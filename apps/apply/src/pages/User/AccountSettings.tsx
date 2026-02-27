@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { isAdminRole, isLeaderRole, canApproveStakeWardChange, canDeleteUser } from '../../lib/roles'
@@ -65,6 +65,14 @@ function SettingsTab() {
   const [ward, setWard] = useState(appUser?.ward || '')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+
+  // Sync local state when appUser changes (e.g. after approval)
+  useEffect(() => {
+    if (!editing) {
+      setStake(appUser?.stake || '')
+      setWard(appUser?.ward || '')
+    }
+  }, [appUser?.stake, appUser?.ward, editing])
 
   const hasChanges = stake !== (appUser?.stake || '') || ward !== (appUser?.ward || '')
   const hasPending = !!(appUser?.pendingStake || appUser?.pendingWard)
@@ -304,6 +312,7 @@ function DeleteUsersTab() {
 
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
 
   const filteredUsers = useMemo(() => {
     if (!users) return []
@@ -323,16 +332,26 @@ function DeleteUsersTab() {
     setSelected(next)
   }
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (!selected.size) return
     if (!confirm(t('accountSettings.deleteUsers.confirmDelete'))) return
-    selected.forEach((uid) => deleteUser.mutate(uid))
-    setSelected(new Set())
+    setDeleting(true)
+    try {
+      await Promise.all(Array.from(selected).map((uid) => deleteUser.mutateAsync(uid)))
+      setSelected(new Set())
+    } finally {
+      setDeleting(false)
+    }
   }
 
-  const handleDeleteSingle = (uid: string, name: string) => {
+  const handleDeleteSingle = async (uid: string, name: string) => {
     if (!confirm(t('accountSettings.deleteUsers.confirmDeleteSingle', { userName: name }))) return
-    deleteUser.mutate(uid)
+    setDeleting(true)
+    try {
+      await deleteUser.mutateAsync(uid)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   if (isLoading) return <Spinner />
@@ -356,7 +375,7 @@ function DeleteUsersTab() {
         {selected.size > 0 && (
           <button
             onClick={handleDeleteSelected}
-            disabled={deleteUser.isPending}
+            disabled={deleting}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: '0.5rem',
@@ -404,7 +423,7 @@ function DeleteUsersTab() {
               <StatusChip label={t(ROLE_LABELS[user.role!] || 'roles.applicant')} tone={getRoleTone(user.role)} />
               <button
                 onClick={() => handleDeleteSingle(user.uid, user.name)}
-                disabled={deleteUser.isPending}
+                disabled={deleting}
                 style={{ fontSize: '0.75rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 {t('common.delete', '삭제')}

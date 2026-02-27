@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import Select from './Select'
 import Label from './Label'
-import { STAKES, getWardsForStake } from '../../utils/stakeWardData'
+import { stakeList, getWardsByStake } from '../../utils/stakeWardData'
 
 interface StakeWardSelectorProps {
   stake: string
@@ -22,7 +22,7 @@ export default function StakeWardSelector({
 }: StakeWardSelectorProps) {
   const { t } = useTranslation()
 
-  const wards = getWardsForStake(stake)
+  const wards = getWardsByStake(stake)
 
   const handleStakeChange = (newStake: string) => {
     onStakeChange(newStake)
@@ -54,8 +54,8 @@ export default function StakeWardSelector({
           disabled={disabled}
           required
         >
-          <option value="">{t('auth.stake', '스테이크/지방부 선택')}</option>
-          {STAKES.map((s) => (
+          <option value="">{t('auth.selectStake', '스테이크/지방부 선택')}</option>
+          {stakeList.map((s: string) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </Select>
@@ -68,8 +68,8 @@ export default function StakeWardSelector({
           disabled={disabled || !stake}
           required
         >
-          <option value="">{t('auth.ward', '와드/지부 선택')}</option>
-          {wards.map((w) => (
+          <option value="">{t('auth.selectWard', '와드/지부 선택')}</option>
+          {wards.map((w: string) => (
             <option key={w} value={w}>{w}</option>
           ))}
         </Select>

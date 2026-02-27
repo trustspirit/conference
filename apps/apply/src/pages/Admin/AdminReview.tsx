@@ -31,7 +31,7 @@ export default function AdminReview() {
 
   const allItems: ReviewItem[] = useMemo(() => {
     const items: ReviewItem[] = []
-    ;(applications || []).forEach((app) => {
+    ;(applications || []).filter((app) => app.status !== 'draft').forEach((app) => {
       items.push({
         key: `app-${app.id}`,
         type: 'application',

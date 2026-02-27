@@ -67,6 +67,8 @@
     "loginFailed": "로그인 실패",
     "stake": "스테이크/지방부",
     "ward": "와드/지부",
+    "selectStake": "스테이크/지방부 선택",
+    "selectWard": "와드/지부 선택",
     "role": "역할",
     "selectRole": "역할을 선택하세요",
     "logout": "로그아웃",
@@ -210,6 +212,7 @@
     },
     "dashboard": {
       "title": "관리자 대시보드",
+      "subtitle": "신청서와 추천서 현황을 한눈에 확인하세요.",
       "overview": {
         "totalSubmissions": "전체 제출",
         "awaitingReview": "검토 대기 중",

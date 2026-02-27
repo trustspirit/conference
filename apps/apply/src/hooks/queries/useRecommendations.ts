@@ -89,12 +89,13 @@ export function useCreateRecommendation() {
 
   return useMutation({
     mutationFn: async (
-      data: Omit<LeaderRecommendation, 'id' | 'createdAt' | 'updatedAt' | 'leaderId' | 'status' | 'comments'>,
+      data: Omit<LeaderRecommendation, 'id' | 'createdAt' | 'updatedAt' | 'leaderId' | 'status' | 'comments'> & { status?: RecommendationStatus },
     ) => {
+      const { status, ...rest } = data
       const docRef = await addDoc(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), {
-        ...data,
+        ...rest,
         leaderId: appUser!.uid,
-        status: 'draft' as RecommendationStatus,
+        status: status || ('draft' as RecommendationStatus),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })

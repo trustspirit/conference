@@ -25,7 +25,7 @@ export default function DetailsGrid({ items, columns = 2 }: DetailsGridProps) {
             {item.label}
           </p>
           <div style={{ fontSize: '0.875rem', color: '#111827' }}>
-            {item.value || '-'}
+            {item.value != null && item.value !== '' ? item.value : '-'}
           </div>
         </div>
       ))}

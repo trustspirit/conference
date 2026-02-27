@@ -90,7 +90,7 @@ export default function AdminDashboard() {
   return (
     <div className="mx-auto max-w-7xl p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('admin.dashboard.title', '관리자 대시보드')}</h1>
-      <p className="text-sm text-gray-500 mb-6">{t('admin.review.subtitle', '들어오는 신청서를 관리하고 상태를 업데이트하세요.')}</p>
+      <p className="text-sm text-gray-500 mb-6">{t('admin.dashboard.subtitle', '신청서와 추천서 현황을 한눈에 확인하세요.')}</p>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-8">

@@ -67,6 +67,8 @@
     "loginFailed": "Login failed",
     "stake": "Stake/District",
     "ward": "Ward/Branch",
+    "selectStake": "Select Stake/District",
+    "selectWard": "Select Ward/Branch",
     "role": "Role",
     "selectRole": "Select a role",
     "logout": "Sign Out",
@@ -210,6 +212,7 @@
     },
     "dashboard": {
       "title": "Admin Dashboard",
+      "subtitle": "Overview of applications and recommendations at a glance.",
       "overview": {
         "totalSubmissions": "Total Submissions",
         "awaitingReview": "Awaiting Review",

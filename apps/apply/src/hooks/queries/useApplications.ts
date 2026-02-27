@@ -86,11 +86,12 @@ export function useCreateApplication() {
   const { appUser } = useAuth()
 
   return useMutation({
-    mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'>) => {
+    mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & { status?: ApplicationStatus }) => {
+      const { status, ...rest } = data
       const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
-        ...data,
+        ...rest,
         userId: appUser!.uid,
-        status: 'awaiting' as ApplicationStatus,
+        status: status || ('awaiting' as ApplicationStatus),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })

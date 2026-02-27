@@ -33,9 +33,10 @@ export default function AdminRoles() {
     )
   }
 
-  const handleRoleChange = (uid: string, role: UserRole) => {
-    if (!confirm(t('admin.roles.approveLeader', `Change role to ${role}?`))) return
-    updateRole.mutate({ uid, role })
+  const handleRoleChange = (uid: string, newRole: UserRole) => {
+    const roleLabel = t(ROLE_LABELS[newRole])
+    if (!confirm(`${t('common.confirm')}: ${roleLabel}?`)) return
+    updateRole.mutate({ uid, role: newRole })
   }
 
   const handleLeaderStatusToggle = (uid: string, current: LeaderStatus | null) => {
