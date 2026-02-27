@@ -13,6 +13,7 @@ import {
   RequireIncompleteProfile,
 } from './components/RouteGuards'
 import AppNav from './components/AppNav'
+import { ToastProvider } from './components/Toast'
 import Spinner from './components/Spinner'
 import { getDefaultRoute } from './lib/roles'
 import { ROUTES } from './utils/constants'
@@ -165,7 +166,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </AuthProvider>
     </QueryClientProvider>

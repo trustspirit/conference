@@ -31,7 +31,7 @@ export default function StakeWardSelector({
 
   if (readOnly) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>{t('auth.stake', '스테이크/지방부')}</Label>
           <p style={{ fontSize: '0.875rem', color: '#111827', padding: '0.5rem 0' }}>{stake || '-'}</p>
@@ -45,7 +45,7 @@ export default function StakeWardSelector({
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <Label>{t('auth.stake', '스테이크/지방부')}</Label>
         <Select

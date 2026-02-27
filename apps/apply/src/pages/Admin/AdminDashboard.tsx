@@ -6,6 +6,7 @@ import { useApplications } from '../../hooks/queries/useApplications'
 import { useRecommendations } from '../../hooks/queries/useRecommendations'
 import PageLoader from '../../components/PageLoader'
 import SummaryCard from '../../components/SummaryCard'
+import EmptyState from '../../components/EmptyState'
 import { ROUTES } from '../../utils/constants'
 
 const PIE_COLORS = ['#3b82f6', '#ec4899']
@@ -121,18 +122,24 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 7-Day Trend */}
         <div className="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">7-Day Trend</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="applications" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name={t('admin.applications', '신청서')} />
-              <Line type="monotone" dataKey="recommendations" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} name={t('admin.recommendations', '추천서')} />
-            </LineChart>
-          </ResponsiveContainer>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('admin.dashboard.charts.trendTitle', '7일 추세')}</h3>
+          {stats.totalApplications + stats.totalRecommendations === 0 ? (
+            <div className="flex items-center justify-center" style={{ height: 220 }}>
+              <EmptyState message={t('leader.dashboard.charts.noData', 'No data')} />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="applications" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name={t('admin.applications', '신청서')} />
+                <Line type="monotone" dataKey="recommendations" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} name={t('admin.recommendations', '추천서')} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Gender Distribution */}

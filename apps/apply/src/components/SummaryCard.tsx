@@ -47,7 +47,12 @@ export default function SummaryCard({ label, value, color = 'gray', onClick }: S
         }
       }}
     >
-      <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>{label}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>{label}</p>
+        {isClickable && (
+          <span style={{ fontSize: '1rem', color: '#9ca3af', lineHeight: 1 }}>&rarr;</span>
+        )}
+      </div>
       <p style={{ fontSize: '1.875rem', fontWeight: 700, color: c.accent }}>{value}</p>
     </div>
   )

@@ -8,6 +8,7 @@ import {
   useUpdateRecommendationStatus,
 } from '../../hooks/queries/useRecommendations'
 import { useRecommendationComments, useCreateComment, useDeleteComment } from '../../hooks/queries/useRecommendationComments'
+import { useToast } from '../../components/Toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { Input, Select, Textarea, Label } from '../../components/form'
 import ToggleButton from '../../components/form/ToggleButton'
@@ -22,6 +23,7 @@ import type { Gender, RecommendationStatus, LeaderRecommendation } from '../../t
 
 export default function LeaderRecommendations() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { data: recommendations, isLoading } = useMyRecommendations()
   const createRec = useCreateRecommendation()
@@ -117,9 +119,10 @@ export default function LeaderRecommendations() {
       } else {
         await createRec.mutateAsync(data)
       }
+      toast(t('leader.recommendations.form.messages.draftSaved'))
       resetForm()
     } catch {
-      alert(t('leader.recommendations.form.messages.failedToSave'))
+      toast(t('leader.recommendations.form.messages.failedToSave'), 'error')
     }
   }
 
@@ -141,15 +144,19 @@ export default function LeaderRecommendations() {
       } else {
         await createRec.mutateAsync({ ...data, status: 'submitted' as RecommendationStatus })
       }
+      toast(t('leader.recommendations.form.messages.submitted'))
       resetForm()
     } catch {
-      alert(t('leader.recommendations.form.messages.failedToSubmit'))
+      toast(t('leader.recommendations.form.messages.failedToSubmit'), 'error')
     }
   }
 
   const handleDelete = (id: string) => {
     if (confirm(t('common.confirmDelete'))) {
-      deleteRec.mutate(id)
+      deleteRec.mutate(id, {
+        onSuccess: () => toast(t('leader.recommendations.messages.removed')),
+        onError: () => toast(t('leader.recommendations.messages.failedToDelete'), 'error'),
+      })
       if (selectedId === id) setSelectedId(null)
     }
   }
@@ -195,27 +202,27 @@ export default function LeaderRecommendations() {
               <Alert variant="warning">{t('leader.recommendations.form.editingAlert')}</Alert>
             </div>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
             <div>
-              <Label>{t('leader.recommendations.form.applicantName', '지원자 이름')}</Label>
+              <Label>{t('leader.recommendations.form.applicantName', '지원자 이름')} *</Label>
               <Input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required />
             </div>
             <div>
-              <Label>{t('leader.recommendations.form.age', '나이')}</Label>
+              <Label>{t('leader.recommendations.form.age', '나이')} *</Label>
               <Input type="number" value={formAge} onChange={(e) => setFormAge(e.target.value)} required />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
             <div>
               <Label>{t('leader.recommendations.form.email', '이메일')}</Label>
               <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
             </div>
             <div>
-              <Label>{t('leader.recommendations.form.phone', '전화번호')}</Label>
+              <Label>{t('leader.recommendations.form.phone', '전화번호')} *</Label>
               <Input type="tel" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} required />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
             <div>
               <Label>{t('leader.recommendations.form.gender', '성별')}</Label>
               <Select value={formGender} onChange={(e) => setFormGender(e.target.value as Gender)}>
@@ -261,8 +268,8 @@ export default function LeaderRecommendations() {
       <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '50vh' }}>
-        {/* Left: List */}
-        <div className="lg:col-span-2 space-y-2 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+        {/* Left: List — hidden on mobile when detail is open */}
+        <div className={`lg:col-span-2 space-y-2 overflow-y-auto ${selected ? 'hidden lg:block' : ''}`} style={{ maxHeight: '70vh' }}>
           {filteredRecs.length === 0 ? (
             <EmptyState message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')} />
           ) : (
@@ -300,9 +307,17 @@ export default function LeaderRecommendations() {
         </div>
 
         {/* Right: Detail */}
-        <div className="lg:col-span-3">
+        <div className={`lg:col-span-3 ${selected ? '' : 'hidden lg:block'}`}>
           {selected ? (
             <div className="rounded-xl border border-gray-200 bg-white p-6">
+              {/* Mobile back button */}
+              <button
+                onClick={() => setSelectedId(null)}
+                className="lg:hidden mb-3 text-sm text-blue-600 flex items-center gap-1"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0' }}
+              >
+                <span>&larr;</span> {t('common.back', '뒤로')}
+              </button>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>{selected.name}</h2>
@@ -467,13 +482,13 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#374151' }}>{c.authorName}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.625rem', color: '#9ca3af' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
                     {c.createdAt instanceof Date ? c.createdAt.toLocaleDateString() : ''}
                   </span>
                   {c.authorId === appUser?.uid && (
                     <button
                       onClick={() => handleDeleteComment(c.id)}
-                      style={{ fontSize: '0.625rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                      style={{ fontSize: '0.75rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
                     >
                       {t('common.delete', '삭제')}
                     </button>

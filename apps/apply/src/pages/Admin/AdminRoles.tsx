@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useUsers, useUpdateUserRole, useUpdateLeaderStatus, useDeleteUser } from '../../hooks/queries/useUsers'
+import { useToast } from '../../components/Toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { Select } from '../../components/form'
 import Spinner from '../../components/Spinner'
@@ -14,6 +15,7 @@ const ROLES: UserRole[] = ['applicant', 'bishop', 'stake_president', 'session_le
 
 export default function AdminRoles() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { data: users, isLoading } = useUsers()
   const updateRole = useUpdateUserRole()
@@ -36,17 +38,26 @@ export default function AdminRoles() {
   const handleRoleChange = (uid: string, newRole: UserRole) => {
     const roleLabel = t(ROLE_LABELS[newRole])
     if (!confirm(`${t('common.confirm')}: ${roleLabel}?`)) return
-    updateRole.mutate({ uid, role: newRole })
+    updateRole.mutate({ uid, role: newRole }, {
+      onSuccess: () => toast(`${roleLabel} ${t('common.approved', '완료')}`),
+      onError: () => toast(t('errors.generic'), 'error'),
+    })
   }
 
   const handleLeaderStatusToggle = (uid: string, current: LeaderStatus | null) => {
     const next: LeaderStatus = current === 'approved' ? 'pending' : 'approved'
-    updateLeaderStatus.mutate({ uid, leaderStatus: next })
+    updateLeaderStatus.mutate({ uid, leaderStatus: next }, {
+      onSuccess: () => toast(next === 'approved' ? t('admin.roles.approved') : t('admin.roles.pending')),
+      onError: () => toast(t('errors.generic'), 'error'),
+    })
   }
 
   const handleDeleteUser = (uid: string, name: string) => {
     if (confirm(t('admin.confirmDelete', { name }))) {
-      deleteUser.mutate(uid)
+      deleteUser.mutate(uid, {
+        onSuccess: () => toast(t('accountSettings.deleteUsers.deletedSingle', { userName: name })),
+        onError: () => toast(t('errors.generic'), 'error'),
+      })
     }
   }
 
@@ -84,7 +95,7 @@ export default function AdminRoles() {
                     <span className="text-sm text-gray-900">{user.name}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.email}>{user.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {isSelf(user.uid) ? (
                     <div className="flex items-center gap-2">

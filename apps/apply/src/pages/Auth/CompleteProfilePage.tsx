@@ -22,6 +22,7 @@ export default function CompleteProfilePage() {
   const [ward, setWard] = useState('')
   const [stake, setStake] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const isLeader = role === 'bishop' || role === 'stake_president'
 
@@ -29,6 +30,7 @@ export default function CompleteProfilePage() {
     e.preventDefault()
     if (!role) return
     setSaving(true)
+    setError('')
     try {
       await updateAppUser({
         role: role as UserRole,
@@ -38,6 +40,8 @@ export default function CompleteProfilePage() {
       })
       setNeedsProfile(false)
       navigate(getDefaultRoute(role as UserRole), { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errors.generic', '오류가 발생했습니다. 다시 시도해주세요.'))
     } finally {
       setSaving(false)
     }
@@ -48,6 +52,8 @@ export default function CompleteProfilePage() {
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 shadow-lg">
         <h1 className="text-2xl font-bold text-gray-900">{t('auth.completeProfile.title', '프로필 완성')}</h1>
         <p className="text-sm text-gray-500">{t('auth.completeProfile.subtitle')}</p>
+
+        {error && <Alert variant="error">{error}</Alert>}
 
         <div>
           <Label>{t('auth.completeProfile.accountType', '계정 유형')}</Label>

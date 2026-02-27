@@ -218,6 +218,9 @@
         "awaitingReview": "검토 대기 중",
         "approved": "승인됨",
         "today": "오늘"
+      },
+      "charts": {
+        "trendTitle": "7일 추세"
       }
     },
     "review": {

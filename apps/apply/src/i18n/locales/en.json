@@ -218,6 +218,9 @@
         "awaitingReview": "Awaiting Review",
         "approved": "Approved",
         "today": "Today"
+      },
+      "charts": {
+        "trendTitle": "7-Day Trend"
       }
     },
     "review": {

@@ -34,7 +34,7 @@ export default function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '0.375rem',
-              padding: '0.5rem 0.75rem',
+              padding: '0.625rem 0.875rem',
               fontSize: '0.875rem',
               fontWeight: isActive ? 600 : 400,
               color: isActive ? '#2563eb' : '#6b7280',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
+import { useToast } from '../../components/Toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { Input, Select, Textarea, Label } from '../../components/form'
 import { StakeWardSelector } from '../../components/form'
@@ -14,6 +15,7 @@ import type { Gender } from '../../types'
 
 export default function UserApplication() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { data: existingApp, isLoading } = useMyApplication()
   const createApp = useCreateApplication()
@@ -83,9 +85,10 @@ export default function UserApplication() {
       } else {
         await createApp.mutateAsync({ ...data, status: 'awaiting' })
       }
+      toast(t('application.messages.submitted'))
       setEditing(false)
     } catch {
-      alert(t('application.messages.failedToSubmit'))
+      toast(t('application.messages.failedToSubmit'), 'error')
     }
   }
 
@@ -97,9 +100,10 @@ export default function UserApplication() {
       } else {
         await createApp.mutateAsync({ ...data, status: 'draft' })
       }
+      toast(t('application.messages.draftSaved'))
       setEditing(false)
     } catch {
-      alert(t('application.messages.failedToSave'))
+      toast(t('application.messages.failedToSave'), 'error')
     }
   }
 
@@ -195,7 +199,7 @@ export default function UserApplication() {
             <Label>{t('application.form.name', 'Name')}</Label>
             <Input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={isLocked} required />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
             <div>
               <Label>{t('application.form.age', 'Age')}</Label>
               <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} disabled={isLocked} required />

@@ -13,11 +13,7 @@ interface DetailsGridProps {
 export default function DetailsGrid({ items, columns = 2 }: DetailsGridProps) {
   return (
     <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: columns === 2 ? '1fr 1fr' : '1fr',
-        gap: '1rem',
-      }}
+      className={columns === 2 ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'grid grid-cols-1 gap-4'}
     >
       {items.map((item, i) => (
         <div key={i}>

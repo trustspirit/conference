@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useApplications, useUpdateApplicationStatus } from '../../hooks/queries/useApplications'
 import { useRecommendations, useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
+import { useToast } from '../../components/Toast'
 import PageLoader from '../../components/PageLoader'
 import EmptyState from '../../components/EmptyState'
 import Tabs from '../../components/Tabs'
 import StatusChip from '../../components/StatusChip'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
+import Spinner from '../../components/Spinner'
 import { Select } from '../../components/form'
 import { ADMIN_REVIEW_TABS, STATUS_TONES } from '../../utils/constants'
 import { exportReviewItemsToCSV } from '../../utils/exportData'
@@ -20,6 +22,7 @@ function isToday(date: Date): boolean {
 
 export default function AdminReview() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { data: applications, isLoading: loadingApps } = useApplications()
   const { data: recommendations, isLoading: loadingRecs } = useRecommendations()
   const updateAppStatus = useUpdateApplicationStatus()
@@ -28,6 +31,8 @@ export default function AdminReview() {
   const [activeTab, setActiveTab] = useState<string>(ADMIN_REVIEW_TABS.ALL)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [todayOnly, setTodayOnly] = useState(false)
+
+  const isMutating = updateAppStatus.isPending || updateRecStatus.isPending
 
   const allItems: ReviewItem[] = useMemo(() => {
     const items: ReviewItem[] = []
@@ -53,7 +58,7 @@ export default function AdminReview() {
       })
     })
     ;(recommendations || []).forEach((rec) => {
-      if (rec.status === 'draft') return // Only show submitted/approved/rejected
+      if (rec.status === 'draft') return
       items.push({
         key: `rec-${rec.id}`,
         type: 'recommendation',
@@ -106,19 +111,39 @@ export default function AdminReview() {
   ]
 
   const handleStatusChange = (item: ReviewItem, newStatus: string) => {
+    if (newStatus === item.rawStatus) return
+    const statusLabel = t(`admin.review.status.${newStatus}`, newStatus)
+    if (!confirm(t('admin.review.updateStatus', { name: item.name }) + ` → ${statusLabel}`)) return
+
+    const onSuccess = () => toast(t('admin.review.updateStatus', { name: item.name }) + ` → ${statusLabel}`)
+    const onError = () => toast(t('errors.generic'), 'error')
+
     if (item.type === 'application') {
-      updateAppStatus.mutate({ id: item.entityId, status: newStatus as ApplicationStatus })
+      updateAppStatus.mutate({ id: item.entityId, status: newStatus as ApplicationStatus }, { onSuccess, onError })
     } else {
-      updateRecStatus.mutate({ id: item.entityId, status: newStatus as RecommendationStatus })
+      updateRecStatus.mutate({ id: item.entityId, status: newStatus as RecommendationStatus }, { onSuccess, onError })
     }
   }
 
   const handleExport = () => {
     const approvedItems = allItems.filter((it) => it.status === 'approved')
     exportReviewItemsToCSV(approvedItems, `approved-${new Date().toISOString().split('T')[0]}.csv`)
+    toast(t('admin.review.export'), 'info')
+  }
+
+  // Mobile: select item → show detail, hide list
+  const handleSelectItem = (key: string) => {
+    setSelectedId(key)
+  }
+  const handleBackToList = () => {
+    setSelectedId(null)
   }
 
   if (loadingApps || loadingRecs) return <PageLoader />
+
+  // Mobile: show detail if selected
+  const showListOnMobile = !selected
+  const showDetailOnMobile = !!selected
 
   return (
     <div className="mx-auto max-w-7xl p-6">
@@ -131,8 +156,8 @@ export default function AdminReview() {
           <button
             onClick={() => setTodayOnly(!todayOnly)}
             style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.75rem',
+              padding: '0.5rem 0.875rem',
+              fontSize: '0.8125rem',
               borderRadius: '9999px',
               border: '1px solid',
               borderColor: todayOnly ? '#3b82f6' : '#d1d5db',
@@ -147,8 +172,8 @@ export default function AdminReview() {
           <button
             onClick={handleExport}
             style={{
-              padding: '0.375rem 0.75rem',
-              fontSize: '0.75rem',
+              padding: '0.5rem 0.875rem',
+              fontSize: '0.8125rem',
               borderRadius: '0.5rem',
               border: '1px solid #d1d5db',
               backgroundColor: '#fff',
@@ -171,15 +196,15 @@ export default function AdminReview() {
       <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '60vh' }}>
-        {/* Left: List */}
-        <div className="lg:col-span-2 space-y-2 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+        {/* Left: List — hidden on mobile when detail is open */}
+        <div className={`lg:col-span-2 space-y-2 overflow-y-auto ${showListOnMobile ? '' : 'hidden lg:block'}`} style={{ maxHeight: '70vh' }}>
           {filteredItems.length === 0 ? (
             <EmptyState message={t('admin.review.empty', '이 탭에 해당하는 신청서가 없습니다.')} />
           ) : (
             filteredItems.map((item) => (
               <button
                 key={item.key}
-                onClick={() => setSelectedId(item.key)}
+                onClick={() => handleSelectItem(item.key)}
                 style={{
                   width: '100%',
                   textAlign: 'left',
@@ -193,7 +218,7 @@ export default function AdminReview() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{item.name}</span>
+                  <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }}>{item.name}</span>
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
                     <StatusChip
                       label={item.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
@@ -210,10 +235,19 @@ export default function AdminReview() {
           )}
         </div>
 
-        {/* Right: Detail */}
-        <div className="lg:col-span-3">
+        {/* Right: Detail — hidden on mobile when no selection */}
+        <div className={`lg:col-span-3 ${showDetailOnMobile ? '' : 'hidden lg:block'}`}>
           {selected ? (
             <div className="rounded-xl border border-gray-200 bg-white p-6">
+              {/* Mobile back button */}
+              <button
+                onClick={handleBackToList}
+                className="lg:hidden mb-3 text-sm text-blue-600 flex items-center gap-1"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0' }}
+              >
+                <span>&larr;</span> {t('common.back', '뒤로')}
+              </button>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>{selected.name}</h2>
@@ -221,13 +255,11 @@ export default function AdminReview() {
                     {t('admin.review.submitted', '제출됨')}: {selected.createdAt instanceof Date ? selected.createdAt.toLocaleDateString() : ''}
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <StatusChip
-                    label={selected.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
-                    tone={selected.type === 'application' ? 'submitted' : 'stakePresident'}
-                    size="md"
-                  />
-                </div>
+                <StatusChip
+                  label={selected.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
+                  tone={selected.type === 'application' ? 'submitted' : 'stakePresident'}
+                  size="md"
+                />
               </div>
 
               <DetailsGrid
@@ -254,29 +286,30 @@ export default function AdminReview() {
               <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
                 <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.5rem' }}>
                   {t('admin.review.statusLabel', '상태')}
-                  <span style={{ fontSize: '0.7rem', color: '#9ca3af', marginLeft: '0.5rem' }}>
-                    {t('admin.review.statusHint', '선택하면 즉시 업데이트됩니다.')}
-                  </span>
                 </p>
-                <Select
-                  value={selected.rawStatus}
-                  onChange={(e) => handleStatusChange(selected, e.target.value)}
-                  style={{ width: 'auto', maxWidth: '14rem' }}
-                >
-                  {selected.type === 'application' ? (
-                    <>
-                      <option value="awaiting">{t('admin.review.status.awaiting', '대기 중')}</option>
-                      <option value="approved">{t('admin.review.status.approved', '승인됨')}</option>
-                      <option value="rejected">{t('admin.review.status.rejected', '다음 기회에')}</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="submitted">{t('status.submitted', '제출됨')}</option>
-                      <option value="approved">{t('admin.review.status.approved', '승인됨')}</option>
-                      <option value="rejected">{t('admin.review.status.rejected', '다음 기회에')}</option>
-                    </>
-                  )}
-                </Select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Select
+                    value={selected.rawStatus}
+                    onChange={(e) => handleStatusChange(selected, e.target.value)}
+                    disabled={isMutating}
+                    style={{ width: 'auto', maxWidth: '14rem' }}
+                  >
+                    {selected.type === 'application' ? (
+                      <>
+                        <option value="awaiting">{t('admin.review.status.awaiting', '대기 중')}</option>
+                        <option value="approved">{t('admin.review.status.approved', '승인됨')}</option>
+                        <option value="rejected">{t('admin.review.status.rejected', '다음 기회에')}</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="submitted">{t('status.submitted', '제출됨')}</option>
+                        <option value="approved">{t('admin.review.status.approved', '승인됨')}</option>
+                        <option value="rejected">{t('admin.review.status.rejected', '다음 기회에')}</option>
+                      </>
+                    )}
+                  </Select>
+                  {isMutating && <Spinner />}
+                </div>
               </div>
             </div>
           ) : (

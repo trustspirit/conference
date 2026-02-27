@@ -11,6 +11,7 @@ import Alert from '../../components/Alert'
 import StatusChip from '../../components/StatusChip'
 import Spinner from '../../components/Spinner'
 import EmptyState from '../../components/EmptyState'
+import { useToast } from '../../components/Toast'
 import { getRoleTone, ACCOUNT_TABS } from '../../utils/constants'
 import { ROLE_LABELS } from '../../utils/roleConfig'
 
@@ -55,6 +56,7 @@ export default function AccountSettings() {
 /* =========== Settings Tab =========== */
 function SettingsTab() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser, updateAppUser } = useAuth()
   const role = appUser?.role
   const canEditDirectly = isAdminRole(role)
@@ -64,7 +66,6 @@ function SettingsTab() {
   const [stake, setStake] = useState(appUser?.stake || '')
   const [ward, setWard] = useState(appUser?.ward || '')
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
 
   // Sync local state when appUser changes (e.g. after approval)
   useEffect(() => {
@@ -80,16 +81,17 @@ function SettingsTab() {
   const handleSave = async () => {
     if (!hasChanges) return
     setSaving(true)
-    setMessage('')
     try {
       if (canEditDirectly) {
         await updateAppUser({ stake, ward })
-        setMessage(t('accountSettings.messages.profileUpdated'))
+        toast(t('accountSettings.messages.profileUpdated'))
       } else {
         await createChangeReq.mutateAsync({ stake, ward })
-        setMessage(t('accountSettings.messages.stakeWardChangeRequested'))
+        toast(t('accountSettings.messages.stakeWardChangeRequested'))
       }
       setEditing(false)
+    } catch {
+      toast(t('errors.generic'), 'error')
     } finally {
       setSaving(false)
     }
@@ -105,10 +107,6 @@ function SettingsTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {message && (
-        <Alert variant="success">{message}</Alert>
-      )}
-
       {/* Personal Information */}
       <section style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
         <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#111827', marginBottom: '0.25rem' }}>
@@ -117,7 +115,7 @@ function SettingsTab() {
         <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
           {t('accountSettings.sections.personalInformation.description')}
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{t('common.name', '이름')}</p>
             <p style={{ fontSize: '0.875rem', color: '#111827' }}>{appUser?.name}</p>
@@ -205,7 +203,7 @@ function SettingsTab() {
             />
             <button
               onClick={() => setEditing(true)}
-              style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer' }}
+              className="mt-3 rounded-lg border border-blue-300 px-4 py-2 text-sm text-blue-600 font-medium hover:bg-blue-50 transition-colors"
             >
               {t('common.edit', '편집')}
             </button>
@@ -219,6 +217,7 @@ function SettingsTab() {
 /* =========== Approvals Tab =========== */
 function ApprovalsTab() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { data: requests, isLoading } = useStakeWardChangeRequests()
   const approveChange = useApproveStakeWardChange()
@@ -229,11 +228,17 @@ function ApprovalsTab() {
   }, [requests, appUser?.role])
 
   const handleApprove = (requestId: string) => {
-    approveChange.mutate({ requestId, approved: true })
+    approveChange.mutate({ requestId, approved: true }, {
+      onSuccess: () => toast(t('accountSettings.approvals.approved')),
+      onError: () => toast(t('errors.generic'), 'error'),
+    })
   }
 
   const handleReject = (requestId: string) => {
-    approveChange.mutate({ requestId, approved: false })
+    approveChange.mutate({ requestId, approved: false }, {
+      onSuccess: () => toast(t('accountSettings.approvals.rejected')),
+      onError: () => toast(t('errors.generic'), 'error'),
+    })
   }
 
   if (isLoading) return <Spinner />

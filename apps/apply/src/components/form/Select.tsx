@@ -25,10 +25,13 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>((props, ref) => (
     }}
     onFocus={(e) => {
       e.target.style.borderColor = '#3b82f6'
+      e.target.style.outline = '2px solid #3b82f6'
+      e.target.style.outlineOffset = '1px'
       props.onFocus?.(e)
     }}
     onBlur={(e) => {
       e.target.style.borderColor = '#d1d5db'
+      e.target.style.outline = 'none'
       props.onBlur?.(e)
     }}
   />
