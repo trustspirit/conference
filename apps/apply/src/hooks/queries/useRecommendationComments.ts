@@ -10,20 +10,13 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { RecommendationComment } from '../../types'
 import { APPLY_RECOMMENDATION_COMMENTS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
-
-function toDate(val: unknown): Date {
-  if (val instanceof Timestamp) return val.toDate()
-  if (val instanceof Date) return val
-  if (typeof val === 'string') return new Date(val)
-  return new Date()
-}
+import { toDate } from './firestoreUtils'
 
 function mapComment(id: string, data: Record<string, unknown>): RecommendationComment {
   return {

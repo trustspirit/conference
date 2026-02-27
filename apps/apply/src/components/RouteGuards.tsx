@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ROUTES } from '../utils/constants'
-import { isAdminOrSessionLeader, isLeaderRole, getDefaultRoute } from '../lib/roles'
+import { isAdminRole, isLeaderRole, getDefaultRoute } from '../lib/roles'
 import type { UserRole } from '../types'
 import Spinner from './Spinner'
 
@@ -39,7 +39,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { appUser } = useAuth()
-  if (!isAdminOrSessionLeader(appUser?.role)) return <Navigate to={getDefaultRoute(appUser?.role)} replace />
+  if (!isAdminRole(appUser?.role)) return <Navigate to={getDefaultRoute(appUser?.role)} replace />
   return <>{children}</>
 }
 
@@ -51,10 +51,10 @@ export function RequireLeader({
   requireApproved?: boolean
 }) {
   const { appUser } = useAuth()
-  if (!isLeaderRole(appUser?.role) && !isAdminOrSessionLeader(appUser?.role)) {
+  if (!isLeaderRole(appUser?.role) && !isAdminRole(appUser?.role)) {
     return <Navigate to={getDefaultRoute(appUser?.role)} replace />
   }
-  if (requireApproved && appUser?.leaderStatus !== 'approved' && !isAdminOrSessionLeader(appUser?.role)) {
+  if (requireApproved && appUser?.leaderStatus !== 'approved' && !isAdminRole(appUser?.role)) {
     return <Navigate to={ROUTES.LEADER_PENDING} replace />
   }
   return <>{children}</>

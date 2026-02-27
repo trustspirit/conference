@@ -11,12 +11,8 @@ export function isAdminRole(role: UserRole | null | undefined): boolean {
   return !!role && ADMIN_ROLES.includes(role)
 }
 
-export function isAdminOrSessionLeader(role: UserRole | null | undefined): boolean {
-  return role === 'admin' || role === 'session_leader'
-}
-
 export function canViewAllApplications(role: UserRole | null | undefined): boolean {
-  return isAdminOrSessionLeader(role)
+  return isAdminRole(role)
 }
 
 export function canViewWardApplications(role: UserRole | null | undefined): boolean {
@@ -28,7 +24,7 @@ export function canViewStakeApplications(role: UserRole | null | undefined): boo
 }
 
 export function canUpdateApplicationStatus(role: UserRole | null | undefined): boolean {
-  return isAdminOrSessionLeader(role)
+  return isAdminRole(role)
 }
 
 export function canCreateMemo(role: UserRole | null | undefined): boolean {
@@ -53,7 +49,7 @@ export function canDeleteUser(role: UserRole | null | undefined): boolean {
 }
 
 export function getDefaultRoute(role: UserRole | null | undefined): string {
-  if (isAdminOrSessionLeader(role)) return '/admin/dashboard'
+  if (isAdminRole(role)) return '/admin/dashboard'
   if (isLeaderRole(role)) return '/leader/dashboard'
   if (role === 'applicant') return '/application'
   return '/login'

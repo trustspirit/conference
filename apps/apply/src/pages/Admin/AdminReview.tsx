@@ -1,10 +1,24 @@
 import { useTranslation } from 'react-i18next'
-import { useApplications } from '../../hooks/queries/useApplications'
-import { useRecommendations } from '../../hooks/queries/useRecommendations'
-import { useUpdateApplicationStatus } from '../../hooks/queries/useApplications'
-import { useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
-import Spinner from '../../components/Spinner'
+import { useApplications, useUpdateApplicationStatus } from '../../hooks/queries/useApplications'
+import { useRecommendations, useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
+import PageLoader from '../../components/PageLoader'
+import ItemCard from '../../components/ItemCard'
+import EmptyState from '../../components/EmptyState'
 import type { ApplicationStatus, RecommendationStatus } from '../../types'
+
+function ApproveRejectButtons({ onApprove, onReject }: { onApprove: () => void; onReject: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <button onClick={onApprove} className="text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700">
+        {t('common.approve', '승인')}
+      </button>
+      <button onClick={onReject} className="text-xs px-3 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700">
+        {t('common.reject', '거부')}
+      </button>
+    </>
+  )
+}
 
 export default function AdminReview() {
   const { t } = useTranslation()
@@ -13,99 +27,55 @@ export default function AdminReview() {
   const updateAppStatus = useUpdateApplicationStatus()
   const updateRecStatus = useUpdateRecommendationStatus()
 
-  if (loadingApps || loadingRecs) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Spinner />
-      </div>
-    )
-  }
-
-  const handleAppStatusChange = (id: string, status: ApplicationStatus) => {
-    updateAppStatus.mutate({ id, status })
-  }
-
-  const handleRecStatusChange = (id: string, status: RecommendationStatus) => {
-    updateRecStatus.mutate({ id, status })
-  }
+  if (loadingApps || loadingRecs) return <PageLoader />
 
   return (
     <div className="mx-auto max-w-7xl p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('admin.review.title', '신청서 검토')}</h1>
 
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.applications', 'Applications')}</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.applications', '신청서')}</h2>
         <div className="space-y-3">
           {applications?.map((app) => (
-            <div key={app.id} className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">{app.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {app.stake} / {app.ward} · {app.email}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{app.status}</span>
-                  {app.status === 'awaiting' && (
-                    <>
-                      <button
-                        onClick={() => handleAppStatusChange(app.id, 'approved')}
-                        className="text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700"
-                      >
-                        {t('common.approve', 'Approve')}
-                      </button>
-                      <button
-                        onClick={() => handleAppStatusChange(app.id, 'rejected')}
-                        className="text-xs px-3 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700"
-                      >
-                        {t('common.reject', 'Reject')}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ItemCard
+              key={app.id}
+              name={app.name}
+              subtitle={`${app.stake} / ${app.ward} · ${app.email}`}
+              status={app.status}
+              actions={
+                app.status === 'awaiting' ? (
+                  <ApproveRejectButtons
+                    onApprove={() => updateAppStatus.mutate({ id: app.id, status: 'approved' as ApplicationStatus })}
+                    onReject={() => updateAppStatus.mutate({ id: app.id, status: 'rejected' as ApplicationStatus })}
+                  />
+                ) : undefined
+              }
+            />
           ))}
-          {!applications?.length && <p className="text-gray-500 text-sm">{t('common.noData', 'No data')}</p>}
+          {!applications?.length && <EmptyState message={t('common.noData', '데이터가 없습니다')} />}
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.recommendations', 'Recommendations')}</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">{t('admin.recommendations', '추천서')}</h2>
         <div className="space-y-3">
           {recommendations?.map((rec) => (
-            <div key={rec.id} className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">{rec.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {rec.stake} / {rec.ward} · {rec.phone}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{rec.status}</span>
-                  {rec.status === 'submitted' && (
-                    <>
-                      <button
-                        onClick={() => handleRecStatusChange(rec.id, 'approved')}
-                        className="text-xs px-3 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700"
-                      >
-                        {t('common.approve', 'Approve')}
-                      </button>
-                      <button
-                        onClick={() => handleRecStatusChange(rec.id, 'rejected')}
-                        className="text-xs px-3 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700"
-                      >
-                        {t('common.reject', 'Reject')}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ItemCard
+              key={rec.id}
+              name={rec.name}
+              subtitle={`${rec.stake} / ${rec.ward} · ${rec.phone}`}
+              status={rec.status}
+              actions={
+                rec.status === 'submitted' ? (
+                  <ApproveRejectButtons
+                    onApprove={() => updateRecStatus.mutate({ id: rec.id, status: 'approved' as RecommendationStatus })}
+                    onReject={() => updateRecStatus.mutate({ id: rec.id, status: 'rejected' as RecommendationStatus })}
+                  />
+                ) : undefined
+              }
+            />
           ))}
-          {!recommendations?.length && <p className="text-gray-500 text-sm">{t('common.noData', 'No data')}</p>}
+          {!recommendations?.length && <EmptyState message={t('common.noData', '데이터가 없습니다')} />}
         </div>
       </section>
     </div>

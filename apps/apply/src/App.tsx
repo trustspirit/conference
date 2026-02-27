@@ -12,6 +12,7 @@ import {
   PublicOnly,
   RequireIncompleteProfile,
 } from './components/RouteGuards'
+import AppNav from './components/AppNav'
 import Spinner from './components/Spinner'
 import { getDefaultRoute } from './lib/roles'
 import { ROUTES } from './utils/constants'
@@ -28,17 +29,30 @@ const LeaderDashboard = lazy(() => import('./pages/Leader/LeaderDashboard'))
 const LeaderPending = lazy(() => import('./pages/Leader/LeaderPending'))
 const LeaderRecommendations = lazy(() => import('./pages/Leader/LeaderRecommendations'))
 
-function AppLayout() {
+function FullPageLoader() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <Spinner />
-        </div>
-      }
-    >
+    <div className="flex items-center justify-center min-h-screen">
+      <Spinner />
+    </div>
+  )
+}
+
+function PublicLayout() {
+  return (
+    <Suspense fallback={<FullPageLoader />}>
       <Outlet />
     </Suspense>
+  )
+}
+
+function AuthenticatedLayout() {
+  return (
+    <>
+      <AppNav />
+      <Suspense fallback={<FullPageLoader />}>
+        <Outlet />
+      </Suspense>
+    </>
   )
 }
 
@@ -49,7 +63,7 @@ function RootRedirect() {
 
 const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    element: <PublicLayout />,
     children: [
       {
         path: ROUTES.LOGIN,
@@ -67,84 +81,84 @@ const router = createBrowserRouter([
           </RequireIncompleteProfile>
         ),
       },
-      {
-        element: (
-          <RequireAuth>
-            <Outlet />
-          </RequireAuth>
-        ),
-        children: [
-          { index: true, element: <RootRedirect /> },
-          {
-            path: ROUTES.ADMIN_ROOT,
-            element: (
-              <RequireAdmin>
-                <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />
-              </RequireAdmin>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_DASHBOARD,
-            element: (
-              <RequireAdmin>
-                <AdminDashboard />
-              </RequireAdmin>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_REVIEW,
-            element: (
-              <RequireAdmin>
-                <AdminReview />
-              </RequireAdmin>
-            ),
-          },
-          {
-            path: ROUTES.ADMIN_ROLES,
-            element: (
-              <RequireAdmin>
-                <AdminRoles />
-              </RequireAdmin>
-            ),
-          },
-          {
-            path: ROUTES.APPLICATION,
-            element: (
-              <RequireApplicant>
-                <UserApplication />
-              </RequireApplicant>
-            ),
-          },
-          { path: ROUTES.ACCOUNT_SETTINGS, element: <AccountSettings /> },
-          {
-            path: ROUTES.LEADER_DASHBOARD,
-            element: (
-              <RequireLeader requireApproved>
-                <LeaderDashboard />
-              </RequireLeader>
-            ),
-          },
-          {
-            path: ROUTES.LEADER_RECOMMENDATIONS,
-            element: (
-              <RequireLeader>
-                <LeaderRecommendations />
-              </RequireLeader>
-            ),
-          },
-          {
-            path: ROUTES.LEADER_PENDING,
-            element: (
-              <RequireLeader>
-                <LeaderPending />
-              </RequireLeader>
-            ),
-          },
-        ],
-      },
-      { path: '*', element: <Navigate to={ROUTES.LOGIN} replace /> },
     ],
   },
+  {
+    element: (
+      <RequireAuth>
+        <AuthenticatedLayout />
+      </RequireAuth>
+    ),
+    children: [
+      { index: true, element: <RootRedirect /> },
+      {
+        path: ROUTES.ADMIN_ROOT,
+        element: (
+          <RequireAdmin>
+            <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN_DASHBOARD,
+        element: (
+          <RequireAdmin>
+            <AdminDashboard />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN_REVIEW,
+        element: (
+          <RequireAdmin>
+            <AdminReview />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN_ROLES,
+        element: (
+          <RequireAdmin>
+            <AdminRoles />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: ROUTES.APPLICATION,
+        element: (
+          <RequireApplicant>
+            <UserApplication />
+          </RequireApplicant>
+        ),
+      },
+      { path: ROUTES.ACCOUNT_SETTINGS, element: <AccountSettings /> },
+      {
+        path: ROUTES.LEADER_DASHBOARD,
+        element: (
+          <RequireLeader requireApproved>
+            <LeaderDashboard />
+          </RequireLeader>
+        ),
+      },
+      {
+        path: ROUTES.LEADER_RECOMMENDATIONS,
+        element: (
+          <RequireLeader>
+            <LeaderRecommendations />
+          </RequireLeader>
+        ),
+      },
+      {
+        path: ROUTES.LEADER_PENDING,
+        element: (
+          <RequireLeader>
+            <LeaderPending />
+          </RequireLeader>
+        ),
+      },
+    ],
+  },
+  { path: '*', element: <Navigate to={ROUTES.LOGIN} replace /> },
 ])
 
 export default function App() {
