@@ -1,0 +1,6 @@
+export const APPLY_USERS_COLLECTION = 'apply_users'
+export const APPLY_APPLICATIONS_COLLECTION = 'apply_applications'
+export const APPLY_RECOMMENDATIONS_COLLECTION = 'apply_recommendations'
+export const APPLY_RECOMMENDATION_COMMENTS_COLLECTION = 'apply_recommendation_comments'
+export const APPLY_MEMOS_COLLECTION = 'apply_memos'
+export const APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION = 'apply_stakeWardChangeRequests'

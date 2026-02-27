@@ -3,6 +3,7 @@ import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/aut
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@conference/firebase'
 import { AppUser } from '../types'
+import { APPLY_USERS_COLLECTION } from '../collections'
 import i18n from '../lib/i18n'
 
 interface AuthContextType {
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setUser(firebaseUser)
         if (firebaseUser) {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+          const userDoc = await getDoc(doc(db, APPLY_USERS_COLLECTION, firebaseUser.uid))
           if (userDoc.exists()) {
             const data = userDoc.data() as AppUser
             setAppUser(data)
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phone: '',
               picture: firebaseUser.photoURL || '',
             }
-            await setDoc(doc(db, 'users', firebaseUser.uid), newUser)
+            await setDoc(doc(db, APPLY_USERS_COLLECTION, firebaseUser.uid), newUser)
             setAppUser(newUser)
             setNeedsProfile(true)
           }
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     for (const [key, value] of Object.entries(fields)) {
       updateData[key] = value
     }
-    await updateDoc(doc(db, 'users', user.uid), updateData)
+    await updateDoc(doc(db, APPLY_USERS_COLLECTION, user.uid), updateData)
     setAppUser((prev) => (prev ? { ...prev, ...fields } : prev))
   }
 

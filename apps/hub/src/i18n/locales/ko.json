@@ -9,6 +9,8 @@
     "registration": "등록",
     "registrationDesc": "참가자 등록 및 신청 관리",
     "finance": "재정",
-    "financeDesc": "재정 관리 및 회계"
+    "financeDesc": "재정 관리 및 회계",
+    "apply": "신청",
+    "applyDesc": "컨퍼런스 참가 신청 및 접수"
   }
 }

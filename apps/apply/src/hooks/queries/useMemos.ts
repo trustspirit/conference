@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { ApplicationMemo } from '../../types'
+import { APPLY_MEMOS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -38,7 +39,7 @@ export function useMemos(applicationId: string) {
     queryKey: queryKeys.memos.byApplication(applicationId),
     queryFn: async () => {
       const q = query(
-        collection(db, 'memos'),
+        collection(db, APPLY_MEMOS_COLLECTION),
         where('applicationId', '==', applicationId),
         orderBy('createdAt', 'desc'),
       )
@@ -55,7 +56,7 @@ export function useCreateMemo() {
 
   return useMutation({
     mutationFn: async ({ applicationId, content }: { applicationId: string; content: string }) => {
-      const docRef = await addDoc(collection(db, 'memos'), {
+      const docRef = await addDoc(collection(db, APPLY_MEMOS_COLLECTION), {
         applicationId,
         authorId: appUser!.uid,
         authorName: appUser!.name,
@@ -77,7 +78,7 @@ export function useUpdateMemo() {
 
   return useMutation({
     mutationFn: async ({ id, content, applicationId }: { id: string; content: string; applicationId: string }) => {
-      await updateDoc(doc(db, 'memos', id), {
+      await updateDoc(doc(db, APPLY_MEMOS_COLLECTION, id), {
         content,
         updatedAt: serverTimestamp(),
       })
@@ -94,7 +95,7 @@ export function useDeleteMemo() {
 
   return useMutation({
     mutationFn: async ({ id, applicationId }: { id: string; applicationId: string }) => {
-      await deleteDoc(doc(db, 'memos', id))
+      await deleteDoc(doc(db, APPLY_MEMOS_COLLECTION, id))
       return applicationId
     },
     onSuccess: (_data, variables) => {

@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { RecommendationComment } from '../../types'
+import { APPLY_RECOMMENDATION_COMMENTS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -38,7 +39,7 @@ export function useRecommendationComments(recommendationId: string) {
     queryKey: queryKeys.comments.byRecommendation(recommendationId),
     queryFn: async () => {
       const q = query(
-        collection(db, 'recommendation-comments'),
+        collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION),
         where('recommendationId', '==', recommendationId),
         orderBy('createdAt', 'desc'),
       )
@@ -54,7 +55,7 @@ export function useApplicationComments(applicationId: string) {
     queryKey: queryKeys.comments.byApplication(applicationId),
     queryFn: async () => {
       const q = query(
-        collection(db, 'recommendation-comments'),
+        collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION),
         where('applicationId', '==', applicationId),
         orderBy('createdAt', 'desc'),
       )
@@ -71,7 +72,7 @@ export function useCreateComment() {
 
   return useMutation({
     mutationFn: async (data: { recommendationId?: string; applicationId?: string; content: string }) => {
-      const docRef = await addDoc(collection(db, 'recommendation-comments'), {
+      const docRef = await addDoc(collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION), {
         ...data,
         authorId: appUser!.uid,
         authorName: appUser!.name,
@@ -111,7 +112,7 @@ export function useUpdateComment() {
       recommendationId?: string
       applicationId?: string
     }) => {
-      await updateDoc(doc(db, 'recommendation-comments', id), {
+      await updateDoc(doc(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION, id), {
         content,
         updatedAt: serverTimestamp(),
       })
@@ -145,7 +146,7 @@ export function useDeleteComment() {
       recommendationId?: string
       applicationId?: string
     }) => {
-      await deleteDoc(doc(db, 'recommendation-comments', id))
+      await deleteDoc(doc(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION, id))
       return { recommendationId, applicationId }
     },
     onSuccess: (_data, variables) => {

@@ -12,6 +12,7 @@ import {
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '@conference/firebase'
 import type { StakeWardChangeRequest } from '../../types'
+import { APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -36,7 +37,7 @@ export function useStakeWardChangeRequests() {
     queryKey: queryKeys.stakeWardChanges.pending(),
     queryFn: async () => {
       const q = query(
-        collection(db, 'stakeWardChangeRequests'),
+        collection(db, APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION),
         where('status', '==', 'pending'),
         orderBy('requestedAt', 'desc'),
       )
@@ -52,7 +53,7 @@ export function useCreateStakeWardChangeRequest() {
 
   return useMutation({
     mutationFn: async ({ stake, ward }: { stake: string; ward: string }) => {
-      const docRef = await addDoc(collection(db, 'stakeWardChangeRequests'), {
+      const docRef = await addDoc(collection(db, APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION), {
         userId: appUser!.uid,
         userName: appUser!.name,
         userEmail: appUser!.email,

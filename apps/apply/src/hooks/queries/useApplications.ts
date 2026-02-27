@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { Application, ApplicationStatus } from '../../types'
+import { APPLY_APPLICATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -46,11 +47,11 @@ export function useApplications() {
     queryFn: async () => {
       let q
       if (appUser?.role === 'bishop') {
-        q = query(collection(db, 'applications'), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
       } else if (appUser?.role === 'stake_president') {
-        q = query(collection(db, 'applications'), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
       } else {
-        q = query(collection(db, 'applications'), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), orderBy('createdAt', 'desc'))
       }
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapApplication(d.id, d.data()))
@@ -65,7 +66,7 @@ export function useMyApplication() {
   return useQuery({
     queryKey: queryKeys.applications.byUser(appUser?.uid || ''),
     queryFn: async () => {
-      const q = query(collection(db, 'applications'), where('userId', '==', appUser!.uid))
+      const q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('userId', '==', appUser!.uid))
       const snap = await getDocs(q)
       if (snap.empty) return null
       const d = snap.docs[0]
@@ -79,7 +80,7 @@ export function useApplicationDetail(id: string) {
   return useQuery({
     queryKey: queryKeys.applications.detail(id),
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'applications', id))
+      const snap = await getDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id))
       if (!snap.exists()) return null
       return mapApplication(snap.id, snap.data())
     },
@@ -93,7 +94,7 @@ export function useCreateApplication() {
 
   return useMutation({
     mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'>) => {
-      const docRef = await addDoc(collection(db, 'applications'), {
+      const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
         ...data,
         userId: appUser!.uid,
         status: 'awaiting' as ApplicationStatus,
@@ -113,7 +114,7 @@ export function useUpdateApplication() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<Application> & { id: string }) => {
-      await updateDoc(doc(db, 'applications', id), {
+      await updateDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id), {
         ...data,
         updatedAt: serverTimestamp(),
       })
@@ -129,7 +130,7 @@ export function useUpdateApplicationStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: ApplicationStatus }) => {
-      await updateDoc(doc(db, 'applications', id), {
+      await updateDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id), {
         status,
         updatedAt: serverTimestamp(),
       })
@@ -145,7 +146,7 @@ export function useDeleteApplication() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'applications', id))
+      await deleteDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })

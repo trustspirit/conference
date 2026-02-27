@@ -4,6 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "site": "checkin-ba4b8-apply",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
@@ -30,10 +31,14 @@
     ],
     "rewrites": [{ "source": "**", "destination": "/index.html" }]
   },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs22"
-  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "apply",
+      "ignore": ["node_modules", ".git"],
+      "predeploy": ["npm --prefix functions run build"]
+    }
+  ],
   "emulators": {
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },

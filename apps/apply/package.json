@@ -11,9 +11,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "deploy": "pnpm build && firebase deploy --only hosting --project apply",
-    "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions --project apply",
-    "deploy:all": "pnpm build && cd functions && npm run build && cd .. && firebase deploy --project apply"
+    "deploy": "pnpm build && firebase deploy --only hosting:checkin-ba4b8-apply",
+    "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions:apply",
+    "deploy:all": "pnpm build && cd functions && npm run build && cd .. && firebase deploy --only hosting:checkin-ba4b8-apply,functions:apply"
   },
   "dependencies": {
     "@conference/firebase": "workspace:*",

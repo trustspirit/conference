@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { LeaderRecommendation, RecommendationStatus } from '../../types'
+import { APPLY_RECOMMENDATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -46,11 +47,11 @@ export function useRecommendations() {
     queryFn: async () => {
       let q
       if (appUser?.role === 'bishop') {
-        q = query(collection(db, 'recommendations'), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
       } else if (appUser?.role === 'stake_president') {
-        q = query(collection(db, 'recommendations'), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
       } else {
-        q = query(collection(db, 'recommendations'), orderBy('createdAt', 'desc'))
+        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), orderBy('createdAt', 'desc'))
       }
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
@@ -66,7 +67,7 @@ export function useMyRecommendations() {
     queryKey: queryKeys.recommendations.byLeader(appUser?.uid || ''),
     queryFn: async () => {
       const q = query(
-        collection(db, 'recommendations'),
+        collection(db, APPLY_RECOMMENDATIONS_COLLECTION),
         where('leaderId', '==', appUser!.uid),
         orderBy('createdAt', 'desc'),
       )
@@ -81,7 +82,7 @@ export function useRecommendationDetail(id: string) {
   return useQuery({
     queryKey: queryKeys.recommendations.detail(id),
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'recommendations', id))
+      const snap = await getDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id))
       if (!snap.exists()) return null
       return mapRecommendation(snap.id, snap.data())
     },
@@ -97,7 +98,7 @@ export function useCreateRecommendation() {
     mutationFn: async (
       data: Omit<LeaderRecommendation, 'id' | 'createdAt' | 'updatedAt' | 'leaderId' | 'status' | 'comments'>,
     ) => {
-      const docRef = await addDoc(collection(db, 'recommendations'), {
+      const docRef = await addDoc(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), {
         ...data,
         leaderId: appUser!.uid,
         status: 'draft' as RecommendationStatus,
@@ -117,7 +118,7 @@ export function useUpdateRecommendation() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<LeaderRecommendation> & { id: string }) => {
-      await updateDoc(doc(db, 'recommendations', id), {
+      await updateDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id), {
         ...data,
         updatedAt: serverTimestamp(),
       })
@@ -133,7 +134,7 @@ export function useUpdateRecommendationStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: RecommendationStatus }) => {
-      await updateDoc(doc(db, 'recommendations', id), {
+      await updateDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id), {
         status,
         updatedAt: serverTimestamp(),
       })
@@ -149,7 +150,7 @@ export function useDeleteRecommendation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'recommendations', id))
+      await deleteDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })

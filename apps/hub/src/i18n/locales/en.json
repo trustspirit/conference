@@ -9,6 +9,8 @@
     "registration": "Registration",
     "registrationDesc": "Participant registration and application management",
     "finance": "Finance",
-    "financeDesc": "Financial management and accounting"
+    "financeDesc": "Financial management and accounting",
+    "apply": "Apply",
+    "applyDesc": "Conference participation application and submission"
   }
 }

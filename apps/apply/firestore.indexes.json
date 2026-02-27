@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "memos",
+      "collectionGroup": "apply_memos",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "applicationId", "order": "ASCENDING" },
@@ -9,7 +9,7 @@
       ]
     },
     {
-      "collectionGroup": "recommendation-comments",
+      "collectionGroup": "apply_recommendation_comments",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "recommendationId", "order": "ASCENDING" },
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "collectionGroup": "recommendation-comments",
+      "collectionGroup": "apply_recommendation_comments",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "applicationId", "order": "ASCENDING" },
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "collectionGroup": "applications",
+      "collectionGroup": "apply_applications",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "ward", "order": "ASCENDING" },
@@ -33,7 +33,7 @@
       ]
     },
     {
-      "collectionGroup": "applications",
+      "collectionGroup": "apply_applications",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "stake", "order": "ASCENDING" },
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "collectionGroup": "recommendations",
+      "collectionGroup": "apply_recommendations",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "ward", "order": "ASCENDING" },
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "collectionGroup": "recommendations",
+      "collectionGroup": "apply_recommendations",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "stake", "order": "ASCENDING" },
@@ -57,7 +57,7 @@
       ]
     },
     {
-      "collectionGroup": "recommendations",
+      "collectionGroup": "apply_recommendations",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "leaderId", "order": "ASCENDING" },
@@ -65,7 +65,7 @@
       ]
     },
     {
-      "collectionGroup": "stakeWardChangeRequests",
+      "collectionGroup": "apply_stakeWardChangeRequests",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
