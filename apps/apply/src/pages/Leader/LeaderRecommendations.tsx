@@ -45,6 +45,7 @@ export default function LeaderRecommendations() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    try {
     await createRec.mutateAsync({
       name,
       age: Number(age),
@@ -57,6 +58,9 @@ export default function LeaderRecommendations() {
       servedMission,
     })
     resetForm()
+    } catch {
+      alert(t('errors.generic', 'An error occurred. Please try again.'))
+    }
   }
 
   const handleSubmit = (id: string) => {
@@ -113,6 +117,7 @@ export default function LeaderRecommendations() {
             </div>
             <div className="flex items-end">
               <Checkbox
+                id="servedMission"
                 checked={servedMission}
                 onChange={(e) => setServedMission(e.target.checked)}
                 label={t('application.servedMission', 'Previously served a mission')}

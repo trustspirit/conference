@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { useApplications } from '../../hooks/queries/useApplications'
-import { useRecommendations } from '../../hooks/queries/useRecommendations'
+import { useMyRecommendations } from '../../hooks/queries/useRecommendations'
 import Spinner from '../../components/Spinner'
 
 export default function LeaderDashboard() {
   const { t } = useTranslation()
   const { data: applications, isLoading: loadingApps } = useApplications()
-  const { data: recommendations, isLoading: loadingRecs } = useRecommendations()
+  const { data: recommendations, isLoading: loadingRecs } = useMyRecommendations()
 
   if (loadingApps || loadingRecs) {
     return (

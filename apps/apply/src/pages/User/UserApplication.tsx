@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
 import { useAuth } from '../../contexts/AuthContext'
@@ -25,7 +25,7 @@ export default function UserApplication() {
   const isLocked = existingApp?.status === 'approved' || existingApp?.status === 'rejected'
 
   // Populate form when existing application loads
-  useState(() => {
+  useEffect(() => {
     if (existingApp) {
       setName(existingApp.name)
       setAge(String(existingApp.age))
@@ -35,7 +35,7 @@ export default function UserApplication() {
       setMoreInfo(existingApp.moreInfo)
       setServedMission(existingApp.servedMission || false)
     }
-  })
+  }, [existingApp])
 
   if (isLoading) {
     return (

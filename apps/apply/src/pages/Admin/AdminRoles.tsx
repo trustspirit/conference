@@ -22,6 +22,7 @@ export default function AdminRoles() {
   }
 
   const handleRoleChange = (uid: string, role: UserRole) => {
+    if (!confirm(t('admin.confirmRoleChange', `Change role to ${role}?`))) return
     updateRole.mutate({ uid, role })
   }
 

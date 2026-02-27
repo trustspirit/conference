@@ -14,7 +14,7 @@ const ROLE_OPTIONS: { value: UserRole; labelKey: string }[] = [
 
 export default function CompleteProfilePage() {
   const { t } = useTranslation()
-  const { updateAppUser } = useAuth()
+  const { updateAppUser, setNeedsProfile } = useAuth()
   const navigate = useNavigate()
   const [role, setRole] = useState<UserRole | ''>('')
   const [ward, setWard] = useState('')
@@ -27,6 +27,7 @@ export default function CompleteProfilePage() {
     setSaving(true)
     try {
       await updateAppUser({ role: role as UserRole, ward, stake, leaderStatus: role === 'applicant' ? null : 'pending' })
+      setNeedsProfile(false)
       navigate(getDefaultRoute(role as UserRole), { replace: true })
     } finally {
       setSaving(false)
