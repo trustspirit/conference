@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return userRole() == 'admin';
+    }
+
+    function isAdminOrSessionLeader() {
+      return userRole() in ['admin', 'session_leader'];
+    }
+
+    function isLeader() {
+      return userRole() in ['bishop', 'stake_president'];
+    }
+
+    function isApprovedLeader() {
+      return isLeader()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.leaderStatus == 'approved';
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isAdminOrSessionLeader() || isApprovedLeader());
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Applications
+    match /applications/{applicationId} {
+      allow read: if request.auth != null
+        && (
+          resource.data.userId == request.auth.uid
+          || isAdminOrSessionLeader()
+          || isApprovedLeader()
+        );
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && (
+          resource.data.userId == request.auth.uid
+          || isAdminOrSessionLeader()
+        )
+        && resource.data.status != 'approved'
+        && resource.data.status != 'rejected';
+      allow delete: if isAdmin();
+    }
+
+    // Recommendations
+    match /recommendations/{recommendationId} {
+      allow read: if request.auth != null
+        && (
+          resource.data.leaderId == request.auth.uid
+          || isAdminOrSessionLeader()
+          || isApprovedLeader()
+        );
+      allow create: if request.auth != null
+        && (isApprovedLeader() || isAdminOrSessionLeader());
+      allow update: if request.auth != null
+        && (
+          resource.data.leaderId == request.auth.uid
+          || isAdminOrSessionLeader()
+        )
+        && resource.data.status != 'approved'
+        && resource.data.status != 'rejected';
+      allow delete: if request.auth != null
+        && (
+          resource.data.leaderId == request.auth.uid
+          || isAdmin()
+        )
+        && resource.data.status != 'approved'
+        && resource.data.status != 'rejected';
+    }
+
+    // Memos (Application Comments)
+    match /memos/{memoId} {
+      allow read: if request.auth != null
+        && (isAdminOrSessionLeader() || isApprovedLeader());
+      allow create: if request.auth != null
+        && (isApprovedLeader() || isAdminOrSessionLeader())
+        && request.resource.data.authorId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+    }
+
+    // Recommendation Comments
+    match /recommendation-comments/{commentId} {
+      allow read: if request.auth != null
+        && (isAdminOrSessionLeader() || isApprovedLeader());
+      allow create: if request.auth != null
+        && (isApprovedLeader() || isAdminOrSessionLeader())
+        && request.resource.data.authorId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+    }
+
+    // Stake/Ward Change Requests
+    match /stakeWardChangeRequests/{requestId} {
+      allow read: if request.auth != null
+        && (isAdminOrSessionLeader() || isApprovedLeader());
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+  }
+}
