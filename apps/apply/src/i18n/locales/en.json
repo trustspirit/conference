@@ -507,7 +507,7 @@
   },
   "eligibility": {
     "title": "Eligibility Requirements",
-    "description": "Only applicants who meet the following requirements may apply."
+    "description": "The following are recommended qualifications for serving in this position."
   },
   "settings": {
     "title": "Account Settings"
@@ -530,7 +530,7 @@
       "draftSaved": "Your draft is saved. Complete the required fields and submit when you are ready.",
       "canUpdate": "You can update your submission while it is being reviewed.",
       "locked": "Your submission is locked while a decision is finalized.",
-      "start": "Start your application to be considered."
+      "start": "Please fill out an application to serve at the conference."
     },
     "recommendationAlert": {
       "title": "Already Recommended",

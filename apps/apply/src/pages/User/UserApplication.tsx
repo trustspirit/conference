@@ -185,7 +185,7 @@ export default function UserApplication() {
     }
   }
 
-  const showForm = editing || !hasApp
+  const showForm = editing
   const statusTone = existingApp ? (STATUS_TONES[existingApp.status] || 'draft') : 'draft'
 
   const genderOptions = [
@@ -325,7 +325,7 @@ export default function UserApplication() {
           )}
 
           {/* Edit Form */}
-          {showForm && (editing || !hasApp) && !closed && (
+          {showForm && !closed && (
             <form onSubmit={handleSubmit} style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
               {/* Position Selector */}
               {positions.length > 0 && (
