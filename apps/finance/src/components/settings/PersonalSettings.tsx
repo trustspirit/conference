@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../hooks/queries/queryKeys'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../../lib/utils'
-import { TextField, Button } from 'trust-ui-react'
+import { TextField, Button, useToast } from 'trust-ui-react'
 import BankSelect from '../BankSelect'
 import { useAuth } from '../../contexts/AuthContext'
 import { Committee } from '../../types'
@@ -13,6 +13,7 @@ import { useUploadBankBook } from '../../hooks/queries/useCloudFunctions'
 
 export default function PersonalSettings() {
   const { t, i18n } = useTranslation()
+  const { toast } = useToast()
   const { appUser, updateAppUser } = useAuth()
   const [displayName, setDisplayName] = useState(appUser?.displayName || '')
   const [phone, setPhone] = useState(appUser?.phone || '')
@@ -44,13 +45,13 @@ export default function PersonalSettings() {
   const uploadBankBook = useUploadBankBook()
 
   const handleSave = async () => {
-    if (!displayName.trim()) { alert(t('validation.displayNameRequired')); return }
+    if (!displayName.trim()) { toast({ variant: 'danger', message: t('validation.displayNameRequired') }); return }
     setSaving(true); setSaved(false)
     try {
       await updateAppUser({ displayName: displayName.trim(), phone: phone.trim(), bankName: bankName.trim(), bankAccount: bankAccount.trim(), defaultCommittee, signature })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       setSaved(true); setTimeout(() => setSaved(false), 2000)
-    } catch { alert(t('settings.saveFailed')) } finally { setSaving(false) }
+    } catch { toast({ variant: 'danger', message: t('settings.saveFailed') }) } finally { setSaving(false) }
   }
 
   const handleUploadBankBook = async () => {
@@ -61,8 +62,8 @@ export default function PersonalSettings() {
       const { storagePath, url } = await uploadBankBook.mutateAsync({ file: { name: bankBookFile.name, data } })
       await updateAppUser({ bankBookImage: '', bankBookPath: storagePath, bankBookUrl: url })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-      setBankBookFile(null); alert(t('settings.bankBookUploadSuccess'))
-    } catch { alert(t('settings.bankBookUploadFailed')) } finally { setUploadingBankBook(false) }
+      setBankBookFile(null); toast({ variant: 'success', message: t('settings.bankBookUploadSuccess') })
+    } catch { toast({ variant: 'danger', message: t('settings.bankBookUploadFailed') }) } finally { setUploadingBankBook(false) }
   }
 
   return (

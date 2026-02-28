@@ -40,6 +40,11 @@ function GroupDetailPage(): React.ReactElement {
     participantName: string
     isRemoving: boolean
   }>({ open: false, participantId: '', participantName: '', isRemoving: false })
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    open: boolean
+    participantId: string
+    participantName: string
+  }>({ open: false, participantId: '', participantName: '' })
 
   const presetTags = ['male', 'female']
 
@@ -109,11 +114,13 @@ function GroupDetailPage(): React.ReactElement {
     }
   }
 
-  const handleRemoveParticipant = async (participantId: string, participantName: string) => {
-    if (!confirm(t('participant.removeFromGroup') + ` - ${participantName}?`)) return
+  const handleRemoveParticipant = (participantId: string, participantName: string) => {
+    setRemoveConfirm({ open: true, participantId, participantName })
+  }
 
+  const confirmRemoveParticipant = async () => {
     try {
-      await removeParticipantFromGroup(participantId)
+      await removeParticipantFromGroup(removeConfirm.participantId)
       await sync()
       toast({ variant: 'success', message: t('group.participantRemoved') })
     } catch (error) {
@@ -569,6 +576,15 @@ function GroupDetailPage(): React.ReactElement {
         }
         confirmText={t('common.confirm')}
         variant={leaderConfirm.isRemoving ? 'danger' : 'primary'}
+      />
+
+      <ConfirmDialog
+        isOpen={removeConfirm.open}
+        onClose={() => setRemoveConfirm({ open: false, participantId: '', participantName: '' })}
+        onConfirm={confirmRemoveParticipant}
+        title={t('common.remove')}
+        description={t('participant.removeFromGroup') + ` - ${removeConfirm.participantName}?`}
+        variant="danger"
       />
     </div>
   )

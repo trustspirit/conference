@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { authUserAtom } from '../../stores/authStore'
-import { useToast, Button } from 'trust-ui-react'
+import { useToast, Button, Dialog } from 'trust-ui-react'
 import { getAllSurveys, createSurvey, deleteSurvey, updateSurvey } from '../../services/surveys'
 import { getDefaultFields } from '../../services/surveyDefaults'
 import Spinner from '../../components/ui/Spinner'
@@ -22,6 +22,7 @@ function SurveyListPage(): React.ReactElement {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [allResponses, setAllResponses] = useState<SurveyResponse[]>([])
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const loadSurveys = async () => {
     try {
@@ -60,9 +61,15 @@ function SurveyListPage(): React.ReactElement {
     })
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('survey.deleteConfirm'))) return
-    await deleteSurvey(id)
+  const handleDelete = (id: string) => {
+    setConfirmDeleteId(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return
+    const idToDelete = confirmDeleteId
+    setConfirmDeleteId(null)
+    await deleteSurvey(idToDelete)
     await loadSurveys()
     toast({ message: t('toast.surveyDeleted'), variant: 'success' })
   }
@@ -103,6 +110,17 @@ function SurveyListPage(): React.ReactElement {
           </div>
         )}
       </main>
+
+      <Dialog open={!!confirmDeleteId} onClose={() => setConfirmDeleteId(null)} size="sm">
+        <Dialog.Title onClose={() => setConfirmDeleteId(null)}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Content>
+          <p className="text-sm text-gray-700">{t('survey.deleteConfirm')}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>{t('common.cancel')}</Button>
+          <Button variant="danger" onClick={handleConfirmDelete}>{t('common.delete')}</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

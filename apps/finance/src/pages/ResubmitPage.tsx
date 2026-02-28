@@ -18,12 +18,13 @@ import BankSelect from '../components/BankSelect'
 import ErrorAlert from '../components/ErrorAlert'
 import Spinner from '../components/Spinner'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button } from 'trust-ui-react'
+import { TextField, Button, useToast } from 'trust-ui-react'
 
 const emptyItem = (): RequestItem => ({ description: '', budgetCode: 0, amount: 0 })
 
 export default function ResubmitPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { id } = useParams<{ id: string }>()
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
@@ -194,7 +195,7 @@ export default function ResubmitPage() {
       navigate('/my-requests')
     } catch (err) {
       console.error(err)
-      alert(t('form.submitFailed'))
+      toast({ variant: 'danger', message: t('form.submitFailed') })
     } finally {
       setSubmitting(false)
     }

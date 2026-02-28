@@ -113,13 +113,6 @@ export function useBusManagement(): UseBusManagementReturn {
 
   const handleDeleteBus = useCallback(
     async (bus: BusRoute): Promise<boolean> => {
-      const warningMsg =
-        bus.participantCount > 0
-          ? t('bus.confirmDeleteWithParticipants', { name: bus.name, count: bus.participantCount })
-          : t('bus.confirmDelete', { name: bus.name })
-
-      if (!confirm(warningMsg)) return false
-
       try {
         await deleteBusRoute(bus.id)
         toast({ variant: 'success', message: t('bus.busDeleted', { name: bus.name }) })

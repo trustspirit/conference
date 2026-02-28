@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
+import { ThemeProvider, ToastProvider } from 'trust-ui-react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import HomePage from './pages/HomePage'
@@ -74,6 +75,8 @@ function App(): React.ReactElement {
   }, [])
 
   return (
+    <ThemeProvider>
+    <ToastProvider position="bottom-right">
     <div className="min-h-screen flex flex-col bg-[#F0F2F5]">
       <nav className="bg-white shadow-sm px-4 h-14 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-4">
@@ -313,6 +316,8 @@ function App(): React.ReactElement {
 
       <ToastBridge />
     </div>
+    </ToastProvider>
+    </ThemeProvider>
   )
 }
 

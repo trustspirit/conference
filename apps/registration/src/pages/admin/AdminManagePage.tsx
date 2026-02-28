@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useToast, Button, TextField } from 'trust-ui-react'
+import { useToast, Button, TextField, Dialog } from 'trust-ui-react'
 import { getAdmins, addAdmin, removeAdmin, type AdminEntry } from '../../services/admins'
 import Spinner from '../../components/ui/Spinner'
 import AdminNavbar from '../../components/admin/AdminNavbar'
@@ -14,6 +14,7 @@ function AdminManagePage(): React.ReactElement {
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [adding, setAdding] = useState(false)
+  const [confirmRemoveEmail, setConfirmRemoveEmail] = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -42,9 +43,15 @@ function AdminManagePage(): React.ReactElement {
     }
   }
 
-  const handleRemove = async (adminEmail: string) => {
-    if (!confirm(t('adminManage.removeConfirm', { email: adminEmail }))) return
-    await removeAdmin(adminEmail)
+  const handleRemove = (adminEmail: string) => {
+    setConfirmRemoveEmail(adminEmail)
+  }
+
+  const handleConfirmRemove = async () => {
+    if (!confirmRemoveEmail) return
+    const emailToRemove = confirmRemoveEmail
+    setConfirmRemoveEmail(null)
+    await removeAdmin(emailToRemove)
     await load()
     toast({ message: t('adminManage.removed'), variant: 'success' })
   }
@@ -95,6 +102,19 @@ function AdminManagePage(): React.ReactElement {
           )}
         </div>
       </main>
+
+      <Dialog open={!!confirmRemoveEmail} onClose={() => setConfirmRemoveEmail(null)} size="sm">
+        <Dialog.Title onClose={() => setConfirmRemoveEmail(null)}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Content>
+          <p className="text-sm text-gray-700">
+            {t('adminManage.removeConfirm', { email: confirmRemoveEmail ?? '' })}
+          </p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="ghost" onClick={() => setConfirmRemoveEmail(null)}>{t('common.cancel')}</Button>
+          <Button variant="danger" onClick={handleConfirmRemove}>{t('common.delete')}</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

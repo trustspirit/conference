@@ -17,11 +17,12 @@ import ReceiptGallery from '../components/ReceiptGallery'
 import { ApprovalModal, RejectionModal } from '../components/AdminRequestModals'
 import StatusProgress from '../components/StatusProgress'
 import ReviewChecklist from '../components/ReviewChecklist'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, useToast } from 'trust-ui-react'
 import { REVIEW_CHECKLIST, APPROVAL_CHECKLIST } from '../constants/reviewChecklist'
 
 export default function RequestDetailPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { id } = useParams<{ id: string }>()
   const { user, appUser } = useAuth()
   const { currentProject } = useProject()
@@ -45,6 +46,8 @@ export default function RequestDetailPage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [showReviewConfirm, setShowReviewConfirm] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
   const [slideState, setSlideState] = useState<'idle' | 'out' | 'in'>('idle')
   const isFirstMount = useRef(true)
 
@@ -126,7 +129,7 @@ export default function RequestDetailPage() {
 
   const handleReview = () => {
     if (!user || !appUser || !request) return
-    if (isSelf) { alert(t('approval.selfReviewError')); return }
+    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfReviewError') }); return }
     setShowReviewConfirm(true)
   }
 
@@ -142,10 +145,10 @@ export default function RequestDetailPage() {
 
   const handleApproveOpen = () => {
     if (!request) return
-    if (isSelf) { alert(t('approval.selfApproveError')); return }
-    if (!appUser?.signature) { alert(t('validation.signatureRequired')); return }
+    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfApproveError') }); return }
+    if (!appUser?.signature) { toast({ variant: 'danger', message: t('validation.signatureRequired') }); return }
     if (!canFinalApproveRequest(role, request.committee, request.totalAmount, threshold)) {
-      if (request.totalAmount > threshold) alert(t('approval.directorRequired'))
+      if (request.totalAmount > threshold) toast({ variant: 'info', message: t('approval.directorRequired') })
       return
     }
     setShowApprovalModal(true)
@@ -162,7 +165,7 @@ export default function RequestDetailPage() {
 
   const handleRejectOpen = () => {
     if (!request) return
-    if (isSelf) { alert(t('approval.selfRejectError')); return }
+    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfRejectError') }); return }
     setShowRejectionModal(true)
   }
 
@@ -221,11 +224,17 @@ export default function RequestDetailPage() {
           <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
             <span className="text-sm text-gray-600">{t('approval.cancelConfirm')}</span>
             <Button variant="danger" onClick={() => {
-              if (!confirm(t('approval.cancelConfirm'))) return
-              cancelMutation.mutate(
-                { requestId: request.id, projectId: currentProject!.id },
-                { onSuccess: () => navigate('/my-requests') }
-              )
+              setConfirmDialog({
+                open: true,
+                message: t('approval.cancelConfirm'),
+                onConfirm: () => {
+                  closeConfirm()
+                  cancelMutation.mutate(
+                    { requestId: request.id, projectId: currentProject!.id },
+                    { onSuccess: () => navigate('/my-requests') }
+                  )
+                },
+              })
             }}
               disabled={cancelMutation.isPending}
               loading={cancelMutation.isPending}>
@@ -415,6 +424,15 @@ export default function RequestDetailPage() {
         onConfirm={handleRejectConfirm}
         isPending={rejectMutation.isPending}
       />
+
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={closeConfirm}>취소</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        </Dialog.Actions>
+      </Dialog>
     </Layout>
   )
 }

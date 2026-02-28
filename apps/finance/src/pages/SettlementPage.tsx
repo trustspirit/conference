@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
@@ -11,6 +11,7 @@ import { useApprovedRequests, useForceRejectRequest } from '../hooks/queries/use
 import { useCreateSettlement } from '../hooks/queries/useSettlements'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
+import { Dialog, Button, useToast } from 'trust-ui-react'
 import Layout from '../components/Layout'
 import SettlementSelectTable from '../components/settlement/SettlementSelectTable'
 import SettlementReviewStep from '../components/settlement/SettlementReviewStep'
@@ -23,6 +24,7 @@ const payeeKey = (req: PaymentRequest) =>
 
 export default function SettlementPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { user, appUser } = useAuth()
   const { currentProject } = useProject()
   const role = appUser?.role || 'user'
@@ -30,6 +32,8 @@ export default function SettlementPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [processing, setProcessing] = useState(false)
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
 
   // Review mode state
   const [reviewPhase, setReviewPhase] = useState<ReviewPhase>('select')
@@ -133,21 +137,30 @@ export default function SettlementPage() {
           advanceReview()
         },
         onError: () => {
-          alert(t('settlement.settleFailed'))
+          toast({ variant: 'danger', message: t('settlement.settleFailed') })
         },
       },
     )
   }
 
-  const backToSelect = () => {
-    if (reviewedIds.size > 0 || rejectedIds.size > 0) {
-      if (!window.confirm(t('settlement.backToSelectConfirm'))) return
-    }
+  const doBackToSelect = useCallback(() => {
     setReviewPhase('select')
     setReviewSnapshot([])
     setReviewIndex(0)
     setReviewedIds(new Set())
     setRejectedIds(new Set())
+  }, [])
+
+  const backToSelect = () => {
+    if (reviewedIds.size > 0 || rejectedIds.size > 0) {
+      setConfirmDialog({
+        open: true,
+        message: t('settlement.backToSelectConfirm'),
+        onConfirm: () => { closeConfirm(); doBackToSelect() },
+      })
+      return
+    }
+    doBackToSelect()
   }
 
   // For final settlement, only use reviewed (included) requests
@@ -160,10 +173,9 @@ export default function SettlementPage() {
     return acc
   }, {})
 
-  const handleFinalSettle = async () => {
+  const doFinalSettle = useRef<(() => Promise<void>) | undefined>(undefined)
+  doFinalSettle.current = async () => {
     if (!user || !appUser || !currentProject || reviewedIds.size === 0) return
-    const confirmed = window.confirm(t('settlement.settleConfirm', { count: reviewedIds.size, payeeCount: Object.keys(groupedByPayee).length }))
-    if (!confirmed) return
 
     setProcessing(true)
     try {
@@ -171,14 +183,14 @@ export default function SettlementPage() {
 
       const missingApproval = includedRequests.find((r) => !r.approvalSignature || !r.approvedBy)
       if (missingApproval) {
-        alert(t('settlement.settleFailed') + ': ' + missingApproval.payee + ' - missing approval signature')
+        toast({ variant: 'danger', message: t('settlement.settleFailed') + ': ' + missingApproval.payee + ' - missing approval signature' })
         setProcessing(false)
         return
       }
 
       const totalOps = Object.values(groupedByPayee).reduce((sum, reqs) => sum + 1 + reqs.length, 0)
       if (totalOps >= 500) {
-        alert(t('settlement.settleFailed') + ': Too many operations. Please select fewer requests.')
+        toast({ variant: 'danger', message: t('settlement.settleFailed') + ': Too many operations. Please select fewer requests.' })
         setProcessing(false)
         return
       }
@@ -230,10 +242,19 @@ export default function SettlementPage() {
       navigate('/admin/settlements')
     } catch (error) {
       console.error('Failed to create settlement:', error)
-      alert(t('settlement.settleFailed'))
+      toast({ variant: 'danger', message: t('settlement.settleFailed') })
     } finally {
       setProcessing(false)
     }
+  }
+
+  const handleFinalSettle = () => {
+    if (!user || !appUser || !currentProject || reviewedIds.size === 0) return
+    setConfirmDialog({
+      open: true,
+      message: t('settlement.settleConfirm', { count: reviewedIds.size, payeeCount: Object.keys(groupedByPayee).length }),
+      onConfirm: () => { closeConfirm(); doFinalSettle.current?.() },
+    })
   }
 
   const selectedSummary = selected.size > 0 ? {
@@ -243,6 +264,17 @@ export default function SettlementPage() {
   } : null
 
   const includedTotal = includedRequests.reduce((sum, r) => sum + r.totalAmount, 0)
+
+  const confirmDialogJsx = (
+    <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+      <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+      <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+      <Dialog.Actions>
+        <Button variant="outline" onClick={closeConfirm}>취소</Button>
+        <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+      </Dialog.Actions>
+    </Dialog>
+  )
 
   // ── Summary phase ──
   if (reviewPhase === 'summary') {
@@ -257,6 +289,7 @@ export default function SettlementPage() {
           onSettle={handleFinalSettle}
           onBack={backToSelect}
         />
+        {confirmDialogJsx}
       </Layout>
     )
   }
@@ -278,6 +311,7 @@ export default function SettlementPage() {
           onRejectClose={() => setRejectingRequestId(null)}
           onBack={backToSelect}
         />
+        {confirmDialogJsx}
       </Layout>
     )
   }
@@ -295,6 +329,7 @@ export default function SettlementPage() {
         onToggleAll={toggleAll}
         onStartReview={startReview}
       />
+      {confirmDialogJsx}
     </Layout>
   )
 }

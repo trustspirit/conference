@@ -40,6 +40,11 @@ function RoomDetailPage(): React.ReactElement {
     participantName: string
     isRemoving: boolean
   }>({ open: false, participantId: '', participantName: '', isRemoving: false })
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    open: boolean
+    participantId: string
+    participantName: string
+  }>({ open: false, participantId: '', participantName: '' })
 
   useEffect(() => {
     const init = async () => {
@@ -111,11 +116,13 @@ function RoomDetailPage(): React.ReactElement {
     }
   }
 
-  const handleRemoveParticipant = async (participantId: string, participantName: string) => {
-    if (!confirm(t('participant.removeFromRoom') + ` - ${participantName}?`)) return
+  const handleRemoveParticipant = (participantId: string, participantName: string) => {
+    setRemoveConfirm({ open: true, participantId, participantName })
+  }
 
+  const confirmRemoveParticipant = async () => {
     try {
-      await removeParticipantFromRoom(participantId)
+      await removeParticipantFromRoom(removeConfirm.participantId)
       await sync()
       toast({ variant: 'success', message: t('room.participantRemoved') })
     } catch (error) {
@@ -573,6 +580,15 @@ function RoomDetailPage(): React.ReactElement {
         }
         confirmText={t('common.confirm')}
         variant={leaderConfirm.isRemoving ? 'danger' : 'primary'}
+      />
+
+      <ConfirmDialog
+        isOpen={removeConfirm.open}
+        onClose={() => setRemoveConfirm({ open: false, participantId: '', participantName: '' })}
+        onConfirm={confirmRemoveParticipant}
+        title={t('common.remove')}
+        description={t('participant.removeFromRoom') + ` - ${removeConfirm.participantName}?`}
+        variant="danger"
       />
     </div>
   )

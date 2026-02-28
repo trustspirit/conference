@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdmin as checkIsAdmin } from '../lib/roles'
@@ -21,6 +22,7 @@ function getRemainingDays(deletedAt: unknown): number {
 
 export default function ProjectSelector() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { currentProject, projects, setCurrentProject } = useProject()
   const { appUser } = useAuth()
   const navigate = useNavigate()
@@ -69,7 +71,7 @@ export default function ProjectSelector() {
       setCurrentProject({ id: projectId } as Project)
       setOpen(false)
     } catch {
-      alert(t('project.restoreFailed'))
+      toast({ variant: 'danger', message: t('project.restoreFailed') })
     }
   }, [restoreProject, queryClient, setCurrentProject, t])
 

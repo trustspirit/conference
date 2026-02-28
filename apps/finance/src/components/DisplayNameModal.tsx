@@ -5,13 +5,14 @@ import { functions } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { Committee } from '../types'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../lib/utils'
-import { Dialog, TextField, Button } from 'trust-ui-react'
+import { Dialog, TextField, Button, useToast } from 'trust-ui-react'
 import BankSelect from './BankSelect'
 import ErrorAlert from './ErrorAlert'
 import CommitteeSelect from './CommitteeSelect'
 
 export default function DisplayNameModal() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser, updateAppUser, setNeedsDisplayName } = useAuth()
   const [displayName, setDisplayName] = useState(appUser?.name || '')
   const [phone, setPhone] = useState(appUser?.phone || '')
@@ -81,7 +82,7 @@ export default function DisplayNameModal() {
       setNeedsDisplayName(false)
     } catch (error) {
       console.error('Failed to save profile:', error)
-      alert(t('settings.saveFailed'))
+      toast({ variant: 'danger', message: t('settings.saveFailed') })
     } finally {
       setSaving(false)
     }

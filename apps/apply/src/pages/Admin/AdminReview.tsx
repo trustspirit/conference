@@ -8,6 +8,8 @@ import EmptyState from '../../components/EmptyState'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
 import Spinner from '../../components/Spinner'
+import Drawer from '../../components/Drawer'
+import ReviewStatsBar from '../../components/ReviewStatsBar'
 import { ADMIN_REVIEW_TABS, STATUS_TONES } from '../../utils/constants'
 import { exportReviewItemsToCSV } from '../../utils/exportData'
 import type { ApplicationStatus, RecommendationStatus, ReviewItem } from '../../types'
@@ -106,6 +108,25 @@ export default function AdminReview() {
 
   const selected = selectedId ? allItems.find((it) => it.key === selectedId) || null : null
 
+  // Drawer navigation
+  const currentIndex = filteredItems.findIndex((it) => it.key === selectedId)
+  const hasPrev = currentIndex > 0
+  const hasNext = currentIndex >= 0 && currentIndex < filteredItems.length - 1
+  const goToPrev = () => { if (hasPrev) setSelectedId(filteredItems[currentIndex - 1].key) }
+  const goToNext = () => { if (hasNext) setSelectedId(filteredItems[currentIndex + 1].key) }
+
+  const navigateToNext = () => {
+    const awaitingItems = allItems.filter((it) => it.status === 'awaiting')
+    const currentIdx = awaitingItems.findIndex((it) => it.key === selectedId)
+    const nextItem = awaitingItems[currentIdx + 1]
+    if (nextItem) {
+      setSelectedId(nextItem.key)
+    } else {
+      setSelectedId(null)
+      toast({ variant: 'info', message: t('admin.review.allReviewed', '모든 검토를 완료했습니다.') })
+    }
+  }
+
   const tabCounts = useMemo(() => ({
     all: allItems.length,
     awaiting: allItems.filter((it) => it.status === 'awaiting').length,
@@ -123,7 +144,10 @@ export default function AdminReview() {
     const { item, newStatus } = confirmDialog
     if (!item) return
     const statusLabel = t(`admin.review.status.${newStatus}`, newStatus)
-    const onSuccess = () => toast({ variant: 'success', message: t('admin.review.updateStatus', { name: item.name }) + ` → ${statusLabel}` })
+    const onSuccess = () => {
+      toast({ variant: 'success', message: t('admin.review.updateStatus', { name: item.name }) + ` → ${statusLabel}` })
+      navigateToNext()
+    }
     const onError = () => toast({ variant: 'danger', message: t('errors.generic') })
 
     if (item.type === 'application') {
@@ -148,9 +172,6 @@ export default function AdminReview() {
   }
 
   if (loadingApps || loadingRecs) return <PageLoader />
-
-  const showListOnMobile = !selected
-  const showDetailOnMobile = !!selected
 
   const statusOptions = selected?.type === 'application'
     ? [
@@ -192,6 +213,8 @@ export default function AdminReview() {
         </div>
       )}
 
+      <ReviewStatsBar items={allItems} />
+
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Trigger value={ADMIN_REVIEW_TABS.ALL}>{t('admin.review.tabs.all', '전체')} ({tabCounts.all})</Tabs.Trigger>
@@ -201,74 +224,66 @@ export default function AdminReview() {
         </Tabs.List>
       </Tabs>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '60vh', marginTop: '1rem' }}>
-        {/* Left: List */}
-        <div className={`lg:col-span-2 space-y-2 overflow-y-auto ${showListOnMobile ? '' : 'hidden lg:block'}`} style={{ maxHeight: '70vh' }}>
-          {filteredItems.length === 0 ? (
-            <EmptyState message={t('admin.review.empty', '이 탭에 해당하는 신청서가 없습니다.')} />
-          ) : (
-            filteredItems.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => handleSelectItem(item.key)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${selectedId === item.key ? '#3b82f6' : '#e5e7eb'}`,
-                  backgroundColor: selectedId === item.key ? '#eff6ff' : '#fff',
-                  cursor: 'pointer',
-                  display: 'block',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }}>{item.name}</span>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <Badge
-                      variant={item.type === 'application' ? 'info' : 'success'}
-                      size="sm"
-                    >
-                      {item.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
-                    </Badge>
-                    <Badge variant={TONE_TO_BADGE[STATUS_TONES[item.rawStatus] || 'draft'] || 'secondary'} size="sm">
-                      {t(`status.${item.rawStatus}`, item.rawStatus)}
-                    </Badge>
-                  </div>
+      <div style={{ marginTop: '1rem', maxHeight: '70vh', overflowY: 'auto' }} className="space-y-2">
+        {filteredItems.length === 0 ? (
+          <EmptyState message={t('admin.review.empty', '이 탭에 해당하는 신청서가 없습니다.')} />
+        ) : (
+          filteredItems.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => handleSelectItem(item.key)}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '0.75rem',
+                borderRadius: '0.5rem',
+                border: `1px solid ${selectedId === item.key ? '#3b82f6' : '#e5e7eb'}`,
+                backgroundColor: selectedId === item.key ? '#eff6ff' : '#fff',
+                cursor: 'pointer',
+                display: 'block',
+                transition: 'border-color 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }}>{item.name}</span>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <Badge variant={item.type === 'application' ? 'info' : 'success'} size="sm">
+                    {item.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
+                  </Badge>
+                  <Badge variant={TONE_TO_BADGE[STATUS_TONES[item.rawStatus] || 'draft'] || 'secondary'} size="sm">
+                    {t(`status.${item.rawStatus}`, item.rawStatus)}
+                  </Badge>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  {item.stake} / {item.ward}
-                </p>
-              </button>
-            ))
-          )}
-        </div>
-
-        {/* Right: Detail */}
-        <div className={`lg:col-span-3 ${showDetailOnMobile ? '' : 'hidden lg:block'}`}>
-          {selected ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              {/* Mobile back button */}
-              <button
-                onClick={handleBackToList}
-                className="lg:hidden mb-3 text-sm text-blue-600 flex items-center gap-1"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0' }}
-              >
-                <span>&larr;</span> {t('common.back', '뒤로')}
-              </button>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>{selected.name}</h2>
-                  <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                    {t('admin.review.submitted', '제출됨')}: {selected.createdAt instanceof Date ? selected.createdAt.toLocaleDateString() : ''}
-                  </p>
-                </div>
-                <Badge variant={selected.type === 'application' ? 'info' : 'success'}>
-                  {selected.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
-                </Badge>
               </div>
+              <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                {item.stake} / {item.ward}
+              </p>
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* Review Drawer */}
+      <Drawer open={!!selected} onClose={handleBackToList}>
+        {selected && (
+          <>
+            <Drawer.Header
+              onClose={handleBackToList}
+              extra={
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                  {currentIndex >= 0 ? currentIndex + 1 : '-'} / {filteredItems.length}
+                </span>
+              }
+            >
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>{selected.name}</h2>
+              <Badge variant={selected.type === 'application' ? 'info' : 'success'}>
+                {selected.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
+              </Badge>
+            </Drawer.Header>
+            <Drawer.Content>
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
+                {t('admin.review.submitted', '제출됨')}: {selected.createdAt instanceof Date ? selected.createdAt.toLocaleDateString() : ''}
+              </p>
 
               <DetailsGrid
                 items={[
@@ -306,14 +321,40 @@ export default function AdminReview() {
                   {isMutating && <Spinner />}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center" style={{ minHeight: '40vh' }}>
-              <p className="text-gray-400 text-sm">{t('admin.review.selectPlaceholder', '세부 정보를 검토하려면 신청서를 선택하세요.')}</p>
-            </div>
-          )}
-        </div>
-      </div>
+            </Drawer.Content>
+            <Drawer.Footer>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button variant="outline" size="sm" onClick={goToPrev} disabled={!hasPrev}>
+                    ◀ {t('common.prev', '이전')}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={goToNext} disabled={!hasNext}>
+                    {t('common.next', '다음')} ▶
+                  </Button>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleStatusChange('approved')}
+                    disabled={isMutating || selected.rawStatus === 'approved'}
+                  >
+                    {t('admin.review.status.approved', '승인')}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleStatusChange('rejected')}
+                    disabled={isMutating || selected.rawStatus === 'rejected'}
+                  >
+                    {t('admin.review.status.rejected', '거절')}
+                  </Button>
+                </div>
+              </div>
+            </Drawer.Footer>
+          </>
+        )}
+      </Drawer>
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, item: null, newStatus: '' })} size="sm">

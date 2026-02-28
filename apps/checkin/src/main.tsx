@@ -22,24 +22,20 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <ToastProvider position="bottom-right">
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/key-generator" element={<KeyGeneratorPage />} />
-              <Route
-                path="/*"
-                element={
-                  <AuthGuard>
-                    <App />
-                  </AuthGuard>
-                }
-              />
-            </Routes>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/key-generator" element={<ThemeProvider><ToastProvider position="bottom-right"><KeyGeneratorPage /></ToastProvider></ThemeProvider>} />
+          <Route
+            path="/*"
+            element={
+              <AuthGuard>
+                <App />
+              </AuthGuard>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>
 )

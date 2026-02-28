@@ -35,6 +35,10 @@ function BusDetailPage(): React.ReactElement {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [showArrivalConfirm, setShowArrivalConfirm] = useState(false)
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    open: boolean
+    participant: Participant | null
+  }>({ open: false, participant: null })
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -107,11 +111,14 @@ function BusDetailPage(): React.ReactElement {
     }
   }
 
-  const handleRemoveParticipant = async (participant: Participant) => {
-    if (!confirm(t('bus.confirmRemoveParticipant', { name: participant.name }))) return
+  const handleRemoveParticipant = (participant: Participant) => {
+    setRemoveConfirm({ open: true, participant })
+  }
 
+  const confirmRemoveParticipant = async () => {
+    if (!removeConfirm.participant) return
     try {
-      await removeParticipantFromBus(participant.id)
+      await removeParticipantFromBus(removeConfirm.participant.id)
       toast({ variant: 'success', message: t('bus.participantRemoved') })
       loadData()
       sync()
@@ -281,6 +288,16 @@ function BusDetailPage(): React.ReactElement {
         }
         confirmText={t('common.confirm')}
         variant={bus.arrivedAt ? 'danger' : 'info'}
+      />
+
+      {/* Remove Participant Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={removeConfirm.open}
+        onClose={() => setRemoveConfirm({ open: false, participant: null })}
+        onConfirm={confirmRemoveParticipant}
+        title={t('common.remove')}
+        description={t('bus.confirmRemoveParticipant', { name: removeConfirm.participant?.name ?? '' })}
+        variant="danger"
       />
     </div>
   )

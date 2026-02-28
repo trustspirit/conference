@@ -49,6 +49,10 @@ function BusesPage(): React.ReactElement {
     busName: string
     isCancel: boolean
   }>({ open: false, busId: '', busName: '', isCancel: false })
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean
+    bus: BusRoute | null
+  }>({ open: false, bus: null })
 
   // Form state
   const [newBusName, setNewBusName] = useState('')
@@ -101,6 +105,16 @@ function BusesPage(): React.ReactElement {
     const { busId, busName, isCancel } = arrivalConfirm
     await handleArrivalToggle(busId, busName, isCancel)
     setArrivalConfirm({ open: false, busId: '', busName: '', isCancel: false })
+  }
+
+  const onDeleteBus = (bus: BusRoute) => {
+    setDeleteConfirm({ open: true, bus })
+  }
+
+  const confirmDeleteBus = async () => {
+    if (!deleteConfirm.bus) return
+    await handleDeleteBus(deleteConfirm.bus)
+    setDeleteConfirm({ open: false, bus: null })
   }
 
   const handleMarkArrival = (bus: BusRoute) => {
@@ -249,7 +263,7 @@ function BusesPage(): React.ReactElement {
                 participants={participants}
                 onNavigate={(busId) => navigate(`/buses/${busId}`)}
                 onMarkArrival={handleMarkArrival}
-                onDelete={handleDeleteBus}
+                onDelete={onDeleteBus}
                 formatTime={formatTime}
               />
             ))}
@@ -298,7 +312,7 @@ function BusesPage(): React.ReactElement {
                       participants={participants}
                       onNavigate={(busId) => navigate(`/buses/${busId}`)}
                       onMarkArrival={handleMarkArrival}
-                      onDelete={handleDeleteBus}
+                      onDelete={onDeleteBus}
                     />
                   ))}
                 </div>
@@ -327,6 +341,22 @@ function BusesPage(): React.ReactElement {
         }
         confirmText={t('common.confirm')}
         variant={arrivalConfirm.isCancel ? 'danger' : 'info'}
+      />
+
+      {/* Delete Bus Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, bus: null })}
+        onConfirm={confirmDeleteBus}
+        title={t('common.delete')}
+        description={
+          deleteConfirm.bus
+            ? deleteConfirm.bus.participantCount > 0
+              ? t('bus.confirmDeleteWithParticipants', { name: deleteConfirm.bus.name, count: deleteConfirm.bus.participantCount })
+              : t('bus.confirmDelete', { name: deleteConfirm.bus.name })
+            : ''
+        }
+        variant="danger"
       />
     </div>
   )

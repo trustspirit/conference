@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import type { SurveyTheme } from '../types'
 
-interface ThemeProviderProps {
+interface SurveyThemeProviderProps {
   theme?: SurveyTheme
   children: React.ReactNode
 }
@@ -66,7 +66,7 @@ function generateThemeColors(hex: string) {
   }
 }
 
-function ThemeProvider({ theme, children }: ThemeProviderProps): React.ReactElement {
+function SurveyThemeProvider({ theme, children }: SurveyThemeProviderProps): React.ReactElement {
   const style = useMemo(() => {
     if (!theme?.primaryColor) return undefined
     const colors = generateThemeColors(theme.primaryColor)
@@ -83,4 +83,4 @@ function ThemeProvider({ theme, children }: ThemeProviderProps): React.ReactElem
 }
 
 export { generateThemeColors }
-export default ThemeProvider
+export default SurveyThemeProvider

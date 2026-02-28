@@ -7,6 +7,7 @@ import { StakeWardSelector } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import Alert from '../../components/Alert'
 import DetailsGrid from '../../components/DetailsGrid'
+import Drawer from '../../components/Drawer'
 import { STATUS_TONES } from '../../utils/constants'
 import type { Gender } from '../../types'
 
@@ -35,6 +36,7 @@ export default function UserApplication() {
   const [gender, setGender] = useState<Gender>('male')
   const [moreInfo, setMoreInfo] = useState('')
   const [servedMission, setServedMission] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const hasApp = !!existingApp
   const isLocked = existingApp?.status === 'approved' || existingApp?.status === 'rejected'
@@ -308,6 +310,9 @@ export default function UserApplication() {
               >
                 {t('application.actions.saveDraft', '초안 저장')}
               </Button>
+              <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
+                {t('application.actions.preview', '미리보기')}
+              </Button>
               {hasApp && (
                 <Button type="button" variant="outline" onClick={() => setEditing(false)}>
                   {t('common.cancel', '취소')}
@@ -317,6 +322,41 @@ export default function UserApplication() {
           )}
         </form>
       )}
+      {/* Preview Drawer */}
+      <Drawer open={previewOpen} onClose={() => setPreviewOpen(false)}>
+        <Drawer.Header onClose={() => setPreviewOpen(false)}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>
+            {t('application.preview.title', '신청서 미리보기')}
+          </h2>
+        </Drawer.Header>
+        <Drawer.Content>
+          <DetailsGrid
+            items={[
+              { label: t('application.overview.name', 'Name'), value: name || '-' },
+              { label: t('application.overview.email', 'Email'), value: email || '-' },
+              { label: t('application.overview.phone', 'Phone'), value: phone || '-' },
+              { label: t('application.overview.age', 'Age'), value: age || '-' },
+              { label: t('application.overview.stake', 'Stake'), value: appUser?.stake || '-' },
+              { label: t('application.overview.ward', 'Ward'), value: appUser?.ward || '-' },
+              { label: t('application.form.gender', 'Gender'), value: t(`gender.${gender}`) },
+              { label: t('application.overview.servedMission', 'Mission'), value: servedMission ? t('common.yes') : t('common.no') },
+            ]}
+          />
+          <div style={{ marginTop: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.25rem' }}>
+              {t('application.overview.additionalInfo', '추가 정보')}
+            </p>
+            <p style={{ fontSize: '0.875rem', color: '#111827' }}>
+              {moreInfo || t('application.overview.noAdditionalInfo')}
+            </p>
+          </div>
+        </Drawer.Content>
+        <Drawer.Footer>
+          <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+            {t('common.close', '닫기')}
+          </Button>
+        </Drawer.Footer>
+      </Drawer>
     </div>
   )
 }

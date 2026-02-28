@@ -1,4 +1,5 @@
 import React from 'react'
+import { useToast } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import type { BusRoute, Participant } from '../types'
 import { formatPhoneNumber } from '../utils/phoneFormat'
@@ -17,6 +18,7 @@ function PrintableBusManifest({
   selectedBusId
 }: PrintableBusManifestProps): React.ReactElement {
   const { t } = useTranslation()
+  const { toast } = useToast()
 
   const getBusParticipants = (busId: string) => {
     return participants
@@ -27,7 +29,7 @@ function PrintableBusManifest({
   const handlePrint = () => {
     const printWindow = window.open('about:blank', '_blank')
     if (!printWindow) {
-      alert('팝업이 차단되었습니다. 팝업을 허용해주세요.')
+      toast({ variant: 'danger', message: '팝업이 차단되었습니다. 팝업을 허용해주세요.' })
       return
     }
 

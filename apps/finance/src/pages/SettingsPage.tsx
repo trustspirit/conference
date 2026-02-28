@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useProject } from '../contexts/ProjectContext'
 import Layout from '../components/Layout'
 import { CheckIcon, StarIcon, TrashIcon } from '../components/Icons'
+import { Dialog, Button } from 'trust-ui-react'
 import ProjectGeneralSettings from '../components/settings/ProjectGeneralSettings'
 import MemberManagement from '../components/settings/MemberManagement'
 import { useGlobalSettings, useUpdateGlobalSettings } from '../hooks/queries/useSettings'
@@ -18,17 +19,25 @@ function ProjectManagement() {
   const defaultProjectId = globalSettings?.defaultProjectId || ''
 
   const [subTab, setSubTab] = useState<'general' | 'members'>('general')
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
 
   const selectedProject = currentProject || activeProjects[0]
   const effectiveId = selectedProject?.id || ''
   const isDefault = effectiveId === defaultProjectId
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!selectedProject) return
-    if (!confirm(t('project.deleteConfirm', { name: selectedProject.name }))) return
-    await softDelete.mutateAsync(effectiveId)
-    const remaining = activeProjects.filter(p => p.id !== effectiveId)
-    if (remaining.length > 0) setCurrentProject(remaining[0])
+    setConfirmDialog({
+      open: true,
+      message: t('project.deleteConfirm', { name: selectedProject.name }),
+      onConfirm: async () => {
+        closeConfirm()
+        await softDelete.mutateAsync(effectiveId)
+        const remaining = activeProjects.filter(p => p.id !== effectiveId)
+        if (remaining.length > 0) setCurrentProject(remaining[0])
+      },
+    })
   }
 
   return (
@@ -91,6 +100,15 @@ function ProjectManagement() {
           )}
         </>
       ) : null}
+
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={closeConfirm}>취소</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

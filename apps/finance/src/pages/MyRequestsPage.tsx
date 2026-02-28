@@ -13,6 +13,7 @@ import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
+import { Dialog, Button } from 'trust-ui-react'
 
 type MyFilter = 'all' | 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled'
 
@@ -37,6 +38,8 @@ export default function MyRequestsPage() {
     fetchNextPage,
   } = useInfiniteMyRequests(currentProject?.id, user?.uid, firestoreStatus)
   const cancelMutation = useCancelRequest()
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
 
   const requests = data?.pages.flatMap(p => p.items) ?? []
   const filterTabs: MyFilter[] = ['all', 'pending', 'reviewed', 'approved', 'settled', 'rejected']
@@ -44,8 +47,14 @@ export default function MyRequestsPage() {
   const handleCancel = (e: React.MouseEvent, requestId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!confirm(t('approval.cancelConfirm'))) return
-    cancelMutation.mutate({ requestId, projectId: currentProject!.id })
+    setConfirmDialog({
+      open: true,
+      message: t('approval.cancelConfirm'),
+      onConfirm: () => {
+        closeConfirm()
+        cancelMutation.mutate({ requestId, projectId: currentProject!.id })
+      },
+    })
   }
 
   return (
@@ -166,6 +175,14 @@ export default function MyRequestsPage() {
           />
         </>
       )}
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={closeConfirm}>취소</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        </Dialog.Actions>
+      </Dialog>
     </Layout>
   )
 }

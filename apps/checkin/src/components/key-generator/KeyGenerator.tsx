@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useToast } from 'trust-ui-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { generateUniqueKey, type KeyInput } from '@conference/key-utils'
 
@@ -8,6 +9,7 @@ function KeyGenerator() {
     firstName: '',
     birthDate: ''
   })
+  const { toast } = useToast()
   const [generatedKey, setGeneratedKey] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -25,7 +27,7 @@ function KeyGenerator() {
     e.preventDefault()
 
     if (!formData.lastName || !formData.firstName || !formData.birthDate) {
-      alert('모든 필드를 입력해주세요.')
+      toast({ variant: 'danger', message: '모든 필드를 입력해주세요.' })
       return
     }
 
@@ -36,7 +38,7 @@ function KeyGenerator() {
       setShowModal(true)
     } catch (error) {
       console.error('키 생성 실패:', error)
-      alert('키 생성에 실패했습니다.')
+      toast({ variant: 'danger', message: '키 생성에 실패했습니다.' })
     } finally {
       setIsLoading(false)
     }
@@ -46,7 +48,7 @@ function KeyGenerator() {
     if (generatedKey) {
       try {
         await navigator.clipboard.writeText(generatedKey)
-        alert('키가 복사되었습니다!')
+        toast({ variant: 'info', message: '키가 복사되었습니다!' })
       } catch (error) {
         console.error('복사 실패:', error)
       }

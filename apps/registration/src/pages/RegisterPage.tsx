@@ -6,7 +6,7 @@ import { submitRegistration, getResponseByCode, updateRegistration, submitDynami
 import Spinner from '../components/ui/Spinner'
 import RegistrationForm from '../components/RegistrationForm'
 import DynamicForm from '../components/form-renderer/DynamicForm'
-import ThemeProvider from '../components/ThemeProvider'
+import SurveyThemeProvider from '../components/ThemeProvider'
 import FormHeader from '../components/form-renderer/FormHeader'
 import FindCodeModal from '../components/FindCodeModal'
 import type { Survey, SurveyResponse, RegistrationData } from '../types'
@@ -117,7 +117,7 @@ function RegisterPage(): React.ReactElement {
   const useDynamic = survey?.fields && survey.fields.length > 0
 
   return (
-    <ThemeProvider theme={survey?.theme}>
+    <SurveyThemeProvider theme={survey?.theme}>
       <div className="min-h-screen bg-gray-100 sm:py-10 sm:px-4">
         <div className="max-w-2xl mx-auto sm:shadow-lg sm:rounded-xl overflow-hidden">
           <FormHeader
@@ -168,7 +168,7 @@ function RegisterPage(): React.ReactElement {
           onClose={() => setShowFindCode(false)}
         />
       )}
-    </ThemeProvider>
+    </SurveyThemeProvider>
   )
 }
 

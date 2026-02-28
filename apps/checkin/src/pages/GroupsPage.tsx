@@ -25,7 +25,7 @@ import {
   PrintableGroupRoster,
   GroupHoverContent
 } from '../components'
-import { HoverCard } from '../components/ui'
+import { HoverCard, ConfirmDialog } from '../components/ui'
 
 function GroupsPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -53,6 +53,11 @@ function GroupsPage(): React.ReactElement {
   const groupFilter = useGroupFilter({ data: paginatedGroups })
   const { filteredAndSortedGroups, totalCount, clearFilters, getTagLabel, getTagColor } =
     groupFilter
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean
+    group: Group | null
+  }>({ open: false, group: null })
 
   // Local UI state
   const [isAdding, setIsAdding] = useState(false)
@@ -130,11 +135,15 @@ function GroupsPage(): React.ReactElement {
     setNewGroupTags((prev) => prev.filter((t) => t !== tag))
   }
 
-  const handleDeleteGroup = async (group: Group) => {
-    if (!confirm(t('group.confirmDelete', { name: group.name }))) return
+  const handleDeleteGroup = (group: Group) => {
+    setDeleteConfirm({ open: true, group })
+  }
+
+  const confirmDeleteGroup = async () => {
+    if (!deleteConfirm.group) return
     try {
-      await deleteGroup(group.id)
-      toast({ variant: 'success', message: t('group.groupDeleted', { name: group.name }) })
+      await deleteGroup(deleteConfirm.group.id)
+      toast({ variant: 'success', message: t('group.groupDeleted', { name: deleteConfirm.group.name }) })
       refresh()
       sync()
     } catch {
@@ -532,6 +541,15 @@ function GroupsPage(): React.ReactElement {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, group: null })}
+        onConfirm={confirmDeleteGroup}
+        title={t('common.delete')}
+        description={t('group.confirmDelete', { name: deleteConfirm.group?.name ?? '' })}
+        variant="danger"
+      />
     </div>
   )
 }

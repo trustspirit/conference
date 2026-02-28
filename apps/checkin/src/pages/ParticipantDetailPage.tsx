@@ -202,7 +202,7 @@ function ParticipantDetailPage(): React.ReactElement {
   const handleRoomAssign = async (room: Room) => {
     if (!participant) return
     if (room.currentOccupancy >= room.maxCapacity) {
-      alert(t('participant.roomFull'))
+      toast({ variant: 'danger', message: t('participant.roomFull') })
       return
     }
     try {

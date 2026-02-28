@@ -4,6 +4,7 @@ import { useAtomValue } from 'jotai'
 import { getUsers, setUserRole, removeUserRole, type AppUser, type UserRole } from '../services/firebase'
 import { userRoleAtom } from '../stores/authStore'
 import { Navigate } from 'react-router-dom'
+import { ConfirmDialog } from '../components/ui'
 
 function AdminManagePage(): React.ReactElement {
   const { t } = useTranslation()
@@ -12,6 +13,11 @@ function AdminManagePage(): React.ReactElement {
   const [loading, setLoading] = useState(true)
   const [updatingUid, setUpdatingUid] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    open: boolean
+    uid: string
+    email: string
+  }>({ open: false, uid: '', email: '' })
 
   const loadUsers = useCallback(async () => {
     try {
@@ -48,9 +54,12 @@ function AdminManagePage(): React.ReactElement {
     }
   }
 
-  const handleRemoveRole = async (uid: string, email: string) => {
-    if (!confirm(t('admin.confirmRemove', { email }))) return
+  const handleRemoveRole = (uid: string, email: string) => {
+    setRemoveConfirm({ open: true, uid, email })
+  }
 
+  const confirmRemoveRole = async () => {
+    const { uid } = removeConfirm
     try {
       setUpdatingUid(uid)
       setError(null)
@@ -200,6 +209,15 @@ function AdminManagePage(): React.ReactElement {
           </ul>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={removeConfirm.open}
+        onClose={() => setRemoveConfirm({ open: false, uid: '', email: '' })}
+        onConfirm={confirmRemoveRole}
+        title={t('common.remove')}
+        description={t('admin.confirmRemove', { email: removeConfirm.email })}
+        variant="danger"
+      />
     </div>
   )
 }

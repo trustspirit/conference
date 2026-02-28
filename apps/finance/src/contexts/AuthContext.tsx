@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@conference/firebase'
+import { useToast } from 'trust-ui-react'
 import i18n from '../lib/i18n'
 import { AppUser } from '../types'
 
@@ -19,6 +20,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { toast } = useToast()
+  const toastRef = useRef(toast)
+  toastRef.current = toast
   const [user, setUser] = useState<User | null>(null)
   const [appUser, setAppUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -95,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
       const firebaseError = error as { code?: string; message?: string }
-      alert(`${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}`)
+      toastRef.current({ variant: 'danger', message: `${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}` })
     }
   }
 

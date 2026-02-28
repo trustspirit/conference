@@ -8,7 +8,7 @@ import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
-import { Select, Button } from 'trust-ui-react'
+import { Select, Button, Dialog, useToast } from 'trust-ui-react'
 import { TrashIcon } from '../components/Icons'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 
@@ -104,6 +104,7 @@ function UserNameWithTooltip({ user, currentUser, isAdmin, roleLabel }: {
 
 export default function AdminUsersPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser: currentUser } = useAuth()
   const {
     data,
@@ -116,6 +117,8 @@ export default function AdminUsersPage() {
   const updateRole = useUpdateUserRole()
   const deleteUser = useDeleteUser()
   const [successUid, setSuccessUid] = useState<string | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
 
   const ROLE_PRIORITY: Record<UserRole, number> = {
     super_admin: -1,
@@ -153,30 +156,40 @@ export default function AdminUsersPage() {
 
   const handleRoleChange = (uid: string, newRole: UserRole) => {
     if (uid === currentUser?.uid) {
-      alert(t('users.selfChangeError'))
+      toast({ variant: 'danger', message: t('users.selfChangeError') })
       return
     }
-    const confirmed = window.confirm(t('users.roleChangeConfirm', { role: ROLE_LABELS[newRole] }))
-    if (!confirmed) return
-
-    updateRole.mutate(
-      { uid, role: newRole },
-      {
-        onSuccess: () => {
-          setSuccessUid(uid)
-          setTimeout(() => setSuccessUid(null), 2000)
-        },
-        onError: () => {
-          alert(t('users.roleChangeFailed'))
-        },
+    setConfirmDialog({
+      open: true,
+      message: t('users.roleChangeConfirm', { role: ROLE_LABELS[newRole] }),
+      onConfirm: () => {
+        closeConfirm()
+        updateRole.mutate(
+          { uid, role: newRole },
+          {
+            onSuccess: () => {
+              setSuccessUid(uid)
+              setTimeout(() => setSuccessUid(null), 2000)
+            },
+            onError: () => {
+              toast({ variant: 'danger', message: t('users.roleChangeFailed') })
+            },
+          },
+        )
       },
-    )
+    })
   }
 
   const handleDeleteUser = (uid: string) => {
     if (uid === currentUser?.uid) return
-    if (!window.confirm(t('users.deleteConfirm'))) return
-    deleteUser.mutate(uid)
+    setConfirmDialog({
+      open: true,
+      message: t('users.deleteConfirm'),
+      onConfirm: () => {
+        closeConfirm()
+        deleteUser.mutate(uid)
+      },
+    })
   }
 
   return (
@@ -337,6 +350,15 @@ export default function AdminUsersPage() {
           />
         </>
       )}
+
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={closeConfirm}>취소</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        </Dialog.Actions>
+      </Dialog>
     </Layout>
   )
 }

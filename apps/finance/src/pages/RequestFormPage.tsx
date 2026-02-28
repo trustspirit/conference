@@ -15,7 +15,7 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, Dialog } from 'trust-ui-react'
+import { TextField, Button, Dialog, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
@@ -56,6 +56,7 @@ function clearDraft() {
 
 export default function RequestFormPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
   const navigate = useNavigate()
@@ -82,6 +83,8 @@ export default function RequestFormPage() {
   const [errors, setErrors] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [showDraftBanner, setShowDraftBanner] = useState(!!draft)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
 
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
@@ -192,9 +195,12 @@ export default function RequestFormPage() {
       (r) => r.totalAmount === currentTotal && (r.status === 'pending' || r.status === 'approved')
     )
     if (duplicate) {
-      if (!confirm(t('validation.duplicateAmount', { amount: currentTotal.toLocaleString(), date: duplicate.date }))) {
-        return
-      }
+      setConfirmDialog({
+        open: true,
+        message: t('validation.duplicateAmount', { amount: currentTotal.toLocaleString(), date: duplicate.date }),
+        onConfirm: () => { closeConfirm(); setShowConfirm(true) },
+      })
+      return
     }
 
     setShowConfirm(true)
@@ -260,7 +266,7 @@ export default function RequestFormPage() {
       navigate('/my-requests')
     } catch (err) {
       console.error(err)
-      alert(t('form.submitFailed'))
+      toast({ variant: 'danger', message: t('form.submitFailed') })
     } finally {
       setSubmitting(false)
     }
@@ -376,6 +382,15 @@ export default function RequestFormPage() {
       />
 
       <ProcessingOverlay open={submitting} text={t('common.processingMessage')} />
+
+      <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
+        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={closeConfirm}>취소</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        </Dialog.Actions>
+      </Dialog>
 
       {/* 페이지 이동 확인 모달 */}
       {blocker.state === 'blocked' && (

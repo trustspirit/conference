@@ -25,7 +25,7 @@ import {
   PrintableRoomAssignment,
   RoomHoverContent
 } from '../components'
-import { HoverCard } from '../components/ui'
+import { HoverCard, ConfirmDialog } from '../components/ui'
 
 function RoomsPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -61,6 +61,11 @@ function RoomsPage(): React.ReactElement {
     getRoomTypeBadgeColor,
     getOccupancyBadgeColor
   } = roomFilter
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean
+    room: Room | null
+  }>({ open: false, room: null })
 
   // Local UI state
   const [isAdding, setIsAdding] = useState(false)
@@ -120,18 +125,15 @@ function RoomsPage(): React.ReactElement {
     }
   }
 
-  const handleDeleteRoom = async (room: Room) => {
-    const warningMsg =
-      room.currentOccupancy > 0
-        ? t('room.confirmDeleteWithParticipants', {
-            number: room.roomNumber,
-            count: room.currentOccupancy
-          })
-        : t('room.confirmDelete', { number: room.roomNumber })
-    if (!confirm(warningMsg)) return
+  const handleDeleteRoom = (room: Room) => {
+    setDeleteConfirm({ open: true, room })
+  }
+
+  const confirmDeleteRoom = async () => {
+    if (!deleteConfirm.room) return
     try {
-      await deleteRoom(room.id)
-      toast({ variant: 'success', message: t('room.roomDeleted', { number: room.roomNumber }) })
+      await deleteRoom(deleteConfirm.room.id)
+      toast({ variant: 'success', message: t('room.roomDeleted', { number: deleteConfirm.room.roomNumber }) })
       refresh()
       sync()
     } catch {
@@ -543,6 +545,24 @@ function RoomsPage(): React.ReactElement {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, room: null })}
+        onConfirm={confirmDeleteRoom}
+        title={t('common.delete')}
+        description={
+          deleteConfirm.room
+            ? deleteConfirm.room.currentOccupancy > 0
+              ? t('room.confirmDeleteWithParticipants', {
+                  number: deleteConfirm.room.roomNumber,
+                  count: deleteConfirm.room.currentOccupancy
+                })
+              : t('room.confirmDelete', { number: deleteConfirm.room.roomNumber })
+            : ''
+        }
+        variant="danger"
+      />
     </div>
   )
 }

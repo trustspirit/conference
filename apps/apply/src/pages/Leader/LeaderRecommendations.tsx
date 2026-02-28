@@ -14,6 +14,7 @@ import Spinner from '../../components/Spinner'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
 import EmptyState from '../../components/EmptyState'
+import Drawer from '../../components/Drawer'
 import { RECOMMENDATION_TABS, STATUS_TONES } from '../../utils/constants'
 import type { Gender, RecommendationStatus, LeaderRecommendation } from '../../types'
 
@@ -39,7 +40,7 @@ export default function LeaderRecommendations() {
   const [activeTab, setActiveTab] = useState<string>(RECOMMENDATION_TABS.ALL)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'form' | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string }>({ open: false, id: '' })
 
   // Form state
@@ -78,8 +79,14 @@ export default function LeaderRecommendations() {
     setFormGender('male')
     setFormMoreInfo('')
     setFormServedMission(false)
-    setShowForm(false)
     setEditingId(null)
+  }
+
+  const openNewForm = () => {
+    resetForm()
+    setEditingId(null)
+    setSelectedId(null)
+    setDrawerMode('form')
   }
 
   const openEditForm = (rec: LeaderRecommendation) => {
@@ -91,12 +98,18 @@ export default function LeaderRecommendations() {
     setFormMoreInfo(rec.moreInfo)
     setFormServedMission(rec.servedMission || false)
     setEditingId(rec.id)
-    setShowForm(true)
+    setDrawerMode('form')
   }
 
-  const openNewForm = () => {
-    resetForm()
-    setShowForm(true)
+  const openDetail = (id: string) => {
+    setSelectedId(id)
+    setDrawerMode('view')
+  }
+
+  const closeDrawer = () => {
+    setDrawerMode(null)
+    setSelectedId(null)
+    setEditingId(null)
   }
 
   const handleSaveDraft = async () => {
@@ -118,7 +131,7 @@ export default function LeaderRecommendations() {
         await createRec.mutateAsync(data)
       }
       toast({ variant: 'success', message: t('leader.recommendations.form.messages.draftSaved') })
-      resetForm()
+      closeDrawer()
     } catch {
       toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToSave') })
     }
@@ -143,7 +156,7 @@ export default function LeaderRecommendations() {
         await createRec.mutateAsync({ ...data, status: 'submitted' as RecommendationStatus })
       }
       toast({ variant: 'success', message: t('leader.recommendations.form.messages.submitted') })
-      resetForm()
+      closeDrawer()
     } catch {
       toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToSubmit') })
     }
@@ -155,12 +168,15 @@ export default function LeaderRecommendations() {
 
   const executeDelete = () => {
     const id = confirmDelete.id
+    setConfirmDelete({ open: false, id: '' })
     deleteRec.mutate(id, {
-      onSuccess: () => toast({ variant: 'success', message: t('leader.recommendations.messages.removed') }),
+      onSuccess: () => {
+        toast({ variant: 'success', message: t('leader.recommendations.messages.removed') })
+        if (selectedId === id) setSelectedId(null)
+        closeDrawer()
+      },
       onError: () => toast({ variant: 'danger', message: t('leader.recommendations.messages.failedToDelete') }),
     })
-    if (selectedId === id) setSelectedId(null)
-    setConfirmDelete({ open: false, id: '' })
   }
 
   const handleStatusChange = (id: string, status: RecommendationStatus) => {
@@ -193,101 +209,10 @@ export default function LeaderRecommendations() {
           <h1 className="text-2xl font-bold text-gray-900">{t('leader.recommendations.title', '추천서')}</h1>
           <p className="text-sm text-gray-500">{t('leader.recommendations.subtitle', '초안 및 제출된 추천서를 관리하세요.')}</p>
         </div>
-        <Button variant={showForm ? 'outline' : 'primary'} onClick={() => showForm ? resetForm() : openNewForm()}>
-          {showForm ? t('common.cancel', '취소') : t('leader.recommendations.createRecommendation', '추천서 작성')}
+        <Button variant={drawerMode === 'form' ? 'outline' : 'primary'} onClick={() => drawerMode === 'form' ? closeDrawer() : openNewForm()}>
+          {drawerMode === 'form' ? t('common.cancel', '취소') : t('leader.recommendations.createRecommendation', '추천서 작성')}
         </Button>
       </div>
-
-      {/* Inline Form */}
-      {showForm && (
-        <div style={{ marginBottom: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
-          {editingId && (
-            <div style={{ marginBottom: '0.75rem' }}>
-              <Alert variant="warning">{t('leader.recommendations.form.editingAlert')}</Alert>
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={`${t('leader.recommendations.form.applicantName', '지원자 이름')} *`}
-              type="text"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              required
-              fullWidth
-            />
-            <TextField
-              label={`${t('leader.recommendations.form.age', '나이')} *`}
-              type="number"
-              value={formAge}
-              onChange={(e) => setFormAge(e.target.value)}
-              required
-              fullWidth
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('leader.recommendations.form.email', '이메일')}
-              type="email"
-              value={formEmail}
-              onChange={(e) => setFormEmail(e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label={`${t('leader.recommendations.form.phone', '전화번호')} *`}
-              type="tel"
-              value={formPhone}
-              onChange={(e) => setFormPhone(e.target.value)}
-              required
-              fullWidth
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <div>
-              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('leader.recommendations.form.gender', '성별')}</p>
-              <Select
-                options={genderOptions}
-                value={formGender}
-                onChange={(value) => setFormGender(value as Gender)}
-                fullWidth
-              />
-            </div>
-            <div>
-              <Switch
-                label={t('leader.recommendations.form.servedMission', '선교사로 봉사')}
-                checked={formServedMission}
-                onChange={setFormServedMission}
-              />
-            </div>
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('leader.recommendations.form.additionalInfo', '추가 정보')}
-              multiline
-              rows={3}
-              value={formMoreInfo}
-              onChange={(e) => setFormMoreInfo(e.target.value)}
-              placeholder={t('leader.recommendations.form.additionalInfoPlaceholder')}
-              fullWidth
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Button
-              variant="primary"
-              onClick={handleSubmitRec}
-              disabled={!formName || !formPhone || createRec.isPending || updateRec.isPending}
-            >
-              {t('leader.recommendations.form.submitRecommendation', '추천서 제출')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={!formName || createRec.isPending || updateRec.isPending}
-            >
-              {t('leader.recommendations.form.saveDraft', '초안 저장')}
-            </Button>
-          </div>
-        </div>
-      )}
 
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
@@ -299,76 +224,162 @@ export default function LeaderRecommendations() {
         </Tabs.List>
       </Tabs>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '50vh', marginTop: '1rem' }}>
-        {/* Left: List */}
-        <div className={`lg:col-span-2 space-y-2 overflow-y-auto ${selected ? 'hidden lg:block' : ''}`} style={{ maxHeight: '70vh' }}>
-          {filteredRecs.length === 0 ? (
-            <EmptyState message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')} />
-          ) : (
-            filteredRecs.map((rec) => (
-              <button
-                key={rec.id}
-                onClick={() => setSelectedId(rec.id)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.75rem',
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${selectedId === rec.id ? '#3b82f6' : '#e5e7eb'}`,
-                  backgroundColor: selectedId === rec.id ? '#eff6ff' : '#fff',
-                  cursor: 'pointer',
-                  display: 'block',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{rec.name}</span>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    {hasLinkedApplication(rec) && (
-                      <Badge variant="info" size="sm">{t('leader.recommendations.tags.applied', '신청됨')}</Badge>
-                    )}
-                    <Badge variant={TONE_TO_BADGE[STATUS_TONES[rec.status] || 'draft'] || 'secondary'} size="sm">
-                      {t(`status.${rec.status}`, rec.status)}
-                    </Badge>
-                  </div>
+      <div style={{ marginTop: '1rem', maxHeight: '70vh', overflowY: 'auto' }} className="space-y-2">
+        {filteredRecs.length === 0 ? (
+          <EmptyState message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')} />
+        ) : (
+          filteredRecs.map((rec) => (
+            <button
+              key={rec.id}
+              onClick={() => openDetail(rec.id)}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '0.75rem',
+                borderRadius: '0.5rem',
+                border: `1px solid ${selectedId === rec.id ? '#3b82f6' : '#e5e7eb'}`,
+                backgroundColor: selectedId === rec.id ? '#eff6ff' : '#fff',
+                cursor: 'pointer',
+                display: 'block',
+                transition: 'border-color 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{rec.name}</span>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {hasLinkedApplication(rec) && (
+                    <Badge variant="info" size="sm">{t('leader.recommendations.tags.applied', '신청됨')}</Badge>
+                  )}
+                  <Badge variant={TONE_TO_BADGE[STATUS_TONES[rec.status] || 'draft'] || 'secondary'} size="sm">
+                    {t(`status.${rec.status}`, rec.status)}
+                  </Badge>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                  {rec.stake} / {rec.ward} · {rec.phone}
-                </p>
-              </button>
-            ))
-          )}
-        </div>
-
-        {/* Right: Detail */}
-        <div className={`lg:col-span-3 ${selected ? '' : 'hidden lg:block'}`}>
-          {selected ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              {/* Mobile back button */}
-              <button
-                onClick={() => setSelectedId(null)}
-                className="lg:hidden mb-3 text-sm text-blue-600 flex items-center gap-1"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0' }}
-              >
-                <span>&larr;</span> {t('common.back', '뒤로')}
-              </button>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>{selected.name}</h2>
-                  <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-                    {t('leader.recommendations.details.updated', '업데이트됨')}: {selected.updatedAt instanceof Date ? selected.updatedAt.toLocaleDateString() : ''}
-                  </p>
-                </div>
-                <Badge variant={TONE_TO_BADGE[STATUS_TONES[selected.status] || 'draft'] || 'secondary'}>
-                  {t(`status.${selected.status}`, selected.status)}
-                </Badge>
               </div>
+              <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                {rec.stake} / {rec.ward} · {rec.phone}
+              </p>
+            </button>
+          ))
+        )}
+      </div>
 
+      {/* Recommendation Drawer */}
+      <Drawer open={drawerMode !== null} onClose={closeDrawer}>
+        {drawerMode === 'form' ? (
+          <>
+            <Drawer.Header onClose={closeDrawer}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>
+                {editingId ? t('leader.recommendations.form.editTitle', '추천서 수정') : t('leader.recommendations.createRecommendation', '추천서 작성')}
+              </h2>
+            </Drawer.Header>
+            <Drawer.Content>
+              {editingId && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <Alert variant="warning">{t('leader.recommendations.form.editingAlert')}</Alert>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={`${t('leader.recommendations.form.applicantName', '지원자 이름')} *`}
+                  type="text"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label={`${t('leader.recommendations.form.age', '나이')} *`}
+                  type="number"
+                  value={formAge}
+                  onChange={(e) => setFormAge(e.target.value)}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('leader.recommendations.form.email', '이메일')}
+                  type="email"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  label={`${t('leader.recommendations.form.phone', '전화번호')} *`}
+                  type="tel"
+                  value={formPhone}
+                  onChange={(e) => setFormPhone(e.target.value)}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                <div>
+                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('leader.recommendations.form.gender', '성별')}</p>
+                  <Select
+                    options={genderOptions}
+                    value={formGender}
+                    onChange={(value) => setFormGender(value as Gender)}
+                    fullWidth
+                  />
+                </div>
+                <div>
+                  <Switch
+                    label={t('leader.recommendations.form.servedMission', '선교사로 봉사')}
+                    checked={formServedMission}
+                    onChange={setFormServedMission}
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('leader.recommendations.form.additionalInfo', '추가 정보')}
+                  multiline
+                  rows={3}
+                  value={formMoreInfo}
+                  onChange={(e) => setFormMoreInfo(e.target.value)}
+                  placeholder={t('leader.recommendations.form.additionalInfoPlaceholder')}
+                  fullWidth
+                />
+              </div>
+            </Drawer.Content>
+            <Drawer.Footer>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button
+                  variant="primary"
+                  onClick={handleSubmitRec}
+                  disabled={!formName || !formPhone || createRec.isPending || updateRec.isPending}
+                >
+                  {t('leader.recommendations.form.submitRecommendation', '추천서 제출')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                  disabled={!formName || createRec.isPending || updateRec.isPending}
+                >
+                  {t('leader.recommendations.form.saveDraft', '초안 저장')}
+                </Button>
+              </div>
+            </Drawer.Footer>
+          </>
+        ) : drawerMode === 'view' && selected ? (
+          <>
+            <Drawer.Header onClose={closeDrawer}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>{selected.name}</h2>
+              <Badge variant={TONE_TO_BADGE[STATUS_TONES[selected.status] || 'draft'] || 'secondary'}>
+                {t(`status.${selected.status}`, selected.status)}
+              </Badge>
+            </Drawer.Header>
+            <Drawer.Content>
               {isLocked(selected) && (
                 <div style={{ marginBottom: '1rem' }}>
                   <Alert variant="info">{t('leader.recommendations.details.lockedMessage')}</Alert>
                 </div>
               )}
+
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
+                {t('leader.recommendations.details.updated', '업데이트됨')}: {selected.updatedAt instanceof Date ? selected.updatedAt.toLocaleDateString() : ''}
+              </p>
 
               <DetailsGrid
                 items={[
@@ -391,9 +402,12 @@ export default function LeaderRecommendations() {
                 </p>
               </div>
 
-              {/* Actions */}
+              {/* Comments Section */}
+              <CommentsSection recommendationId={selected.id} />
+            </Drawer.Content>
+            <Drawer.Footer>
               {!isLocked(selected) && (
-                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {selected.status === 'draft' && (
                     <>
                       <Button variant="outline" size="sm" onClick={() => openEditForm(selected)}>
@@ -414,17 +428,10 @@ export default function LeaderRecommendations() {
                   )}
                 </div>
               )}
-
-              {/* Comments Section */}
-              <CommentsSection recommendationId={selected.id} />
-            </div>
-          ) : (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center" style={{ minHeight: '40vh' }}>
-              <p className="text-gray-400 text-sm">{t('leader.recommendations.details.selectRecommendation', '세부 정보를 검토하려면 추천서를 선택하세요.')}</p>
-            </div>
-          )}
-        </div>
-      </div>
+            </Drawer.Footer>
+          </>
+        ) : null}
+      </Drawer>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={confirmDelete.open} onClose={() => setConfirmDelete({ open: false, id: '' })} size="sm">
@@ -443,6 +450,7 @@ export default function LeaderRecommendations() {
 
 function CommentsSection({ recommendationId }: { recommendationId: string }) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { data: comments, isLoading } = useRecommendationComments(recommendationId)
   const createComment = useCreateComment()
@@ -456,7 +464,7 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
       await createComment.mutateAsync({ recommendationId, content: newComment.trim() })
       setNewComment('')
     } catch {
-      alert(t('leader.recommendations.form.messages.failedToAddComment'))
+      toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToAddComment') })
     }
   }
 

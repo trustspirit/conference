@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportSettlementPdf } from '../lib/pdfExport'
@@ -15,6 +16,7 @@ import ReceiptGallery from '../components/ReceiptGallery'
 
 export default function SettlementReportPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { id } = useParams<{ id: string }>()
   const { currentProject } = useProject()
   const { data: settlement, isLoading: loading } = useSettlement(id)
@@ -26,7 +28,7 @@ export default function SettlementReportPage() {
     if (!settlement) return
     setExporting(true)
     const success = await exportSettlementPdf(settlement, documentNo, projectName)
-    if (!success) alert('Popup blocked. Please allow popups for this site.')
+    if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
     setExporting(false)
   }
 

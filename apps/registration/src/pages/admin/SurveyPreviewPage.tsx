@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { getSurveyById } from '../../services/surveys'
 import { Button } from 'trust-ui-react'
 import Spinner from '../../components/ui/Spinner'
-import ThemeProvider from '../../components/ThemeProvider'
+import SurveyThemeProvider from '../../components/ThemeProvider'
 import FormHeader from '../../components/form-renderer/FormHeader'
 import DynamicForm from '../../components/form-renderer/DynamicForm'
 import type { SurveyField, SurveyTheme } from '../../types'
@@ -69,7 +69,7 @@ function SurveyPreviewPage(): React.ReactElement {
   }
 
   return (
-    <ThemeProvider theme={data.theme}>
+    <SurveyThemeProvider theme={data.theme}>
       {/* Preview banner */}
       <div className="bg-gray-900 text-white px-4 py-2 flex items-center justify-between sticky top-0 z-10">
         <span className="text-sm font-medium">{t('builder.theme.preview')}</span>
@@ -104,7 +104,7 @@ function SurveyPreviewPage(): React.ReactElement {
           )}
         </div>
       </div>
-    </ThemeProvider>
+    </SurveyThemeProvider>
   )
 }
 

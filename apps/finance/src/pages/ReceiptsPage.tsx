@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useToast } from "trust-ui-react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from '@conference/firebase';
 import { useProject } from "../contexts/ProjectContext";
@@ -51,6 +52,7 @@ function PdfIcon({ className }: { className?: string }) {
 
 export default function ReceiptsPage() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { currentProject } = useProject();
   const {
     data,
@@ -170,7 +172,7 @@ export default function ReceiptsPage() {
         const row = selectedRows[0];
         const file = await downloadOneFile(row);
         if (!file) {
-          alert(t("receipts.downloadFailed"));
+          toast({ variant: "danger", message: t("receipts.downloadFailed") });
           return;
         }
         const blob = new Blob([file.bytes as unknown as BlobPart]);
@@ -198,12 +200,13 @@ export default function ReceiptsPage() {
       );
 
       if (failCount > 0) {
-        alert(
-          t("receipts.partialDownload", {
+        toast({
+          variant: "danger",
+          message: t("receipts.partialDownload", {
             failed: failCount,
             total: selectedRows.length,
           }),
-        );
+        });
       }
       if (Object.keys(zip.files).length === 0) return;
 
@@ -219,7 +222,7 @@ export default function ReceiptsPage() {
       URL.revokeObjectURL(link.href);
     } catch (err) {
       console.error("Download failed:", err);
-      alert(t("receipts.downloadFailed"));
+      toast({ variant: "danger", message: t("receipts.downloadFailed") });
     } finally {
       setDownloading(false);
     }
