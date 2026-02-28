@@ -190,7 +190,8 @@
     "current": "현재",
     "closed": "마감됨",
     "label": "대회",
-    "select": "대회 선택"
+    "select": "대회 선택",
+    "noConference": "선택된 대회가 없습니다. 상단에서 대회를 선택해주세요."
   },
   "admin": {
     "totalApplications": "전체 신청서",
@@ -253,7 +254,13 @@
         "close": "마감하기",
         "reopen": "신청 열기",
         "closedManually": "신청이 마감되었습니다.",
-        "reopened": "신청이 다시 열렸습니다."
+        "reopened": "신청이 다시 열렸습니다.",
+        "updated": "대회 정보가 저장되었습니다.",
+        "editDescription": "현재 선택된 대회의 정보를 수정합니다.",
+        "noConference": "대회를 먼저 생성해주세요. 상단 대회 선택기에서 새 대회를 생성할 수 있습니다.",
+        "confirmDelete": "\"{{name}}\" 대회를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+        "confirmClose": "\"{{name}}\" 대회의 신청을 마감하시겠습니까?",
+        "confirmReopen": "\"{{name}}\" 대회의 신청을 다시 열겠습니까?"
       },
       "eligibility": {
         "title": "자격 요건 관리",

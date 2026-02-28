@@ -142,6 +142,18 @@ export default function UserApplication() {
     { value: 'female', label: t('application.form.genderFemale', 'Female') },
   ]
 
+  if (!currentConference) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
+        <p className="text-sm text-gray-500 mb-6">{t('application.subtitle.start')}</p>
+        <Alert variant="warning">
+          {t('conference.noConference', '선택된 대회가 없습니다. 상단에서 대회를 선택해주세요.')}
+        </Alert>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>

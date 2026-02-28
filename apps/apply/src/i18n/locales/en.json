@@ -190,7 +190,8 @@
     "current": "Current",
     "closed": "Closed",
     "label": "Conference",
-    "select": "Select Conference"
+    "select": "Select Conference",
+    "noConference": "No conference selected. Please select a conference from the top."
   },
   "admin": {
     "totalApplications": "Total Applications",
@@ -253,7 +254,13 @@
         "close": "Close Applications",
         "reopen": "Reopen Applications",
         "closedManually": "Applications have been closed.",
-        "reopened": "Applications have been reopened."
+        "reopened": "Applications have been reopened.",
+        "updated": "Conference information saved.",
+        "editDescription": "Edit the currently selected conference.",
+        "noConference": "Please create a conference first. You can create one from the conference selector at the top.",
+        "confirmDelete": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirmClose": "Are you sure you want to close applications for \"{{name}}\"?",
+        "confirmReopen": "Are you sure you want to reopen applications for \"{{name}}\"?"
       },
       "eligibility": {
         "title": "Eligibility Requirements",

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast, TextField, Button, Badge } from 'trust-ui-react'
+import { useToast, TextField, Button, Badge, Dialog } from 'trust-ui-react'
 import { useConference } from '../../contexts/ConferenceContext'
-import { useCreateConference, useUpdateConference, useDeleteConference } from '../../hooks/queries/useConferences'
+import { useUpdateConference, useDeleteConference } from '../../hooks/queries/useConferences'
 import { usePositions, useCreatePosition, useUpdatePosition, useDeletePosition } from '../../hooks/queries/usePositions'
-import { useAuth } from '../../contexts/AuthContext'
 import PageLoader from '../../components/PageLoader'
 import Alert from '../../components/Alert'
 import { isConferenceClosed } from '../../lib/conference'
@@ -13,9 +12,7 @@ import type { Position } from '../../types'
 export default function AdminSettings() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { appUser } = useAuth()
-  const { currentConference, conferences, loading } = useConference()
-  const createConference = useCreateConference()
+  const { currentConference, loading } = useConference()
   const updateConference = useUpdateConference()
   const deleteConference = useDeleteConference()
 
@@ -25,10 +22,13 @@ export default function AdminSettings() {
   const updatePosition = useUpdatePosition()
   const deletePosition = useDeletePosition()
 
-  // Conference form
-  const [newConferenceName, setNewConferenceName] = useState('')
-  const [newConferenceDesc, setNewConferenceDesc] = useState('')
-  const [newConferenceDeadline, setNewConferenceDeadline] = useState('')
+  // Conference edit form
+  const [editConferenceName, setEditConferenceName] = useState('')
+  const [editConferenceDesc, setEditConferenceDesc] = useState('')
+  const [editConferenceDeadline, setEditConferenceDeadline] = useState('')
+
+  // Confirm dialogs
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: 'delete' | 'close' | 'reopen' }>({ open: false, type: 'delete' })
 
   // Position management
   const [editingPosition, setEditingPosition] = useState<Position | null>(null)
@@ -43,44 +43,62 @@ export default function AdminSettings() {
     }
   }, [editingPosition])
 
-  const handleCreateConference = async () => {
-    if (!newConferenceName.trim()) return
+  // Sync conference edit form from currentConference
+  useEffect(() => {
+    if (currentConference) {
+      setEditConferenceName(currentConference.name)
+      setEditConferenceDesc(currentConference.description || '')
+      const dl = currentConference.deadline
+      setEditConferenceDeadline(dl ? dl.toISOString().split('T')[0] : '')
+    }
+  }, [currentConference])
+
+  const handleSaveConference = async () => {
+    if (!currentConference || !editConferenceName.trim()) return
     try {
-      await createConference.mutateAsync({
-        name: newConferenceName.trim(),
-        description: newConferenceDesc.trim(),
-        deadline: newConferenceDeadline || null,
-        createdBy: appUser?.uid || '',
+      await updateConference.mutateAsync({
+        id: currentConference.id,
+        name: editConferenceName.trim(),
+        description: editConferenceDesc.trim(),
+        deadline: editConferenceDeadline ? new Date(editConferenceDeadline) : null,
       })
-      toast({ variant: 'success', message: t('admin.settings.conference.created', '대회가 생성되었습니다.') })
-      setNewConferenceName('')
-      setNewConferenceDesc('')
-      setNewConferenceDeadline('')
+      toast({ variant: 'success', message: t('admin.settings.conference.updated', '대회 정보가 저장되었습니다.') })
     } catch {
       toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
     }
   }
 
-  const handleToggleClosed = async (id: string, currentlyClosed: boolean) => {
+  const handleConfirmAction = async () => {
+    if (!currentConference) return
+    setConfirmDialog({ open: false, type: 'delete' })
     try {
-      await updateConference.mutateAsync({ id, isClosed: !currentlyClosed })
-      toast({
-        variant: 'success',
-        message: currentlyClosed
-          ? t('admin.settings.conference.reopened', '신청이 다시 열렸습니다.')
-          : t('admin.settings.conference.closedManually', '신청이 마감되었습니다.'),
-      })
+      if (confirmDialog.type === 'delete') {
+        await deleteConference.mutateAsync(currentConference.id)
+        toast({ variant: 'success', message: t('admin.settings.conference.deleted', '대회가 삭제되었습니다.') })
+      } else {
+        const closing = confirmDialog.type === 'close'
+        await updateConference.mutateAsync({ id: currentConference.id, isClosed: closing })
+        toast({
+          variant: 'success',
+          message: closing
+            ? t('admin.settings.conference.closedManually', '신청이 마감되었습니다.')
+            : t('admin.settings.conference.reopened', '신청이 다시 열렸습니다.'),
+        })
+      }
     } catch {
       toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
     }
   }
 
-  const handleDeleteConference = async (id: string) => {
-    try {
-      await deleteConference.mutateAsync(id)
-      toast({ variant: 'success', message: t('admin.settings.conference.deleted', '대회가 삭제되었습니다.') })
-    } catch {
-      toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
+  const getConfirmMessage = () => {
+    if (!currentConference) return ''
+    switch (confirmDialog.type) {
+      case 'delete':
+        return t('admin.settings.conference.confirmDelete', '\"{{name}}\" 대회를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', { name: currentConference.name })
+      case 'close':
+        return t('admin.settings.conference.confirmClose', '\"{{name}}\" 대회의 신청을 마감하시겠습니까?', { name: currentConference.name })
+      case 'reopen':
+        return t('admin.settings.conference.confirmReopen', '\"{{name}}\" 대회의 신청을 다시 열겠습니까?', { name: currentConference.name })
     }
   }
 
@@ -150,134 +168,107 @@ export default function AdminSettings() {
         {t('admin.settings.subtitle', '대회 및 신청 관련 설정을 관리합니다.')}
       </p>
 
-      {/* Conference Management */}
-      <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', marginBottom: '0.25rem' }}>
-          {t('admin.settings.conference.title', '대회 관리')}
-        </h2>
-        <p style={{ fontSize: '0.8125rem', color: '#6b7280', marginBottom: '1.25rem' }}>
-          {t('admin.settings.conference.description', '대회를 생성하고 관리합니다. 신청서와 추천서는 대회별로 관리됩니다.')}
-        </p>
-
-        {/* Existing Conferences */}
-        {conferences.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
-            {conferences.map((conference) => (
-              <div
-                key={conference.id}
+      {/* Conference Settings */}
+      {currentConference ? (
+        <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
+              {t('admin.settings.conference.title', '대회 관리')}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {isConferenceClosed(currentConference) && (
+                <Badge variant="danger" size="sm">{t('conference.closed', '마감됨')}</Badge>
+              )}
+              <button
+                onClick={() => setConfirmDialog({ open: true, type: isConferenceClosed(currentConference) ? 'reopen' : 'close' })}
+                disabled={updateConference.isPending}
                 style={{
-                  padding: '0.625rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  backgroundColor: conference.id === currentConference?.id ? '#eff6ff' : '#f9fafb',
-                  border: `1px solid ${conference.id === currentConference?.id ? '#bfdbfe' : '#f3f4f6'}`,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  color: isConferenceClosed(currentConference) ? '#2563eb' : '#d97706',
+                  padding: '0.25rem 0.5rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
-                      {conference.name}
-                    </span>
-                    {conference.id === currentConference?.id && (
-                      <Badge variant="primary" size="sm">{t('conference.current', '현재')}</Badge>
-                    )}
-                    {isConferenceClosed(conference) && (
-                      <Badge variant="danger" size="sm">{t('conference.closed', '마감됨')}</Badge>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
-                    <button
-                      onClick={() => handleToggleClosed(conference.id, isConferenceClosed(conference))}
-                      disabled={updateConference.isPending}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        color: isConferenceClosed(conference) ? '#2563eb' : '#d97706',
-                        padding: '0.25rem 0.5rem',
-                      }}
-                    >
-                      {isConferenceClosed(conference)
-                        ? t('admin.settings.conference.reopen', '신청 열기')
-                        : t('admin.settings.conference.close', '마감하기')}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConference(conference.id)}
-                      disabled={deleteConference.isPending}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        color: '#dc2626',
-                        padding: '0.25rem 0.5rem',
-                      }}
-                    >
-                      {t('common.delete', '삭제')}
-                    </button>
-                  </div>
-                </div>
-                {conference.description && (
-                  <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                    {conference.description}
-                  </p>
-                )}
-                {conference.deadline && (
-                  <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: conference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
-                    {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-            ))}
+                {isConferenceClosed(currentConference)
+                  ? t('admin.settings.conference.reopen', '신청 열기')
+                  : t('admin.settings.conference.close', '마감하기')}
+              </button>
+              <button
+                onClick={() => setConfirmDialog({ open: true, type: 'delete' })}
+                disabled={deleteConference.isPending}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  color: '#dc2626',
+                  padding: '0.25rem 0.5rem',
+                }}
+              >
+                {t('common.delete', '삭제')}
+              </button>
+            </div>
           </div>
-        )}
+          <p style={{ fontSize: '0.8125rem', color: '#6b7280', marginBottom: '1.25rem' }}>
+            {t('admin.settings.conference.editDescription', '현재 선택된 대회의 정보를 수정합니다.')}
+          </p>
 
-        {/* Create Conference */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <TextField
-            label={t('admin.settings.conference.name', '대회명')}
-            type="text"
-            value={newConferenceName}
-            onChange={(e) => setNewConferenceName(e.target.value)}
-            placeholder={t('admin.settings.conference.namePlaceholder', '예: 2026 청소년 대회')}
-            fullWidth
-          />
-          <TextField
-            label={t('admin.settings.conference.desc', '대회 설명')}
-            type="text"
-            value={newConferenceDesc}
-            onChange={(e) => setNewConferenceDesc(e.target.value)}
-            placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
-            fullWidth
-          />
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
-              {t('admin.settings.conference.deadline', '신청 마감일')}
-            </label>
-            <input
-              type="date"
-              value={newConferenceDeadline}
-              onChange={(e) => setNewConferenceDeadline(e.target.value)}
-              style={{
-                width: '100%',
-                borderRadius: '0.5rem',
-                border: '1px solid #d1d5db',
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.875rem',
-              }}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <TextField
+              label={t('admin.settings.conference.name', '대회명')}
+              type="text"
+              value={editConferenceName}
+              onChange={(e) => setEditConferenceName(e.target.value)}
+              placeholder={t('admin.settings.conference.namePlaceholder', '예: 2026 청소년 대회')}
+              fullWidth
             />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="primary"
-              onClick={handleCreateConference}
-              disabled={!newConferenceName.trim() || createConference.isPending}
-            >
-              {t('admin.settings.conference.create', '생성')}
-            </Button>
+            <TextField
+              label={t('admin.settings.conference.desc', '대회 설명')}
+              type="text"
+              value={editConferenceDesc}
+              onChange={(e) => setEditConferenceDesc(e.target.value)}
+              placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
+              fullWidth
+            />
+            <div>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+                {t('admin.settings.conference.deadline', '신청 마감일')}
+              </label>
+              <input
+                type="date"
+                value={editConferenceDeadline}
+                onChange={(e) => setEditConferenceDeadline(e.target.value)}
+                style={{
+                  width: '100%',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.875rem',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="primary"
+                onClick={handleSaveConference}
+                disabled={!editConferenceName.trim() || updateConference.isPending}
+              >
+                {updateConference.isPending
+                  ? t('common.saving', '저장 중...')
+                  : t('common.save', '저장')}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <Alert variant="warning">
+            {t('admin.settings.conference.noConference', '대회를 먼저 생성해주세요. 상단 대회 선택기에서 새 대회를 생성할 수 있습니다.')}
+          </Alert>
+        </div>
+      )}
 
       {/* Position Management (per conference) */}
       {currentConference ? (
@@ -470,6 +461,24 @@ export default function AdminSettings() {
           {t('admin.settings.position.noConference', '대회를 먼저 생성해주세요.')}
         </Alert>
       )}
+
+      {/* Confirm Dialog */}
+      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, type: 'delete' })} size="sm">
+        <Dialog.Title onClose={() => setConfirmDialog({ open: false, type: 'delete' })}>
+          {t('common.confirm', '확인')}
+        </Dialog.Title>
+        <Dialog.Content>
+          <p style={{ fontSize: '0.875rem', color: '#374151' }}>{getConfirmMessage()}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={() => setConfirmDialog({ open: false, type: 'delete' })}>
+            {t('common.cancel', '취소')}
+          </Button>
+          <Button variant={confirmDialog.type === 'delete' ? 'danger' : 'primary'} onClick={handleConfirmAction}>
+            {t('common.confirm', '확인')}
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

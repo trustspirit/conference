@@ -231,6 +231,17 @@ export default function LeaderRecommendations() {
     )
   }
 
+  if (!currentConference) {
+    return (
+      <div className="mx-auto max-w-7xl p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('leader.recommendations.title', '추천서')}</h1>
+        <Alert variant="warning">
+          {t('conference.noConference', '선택된 대회가 없습니다. 상단에서 대회를 선택해주세요.')}
+        </Alert>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-7xl p-6">
       <div className="flex items-center justify-between mb-2">
@@ -302,6 +313,31 @@ export default function LeaderRecommendations() {
               </h2>
             </Drawer.Header>
             <Drawer.Content>
+              {/* Current Conference Info */}
+              {currentConference && (
+                <div
+                  style={{
+                    marginBottom: '1rem',
+                    padding: '0.625rem 0.75rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: '#f9fafb',
+                    border: '1px solid #f3f4f6',
+                  }}
+                >
+                  <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.125rem' }}>
+                    {t('conference.label', '대회')}
+                  </p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
+                    {currentConference.name}
+                  </p>
+                  {currentConference.deadline && (
+                    <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: currentConference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
+                      {t('application.deadline', '신청 마감일')}: {currentConference.deadline.toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <EligibilityNotice requirements={selectedPosition?.eligibilityRequirements} />
               {editingId && (
                 <div style={{ marginBottom: '0.75rem' }}>
