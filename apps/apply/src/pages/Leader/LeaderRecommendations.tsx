@@ -8,18 +8,23 @@ import {
   useUpdateRecommendationStatus,
 } from '../../hooks/queries/useRecommendations'
 import { useRecommendationComments, useCreateComment, useDeleteComment } from '../../hooks/queries/useRecommendationComments'
-import { useToast } from '../../components/Toast'
+import { useToast, TextField, Select, Switch, Tabs, Badge, Button, Dialog } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Input, Select, Textarea, Label } from '../../components/form'
-import ToggleButton from '../../components/form/ToggleButton'
 import Spinner from '../../components/Spinner'
-import Tabs from '../../components/Tabs'
-import StatusChip from '../../components/StatusChip'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
 import EmptyState from '../../components/EmptyState'
 import { RECOMMENDATION_TABS, STATUS_TONES } from '../../utils/constants'
 import type { Gender, RecommendationStatus, LeaderRecommendation } from '../../types'
+
+const TONE_TO_BADGE: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+  draft: 'secondary',
+  awaiting: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  submitted: 'info',
+  pending: 'warning',
+}
 
 export default function LeaderRecommendations() {
   const { t } = useTranslation()
@@ -33,8 +38,9 @@ export default function LeaderRecommendations() {
 
   const [activeTab, setActiveTab] = useState<string>(RECOMMENDATION_TABS.ALL)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null) // null = new, id = editing
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string }>({ open: false, id: '' })
 
   // Form state
   const [formName, setFormName] = useState('')
@@ -63,14 +69,6 @@ export default function LeaderRecommendations() {
       rejected: recs.filter((r) => r.status === 'rejected').length,
     }
   }, [recommendations])
-
-  const tabs = [
-    { id: RECOMMENDATION_TABS.ALL, label: t('leader.recommendations.tabs.all', '전체'), count: tabCounts.all },
-    { id: RECOMMENDATION_TABS.DRAFT, label: t('leader.recommendations.tabs.draft', '초안'), count: tabCounts.draft },
-    { id: RECOMMENDATION_TABS.SUBMITTED, label: t('leader.recommendations.tabs.submitted', '검토 대기 중'), count: tabCounts.submitted },
-    { id: RECOMMENDATION_TABS.APPROVED, label: t('leader.recommendations.tabs.approved', '승인됨'), count: tabCounts.approved },
-    { id: RECOMMENDATION_TABS.REJECTED, label: t('leader.recommendations.tabs.rejected', '다음 기회에'), count: tabCounts.rejected },
-  ]
 
   const resetForm = () => {
     setFormName('')
@@ -119,10 +117,10 @@ export default function LeaderRecommendations() {
       } else {
         await createRec.mutateAsync(data)
       }
-      toast(t('leader.recommendations.form.messages.draftSaved'))
+      toast({ variant: 'success', message: t('leader.recommendations.form.messages.draftSaved') })
       resetForm()
     } catch {
-      toast(t('leader.recommendations.form.messages.failedToSave'), 'error')
+      toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToSave') })
     }
   }
 
@@ -144,21 +142,25 @@ export default function LeaderRecommendations() {
       } else {
         await createRec.mutateAsync({ ...data, status: 'submitted' as RecommendationStatus })
       }
-      toast(t('leader.recommendations.form.messages.submitted'))
+      toast({ variant: 'success', message: t('leader.recommendations.form.messages.submitted') })
       resetForm()
     } catch {
-      toast(t('leader.recommendations.form.messages.failedToSubmit'), 'error')
+      toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToSubmit') })
     }
   }
 
   const handleDelete = (id: string) => {
-    if (confirm(t('common.confirmDelete'))) {
-      deleteRec.mutate(id, {
-        onSuccess: () => toast(t('leader.recommendations.messages.removed')),
-        onError: () => toast(t('leader.recommendations.messages.failedToDelete'), 'error'),
-      })
-      if (selectedId === id) setSelectedId(null)
-    }
+    setConfirmDelete({ open: true, id })
+  }
+
+  const executeDelete = () => {
+    const id = confirmDelete.id
+    deleteRec.mutate(id, {
+      onSuccess: () => toast({ variant: 'success', message: t('leader.recommendations.messages.removed') }),
+      onError: () => toast({ variant: 'danger', message: t('leader.recommendations.messages.failedToDelete') }),
+    })
+    if (selectedId === id) setSelectedId(null)
+    setConfirmDelete({ open: false, id: '' })
   }
 
   const handleStatusChange = (id: string, status: RecommendationStatus) => {
@@ -170,6 +172,11 @@ export default function LeaderRecommendations() {
   }
 
   const isLocked = (rec: LeaderRecommendation) => rec.status === 'approved' || rec.status === 'rejected'
+
+  const genderOptions = [
+    { value: 'male', label: t('leader.recommendations.form.genderMale', '형제') },
+    { value: 'female', label: t('leader.recommendations.form.genderFemale', '자매') },
+  ]
 
   if (isLoading) {
     return (
@@ -186,12 +193,9 @@ export default function LeaderRecommendations() {
           <h1 className="text-2xl font-bold text-gray-900">{t('leader.recommendations.title', '추천서')}</h1>
           <p className="text-sm text-gray-500">{t('leader.recommendations.subtitle', '초안 및 제출된 추천서를 관리하세요.')}</p>
         </div>
-        <button
-          onClick={() => showForm ? resetForm() : openNewForm()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
-        >
+        <Button variant={showForm ? 'outline' : 'primary'} onClick={() => showForm ? resetForm() : openNewForm()}>
           {showForm ? t('common.cancel', '취소') : t('leader.recommendations.createRecommendation', '추천서 작성')}
-        </button>
+        </Button>
       </div>
 
       {/* Inline Form */}
@@ -203,72 +207,100 @@ export default function LeaderRecommendations() {
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <div>
-              <Label>{t('leader.recommendations.form.applicantName', '지원자 이름')} *</Label>
-              <Input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} required />
-            </div>
-            <div>
-              <Label>{t('leader.recommendations.form.age', '나이')} *</Label>
-              <Input type="number" value={formAge} onChange={(e) => setFormAge(e.target.value)} required />
-            </div>
+            <TextField
+              label={`${t('leader.recommendations.form.applicantName', '지원자 이름')} *`}
+              type="text"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              required
+              fullWidth
+            />
+            <TextField
+              label={`${t('leader.recommendations.form.age', '나이')} *`}
+              type="number"
+              value={formAge}
+              onChange={(e) => setFormAge(e.target.value)}
+              required
+              fullWidth
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+            <TextField
+              label={t('leader.recommendations.form.email', '이메일')}
+              type="email"
+              value={formEmail}
+              onChange={(e) => setFormEmail(e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label={`${t('leader.recommendations.form.phone', '전화번호')} *`}
+              type="tel"
+              value={formPhone}
+              onChange={(e) => setFormPhone(e.target.value)}
+              required
+              fullWidth
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
             <div>
-              <Label>{t('leader.recommendations.form.email', '이메일')}</Label>
-              <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
+              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('leader.recommendations.form.gender', '성별')}</p>
+              <Select
+                options={genderOptions}
+                value={formGender}
+                onChange={(value) => setFormGender(value as Gender)}
+                fullWidth
+              />
             </div>
             <div>
-              <Label>{t('leader.recommendations.form.phone', '전화번호')} *</Label>
-              <Input type="tel" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} required />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <div>
-              <Label>{t('leader.recommendations.form.gender', '성별')}</Label>
-              <Select value={formGender} onChange={(e) => setFormGender(e.target.value as Gender)}>
-                <option value="male">{t('leader.recommendations.form.genderMale', '형제')}</option>
-                <option value="female">{t('leader.recommendations.form.genderFemale', '자매')}</option>
-              </Select>
-            </div>
-            <div>
-              <Label>{t('leader.recommendations.form.servedMission', '선교사로 봉사')}</Label>
-              <div style={{ paddingTop: '0.375rem' }}>
-                <ToggleButton value={formServedMission} onChange={setFormServedMission} />
-              </div>
+              <Switch
+                label={t('leader.recommendations.form.servedMission', '선교사로 봉사')}
+                checked={formServedMission}
+                onChange={setFormServedMission}
+              />
             </div>
           </div>
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('leader.recommendations.form.additionalInfo', '추가 정보')}</Label>
-            <Textarea
+            <TextField
+              label={t('leader.recommendations.form.additionalInfo', '추가 정보')}
+              multiline
+              rows={3}
               value={formMoreInfo}
               onChange={(e) => setFormMoreInfo(e.target.value)}
-              rows={3}
               placeholder={t('leader.recommendations.form.additionalInfoPlaceholder')}
+              fullWidth
             />
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
+            <Button
+              variant="primary"
               onClick={handleSubmitRec}
               disabled={!formName || !formPhone || createRec.isPending || updateRec.isPending}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {t('leader.recommendations.form.submitRecommendation', '추천서 제출')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={handleSaveDraft}
               disabled={!formName || createRec.isPending || updateRec.isPending}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               {t('leader.recommendations.form.saveDraft', '초안 저장')}
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs.List>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.ALL}>{t('leader.recommendations.tabs.all', '전체')} ({tabCounts.all})</Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.DRAFT}>{t('leader.recommendations.tabs.draft', '초안')} ({tabCounts.draft})</Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.SUBMITTED}>{t('leader.recommendations.tabs.submitted', '검토 대기 중')} ({tabCounts.submitted})</Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.APPROVED}>{t('leader.recommendations.tabs.approved', '승인됨')} ({tabCounts.approved})</Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.REJECTED}>{t('leader.recommendations.tabs.rejected', '다음 기회에')} ({tabCounts.rejected})</Tabs.Trigger>
+        </Tabs.List>
+      </Tabs>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '50vh' }}>
-        {/* Left: List — hidden on mobile when detail is open */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" style={{ minHeight: '50vh', marginTop: '1rem' }}>
+        {/* Left: List */}
         <div className={`lg:col-span-2 space-y-2 overflow-y-auto ${selected ? 'hidden lg:block' : ''}`} style={{ maxHeight: '70vh' }}>
           {filteredRecs.length === 0 ? (
             <EmptyState message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')} />
@@ -293,9 +325,11 @@ export default function LeaderRecommendations() {
                   <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{rec.name}</span>
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
                     {hasLinkedApplication(rec) && (
-                      <StatusChip label={t('leader.recommendations.tags.applied', '신청됨')} tone="submitted" />
+                      <Badge variant="info" size="sm">{t('leader.recommendations.tags.applied', '신청됨')}</Badge>
                     )}
-                    <StatusChip label={t(`status.${rec.status}`, rec.status)} tone={STATUS_TONES[rec.status] || 'draft'} />
+                    <Badge variant={TONE_TO_BADGE[STATUS_TONES[rec.status] || 'draft'] || 'secondary'} size="sm">
+                      {t(`status.${rec.status}`, rec.status)}
+                    </Badge>
                   </div>
                 </div>
                 <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
@@ -325,7 +359,9 @@ export default function LeaderRecommendations() {
                     {t('leader.recommendations.details.updated', '업데이트됨')}: {selected.updatedAt instanceof Date ? selected.updatedAt.toLocaleDateString() : ''}
                   </p>
                 </div>
-                <StatusChip label={t(`status.${selected.status}`, selected.status)} tone={STATUS_TONES[selected.status] || 'draft'} size="md" />
+                <Badge variant={TONE_TO_BADGE[STATUS_TONES[selected.status] || 'draft'] || 'secondary'}>
+                  {t(`status.${selected.status}`, selected.status)}
+                </Badge>
               </div>
 
               {isLocked(selected) && (
@@ -360,33 +396,21 @@ export default function LeaderRecommendations() {
                 <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {selected.status === 'draft' && (
                     <>
-                      <button
-                        onClick={() => openEditForm(selected)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => openEditForm(selected)}>
                         {t('leader.recommendations.actions.modify', '수정')}
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(selected.id, 'submitted' as RecommendationStatus)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                      >
+                      </Button>
+                      <Button variant="primary" size="sm" onClick={() => handleStatusChange(selected.id, 'submitted' as RecommendationStatus)}>
                         {t('leader.recommendations.actions.submit', '제출')}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(selected.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
-                      >
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(selected.id)}>
                         {t('leader.recommendations.actions.delete', '삭제')}
-                      </button>
+                      </Button>
                     </>
                   )}
                   {selected.status === 'submitted' && (
-                    <button
-                      onClick={() => handleStatusChange(selected.id, 'draft' as RecommendationStatus)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleStatusChange(selected.id, 'draft' as RecommendationStatus)}>
                       {t('leader.recommendations.actions.cancelSubmission', '제출 취소')}
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -401,6 +425,18 @@ export default function LeaderRecommendations() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={confirmDelete.open} onClose={() => setConfirmDelete({ open: false, id: '' })} size="sm">
+        <Dialog.Title onClose={() => setConfirmDelete({ open: false, id: '' })}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Content>
+          <p style={{ fontSize: '0.875rem', color: '#374151' }}>{t('common.confirmDelete')}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={() => setConfirmDelete({ open: false, id: '' })}>{t('common.cancel', '취소')}</Button>
+          <Button variant="danger" onClick={executeDelete}>{t('common.delete', '삭제')}</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }
@@ -412,6 +448,7 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
   const createComment = useCreateComment()
   const deleteComment = useDeleteComment()
   const [newComment, setNewComment] = useState('')
+  const [confirmDeleteComment, setConfirmDeleteComment] = useState<{ open: boolean; id: string }>({ open: false, id: '' })
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return
@@ -424,9 +461,12 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
   }
 
   const handleDeleteComment = (commentId: string) => {
-    if (confirm(t('leader.recommendations.form.messages.confirmDeleteComment'))) {
-      deleteComment.mutate({ id: commentId, recommendationId })
-    }
+    setConfirmDeleteComment({ open: true, id: commentId })
+  }
+
+  const executeDeleteComment = () => {
+    deleteComment.mutate({ id: confirmDeleteComment.id, recommendationId })
+    setConfirmDeleteComment({ open: false, id: '' })
   }
 
   return (
@@ -437,31 +477,21 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
 
       {/* Comment input */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-        <Input
+        <TextField
           type="text"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={t('leader.recommendations.form.leaderCommentPlaceholder')}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment() }}
+          fullWidth
         />
-        <button
+        <Button
+          variant="primary"
           onClick={handleAddComment}
           disabled={!newComment.trim() || createComment.isPending}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '0.5rem',
-            backgroundColor: '#2563eb',
-            color: '#fff',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            border: 'none',
-            cursor: 'pointer',
-            opacity: !newComment.trim() || createComment.isPending ? 0.5 : 1,
-            whiteSpace: 'nowrap',
-          }}
         >
           {t('common.add', '추가')}
-        </button>
+        </Button>
       </div>
 
       {/* Comment list */}
@@ -486,12 +516,9 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
                     {c.createdAt instanceof Date ? c.createdAt.toLocaleDateString() : ''}
                   </span>
                   {c.authorId === appUser?.uid && (
-                    <button
-                      onClick={() => handleDeleteComment(c.id)}
-                      style={{ fontSize: '0.75rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                      {t('common.delete', '삭제')}
-                    </button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(c.id)}>
+                      <span className="text-red-600" style={{ fontSize: '0.75rem' }}>{t('common.delete', '삭제')}</span>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -502,6 +529,18 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
       ) : (
         <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{t('common.noData', 'No comments')}</p>
       )}
+
+      {/* Delete Comment Confirmation Dialog */}
+      <Dialog open={confirmDeleteComment.open} onClose={() => setConfirmDeleteComment({ open: false, id: '' })} size="sm">
+        <Dialog.Title onClose={() => setConfirmDeleteComment({ open: false, id: '' })}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Content>
+          <p style={{ fontSize: '0.875rem', color: '#374151' }}>{t('leader.recommendations.form.messages.confirmDeleteComment')}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={() => setConfirmDeleteComment({ open: false, id: '' })}>{t('common.cancel', '취소')}</Button>
+          <Button variant="danger" onClick={executeDeleteComment}>{t('common.delete', '삭제')}</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

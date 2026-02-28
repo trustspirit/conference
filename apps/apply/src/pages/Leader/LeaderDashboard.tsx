@@ -6,6 +6,7 @@ import { useApplications } from '../../hooks/queries/useApplications'
 import { useMyRecommendations } from '../../hooks/queries/useRecommendations'
 import PageLoader from '../../components/PageLoader'
 import SummaryCard from '../../components/SummaryCard'
+import { Button } from 'trust-ui-react'
 import { ROUTES } from '../../utils/constants'
 
 const PIE_COLORS = ['#3b82f6', '#ec4899']
@@ -68,12 +69,9 @@ export default function LeaderDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">{t('leader.dashboard.title', '리더 대시보드')}</h1>
           <p className="text-sm text-gray-500">{t('leader.dashboard.subtitle', '추천서를 모니터링하고 지원자가 어디서 오는지 확인하세요.')}</p>
         </div>
-        <button
-          onClick={() => navigate(ROUTES.LEADER_RECOMMENDATIONS)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
-        >
+        <Button variant="primary" onClick={() => navigate(ROUTES.LEADER_RECOMMENDATIONS)}>
           {t('leader.dashboard.createRecommendation', '추천서 작성')}
-        </button>
+        </Button>
       </div>
 
       {/* 7 Stat Cards */}

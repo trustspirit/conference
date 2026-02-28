@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
-import { useToast } from '../../components/Toast'
+import { useToast, TextField, Select, Switch, Button, Badge } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Input, Select, Textarea, Label } from '../../components/form'
 import { StakeWardSelector } from '../../components/form'
-import ToggleButton from '../../components/form/ToggleButton'
 import Spinner from '../../components/Spinner'
 import Alert from '../../components/Alert'
-import StatusChip from '../../components/StatusChip'
 import DetailsGrid from '../../components/DetailsGrid'
 import { STATUS_TONES } from '../../utils/constants'
 import type { Gender } from '../../types'
+
+const TONE_TO_BADGE: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+  draft: 'secondary',
+  awaiting: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  submitted: 'info',
+  pending: 'warning',
+}
 
 export default function UserApplication() {
   const { t } = useTranslation()
@@ -85,10 +91,10 @@ export default function UserApplication() {
       } else {
         await createApp.mutateAsync({ ...data, status: 'awaiting' })
       }
-      toast(t('application.messages.submitted'))
+      toast({ variant: 'success', message: t('application.messages.submitted') })
       setEditing(false)
     } catch {
-      toast(t('application.messages.failedToSubmit'), 'error')
+      toast({ variant: 'danger', message: t('application.messages.failedToSubmit') })
     }
   }
 
@@ -100,14 +106,20 @@ export default function UserApplication() {
       } else {
         await createApp.mutateAsync({ ...data, status: 'draft' })
       }
-      toast(t('application.messages.draftSaved'))
+      toast({ variant: 'success', message: t('application.messages.draftSaved') })
       setEditing(false)
     } catch {
-      toast(t('application.messages.failedToSave'), 'error')
+      toast({ variant: 'danger', message: t('application.messages.failedToSave') })
     }
   }
 
   const showForm = editing || !hasApp
+  const statusTone = existingApp ? (STATUS_TONES[existingApp.status] || 'draft') : 'draft'
+
+  const genderOptions = [
+    { value: 'male', label: t('application.form.genderMale', 'Male') },
+    { value: 'female', label: t('application.form.genderFemale', 'Female') },
+  ]
 
   return (
     <div className="mx-auto max-w-2xl p-6">
@@ -135,7 +147,9 @@ export default function UserApplication() {
         <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{t('application.overview.title', '제출 개요')}</h2>
-            <StatusChip label={t(`status.${existingApp!.status}`, existingApp!.status)} tone={STATUS_TONES[existingApp!.status] || 'draft'} size="md" />
+            <Badge variant={TONE_TO_BADGE[statusTone] || 'secondary'}>
+              {t(`status.${existingApp!.status}`, existingApp!.status)}
+            </Badge>
           </div>
 
           {isDraft && (
@@ -168,12 +182,9 @@ export default function UserApplication() {
 
           {!isLocked && (
             <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-              <button
-                onClick={() => setEditing(true)}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
-              >
+              <Button variant="primary" onClick={() => setEditing(true)}>
                 {t('application.actions.edit', '제출 내용 편집')}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -183,12 +194,9 @@ export default function UserApplication() {
       {!hasApp && !editing && (
         <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb', padding: '2rem', textAlign: 'center' }}>
           <p style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '1rem' }}>{t('application.subtitle.start')}</p>
-          <button
-            onClick={() => setEditing(true)}
-            className="rounded-lg bg-blue-600 px-6 py-2.5 text-white font-medium hover:bg-blue-700 transition-colors"
-          >
+          <Button variant="primary" onClick={() => setEditing(true)}>
             {t('application.actions.start', '신청서 시작')}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -196,29 +204,58 @@ export default function UserApplication() {
       {showForm && (editing || !hasApp) && (
         <form onSubmit={handleSubmit} style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('application.form.name', 'Name')}</Label>
-            <Input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={isLocked} required />
+            <TextField
+              label={t('application.form.name', 'Name')}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isLocked}
+              required
+              fullWidth
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+            <TextField
+              label={t('application.form.age', 'Age')}
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              disabled={isLocked}
+              required
+              fullWidth
+            />
             <div>
-              <Label>{t('application.form.age', 'Age')}</Label>
-              <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} disabled={isLocked} required />
-            </div>
-            <div>
-              <Label>{t('application.form.gender', 'Gender')}</Label>
-              <Select value={gender} onChange={(e) => setGender(e.target.value as Gender)} disabled={isLocked}>
-                <option value="male">{t('application.form.genderMale', 'Male')}</option>
-                <option value="female">{t('application.form.genderFemale', 'Female')}</option>
-              </Select>
+              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('application.form.gender', 'Gender')}</p>
+              <Select
+                options={genderOptions}
+                value={gender}
+                onChange={(value) => setGender(value as Gender)}
+                disabled={isLocked}
+                fullWidth
+              />
             </div>
           </div>
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('application.form.email', 'Email')}</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLocked} required />
+            <TextField
+              label={t('application.form.email', 'Email')}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLocked}
+              required
+              fullWidth
+            />
           </div>
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('application.form.phone', 'Phone')}</Label>
-            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isLocked} required />
+            <TextField
+              label={t('application.form.phone', 'Phone')}
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={isLocked}
+              required
+              fullWidth
+            />
           </div>
 
           {/* Stake/Ward (readonly display) */}
@@ -233,48 +270,48 @@ export default function UserApplication() {
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('application.form.servedMission', '선교사로 봉사')}</Label>
-            <div style={{ paddingTop: '0.375rem' }}>
-              <ToggleButton value={servedMission} onChange={setServedMission} disabled={isLocked} />
-            </div>
+            <Switch
+              label={t('application.form.servedMission', '선교사로 봉사')}
+              checked={servedMission}
+              onChange={setServedMission}
+              disabled={isLocked}
+            />
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <Label>{t('application.form.additionalInfo', 'Additional Info')}</Label>
-            <Textarea
+            <TextField
+              label={t('application.form.additionalInfo', 'Additional Info')}
+              multiline
+              rows={4}
               value={moreInfo}
               onChange={(e) => setMoreInfo(e.target.value)}
               disabled={isLocked}
-              rows={4}
               placeholder={t('application.form.additionalInfoPlaceholder')}
+              fullWidth
             />
           </div>
 
           {!isLocked && (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={createApp.isPending || updateApp.isPending}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {createApp.isPending || updateApp.isPending ? t('common.saving') : t('application.actions.submit', '신청서 제출')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
                 onClick={handleSaveDraft}
                 disabled={createApp.isPending || updateApp.isPending}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
               >
                 {t('application.actions.saveDraft', '초안 저장')}
-              </button>
+              </Button>
               {hasApp && (
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                >
+                <Button type="button" variant="outline" onClick={() => setEditing(false)}>
                   {t('common.cancel', '취소')}
-                </button>
+                </Button>
               )}
             </div>
           )}

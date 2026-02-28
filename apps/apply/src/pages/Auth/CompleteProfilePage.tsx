@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
-import { Select, Label } from '../../components/form'
+import { Select, Button } from 'trust-ui-react'
 import { StakeWardSelector } from '../../components/form'
 import Alert from '../../components/Alert'
 import type { UserRole } from '../../types'
@@ -47,6 +47,11 @@ export default function CompleteProfilePage() {
     }
   }
 
+  const roleOptions = ROLE_OPTIONS.map((opt) => ({
+    value: opt.value,
+    label: t(opt.labelKey),
+  }))
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 shadow-lg">
@@ -56,15 +61,14 @@ export default function CompleteProfilePage() {
         {error && <Alert variant="error">{error}</Alert>}
 
         <div>
-          <Label>{t('auth.completeProfile.accountType', '계정 유형')}</Label>
-          <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} required>
-            <option value="">{t('auth.selectRole', '역할을 선택하세요')}</option>
-            {ROLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {t(opt.labelKey)}
-              </option>
-            ))}
-          </Select>
+          <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.completeProfile.accountType', '계정 유형')}</p>
+          <Select
+            options={roleOptions}
+            value={role}
+            onChange={(value) => setRole(value as UserRole)}
+            placeholder={t('auth.selectRole', '역할을 선택하세요')}
+            fullWidth
+          />
         </div>
 
         {isLeader && (
@@ -78,13 +82,14 @@ export default function CompleteProfilePage() {
           onWardChange={setWard}
         />
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          fullWidth
           disabled={saving || !role || !stake || !ward}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
           {saving ? t('auth.completeProfile.buttonLoading', '프로필 완성 중...') : t('auth.completeProfile.button', '프로필 완성')}
-        </button>
+        </Button>
       </form>
     </div>
   )

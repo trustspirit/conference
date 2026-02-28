@@ -13,7 +13,7 @@ import {
   RequireIncompleteProfile,
 } from './components/RouteGuards'
 import AppNav from './components/AppNav'
-import { ToastProvider } from './components/Toast'
+import { ThemeProvider, ToastProvider } from 'trust-ui-react'
 import Spinner from './components/Spinner'
 import { getDefaultRoute } from './lib/roles'
 import { ROUTES } from './utils/constants'
@@ -166,9 +166,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider position="bottom-right">
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </ThemeProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </AuthProvider>
     </QueryClientProvider>

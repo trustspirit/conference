@@ -5,15 +5,26 @@ import { isAdminRole, isLeaderRole, canApproveStakeWardChange, canDeleteUser } f
 import { useStakeWardChangeRequests, useCreateStakeWardChangeRequest, useApproveStakeWardChange } from '../../hooks/queries/useStakeWardChanges'
 import { useUsers, useDeleteUser } from '../../hooks/queries/useUsers'
 import { StakeWardSelector } from '../../components/form'
-import { Input } from '../../components/form'
-import Tabs from '../../components/Tabs'
+import { useToast, Tabs, TextField, Badge, Button, Dialog } from 'trust-ui-react'
 import Alert from '../../components/Alert'
-import StatusChip from '../../components/StatusChip'
 import Spinner from '../../components/Spinner'
 import EmptyState from '../../components/EmptyState'
-import { useToast } from '../../components/Toast'
 import { getRoleTone, ACCOUNT_TABS } from '../../utils/constants'
 import { ROLE_LABELS } from '../../utils/roleConfig'
+
+const TONE_TO_BADGE: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+  admin: 'primary',
+  sessionLeader: 'info',
+  stakePresident: 'success',
+  bishop: 'secondary',
+  applicant: 'secondary',
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  draft: 'secondary',
+  submitted: 'info',
+  awaiting: 'warning',
+}
 
 export default function AccountSettings() {
   const { t } = useTranslation()
@@ -23,19 +34,19 @@ export default function AccountSettings() {
   const showDeleteUsers = canDeleteUser(role)
 
   const availableTabs = useMemo(() => {
-    const tabs: { id: string; label: string }[] = [
-      { id: ACCOUNT_TABS.SETTINGS, label: t('accountSettings.tabs.settings', '설정') },
-    ]
-    if (showApprovals) {
-      tabs.push({ id: ACCOUNT_TABS.APPROVALS, label: t('accountSettings.tabs.approvals', '승인') })
-    }
-    if (showDeleteUsers) {
-      tabs.push({ id: ACCOUNT_TABS.DELETE, label: t('accountSettings.tabs.deleteUsers', '사용자 삭제') })
-    }
+    const tabs: string[] = [ACCOUNT_TABS.SETTINGS]
+    if (showApprovals) tabs.push(ACCOUNT_TABS.APPROVALS)
+    if (showDeleteUsers) tabs.push(ACCOUNT_TABS.DELETE)
     return tabs
-  }, [t, showApprovals, showDeleteUsers])
+  }, [showApprovals, showDeleteUsers])
 
   const [activeTab, setActiveTab] = useState<string>(ACCOUNT_TABS.SETTINGS)
+
+  const tabLabels: Record<string, string> = {
+    [ACCOUNT_TABS.SETTINGS]: t('accountSettings.tabs.settings', '설정'),
+    [ACCOUNT_TABS.APPROVALS]: t('accountSettings.tabs.approvals', '승인'),
+    [ACCOUNT_TABS.DELETE]: t('accountSettings.tabs.deleteUsers', '사용자 삭제'),
+  }
 
   return (
     <div className="mx-auto max-w-3xl p-6">
@@ -43,12 +54,20 @@ export default function AccountSettings() {
       <p className="text-sm text-gray-500 mb-4">{t('accountSettings.subtitle', '프로필 정보 및 기본 설정 관리')}</p>
 
       {availableTabs.length > 1 && (
-        <Tabs tabs={availableTabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Tabs value={activeTab} onChange={setActiveTab}>
+          <Tabs.List>
+            {availableTabs.map((tab) => (
+              <Tabs.Trigger key={tab} value={tab}>{tabLabels[tab]}</Tabs.Trigger>
+            ))}
+          </Tabs.List>
+        </Tabs>
       )}
 
-      {activeTab === ACCOUNT_TABS.SETTINGS && <SettingsTab />}
-      {activeTab === ACCOUNT_TABS.APPROVALS && showApprovals && <ApprovalsTab />}
-      {activeTab === ACCOUNT_TABS.DELETE && showDeleteUsers && <DeleteUsersTab />}
+      <div style={{ marginTop: '1rem' }}>
+        {activeTab === ACCOUNT_TABS.SETTINGS && <SettingsTab />}
+        {activeTab === ACCOUNT_TABS.APPROVALS && showApprovals && <ApprovalsTab />}
+        {activeTab === ACCOUNT_TABS.DELETE && showDeleteUsers && <DeleteUsersTab />}
+      </div>
     </div>
   )
 }
@@ -67,7 +86,6 @@ function SettingsTab() {
   const [ward, setWard] = useState(appUser?.ward || '')
   const [saving, setSaving] = useState(false)
 
-  // Sync local state when appUser changes (e.g. after approval)
   useEffect(() => {
     if (!editing) {
       setStake(appUser?.stake || '')
@@ -84,14 +102,14 @@ function SettingsTab() {
     try {
       if (canEditDirectly) {
         await updateAppUser({ stake, ward })
-        toast(t('accountSettings.messages.profileUpdated'))
+        toast({ variant: 'success', message: t('accountSettings.messages.profileUpdated') })
       } else {
         await createChangeReq.mutateAsync({ stake, ward })
-        toast(t('accountSettings.messages.stakeWardChangeRequested'))
+        toast({ variant: 'success', message: t('accountSettings.messages.stakeWardChangeRequested') })
       }
       setEditing(false)
     } catch {
-      toast(t('errors.generic'), 'error')
+      toast({ variant: 'danger', message: t('errors.generic') })
     } finally {
       setSaving(false)
     }
@@ -104,6 +122,7 @@ function SettingsTab() {
   }
 
   const roleLabelKey = role ? ROLE_LABELS[role] : ''
+  const roleTone = getRoleTone(role)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -136,7 +155,9 @@ function SettingsTab() {
           {t('accountSettings.sections.accountRole.description')}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <StatusChip label={t(roleLabelKey)} tone={getRoleTone(role)} size="md" />
+          <Badge variant={TONE_TO_BADGE[roleTone] || 'secondary'}>
+            {t(roleLabelKey)}
+          </Badge>
           {appUser?.leaderStatus === 'pending' && (
             <span style={{ fontSize: '0.75rem', color: '#92400e' }}>
               {t('accountSettings.sections.accountRole.pendingApproval')}
@@ -176,20 +197,12 @@ function SettingsTab() {
               onWardChange={setWard}
             />
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              <button
-                onClick={handleSave}
-                disabled={saving || !hasChanges}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
+              <Button variant="primary" onClick={handleSave} disabled={saving || !hasChanges}>
                 {saving ? t('accountSettings.messages.saving') : t('accountSettings.messages.saveChanges')}
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={saving}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-              >
+              </Button>
+              <Button variant="outline" onClick={handleCancel} disabled={saving}>
                 {t('common.cancel', '취소')}
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -201,12 +214,9 @@ function SettingsTab() {
               onWardChange={() => {}}
               readOnly
             />
-            <button
-              onClick={() => setEditing(true)}
-              className="mt-3 rounded-lg border border-blue-300 px-4 py-2 text-sm text-blue-600 font-medium hover:bg-blue-50 transition-colors"
-            >
+            <Button variant="outline" onClick={() => setEditing(true)} style={{ marginTop: '0.75rem' }}>
               {t('common.edit', '편집')}
-            </button>
+            </Button>
           </>
         )}
       </section>
@@ -229,15 +239,15 @@ function ApprovalsTab() {
 
   const handleApprove = (requestId: string) => {
     approveChange.mutate({ requestId, approved: true }, {
-      onSuccess: () => toast(t('accountSettings.approvals.approved')),
-      onError: () => toast(t('errors.generic'), 'error'),
+      onSuccess: () => toast({ variant: 'success', message: t('accountSettings.approvals.approved') }),
+      onError: () => toast({ variant: 'danger', message: t('errors.generic') }),
     })
   }
 
   const handleReject = (requestId: string) => {
     approveChange.mutate({ requestId, approved: false }, {
-      onSuccess: () => toast(t('accountSettings.approvals.rejected')),
-      onError: () => toast(t('errors.generic'), 'error'),
+      onSuccess: () => toast({ variant: 'success', message: t('accountSettings.approvals.rejected') }),
+      onError: () => toast({ variant: 'danger', message: t('errors.generic') }),
     })
   }
 
@@ -271,7 +281,9 @@ function ApprovalsTab() {
                   <p style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{req.userName}</p>
                   <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{req.userEmail}</p>
                 </div>
-                <StatusChip label={t(`roles.${req.userRole === 'stake_president' ? 'stakePresident' : req.userRole}`)} tone={getRoleTone(req.userRole)} />
+                <Badge variant={TONE_TO_BADGE[getRoleTone(req.userRole)] || 'secondary'} size="sm">
+                  {t(`roles.${req.userRole === 'stake_president' ? 'stakePresident' : req.userRole}`)}
+                </Badge>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.8125rem' }}>
                 <div>
@@ -285,20 +297,12 @@ function ApprovalsTab() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => handleApprove(req.id)}
-                  disabled={approveChange.isPending}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 font-medium"
-                >
+                <Button variant="primary" size="sm" onClick={() => handleApprove(req.id)} disabled={approveChange.isPending}>
                   {t('accountSettings.approvals.approve', '승인')}
-                </button>
-                <button
-                  onClick={() => handleReject(req.id)}
-                  disabled={approveChange.isPending}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50 font-medium"
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => handleReject(req.id)} disabled={approveChange.isPending}>
                   {t('accountSettings.approvals.reject', '거부')}
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -318,11 +322,14 @@ function DeleteUsersTab() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({
+    open: false, onConfirm: () => {}, message: '',
+  })
 
   const filteredUsers = useMemo(() => {
     if (!users) return []
     return users
-      .filter((u) => u.uid !== appUser?.uid) // exclude self
+      .filter((u) => u.uid !== appUser?.uid)
       .filter((u) => {
         if (!search) return true
         const q = search.toLowerCase()
@@ -337,26 +344,38 @@ function DeleteUsersTab() {
     setSelected(next)
   }
 
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = () => {
     if (!selected.size) return
-    if (!confirm(t('accountSettings.deleteUsers.confirmDelete'))) return
-    setDeleting(true)
-    try {
-      await Promise.all(Array.from(selected).map((uid) => deleteUser.mutateAsync(uid)))
-      setSelected(new Set())
-    } finally {
-      setDeleting(false)
-    }
+    setConfirmDialog({
+      open: true,
+      message: t('accountSettings.deleteUsers.confirmDelete'),
+      onConfirm: async () => {
+        setDeleting(true)
+        try {
+          await Promise.all(Array.from(selected).map((uid) => deleteUser.mutateAsync(uid)))
+          setSelected(new Set())
+        } finally {
+          setDeleting(false)
+          setConfirmDialog({ open: false, onConfirm: () => {}, message: '' })
+        }
+      },
+    })
   }
 
-  const handleDeleteSingle = async (uid: string, name: string) => {
-    if (!confirm(t('accountSettings.deleteUsers.confirmDeleteSingle', { userName: name }))) return
-    setDeleting(true)
-    try {
-      await deleteUser.mutateAsync(uid)
-    } finally {
-      setDeleting(false)
-    }
+  const handleDeleteSingle = (uid: string, name: string) => {
+    setConfirmDialog({
+      open: true,
+      message: t('accountSettings.deleteUsers.confirmDeleteSingle', { userName: name }),
+      onConfirm: async () => {
+        setDeleting(true)
+        try {
+          await deleteUser.mutateAsync(uid)
+        } finally {
+          setDeleting(false)
+          setConfirmDialog({ open: false, onConfirm: () => {}, message: '' })
+        }
+      },
+    })
   }
 
   if (isLoading) return <Spinner />
@@ -371,30 +390,17 @@ function DeleteUsersTab() {
       </p>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
-        <Input
+        <TextField
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t('accountSettings.deleteUsers.searchPlaceholder')}
+          fullWidth
         />
         {selected.size > 0 && (
-          <button
-            onClick={handleDeleteSelected}
-            disabled={deleting}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              backgroundColor: '#dc2626',
-              color: '#fff',
-              fontSize: '0.8125rem',
-              fontWeight: 500,
-              border: 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <Button variant="danger" onClick={handleDeleteSelected} disabled={deleting}>
             {t('accountSettings.deleteUsers.deleteSelected')} ({selected.size})
-          </button>
+          </Button>
         )}
       </div>
 
@@ -425,18 +431,28 @@ function DeleteUsersTab() {
                 <p style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{user.name}</p>
                 <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{user.email}</p>
               </div>
-              <StatusChip label={t(ROLE_LABELS[user.role!] || 'roles.applicant')} tone={getRoleTone(user.role)} />
-              <button
-                onClick={() => handleDeleteSingle(user.uid, user.name)}
-                disabled={deleting}
-                style={{ fontSize: '0.75rem', color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                {t('common.delete', '삭제')}
-              </button>
+              <Badge variant={TONE_TO_BADGE[getRoleTone(user.role)] || 'secondary'} size="sm">
+                {t(ROLE_LABELS[user.role!] || 'roles.applicant')}
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={() => handleDeleteSingle(user.uid, user.name)} disabled={deleting}>
+                <span className="text-red-600">{t('common.delete', '삭제')}</span>
+              </Button>
             </div>
           ))}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, onConfirm: () => {}, message: '' })} size="sm">
+        <Dialog.Title onClose={() => setConfirmDialog({ open: false, onConfirm: () => {}, message: '' })}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Content>
+          <p style={{ fontSize: '0.875rem', color: '#374151' }}>{confirmDialog.message}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={() => setConfirmDialog({ open: false, onConfirm: () => {}, message: '' })}>{t('common.cancel', '취소')}</Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>{t('common.confirm', '확인')}</Button>
+        </Dialog.Actions>
+      </Dialog>
     </div>
   )
 }

@@ -47,6 +47,9 @@ importers:
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@16.13.1)(react@19.2.4)(redux@5.0.1)
+      trust-ui-react:
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -3076,6 +3079,12 @@ packages:
 
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
+  trust-ui-react@0.1.0:
+    resolution: {integrity: sha512-uoFzYv37LogMegxZVRjsqawOi4aah88TSEi4R1Fxh4FBJP0tAEHN0ww3XQhY9LZykKyadZp6kGLy0/gGgJGKqQ==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   ts-api-utils@2.4.0:
     resolution: {integrity: sha512-3TaVTaAv2gTiMB35i3FiGJaRfwb3Pyn/j3m/bfAvGe8FB7CF6u+LMYqYlDh7reQf7UNvoTvdfAqHGmPGOSsPmA==}
@@ -6369,6 +6378,11 @@ snapshots:
       picomatch: 4.0.3
 
   tr46@0.0.3: {}
+
+  trust-ui-react@0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   ts-api-utils@2.4.0(typescript@5.9.3):
     dependencies:
