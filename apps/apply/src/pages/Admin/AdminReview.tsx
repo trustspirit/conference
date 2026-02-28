@@ -2,12 +2,11 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useApplications, useUpdateApplicationStatus } from '../../hooks/queries/useApplications'
 import { useRecommendations, useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
-import { useToast, Tabs, Select, Badge, Button, Dialog } from 'trust-ui-react'
+import { useToast, Tabs, Badge, Button, Dialog } from 'trust-ui-react'
 import PageLoader from '../../components/PageLoader'
 import EmptyState from '../../components/EmptyState'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
-import Spinner from '../../components/Spinner'
 import Drawer from '../../components/Drawer'
 import ReviewStatsBar from '../../components/ReviewStatsBar'
 import { ADMIN_REVIEW_TABS, STATUS_TONES } from '../../utils/constants'
@@ -173,18 +172,6 @@ export default function AdminReview() {
 
   if (loadingApps || loadingRecs) return <PageLoader />
 
-  const statusOptions = selected?.type === 'application'
-    ? [
-        { value: 'awaiting', label: t('admin.review.status.awaiting', '대기 중') },
-        { value: 'approved', label: t('admin.review.status.approved', '승인됨') },
-        { value: 'rejected', label: t('admin.review.status.rejected', '다음 기회에') },
-      ]
-    : [
-        { value: 'submitted', label: t('status.submitted', '제출됨') },
-        { value: 'approved', label: t('admin.review.status.approved', '승인됨') },
-        { value: 'rejected', label: t('admin.review.status.rejected', '다음 기회에') },
-      ]
-
   return (
     <div className="mx-auto max-w-7xl p-6">
       <div className="flex items-center justify-between mb-2">
@@ -305,21 +292,14 @@ export default function AdminReview() {
                 </p>
               </div>
 
-              {/* Status Changer */}
+              {/* Current Status */}
               <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
                 <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.5rem' }}>
                   {t('admin.review.statusLabel', '상태')}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Select
-                    options={statusOptions}
-                    value={selected.rawStatus}
-                    onChange={handleStatusChange}
-                    disabled={isMutating}
-                    style={{ maxWidth: '14rem' }}
-                  />
-                  {isMutating && <Spinner />}
-                </div>
+                <Badge variant={TONE_TO_BADGE[STATUS_TONES[selected.rawStatus] || 'draft'] || 'secondary'}>
+                  {t(`status.${selected.rawStatus}`, selected.rawStatus)}
+                </Badge>
               </div>
             </Drawer.Content>
             <Drawer.Footer>
