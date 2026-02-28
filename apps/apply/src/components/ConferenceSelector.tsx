@@ -8,6 +8,7 @@ import { isAdminRole } from '../lib/roles'
 import { useCreateConference } from '../hooks/queries/useConferences'
 import { queryKeys } from '../hooks/queries/queryKeys'
 import { ChevronDownIcon, CloseIcon } from './Icons'
+import { isConferenceClosed } from '../lib/conference'
 import type { Conference } from '../types'
 
 export default function ConferenceSelector() {
@@ -154,11 +155,15 @@ export default function ConferenceSelector() {
                 currentConference?.id === conference.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
               }`}
             >
-              <span>{conference.name}</span>
+              <div className="flex items-center gap-1">
+                <span>{conference.name}</span>
+                {isConferenceClosed(conference) && (
+                  <span className="text-[0.625rem] text-red-500 font-medium">{t('conference.closed', '마감됨')}</span>
+                )}
+              </div>
               {conference.deadline && (
-                <p className={`text-xs truncate ${conference.deadline < new Date() ? 'text-red-400' : 'text-gray-400'}`}>
+                <p className={`text-xs truncate ${isConferenceClosed(conference) ? 'text-red-400' : 'text-gray-400'}`}>
                   {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
-                  {conference.deadline < new Date() && ` (${t('conference.closed', '마감됨')})`}
                 </p>
               )}
             </button>

@@ -11,6 +11,7 @@ export interface Conference {
   name: string
   description: string
   deadline: Date | null
+  isClosed: boolean
   eligibilityRequirements: string[]
   isActive: boolean
   createdAt: Date

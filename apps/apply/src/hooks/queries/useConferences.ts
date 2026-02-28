@@ -7,7 +7,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore'
@@ -22,6 +21,7 @@ function mapConference(id: string, data: Record<string, unknown>): Conference {
     ...data,
     id,
     deadline: data.deadline ? toDate(data.deadline) : null,
+    isClosed: !!data.isClosed,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   } as Conference
@@ -34,10 +34,11 @@ export function useConferences() {
       const q = query(
         collection(db, APPLY_CONFERENCES_COLLECTION),
         where('isActive', '==', true),
-        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
-      return snap.docs.map((d) => mapConference(d.id, d.data()))
+      return snap.docs
+        .map((d) => mapConference(d.id, d.data()))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     },
   })
 }

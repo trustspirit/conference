@@ -175,6 +175,7 @@
     "adminDashboard": "Dashboard",
     "reviewApplications": "Review Applications",
     "manageRoles": "Manage Roles",
+    "settings": "Settings",
     "leaderDashboard": "Leader Dashboard",
     "recommendations": "Recommendations",
     "leaderAccess": "Leader Access",
@@ -182,6 +183,14 @@
     "accountSettings": "Account Settings",
     "language": "Language",
     "signOut": "Sign Out"
+  },
+  "conference": {
+    "all": "All Conferences",
+    "create": "+ New Conference",
+    "current": "Current",
+    "closed": "Closed",
+    "label": "Conference",
+    "select": "Select Conference"
   },
   "admin": {
     "totalApplications": "Total Applications",
@@ -221,6 +230,36 @@
       },
       "charts": {
         "trendTitle": "7-Day Trend"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage conference and application settings.",
+      "saved": "Settings saved successfully.",
+      "conference": {
+        "title": "Conference Management",
+        "description": "Create and manage conferences. Applications and recommendations are organized by conference.",
+        "name": "Conference Name",
+        "namePlaceholder": "e.g., 2026 Youth Conference",
+        "desc": "Description",
+        "descPlaceholder": "e.g., Seoul Stake Youth Conference",
+        "deadline": "Application Deadline",
+        "deadlineLabel": "Deadline",
+        "create": "Create Conference",
+        "created": "Conference created successfully.",
+        "deleted": "Conference deleted successfully.",
+        "close": "Close Applications",
+        "reopen": "Reopen Applications",
+        "closedManually": "Applications have been closed.",
+        "reopened": "Applications have been reopened."
+      },
+      "eligibility": {
+        "title": "Eligibility Requirements",
+        "forConference": "eligibility requirements",
+        "description": "Displayed on the application and recommendation forms.",
+        "empty": "No eligibility requirements registered.",
+        "placeholder": "Enter a new eligibility requirement",
+        "noConference": "Please create a conference first."
       }
     },
     "review": {

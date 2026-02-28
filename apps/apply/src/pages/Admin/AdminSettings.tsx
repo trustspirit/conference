@@ -6,6 +6,7 @@ import { useCreateConference, useUpdateConference, useDeleteConference } from '.
 import { useAuth } from '../../contexts/AuthContext'
 import PageLoader from '../../components/PageLoader'
 import Alert from '../../components/Alert'
+import { isConferenceClosed } from '../../lib/conference'
 
 export default function AdminSettings() {
   const { t } = useTranslation()
@@ -44,6 +45,20 @@ export default function AdminSettings() {
       setNewConferenceName('')
       setNewConferenceDesc('')
       setNewConferenceDeadline('')
+    } catch {
+      toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
+    }
+  }
+
+  const handleToggleClosed = async (id: string, currentlyClosed: boolean) => {
+    try {
+      await updateConference.mutateAsync({ id, isClosed: !currentlyClosed })
+      toast({
+        variant: 'success',
+        message: currentlyClosed
+          ? t('admin.settings.conference.reopened', '신청이 다시 열렸습니다.')
+          : t('admin.settings.conference.closedManually', '신청이 마감되었습니다.'),
+      })
     } catch {
       toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
     }
@@ -106,51 +121,67 @@ export default function AdminSettings() {
               <div
                 key={conference.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
                   padding: '0.625rem 0.75rem',
                   borderRadius: '0.5rem',
                   backgroundColor: conference.id === currentConference?.id ? '#eff6ff' : '#f9fafb',
                   border: `1px solid ${conference.id === currentConference?.id ? '#bfdbfe' : '#f3f4f6'}`,
                 }}
               >
-                <div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
-                    {conference.name}
-                  </span>
-                  {conference.id === currentConference?.id && (
-                    <Badge variant="primary" size="sm" style={{ marginLeft: '0.5rem' }}>
-                      {t('conference.current', '현재')}
-                    </Badge>
-                  )}
-                  {conference.description && (
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.125rem' }}>
-                      {conference.description}
-                    </p>
-                  )}
-                  {conference.deadline && (
-                    <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: conference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
-                      {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
-                      {conference.deadline < new Date() && ` (${t('conference.closed', '마감됨')})`}
-                    </p>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
+                      {conference.name}
+                    </span>
+                    {conference.id === currentConference?.id && (
+                      <Badge variant="primary" size="sm">{t('conference.current', '현재')}</Badge>
+                    )}
+                    {isConferenceClosed(conference) && (
+                      <Badge variant="danger" size="sm">{t('conference.closed', '마감됨')}</Badge>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                    <button
+                      onClick={() => handleToggleClosed(conference.id, isConferenceClosed(conference))}
+                      disabled={updateConference.isPending}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        color: isConferenceClosed(conference) ? '#2563eb' : '#d97706',
+                        padding: '0.25rem 0.5rem',
+                      }}
+                    >
+                      {isConferenceClosed(conference)
+                        ? t('admin.settings.conference.reopen', '신청 열기')
+                        : t('admin.settings.conference.close', '마감하기')}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteConference(conference.id)}
+                      disabled={deleteConference.isPending}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        color: '#dc2626',
+                        padding: '0.25rem 0.5rem',
+                      }}
+                    >
+                      {t('common.delete', '삭제')}
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleDeleteConference(conference.id)}
-                  disabled={deleteConference.isPending}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    color: '#dc2626',
-                    flexShrink: 0,
-                    padding: '0.25rem 0.5rem',
-                  }}
-                >
-                  {t('common.delete', '삭제')}
-                </button>
+                {conference.description && (
+                  <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                    {conference.description}
+                  </p>
+                )}
+                {conference.deadline && (
+                  <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: conference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
+                    {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
+                  </p>
+                )}
               </div>
             ))}
           </div>
