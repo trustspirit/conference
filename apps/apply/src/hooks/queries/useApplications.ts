@@ -77,6 +77,50 @@ export function useMyApplication() {
   })
 }
 
+/** Query my application for a specific conference (no ConferenceContext dependency) */
+export function useMyApplicationByConference(conferenceId: string) {
+  const { appUser } = useAuth()
+
+  return useQuery({
+    queryKey: [...queryKeys.applications.byUser(appUser?.uid || ''), conferenceId],
+    queryFn: async () => {
+      const q = query(
+        collection(db, APPLY_APPLICATIONS_COLLECTION),
+        where('userId', '==', appUser!.uid),
+        where('conferenceId', '==', conferenceId),
+      )
+      const snap = await getDocs(q)
+      if (snap.empty) return null
+      return mapApplication(snap.docs[0].id, snap.docs[0].data())
+    },
+    enabled: !!appUser && !!conferenceId,
+  })
+}
+
+/** Create application with explicit conferenceId (no ConferenceContext dependency) */
+export function useCreateApplicationForConference() {
+  const queryClient = useQueryClient()
+  const { appUser } = useAuth()
+
+  return useMutation({
+    mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & { status?: ApplicationStatus; conferenceId: string }) => {
+      const { status, conferenceId, ...rest } = data
+      const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
+        ...rest,
+        userId: appUser!.uid,
+        conferenceId,
+        status: status || ('awaiting' as ApplicationStatus),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+      return docRef.id
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+    },
+  })
+}
+
 export function useApplicationDetail(id: string) {
   return useQuery({
     queryKey: queryKeys.applications.detail(id),

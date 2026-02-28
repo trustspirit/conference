@@ -5,12 +5,14 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteField,
   query,
   where,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore'
-import { db } from '@conference/firebase'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from '@conference/firebase'
 import type { Conference } from '../../types'
 import { APPLY_CONFERENCES_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
@@ -22,6 +24,7 @@ function mapConference(id: string, data: Record<string, unknown>): Conference {
     id,
     deadline: data.deadline ? toDate(data.deadline) : null,
     isClosed: !!data.isClosed,
+    deactivatedAt: data.deactivatedAt ? toDate(data.deactivatedAt) : undefined,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   } as Conference
@@ -89,11 +92,66 @@ export function useDeleteConference() {
     mutationFn: async (id: string) => {
       await updateDoc(doc(db, APPLY_CONFERENCES_COLLECTION, id), {
         isActive: false,
+        deactivatedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.conferences.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.conferences.deactivated() })
+    },
+  })
+}
+
+export function useRestoreConference() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await updateDoc(doc(db, APPLY_CONFERENCES_COLLECTION, id), {
+        isActive: true,
+        deactivatedAt: deleteField(),
+        updatedAt: serverTimestamp(),
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.conferences.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.conferences.deactivated() })
+    },
+  })
+}
+
+export function useDeactivatedConferences() {
+  return useQuery({
+    queryKey: queryKeys.conferences.deactivated(),
+    queryFn: async () => {
+      const q = query(
+        collection(db, APPLY_CONFERENCES_COLLECTION),
+        where('isActive', '==', false),
+      )
+      const snap = await getDocs(q)
+      return snap.docs
+        .map((d) => mapConference(d.id, d.data()))
+        .sort((a, b) => {
+          const aTime = a.deactivatedAt?.getTime() ?? 0
+          const bTime = b.deactivatedAt?.getTime() ?? 0
+          return bTime - aTime
+        })
+    },
+  })
+}
+
+export function usePermanentlyDeleteConference() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (conferenceId: string) => {
+      const fn = httpsCallable(functions, 'permanentlyDeleteConference')
+      await fn({ conferenceId })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.conferences.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.conferences.deactivated() })
     },
   })
 }

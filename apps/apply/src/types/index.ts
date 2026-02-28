@@ -13,6 +13,7 @@ export interface Conference {
   deadline: Date | null
   isClosed: boolean
   isActive: boolean
+  deactivatedAt?: Date
   createdAt: Date
   updatedAt: Date
   createdBy: string
@@ -33,6 +34,7 @@ export interface Position {
 export interface AppUser {
   uid: string
   name: string
+  preferredName?: string
   email: string
   role: UserRole | null
   leaderStatus: LeaderStatus | null
@@ -42,6 +44,12 @@ export interface AppUser {
   picture: string
   pendingWard?: string
   pendingStake?: string
+}
+
+/** Returns the preferred name if set, otherwise the account name */
+export function getDisplayName(user: Pick<AppUser, 'name' | 'preferredName'> | null | undefined): string {
+  if (!user) return ''
+  return user.preferredName?.trim() || user.name
 }
 
 // Application

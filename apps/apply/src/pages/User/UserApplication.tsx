@@ -1,10 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
-import { usePositions } from '../../hooks/queries/usePositions'
 import { useToast, TextField, Select, Switch, Button, Badge } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useConference } from '../../contexts/ConferenceContext'
+import { useConferences } from '../../hooks/queries/useConferences'
+import { usePositions } from '../../hooks/queries/usePositions'
+import {
+  useMyApplicationByConference,
+  useCreateApplicationForConference,
+  useUpdateApplication,
+} from '../../hooks/queries/useApplications'
+import { isConferenceClosed } from '../../lib/conference'
 import { StakeWardSelector } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import Alert from '../../components/Alert'
@@ -27,11 +32,27 @@ export default function UserApplication() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { appUser } = useAuth()
-  const { currentConference } = useConference()
-  const { data: existingApp, isLoading } = useMyApplication()
-  const createApp = useCreateApplication()
+  const { data: conferences = [], isLoading: conferencesLoading } = useConferences()
+
+  // Applicant picks conference locally (not from ConferenceContext)
+  const [selectedConferenceId, setSelectedConferenceId] = useState('')
+  const selectedConference = useMemo(
+    () => conferences.find((c) => c.id === selectedConferenceId) ?? null,
+    [conferences, selectedConferenceId],
+  )
+
+  // Auto-select first open conference
+  useEffect(() => {
+    if (selectedConferenceId || conferences.length === 0) return
+    const open = conferences.find((c) => !isConferenceClosed(c))
+    if (open) setSelectedConferenceId(open.id)
+    else setSelectedConferenceId(conferences[0].id)
+  }, [conferences, selectedConferenceId])
+
+  const { data: existingApp, isLoading: appLoading } = useMyApplicationByConference(selectedConferenceId)
+  const createApp = useCreateApplicationForConference()
   const updateApp = useUpdateApplication()
-  const { data: positions = [] } = usePositions(currentConference?.id)
+  const { data: positions = [] } = usePositions(selectedConferenceId || undefined)
 
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
@@ -49,6 +70,7 @@ export default function UserApplication() {
   const isDraft = existingApp?.status === 'draft'
   const isAwaiting = existingApp?.status === 'awaiting'
   const hasRecommendation = !!existingApp?.linkedRecommendationId
+  const closed = isConferenceClosed(selectedConference)
 
   useEffect(() => {
     if (existingApp) {
@@ -63,6 +85,12 @@ export default function UserApplication() {
     }
   }, [existingApp])
 
+  // Reset form state when switching conferences
+  useEffect(() => {
+    setEditing(false)
+    setPositionId('')
+  }, [selectedConferenceId])
+
   const selectedPosition = useMemo(
     () => positions.find((p) => p.id === positionId) ?? null,
     [positions, positionId],
@@ -73,10 +101,33 @@ export default function UserApplication() {
     [positions],
   )
 
-  if (isLoading) {
+  const conferenceOptions = useMemo(
+    () => conferences.map((c) => {
+      const isClosed = isConferenceClosed(c)
+      let label = c.name
+      if (isClosed) label += ` (${t('conference.closed', '마감됨')})`
+      else if (c.deadline) label += ` (${t('admin.settings.conference.deadlineLabel', '마감')}: ${c.deadline.toLocaleDateString()})`
+      return { value: c.id, label }
+    }),
+    [conferences, t],
+  )
+
+  if (conferencesLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Spinner />
+      </div>
+    )
+  }
+
+  if (conferences.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
+        <p className="text-sm text-gray-500 mb-6">{t('application.subtitle.start')}</p>
+        <Alert variant="warning">
+          {t('conference.noOpenConference', '현재 열려 있는 대회가 없습니다. 대회가 생성되면 신청서를 작성할 수 있습니다.')}
+        </Alert>
       </div>
     )
   }
@@ -110,7 +161,7 @@ export default function UserApplication() {
       if (hasApp && existingApp) {
         await updateApp.mutateAsync({ id: existingApp.id, ...data, status: 'awaiting' })
       } else {
-        await createApp.mutateAsync({ ...data, status: 'awaiting' })
+        await createApp.mutateAsync({ ...data, status: 'awaiting', conferenceId: selectedConferenceId })
       }
       toast({ variant: 'success', message: t('application.messages.submitted') })
       setEditing(false)
@@ -125,7 +176,7 @@ export default function UserApplication() {
       if (hasApp && existingApp) {
         await updateApp.mutateAsync({ id: existingApp.id, ...data })
       } else {
-        await createApp.mutateAsync({ ...data, status: 'draft' })
+        await createApp.mutateAsync({ ...data, status: 'draft', conferenceId: selectedConferenceId })
       }
       toast({ variant: 'success', message: t('application.messages.draftSaved') })
       setEditing(false)
@@ -142,259 +193,282 @@ export default function UserApplication() {
     { value: 'female', label: t('application.form.genderFemale', 'Female') },
   ]
 
-  if (!currentConference) {
-    return (
-      <div className="mx-auto max-w-2xl p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
-        <p className="text-sm text-gray-500 mb-6">{t('application.subtitle.start')}</p>
-        <Alert variant="warning">
-          {t('conference.noConference', '선택된 대회가 없습니다. 상단에서 대회를 선택해주세요.')}
-        </Alert>
-      </div>
-    )
-  }
-
   return (
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
       <p className="text-sm text-gray-500 mb-6">{getSubtitle()}</p>
 
-      {/* Conference Deadline Notice */}
-      {currentConference?.deadline && (
-        <div
-          style={{
-            marginBottom: '1rem',
-            padding: '0.75rem 1rem',
-            borderRadius: '0.5rem',
-            backgroundColor: currentConference.deadline < new Date() ? '#fef2f2' : '#f0fdf4',
-            border: `1px solid ${currentConference.deadline < new Date() ? '#fecaca' : '#bbf7d0'}`,
-          }}
-        >
-          <p style={{ fontSize: '0.8125rem', color: currentConference.deadline < new Date() ? '#dc2626' : '#16a34a', fontWeight: 500 }}>
-            {t('application.deadline', '신청 마감일')}: {currentConference.deadline.toLocaleDateString()}
-          </p>
+      {/* Conference selector — always visible for applicants */}
+      <div style={{ marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+          {t('conference.label', '대회')}
+        </p>
+        <Select
+          options={conferenceOptions}
+          value={selectedConferenceId}
+          onChange={(value) => setSelectedConferenceId(value as string)}
+          placeholder={t('conference.select', '대회 선택')}
+          fullWidth
+        />
+      </div>
+
+      {/* Loading app for selected conference */}
+      {appLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Spinner />
         </div>
       )}
 
-      <EligibilityNotice requirements={selectedPosition?.eligibilityRequirements} />
-
-      {/* Recommendation Alert */}
-      {hasRecommendation && (
-        <div style={{ marginBottom: '1rem' }}>
-          <Alert variant="info" title={t('application.recommendationAlert.title')}>
-            {t('application.recommendationAlert.message')}
-          </Alert>
-        </div>
-      )}
-
-      {/* Locked Alert */}
-      {isLocked && (
-        <div style={{ marginBottom: '1rem' }}>
-          <Alert variant="warning">{t('application.messages.lockedMessage')}</Alert>
-        </div>
-      )}
-
-      {/* Application Overview (when has app and not editing) */}
-      {hasApp && !showForm && (
-        <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{t('application.overview.title', '제출 개요')}</h2>
-            <Badge variant={TONE_TO_BADGE[statusTone] || 'secondary'}>
-              {t(`status.${existingApp!.status}`, existingApp!.status)}
-            </Badge>
-          </div>
-
-          {isDraft && (
+      {!appLoading && selectedConferenceId && (
+        <>
+          {/* Closed conference notice */}
+          {closed && !hasApp && (
             <div style={{ marginBottom: '1rem' }}>
-              <Alert variant="warning">{t('application.overview.draftWarning')}</Alert>
+              <Alert variant="warning">
+                {t('application.closedConference', '이 대회는 마감되었습니다. 새 신청서를 작성할 수 없습니다.')}
+              </Alert>
             </div>
           )}
 
-          <DetailsGrid
-            items={[
-              { label: t('application.overview.name', 'Name'), value: existingApp!.name },
-              { label: t('application.overview.email', 'Email'), value: existingApp!.email },
-              { label: t('application.overview.phone', 'Phone'), value: existingApp!.phone },
-              { label: t('application.overview.age', 'Age'), value: String(existingApp!.age) },
-              { label: t('position.label', '포지션'), value: existingApp!.positionName || '-' },
-              { label: t('application.overview.stake', 'Stake'), value: existingApp!.stake },
-              { label: t('application.overview.ward', 'Ward'), value: existingApp!.ward },
-              { label: t('application.overview.servedMission', 'Mission'), value: existingApp!.servedMission ? t('common.yes') : t('common.no') },
-              { label: t('application.form.gender', 'Gender'), value: t(`gender.${existingApp!.gender}`) },
-            ]}
-          />
-
-          <div style={{ marginTop: '1rem' }}>
-            <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.25rem' }}>
-              {t('application.overview.additionalInfo', '추가 정보')}
-            </p>
-            <p style={{ fontSize: '0.875rem', color: '#111827' }}>
-              {existingApp!.moreInfo || t('application.overview.noAdditionalInfo')}
-            </p>
-          </div>
-
-          {!isLocked && (
-            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-              <Button variant="primary" onClick={() => setEditing(true)}>
-                {t('application.actions.edit', '제출 내용 편집')}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* New Application Start */}
-      {!hasApp && !editing && (
-        <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb', padding: '2rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '1rem' }}>{t('application.subtitle.start')}</p>
-          <Button variant="primary" onClick={() => setEditing(true)}>
-            {t('application.actions.start', '신청서 시작')}
-          </Button>
-        </div>
-      )}
-
-      {/* Edit Form */}
-      {showForm && (editing || !hasApp) && (
-        <form onSubmit={handleSubmit} style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
-          {/* Position Selector */}
-          {positions.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
-                {t('position.select', '포지션 선택')} <span style={{ color: '#dc2626' }}>*</span>
+          {/* Conference Deadline Notice */}
+          {selectedConference?.deadline && !closed && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+              }}
+            >
+              <p style={{ fontSize: '0.8125rem', color: '#16a34a', fontWeight: 500 }}>
+                {t('application.deadline', '신청 마감일')}: {selectedConference.deadline.toLocaleDateString()}
               </p>
-              <Select
-                options={positionOptions}
-                value={positionId}
-                onChange={(value) => setPositionId(value as string)}
-                disabled={isLocked}
-                placeholder={t('position.selectPlaceholder', '포지션을 선택하세요')}
-                fullWidth
+            </div>
+          )}
+
+          <EligibilityNotice requirements={selectedPosition?.eligibilityRequirements} />
+
+          {/* Recommendation Alert */}
+          {hasRecommendation && (
+            <div style={{ marginBottom: '1rem' }}>
+              <Alert variant="info" title={t('application.recommendationAlert.title')}>
+                {t('application.recommendationAlert.message')}
+              </Alert>
+            </div>
+          )}
+
+          {/* Locked Alert */}
+          {isLocked && (
+            <div style={{ marginBottom: '1rem' }}>
+              <Alert variant="warning">{t('application.messages.lockedMessage')}</Alert>
+            </div>
+          )}
+
+          {/* Application Overview (when has app and not editing) */}
+          {hasApp && !showForm && (
+            <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{t('application.overview.title', '제출 개요')}</h2>
+                <Badge variant={TONE_TO_BADGE[statusTone] || 'secondary'}>
+                  {t(`status.${existingApp!.status}`, existingApp!.status)}
+                </Badge>
+              </div>
+
+              {isDraft && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <Alert variant="warning">{t('application.overview.draftWarning')}</Alert>
+                </div>
+              )}
+
+              <DetailsGrid
+                items={[
+                  { label: t('application.overview.name', 'Name'), value: existingApp!.name },
+                  { label: t('application.overview.email', 'Email'), value: existingApp!.email },
+                  { label: t('application.overview.phone', 'Phone'), value: existingApp!.phone },
+                  { label: t('application.overview.age', 'Age'), value: String(existingApp!.age) },
+                  { label: t('position.label', '포지션'), value: existingApp!.positionName || '-' },
+                  { label: t('application.overview.stake', 'Stake'), value: existingApp!.stake },
+                  { label: t('application.overview.ward', 'Ward'), value: existingApp!.ward },
+                  { label: t('application.overview.servedMission', 'Mission'), value: existingApp!.servedMission ? t('common.yes') : t('common.no') },
+                  { label: t('application.form.gender', 'Gender'), value: t(`gender.${existingApp!.gender}`) },
+                ]}
               />
-              {selectedPosition?.description && (
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                  {selectedPosition.description}
+
+              <div style={{ marginTop: '1rem' }}>
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.25rem' }}>
+                  {t('application.overview.additionalInfo', '추가 정보')}
                 </p>
+                <p style={{ fontSize: '0.875rem', color: '#111827' }}>
+                  {existingApp!.moreInfo || t('application.overview.noAdditionalInfo')}
+                </p>
+              </div>
+
+              {!isLocked && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                  <Button variant="primary" onClick={() => setEditing(true)}>
+                    {t('application.actions.edit', '제출 내용 편집')}
+                  </Button>
+                </div>
               )}
             </div>
           )}
 
-          <div style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('application.form.name', 'Name')}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={isLocked}
-              required
-              fullWidth
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('application.form.age', 'Age')}
-              type="number"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              disabled={isLocked}
-              required
-              fullWidth
-            />
-            <div>
-              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('application.form.gender', 'Gender')}</p>
-              <Select
-                options={genderOptions}
-                value={gender}
-                onChange={(value) => setGender(value as Gender)}
-                disabled={isLocked}
-                fullWidth
-              />
-            </div>
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('application.form.email', 'Email')}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLocked}
-              required
-              fullWidth
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('application.form.phone', 'Phone')}
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              disabled={isLocked}
-              required
-              fullWidth
-            />
-          </div>
-
-          {/* Stake/Ward (readonly display) */}
-          <div style={{ marginBottom: '1rem' }}>
-            <StakeWardSelector
-              stake={appUser?.stake || ''}
-              ward={appUser?.ward || ''}
-              onStakeChange={() => {}}
-              onWardChange={() => {}}
-              readOnly
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <Switch
-              label={t('application.form.servedMission', '선교사로 봉사')}
-              checked={servedMission}
-              onChange={setServedMission}
-              disabled={isLocked}
-            />
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <TextField
-              label={t('application.form.additionalInfo', 'Additional Info')}
-              multiline
-              rows={4}
-              value={moreInfo}
-              onChange={(e) => setMoreInfo(e.target.value)}
-              disabled={isLocked}
-              placeholder={t('application.form.additionalInfoPlaceholder')}
-              fullWidth
-            />
-          </div>
-
-          {!isLocked && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={createApp.isPending || updateApp.isPending || (positions.length > 0 && !positionId)}
-              >
-                {createApp.isPending || updateApp.isPending ? t('common.saving') : t('application.actions.submit', '신청서 제출')}
+          {/* New Application Start — only if conference is open */}
+          {!hasApp && !editing && !closed && (
+            <div style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#f9fafb', padding: '2rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '1rem', color: '#6b7280', marginBottom: '1rem' }}>{t('application.subtitle.start')}</p>
+              <Button variant="primary" onClick={() => setEditing(true)}>
+                {t('application.actions.start', '신청서 시작')}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSaveDraft}
-                disabled={createApp.isPending || updateApp.isPending}
-              >
-                {t('application.actions.saveDraft', '초안 저장')}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
-                {t('application.actions.preview', '미리보기')}
-              </Button>
-              {hasApp && (
-                <Button type="button" variant="outline" onClick={() => setEditing(false)}>
-                  {t('common.cancel', '취소')}
-                </Button>
-              )}
             </div>
           )}
-        </form>
+
+          {/* Edit Form */}
+          {showForm && (editing || !hasApp) && !closed && (
+            <form onSubmit={handleSubmit} style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
+              {/* Position Selector */}
+              {positions.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+                    {t('position.select', '포지션 선택')} <span style={{ color: '#dc2626' }}>*</span>
+                  </p>
+                  <Select
+                    options={positionOptions}
+                    value={positionId}
+                    onChange={(value) => setPositionId(value as string)}
+                    disabled={isLocked}
+                    placeholder={t('position.selectPlaceholder', '포지션을 선택하세요')}
+                    fullWidth
+                  />
+                  {selectedPosition?.description && (
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                      {selectedPosition.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('application.form.name', 'Name')}
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isLocked}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('application.form.age', 'Age')}
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  disabled={isLocked}
+                  required
+                  fullWidth
+                />
+                <div>
+                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('application.form.gender', 'Gender')}</p>
+                  <Select
+                    options={genderOptions}
+                    value={gender}
+                    onChange={(value) => setGender(value as Gender)}
+                    disabled={isLocked}
+                    fullWidth
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('application.form.email', 'Email')}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLocked}
+                  required
+                  fullWidth
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('application.form.phone', 'Phone')}
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={isLocked}
+                  required
+                  fullWidth
+                />
+              </div>
+
+              {/* Stake/Ward (readonly display) */}
+              <div style={{ marginBottom: '1rem' }}>
+                <StakeWardSelector
+                  stake={appUser?.stake || ''}
+                  ward={appUser?.ward || ''}
+                  onStakeChange={() => {}}
+                  onWardChange={() => {}}
+                  readOnly
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <Switch
+                  label={t('application.form.servedMission', '선교사로 봉사')}
+                  checked={servedMission}
+                  onChange={setServedMission}
+                  disabled={isLocked}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <TextField
+                  label={t('application.form.additionalInfo', 'Additional Info')}
+                  multiline
+                  rows={4}
+                  value={moreInfo}
+                  onChange={(e) => setMoreInfo(e.target.value)}
+                  disabled={isLocked}
+                  placeholder={t('application.form.additionalInfoPlaceholder')}
+                  fullWidth
+                />
+              </div>
+
+              {!isLocked && (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={createApp.isPending || updateApp.isPending || (positions.length > 0 && !positionId)}
+                  >
+                    {createApp.isPending || updateApp.isPending ? t('common.saving') : t('application.actions.submit', '신청서 제출')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSaveDraft}
+                    disabled={createApp.isPending || updateApp.isPending}
+                  >
+                    {t('application.actions.saveDraft', '초안 저장')}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
+                    {t('application.actions.preview', '미리보기')}
+                  </Button>
+                  {hasApp && (
+                    <Button type="button" variant="outline" onClick={() => setEditing(false)}>
+                      {t('common.cancel', '취소')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </form>
+          )}
+        </>
       )}
+
       {/* Preview Drawer */}
       <Drawer open={previewOpen} onClose={() => setPreviewOpen(false)}>
         <Drawer.Header onClose={() => setPreviewOpen(false)}>

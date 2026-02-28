@@ -86,6 +86,30 @@ function SettingsTab() {
   const [ward, setWard] = useState(appUser?.ward || '')
   const [saving, setSaving] = useState(false)
 
+  // Preferred name
+  const [editingName, setEditingName] = useState(false)
+  const [preferredName, setPreferredName] = useState(appUser?.preferredName || '')
+  const [savingName, setSavingName] = useState(false)
+
+  useEffect(() => {
+    if (!editingName) {
+      setPreferredName(appUser?.preferredName || '')
+    }
+  }, [appUser?.preferredName, editingName])
+
+  const handleSaveName = async () => {
+    setSavingName(true)
+    try {
+      await updateAppUser({ preferredName: preferredName.trim() || '' })
+      toast({ variant: 'success', message: t('accountSettings.messages.profileUpdated') })
+      setEditingName(false)
+    } catch {
+      toast({ variant: 'danger', message: t('errors.generic') })
+    } finally {
+      setSavingName(false)
+    }
+  }
+
   useEffect(() => {
     if (!editing) {
       setStake(appUser?.stake || '')
@@ -134,15 +158,54 @@ function SettingsTab() {
         <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
           {t('accountSettings.sections.personalInformation.description')}
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
           <div>
-            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{t('common.name', '이름')}</p>
+            <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{t('accountSettings.sections.personalInformation.accountName', '계정 이름')}</p>
             <p style={{ fontSize: '0.875rem', color: '#111827' }}>{appUser?.name}</p>
           </div>
           <div>
             <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{t('common.email', '이메일')}</p>
             <p style={{ fontSize: '0.875rem', color: '#111827' }}>{appUser?.email}</p>
           </div>
+        </div>
+
+        {/* Preferred Name */}
+        <div style={{ paddingTop: '0.75rem', borderTop: '1px solid #f3f4f6' }}>
+          <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+            {t('accountSettings.sections.personalInformation.preferredName', '선호 이름')}
+          </p>
+          {editingName ? (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <TextField
+                type="text"
+                value={preferredName}
+                onChange={(e) => setPreferredName(e.target.value)}
+                placeholder={t('accountSettings.sections.personalInformation.preferredNamePlaceholder', '앱에서 사용할 이름을 입력하세요')}
+                fullWidth
+              />
+              <Button variant="primary" size="sm" onClick={handleSaveName} disabled={savingName}>
+                {savingName ? t('common.saving', '저장 중...') : t('common.save', '저장')}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setEditingName(false); setPreferredName(appUser?.preferredName || '') }}>
+                {t('common.cancel', '취소')}
+              </Button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <p style={{ fontSize: '0.875rem', color: '#111827' }}>
+                {appUser?.preferredName || <span style={{ color: '#9ca3af' }}>{t('accountSettings.sections.personalInformation.preferredNameEmpty', '설정되지 않음 (계정 이름 사용)')}</span>}
+              </p>
+              <button
+                onClick={() => setEditingName(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', color: '#2563eb', padding: '0.25rem 0.5rem' }}
+              >
+                {t('common.edit', '편집')}
+              </button>
+            </div>
+          )}
+          <p style={{ fontSize: '0.7rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+            {t('accountSettings.sections.personalInformation.preferredNameHint', '설정하면 앱 내에서 이 이름이 표시됩니다.')}
+          </p>
         </div>
       </section>
 

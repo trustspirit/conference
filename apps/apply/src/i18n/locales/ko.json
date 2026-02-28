@@ -78,6 +78,8 @@
       "button": "프로필 완성",
       "buttonLoading": "프로필 완성 중...",
       "welcome": "{{name}}님, 환영합니다! 계속하려면 역할을 선택하세요.",
+      "name": "이름",
+      "namePlaceholder": "이름을 입력하세요",
       "accountType": "계정 유형",
       "approvalHint": "대회 지도자, 감독 및 스테이크 회장 액세스는 활성화 전에 관리자 승인이 필요합니다."
     }
@@ -94,7 +96,12 @@
       "personalInformation": {
         "title": "개인 정보",
         "description": "기본 계정 정보입니다. 이름이나 이메일을 변경하려면 관리자에게 문의하세요.",
-        "contactAdminToUpdate": "업데이트하려면 관리자에게 문의"
+        "contactAdminToUpdate": "업데이트하려면 관리자에게 문의",
+        "accountName": "계정 이름",
+        "preferredName": "선호 이름",
+        "preferredNamePlaceholder": "앱에서 사용할 이름을 입력하세요",
+        "preferredNameEmpty": "설정되지 않음 (계정 이름 사용)",
+        "preferredNameHint": "설정하면 앱 내에서 이 이름이 표시됩니다."
       },
       "churchInformation": {
         "title": "교회 정보",
@@ -191,7 +198,8 @@
     "closed": "마감됨",
     "label": "대회",
     "select": "대회 선택",
-    "noConference": "선택된 대회가 없습니다. 상단에서 대회를 선택해주세요."
+    "noConference": "선택된 대회가 없습니다. 상단에서 대회를 선택해주세요.",
+    "noOpenConference": "현재 열려 있는 대회가 없습니다. 대회가 생성되면 신청서를 작성할 수 있습니다."
   },
   "admin": {
     "totalApplications": "전체 신청서",
@@ -232,7 +240,9 @@
       "charts": {
         "trendTitle": "7일 추세",
         "positionDistribution": "포지션별 신청 현황",
-        "submissions": "제출 수"
+        "submissions": "제출 수",
+        "genderByPosition": "포지션별 성별 분포",
+        "stakeByPosition": "스테이크별 포지션 분포"
       }
     },
     "settings": {
@@ -250,7 +260,7 @@
         "deadlineLabel": "마감",
         "create": "대회 생성",
         "created": "대회가 생성되었습니다.",
-        "deleted": "대회가 삭제되었습니다.",
+        "deleted": "대회가 비활성화되었습니다.",
         "close": "마감하기",
         "reopen": "신청 열기",
         "closedManually": "신청이 마감되었습니다.",
@@ -258,9 +268,17 @@
         "updated": "대회 정보가 저장되었습니다.",
         "editDescription": "현재 선택된 대회의 정보를 수정합니다.",
         "noConference": "대회를 먼저 생성해주세요. 상단 대회 선택기에서 새 대회를 생성할 수 있습니다.",
-        "confirmDelete": "\"{{name}}\" 대회를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+        "confirmDelete": "\"{{name}}\" 대회를 비활성화하시겠습니까? 30일 이내에 복원할 수 있습니다.",
         "confirmClose": "\"{{name}}\" 대회의 신청을 마감하시겠습니까?",
-        "confirmReopen": "\"{{name}}\" 대회의 신청을 다시 열겠습니까?"
+        "confirmReopen": "\"{{name}}\" 대회의 신청을 다시 열겠습니까?",
+        "deactivatedSection": "비활성화된 대회",
+        "deactivatedDescription": "비활성화된 대회는 30일 후 자동으로 영구 삭제됩니다.",
+        "restore": "복원",
+        "permanentDelete": "영구 삭제",
+        "daysRemaining": "복원 가능 기간: {{days}}일",
+        "confirmPermanentDelete": "\"{{name}}\" 대회와 관련된 모든 데이터(신청서, 추천서, 메모, 코멘트, 포지션)가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+        "restored": "대회가 복원되었습니다.",
+        "permanentlyDeleted": "대회가 영구 삭제되었습니다."
       },
       "eligibility": {
         "title": "자격 요건 관리",
@@ -357,6 +375,8 @@
         "genderBreakdown": "성별 구성",
         "positionDistribution": "포지션별 추천 현황",
         "recommendations": "추천 수",
+        "genderByPosition": "포지션별 성별 분포",
+        "stakeByPosition": "와드별 포지션 분포",
         "noData": "위치 분포를 표시할 데이터가 아직 없습니다."
       }
     },
@@ -500,6 +520,7 @@
     "gender": "성별",
     "servedMission": "선교사로 봉사",
     "moreInfo": "추가 정보",
+    "closedConference": "이 대회는 마감되었습니다. 새 신청서를 작성할 수 없습니다.",
     "edit": "신청서 수정",
     "new": "새 신청서",
     "locked": "이 신청서는 검토가 완료되어 수정할 수 없습니다.",

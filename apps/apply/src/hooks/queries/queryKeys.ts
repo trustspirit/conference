@@ -30,6 +30,7 @@ export const queryKeys = {
   },
   conferences: {
     all: () => ['conferences'] as const,
+    deactivated: () => ['conferences', 'deactivated'] as const,
     detail: (id: string) => ['conferences', id] as const,
   },
   positions: {

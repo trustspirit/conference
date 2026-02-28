@@ -78,6 +78,8 @@
       "button": "Complete Profile",
       "buttonLoading": "Completing Profile...",
       "welcome": "Welcome {{name}}! Please select your role to continue.",
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
       "accountType": "Account Type",
       "approvalHint": "Session Leader, Bishop and Stake President access requires admin approval before activation."
     }
@@ -94,7 +96,12 @@
       "personalInformation": {
         "title": "Personal Information",
         "description": "Your basic account information. Contact an administrator to change your name or email.",
-        "contactAdminToUpdate": "Contact admin to update"
+        "contactAdminToUpdate": "Contact admin to update",
+        "accountName": "Account Name",
+        "preferredName": "Preferred Name",
+        "preferredNamePlaceholder": "Enter the name you'd like to use in the app",
+        "preferredNameEmpty": "Not set (using account name)",
+        "preferredNameHint": "When set, this name will be displayed throughout the app."
       },
       "churchInformation": {
         "title": "Church Information",
@@ -191,7 +198,8 @@
     "closed": "Closed",
     "label": "Conference",
     "select": "Select Conference",
-    "noConference": "No conference selected. Please select a conference from the top."
+    "noConference": "No conference selected. Please select a conference from the top.",
+    "noOpenConference": "No conferences are currently available. You can apply once a conference is created."
   },
   "admin": {
     "totalApplications": "Total Applications",
@@ -232,7 +240,9 @@
       "charts": {
         "trendTitle": "7-Day Trend",
         "positionDistribution": "Submissions by Position",
-        "submissions": "Submissions"
+        "submissions": "Submissions",
+        "genderByPosition": "Gender by Position",
+        "stakeByPosition": "Stake by Position"
       }
     },
     "settings": {
@@ -250,7 +260,7 @@
         "deadlineLabel": "Deadline",
         "create": "Create Conference",
         "created": "Conference created successfully.",
-        "deleted": "Conference deleted successfully.",
+        "deleted": "Conference has been deactivated.",
         "close": "Close Applications",
         "reopen": "Reopen Applications",
         "closedManually": "Applications have been closed.",
@@ -258,9 +268,17 @@
         "updated": "Conference information saved.",
         "editDescription": "Edit the currently selected conference.",
         "noConference": "Please create a conference first. You can create one from the conference selector at the top.",
-        "confirmDelete": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "confirmDelete": "Are you sure you want to deactivate \"{{name}}\"? You can restore it within 30 days.",
         "confirmClose": "Are you sure you want to close applications for \"{{name}}\"?",
-        "confirmReopen": "Are you sure you want to reopen applications for \"{{name}}\"?"
+        "confirmReopen": "Are you sure you want to reopen applications for \"{{name}}\"?",
+        "deactivatedSection": "Deactivated Conferences",
+        "deactivatedDescription": "Deactivated conferences will be permanently deleted after 30 days.",
+        "restore": "Restore",
+        "permanentDelete": "Delete Permanently",
+        "daysRemaining": "{{days}} day(s) remaining to restore",
+        "confirmPermanentDelete": "\"{{name}}\" and all related data (applications, recommendations, memos, comments, positions) will be permanently deleted. This action cannot be undone.",
+        "restored": "Conference has been restored.",
+        "permanentlyDeleted": "Conference has been permanently deleted."
       },
       "eligibility": {
         "title": "Eligibility Requirements",
@@ -357,6 +375,8 @@
         "genderBreakdown": "Gender Breakdown",
         "positionDistribution": "Recommendations by Position",
         "recommendations": "Recommendations",
+        "genderByPosition": "Gender by Position",
+        "stakeByPosition": "Ward by Position",
         "noData": "No data yet to show location distribution."
       }
     },
@@ -500,6 +520,7 @@
     "gender": "Gender",
     "servedMission": "Served a Mission",
     "moreInfo": "Additional Info",
+    "closedConference": "This conference is closed. New applications cannot be submitted.",
     "edit": "Edit Application",
     "new": "New Application",
     "locked": "This application has been reviewed and cannot be modified.",

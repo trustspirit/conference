@@ -12,7 +12,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
-import type { ApplicationMemo } from '../../types'
+import { getDisplayName, type ApplicationMemo } from '../../types'
 import { APPLY_MEMOS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
@@ -52,7 +52,7 @@ export function useCreateMemo() {
       const docRef = await addDoc(collection(db, APPLY_MEMOS_COLLECTION), {
         applicationId,
         authorId: appUser!.uid,
-        authorName: appUser!.name,
+        authorName: getDisplayName(appUser),
         authorRole: appUser!.role,
         content,
         createdAt: serverTimestamp(),

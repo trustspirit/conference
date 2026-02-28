@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { isAdminRole, isLeaderRole } from '../lib/roles'
+import { getDisplayName } from '../types'
 import { ROUTES } from '../utils/constants'
 import { getRoleTone } from '../utils/constants'
 import { Badge, Avatar, Menu } from 'trust-ui-react'
@@ -55,8 +56,13 @@ export default function AppNav() {
   }
 
   if (isLeaderRole(role) || isAdminRole(role)) {
+    // Leader dashboard: only stake_president, bishop, admin (not session_leader)
+    if (role !== 'session_leader') {
+      navItems.push(
+        { to: ROUTES.LEADER_DASHBOARD, label: t('navigation.leaderDashboard', '리더 대시보드') },
+      )
+    }
     navItems.push(
-      { to: ROUTES.LEADER_DASHBOARD, label: t('navigation.leaderDashboard', '리더 대시보드') },
       { to: ROUTES.LEADER_RECOMMENDATIONS, label: t('navigation.recommendations', '추천서') },
     )
   }
@@ -128,7 +134,7 @@ export default function AppNav() {
                   <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 transition-colors">
                     <Avatar
                       src={appUser?.picture}
-                      name={appUser?.name || '?'}
+                      name={getDisplayName(appUser) || '?'}
                       size="sm"
                     />
                     <ChevronDownIcon style={{ color: '#6b7280' }} />
@@ -136,7 +142,7 @@ export default function AppNav() {
                 </Menu.Trigger>
                 <Menu.Content align="end">
                   <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #f3f4f6' }}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>{appUser?.name}</p>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>{getDisplayName(appUser)}</p>
                     <p style={{ fontSize: '0.75rem', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '10rem' }}>{appUser?.email}</p>
                   </div>
                   <Menu.Item onClick={() => navigate(ROUTES.ACCOUNT_SETTINGS)}>
@@ -179,11 +185,11 @@ export default function AppNav() {
             <div className="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
               <Avatar
                 src={appUser?.picture}
-                name={appUser?.name || '?'}
+                name={getDisplayName(appUser) || '?'}
                 size="md"
               />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{appUser?.name}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{getDisplayName(appUser)}</p>
                 <p className="text-xs text-gray-500 truncate">{appUser?.email}</p>
                 {role && (
                   <Badge variant={TONE_TO_BADGE_VARIANT[roleTone] || 'secondary'} size="sm" style={{ marginTop: '0.25rem' }}>

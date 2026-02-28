@@ -5,11 +5,17 @@ import { useAuth } from '../../contexts/AuthContext'
 import Spinner from '../../components/Spinner'
 import { getRoleTone } from '../../utils/constants'
 import { ROLE_LABELS, sortByRole } from '../../utils/roleConfig'
-import type { UserRole, LeaderStatus } from '../../types'
+import type { UserRole, LeaderStatus, AppUser } from '../../types'
 import { isLeaderRole } from '../../lib/roles'
 import { useMemo, useState } from 'react'
 
 const ROLES: UserRole[] = ['applicant', 'bishop', 'stake_president', 'session_leader', 'admin']
+
+function formatUserName(user: AppUser): string {
+  const preferred = user.preferredName?.trim()
+  if (!preferred || preferred === user.name) return user.name
+  return `${user.name} (${preferred})`
+}
 
 const TONE_TO_BADGE: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
   admin: 'primary',
@@ -124,7 +130,7 @@ export default function AdminRoles() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Avatar src={user.picture} name={user.name || '?'} size="sm" />
-                    <span className="text-sm text-gray-900">{user.name}</span>
+                    <span className="text-sm text-gray-900">{formatUserName(user)}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={user.email}>{user.email}</td>
@@ -187,7 +193,7 @@ export default function AdminRoles() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Avatar src={user.picture} name={user.name || '?'} size="sm" />
                 <div>
-                  <p style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{user.name}</p>
+                  <p style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{formatUserName(user)}</p>
                   <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{user.email}</p>
                 </div>
               </div>

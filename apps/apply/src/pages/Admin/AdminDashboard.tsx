@@ -1,16 +1,16 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend } from 'recharts'
 import { useApplications } from '../../hooks/queries/useApplications'
 import { useRecommendations } from '../../hooks/queries/useRecommendations'
 import PageLoader from '../../components/PageLoader'
 import SummaryCard from '../../components/SummaryCard'
 import EmptyState from '../../components/EmptyState'
 import { ROUTES } from '../../utils/constants'
+import type { Application, LeaderRecommendation } from '../../types'
 
-const PIE_COLORS = ['#3b82f6', '#ec4899']
-const BAR_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']
+const POSITION_COLORS = ['#6366f1', '#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b']
 
 function isToday(date: Date): boolean {
   const now = new Date()
@@ -31,11 +31,20 @@ function getDateKey(date: Date): string {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
+/** Collect unique position names from both apps and recs */
+function getPositionNames(items: Array<Pick<Application | LeaderRecommendation, 'positionName'>>, fallback: string): string[] {
+  const set = new Set<string>()
+  items.forEach((it) => set.add(it.positionName || fallback))
+  return Array.from(set).sort()
+}
+
 export default function AdminDashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: applications, isLoading: loadingApps } = useApplications()
   const { data: recommendations, isLoading: loadingRecs } = useRecommendations()
+
+  const unspecified = t('position.unspecified', '미지정')
 
   const stats = useMemo(() => {
     const apps = applications || []
@@ -44,7 +53,6 @@ export default function AdminDashboard() {
       totalApplications: apps.length,
       awaiting: apps.filter((a) => a.status === 'awaiting').length,
       approved: apps.filter((a) => a.status === 'approved').length,
-      rejected: apps.filter((a) => a.status === 'rejected').length,
       totalRecommendations: recs.length,
       submitted: recs.filter((r) => r.status === 'submitted').length,
       todayApps: apps.filter((a) => a.createdAt && isToday(a.createdAt)).length,
@@ -63,47 +71,64 @@ export default function AdminDashboard() {
     }))
   }, [applications, recommendations])
 
-  const genderData = useMemo(() => {
-    const apps = applications || []
-    const male = apps.filter((a) => a.gender === 'male').length
-    const female = apps.filter((a) => a.gender === 'female').length
-    return [
-      { name: t('gender.male', 'Male'), value: male },
-      { name: t('gender.female', 'Female'), value: female },
-    ].filter((d) => d.value > 0)
-  }, [applications, t])
+  const allItems = useMemo(() => [...(applications || []), ...(recommendations || [])], [applications, recommendations])
+  const positionNames = useMemo(() => getPositionNames(allItems, unspecified), [allItems, unspecified])
 
-  const stakeData = useMemo(() => {
-    const apps = applications || []
-    const map: Record<string, number> = {}
-    apps.forEach((a) => {
-      const key = a.stake || 'Unknown'
-      map[key] = (map[key] || 0) + 1
+  // Position × Stake stacked bar
+  const stakeByPosition = useMemo(() => {
+    const map: Record<string, Record<string, number>> = {}
+    allItems.forEach((item) => {
+      const stake = item.stake || 'Unknown'
+      const pos = item.positionName || unspecified
+      if (!map[stake]) map[stake] = {}
+      map[stake][pos] = (map[stake][pos] || 0) + 1
     })
     return Object.entries(map)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
+      .map(([stake, positions]) => ({ name: stake, ...positions }))
+      .sort((a, b) => {
+        const totalA = Object.values(a).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        const totalB = Object.values(b).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        return totalB - totalA
+      })
       .slice(0, 10)
-  }, [applications])
+  }, [allItems, unspecified])
 
-  const positionData = useMemo(() => {
-    const apps = applications || []
-    const recs = recommendations || []
-    const map: Record<string, number> = {}
-    apps.forEach((a) => {
-      const key = a.positionName || t('position.unspecified', '미지정')
-      map[key] = (map[key] || 0) + 1
+  // Position × Gender stacked bar
+  const genderByPosition = useMemo(() => {
+    const male = t('gender.male', 'Male')
+    const female = t('gender.female', 'Female')
+    const map: Record<string, Record<string, number>> = {}
+    allItems.forEach((item) => {
+      const pos = item.positionName || unspecified
+      const gender = item.gender === 'male' ? male : female
+      if (!map[pos]) map[pos] = {}
+      map[pos][gender] = (map[pos][gender] || 0) + 1
     })
-    recs.forEach((r) => {
-      const key = r.positionName || t('position.unspecified', '미지정')
-      map[key] = (map[key] || 0) + 1
+    return Object.entries(map)
+      .map(([pos, genders]) => ({ name: pos, ...genders }))
+      .sort((a, b) => {
+        const totalA = Object.values(a).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        const totalB = Object.values(b).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        return totalB - totalA
+      })
+  }, [allItems, unspecified, t])
+
+  // Position total bar
+  const positionData = useMemo(() => {
+    const map: Record<string, number> = {}
+    allItems.forEach((item) => {
+      const pos = item.positionName || unspecified
+      map[pos] = (map[pos] || 0) + 1
     })
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [applications, recommendations, t])
+  }, [allItems, unspecified])
 
   if (loadingApps || loadingRecs) return <PageLoader />
+
+  const maleLabel = t('gender.male', 'Male')
+  const femaleLabel = t('gender.female', 'Female')
 
   return (
     <div className="mx-auto max-w-7xl p-6">
@@ -159,40 +184,17 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Gender Distribution */}
+        {/* Position Total */}
         <div className="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.genderBreakdown', 'Gender Breakdown')}</h3>
-          {genderData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={genderData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}>
-                  {genderData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
-          )}
-        </div>
-
-        {/* Position Distribution */}
-        <div className="rounded-xl bg-white border border-gray-200 p-5 lg:col-span-2">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('admin.dashboard.charts.positionDistribution', '포지션별 신청 현황')}</h3>
           {positionData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={positionData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" name={t('admin.dashboard.charts.submissions', '제출 수')} radius={[4, 4, 0, 0]}>
-                  {positionData.map((_, i) => (
-                    <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                  ))}
-                </Bar>
+                <Bar dataKey="value" name={t('admin.dashboard.charts.submissions', '제출 수')} radius={[4, 4, 0, 0]} fill="#6366f1" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -200,21 +202,46 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Stake Distribution */}
+        {/* Gender by Position (stacked) */}
+        <div className="rounded-xl bg-white border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('admin.dashboard.charts.genderByPosition', '포지션별 성별 분포')}</h3>
+          {genderByPosition.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={genderByPosition}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey={maleLabel} stackId="gender" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                <Bar dataKey={femaleLabel} stackId="gender" fill="#ec4899" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+          )}
+        </div>
+
+        {/* Stake by Position (stacked) */}
         <div className="rounded-xl bg-white border border-gray-200 p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.stakeWardDistribution', 'Stake & Ward Distribution')}</h3>
-          {stakeData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={stakeData}>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('admin.dashboard.charts.stakeByPosition', '스테이크별 포지션 분포')}</h3>
+          {stakeByPosition.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={stakeByPosition}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={60} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" name={t('admin.applications', 'Applications')} radius={[4, 4, 0, 0]}>
-                  {stakeData.map((_, i) => (
-                    <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                  ))}
-                </Bar>
+                <Legend />
+                {positionNames.map((pos, i) => (
+                  <Bar
+                    key={pos}
+                    dataKey={pos}
+                    stackId="position"
+                    fill={POSITION_COLORS[i % POSITION_COLORS.length]}
+                    radius={i === positionNames.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                  />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           ) : (

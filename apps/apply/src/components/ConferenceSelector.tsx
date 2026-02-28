@@ -97,6 +97,8 @@ export default function ConferenceSelector() {
     setOpen(!open)
   }
 
+  // Applicants manage conference selection in their own page
+  if (appUser?.role === 'applicant') return null
   // Non-admin with 0 or 1 conference: hide selector
   if (!isAdmin && conferences.length <= 1) return null
 

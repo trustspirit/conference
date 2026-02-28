@@ -60,6 +60,20 @@ export function RequireLeader({
   return <>{children}</>
 }
 
+export function RequireStakeLeader({ children }: { children: React.ReactNode }) {
+  const { appUser } = useAuth()
+  const role = appUser?.role
+  // Only stake_president, bishop, and admin roles can access (not session_leader)
+  if (role !== 'stake_president' && role !== 'bishop' && !isAdminRole(role)) {
+    return <Navigate to={getDefaultRoute(role)} replace />
+  }
+  // Require approved status for stake_president and bishop
+  if ((role === 'stake_president' || role === 'bishop') && appUser?.leaderStatus !== 'approved') {
+    return <Navigate to={ROUTES.LEADER_PENDING} replace />
+  }
+  return <>{children}</>
+}
+
 export function RequireApplicant({ children }: { children: React.ReactNode }) {
   const { appUser } = useAuth()
   if (appUser?.role !== 'applicant') return <Navigate to={getDefaultRoute(appUser?.role)} replace />

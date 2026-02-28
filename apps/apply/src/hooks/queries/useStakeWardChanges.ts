@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '@conference/firebase'
-import type { StakeWardChangeRequest } from '../../types'
+import { getDisplayName, type StakeWardChangeRequest } from '../../types'
 import { APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
@@ -48,7 +48,7 @@ export function useCreateStakeWardChangeRequest() {
     mutationFn: async ({ stake, ward }: { stake: string; ward: string }) => {
       const docRef = await addDoc(collection(db, APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION), {
         userId: appUser!.uid,
-        userName: appUser!.name,
+        userName: getDisplayName(appUser),
         userEmail: appUser!.email,
         userRole: appUser!.role,
         currentStake: appUser!.stake,

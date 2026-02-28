@@ -9,6 +9,7 @@ import {
   RequireAuth,
   RequireAdmin,
   RequireLeader,
+  RequireStakeLeader,
   RequireApplicant,
   PublicOnly,
   RequireIncompleteProfile,
@@ -146,9 +147,9 @@ const router = createBrowserRouter([
       {
         path: ROUTES.LEADER_DASHBOARD,
         element: (
-          <RequireLeader requireApproved>
+          <RequireStakeLeader>
             <LeaderDashboard />
-          </RequireLeader>
+          </RequireStakeLeader>
         ),
       },
       {

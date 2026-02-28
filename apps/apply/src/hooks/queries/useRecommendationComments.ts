@@ -12,7 +12,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
-import type { RecommendationComment } from '../../types'
+import { getDisplayName, type RecommendationComment } from '../../types'
 import { APPLY_RECOMMENDATION_COMMENTS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
@@ -68,7 +68,7 @@ export function useCreateComment() {
       const docRef = await addDoc(collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION), {
         ...data,
         authorId: appUser!.uid,
-        authorName: appUser!.name,
+        authorName: getDisplayName(appUser),
         authorRole: appUser!.role,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
