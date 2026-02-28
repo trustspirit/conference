@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useApplications, useUpdateApplicationStatus } from '../../hooks/queries/useApplications'
 import { useRecommendations, useUpdateRecommendationStatus } from '../../hooks/queries/useRecommendations'
+import { useConference } from '../../contexts/ConferenceContext'
 import { useToast, Tabs, Badge, Button, Dialog } from 'trust-ui-react'
 import PageLoader from '../../components/PageLoader'
 import EmptyState from '../../components/EmptyState'
@@ -33,8 +34,16 @@ export default function AdminReview() {
   const { toast } = useToast()
   const { data: applications, isLoading: loadingApps } = useApplications()
   const { data: recommendations, isLoading: loadingRecs } = useRecommendations()
+  const { currentConference, conferences } = useConference()
   const updateAppStatus = useUpdateApplicationStatus()
   const updateRecStatus = useUpdateRecommendationStatus()
+
+  const conferenceMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    conferences.forEach((c) => { map[c.id] = c.name })
+    return map
+  }, [conferences])
+  const showConferenceName = !currentConference
 
   const [activeTab, setActiveTab] = useState<string>(ADMIN_REVIEW_TABS.ALL)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -66,6 +75,7 @@ export default function AdminReview() {
         updatedAt: app.updatedAt,
         hasRecommendation: !!app.linkedRecommendationId,
         recommendationId: app.linkedRecommendationId,
+        conferenceName: app.conferenceId ? conferenceMap[app.conferenceId] : undefined,
       })
     })
     ;(recommendations || []).forEach((rec) => {
@@ -89,10 +99,11 @@ export default function AdminReview() {
         updatedAt: rec.updatedAt,
         hasApplication: !!rec.linkedApplicationId,
         applicationId: rec.linkedApplicationId,
+        conferenceName: rec.conferenceId ? conferenceMap[rec.conferenceId] : undefined,
       })
     })
     return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-  }, [applications, recommendations])
+  }, [applications, recommendations, conferenceMap])
 
   const filteredItems = useMemo(() => {
     let items = allItems
@@ -243,6 +254,9 @@ export default function AdminReview() {
                 </div>
               </div>
               <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                {showConferenceName && item.conferenceName && (
+                  <span style={{ color: '#2563eb', marginRight: '0.375rem' }}>[{item.conferenceName}]</span>
+                )}
                 {item.stake} / {item.ward}
               </p>
             </button>
@@ -274,6 +288,9 @@ export default function AdminReview() {
 
               <DetailsGrid
                 items={[
+                  ...(showConferenceName && selected.conferenceName
+                    ? [{ label: t('conference.label', '대회'), value: selected.conferenceName }]
+                    : []),
                   { label: t('common.email', 'Email'), value: selected.email },
                   { label: t('common.phone', 'Phone'), value: selected.phone },
                   { label: t('admin.review.age', 'Age'), value: String(selected.age) },

@@ -153,6 +153,7 @@ export interface ReviewItem {
   recommendationId?: string
   hasApplication?: boolean
   applicationId?: string
+  conferenceName?: string
 }
 
 export interface ValidationErrors {
