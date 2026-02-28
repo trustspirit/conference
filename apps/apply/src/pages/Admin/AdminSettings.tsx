@@ -148,24 +148,32 @@ export default function AdminSettings() {
         )}
 
         {/* Create Conference */}
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
-            <TextField
-              label={t('admin.settings.conference.name', '대회명')}
-              type="text"
-              value={newConferenceName}
-              onChange={(e) => setNewConferenceName(e.target.value)}
-              placeholder={t('admin.settings.conference.namePlaceholder', '예: 2026 청소년 대회')}
-              fullWidth
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <TextField
+            label={t('admin.settings.conference.name', '대회명')}
+            type="text"
+            value={newConferenceName}
+            onChange={(e) => setNewConferenceName(e.target.value)}
+            placeholder={t('admin.settings.conference.namePlaceholder', '예: 2026 청소년 대회')}
+            fullWidth
+          />
+          <TextField
+            label={t('admin.settings.conference.desc', '대회 설명')}
+            type="text"
+            value={newConferenceDesc}
+            onChange={(e) => setNewConferenceDesc(e.target.value)}
+            placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
+            fullWidth
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="primary"
+              onClick={handleCreateConference}
+              disabled={!newConferenceName.trim() || createConference.isPending}
+            >
+              {t('admin.settings.conference.create', '생성')}
+            </Button>
           </div>
-          <Button
-            variant="primary"
-            onClick={handleCreateConference}
-            disabled={!newConferenceName.trim() || createConference.isPending}
-          >
-            {t('admin.settings.conference.create', '생성')}
-          </Button>
         </div>
       </div>
 
