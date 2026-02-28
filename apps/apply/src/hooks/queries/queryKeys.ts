@@ -28,4 +28,7 @@ export const queryKeys = {
     all: () => ['stakeWardChanges'] as const,
     pending: () => ['stakeWardChanges', 'pending'] as const,
   },
+  settings: {
+    eligibility: () => ['settings', 'eligibility'] as const,
+  },
 } as const

@@ -8,6 +8,7 @@ export const ROUTES = {
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_REVIEW: '/admin/review',
   ADMIN_ROLES: '/admin/roles',
+  ADMIN_SETTINGS: '/admin/settings',
   LEADER_DASHBOARD: '/leader/dashboard',
   LEADER_RECOMMENDATIONS: '/leader/recommendations',
   LEADER_PENDING: '/leader/pending',

@@ -14,7 +14,9 @@ import Spinner from '../../components/Spinner'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
 import EmptyState from '../../components/EmptyState'
+import { StakeWardSelector } from '../../components/form'
 import Drawer from '../../components/Drawer'
+import EligibilityNotice from '../../components/EligibilityNotice'
 import { RECOMMENDATION_TABS, STATUS_TONES } from '../../utils/constants'
 import type { Gender, RecommendationStatus, LeaderRecommendation } from '../../types'
 
@@ -48,6 +50,8 @@ export default function LeaderRecommendations() {
   const [formAge, setFormAge] = useState('')
   const [formEmail, setFormEmail] = useState('')
   const [formPhone, setFormPhone] = useState('')
+  const [formStake, setFormStake] = useState(appUser?.stake || '')
+  const [formWard, setFormWard] = useState(appUser?.ward || '')
   const [formGender, setFormGender] = useState<Gender>('male')
   const [formMoreInfo, setFormMoreInfo] = useState('')
   const [formServedMission, setFormServedMission] = useState(false)
@@ -76,6 +80,8 @@ export default function LeaderRecommendations() {
     setFormAge('')
     setFormEmail('')
     setFormPhone('')
+    setFormStake(appUser?.stake || '')
+    setFormWard(appUser?.ward || '')
     setFormGender('male')
     setFormMoreInfo('')
     setFormServedMission(false)
@@ -91,9 +97,11 @@ export default function LeaderRecommendations() {
 
   const openEditForm = (rec: LeaderRecommendation) => {
     setFormName(rec.name)
-    setFormAge(String(rec.age))
+    setFormAge(rec.age ? String(rec.age) : '')
     setFormEmail(rec.email || '')
     setFormPhone(rec.phone)
+    setFormStake(rec.stake || appUser?.stake || '')
+    setFormWard(rec.ward || appUser?.ward || '')
     setFormGender(rec.gender)
     setFormMoreInfo(rec.moreInfo)
     setFormServedMission(rec.servedMission || false)
@@ -115,11 +123,11 @@ export default function LeaderRecommendations() {
   const handleSaveDraft = async () => {
     const data = {
       name: formName,
-      age: Number(formAge),
+      age: formAge ? Number(formAge) : 0,
       email: formEmail,
       phone: formPhone,
-      stake: appUser?.stake || '',
-      ward: appUser?.ward || '',
+      stake: formStake,
+      ward: formWard,
       gender: formGender,
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
@@ -140,11 +148,11 @@ export default function LeaderRecommendations() {
   const handleSubmitRec = async () => {
     const data = {
       name: formName,
-      age: Number(formAge),
+      age: formAge ? Number(formAge) : 0,
       email: formEmail,
       phone: formPhone,
-      stake: appUser?.stake || '',
-      ward: appUser?.ward || '',
+      stake: formStake,
+      ward: formWard,
       gender: formGender,
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
@@ -273,6 +281,7 @@ export default function LeaderRecommendations() {
               </h2>
             </Drawer.Header>
             <Drawer.Content>
+              <EligibilityNotice />
               {editingId && (
                 <div style={{ marginBottom: '0.75rem' }}>
                   <Alert variant="warning">{t('leader.recommendations.form.editingAlert')}</Alert>
@@ -288,11 +297,10 @@ export default function LeaderRecommendations() {
                   fullWidth
                 />
                 <TextField
-                  label={`${t('leader.recommendations.form.age', '나이')} *`}
+                  label={t('leader.recommendations.form.age', '나이')}
                   type="number"
                   value={formAge}
                   onChange={(e) => setFormAge(e.target.value)}
-                  required
                   fullWidth
                 />
               </div>
@@ -311,6 +319,14 @@ export default function LeaderRecommendations() {
                   onChange={(e) => setFormPhone(e.target.value)}
                   required
                   fullWidth
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <StakeWardSelector
+                  stake={formStake}
+                  ward={formWard}
+                  onStakeChange={setFormStake}
+                  onWardChange={setFormWard}
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>

@@ -8,6 +8,7 @@ import Spinner from '../../components/Spinner'
 import Alert from '../../components/Alert'
 import DetailsGrid from '../../components/DetailsGrid'
 import Drawer from '../../components/Drawer'
+import EligibilityNotice from '../../components/EligibilityNotice'
 import { STATUS_TONES } from '../../utils/constants'
 import type { Gender } from '../../types'
 
@@ -127,6 +128,8 @@ export default function UserApplication() {
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
       <p className="text-sm text-gray-500 mb-6">{getSubtitle()}</p>
+
+      <EligibilityNotice />
 
       {/* Recommendation Alert */}
       {hasRecommendation && (

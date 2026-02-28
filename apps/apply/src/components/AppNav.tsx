@@ -40,6 +40,7 @@ export default function AppNav() {
       { to: ROUTES.ADMIN_DASHBOARD, label: t('navigation.dashboard', '대시보드') },
       { to: ROUTES.ADMIN_REVIEW, label: t('navigation.reviewApplications', '신청서 검토') },
       { to: ROUTES.ADMIN_ROLES, label: t('navigation.manageRoles', '역할 관리') },
+      { to: ROUTES.ADMIN_SETTINGS, label: t('navigation.settings', '설정') },
     )
   }
 

@@ -24,6 +24,7 @@ const CompleteProfilePage = lazy(() => import('./pages/Auth/CompleteProfilePage'
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'))
 const AdminReview = lazy(() => import('./pages/Admin/AdminReview'))
 const AdminRoles = lazy(() => import('./pages/Admin/AdminRoles'))
+const AdminSettings = lazy(() => import('./pages/Admin/AdminSettings'))
 const UserApplication = lazy(() => import('./pages/User/UserApplication'))
 const AccountSettings = lazy(() => import('./pages/User/AccountSettings'))
 const LeaderDashboard = lazy(() => import('./pages/Leader/LeaderDashboard'))
@@ -121,6 +122,14 @@ const router = createBrowserRouter([
         element: (
           <RequireAdmin>
             <AdminRoles />
+          </RequireAdmin>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN_SETTINGS,
+        element: (
+          <RequireAdmin>
+            <AdminSettings />
           </RequireAdmin>
         ),
       },
