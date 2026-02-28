@@ -82,7 +82,7 @@ export default function ConferenceSelector() {
     }
   }, [newName, newDesc, appUser, createConference, queryClient])
 
-  const handleSelect = (conference: Conference | null) => {
+  const handleSelect = (conference: Conference) => {
     setCurrentConference(conference)
     setOpen(false)
   }
@@ -101,14 +101,9 @@ export default function ConferenceSelector() {
   if (!isAdmin && conferences.length <= 1) return null
 
   // Determine trigger label
-  let triggerLabel: string
-  if (!hasConferences) {
-    triggerLabel = t('conference.create', '+ 새 대회 생성')
-  } else if (currentConference) {
-    triggerLabel = currentConference.name
-  } else {
-    triggerLabel = t('conference.all', '전체 대회')
-  }
+  const triggerLabel = hasConferences
+    ? (currentConference?.name || t('conference.select', '대회 선택'))
+    : t('conference.create', '+ 새 대회 생성')
 
   return (
     <>
@@ -134,18 +129,6 @@ export default function ConferenceSelector() {
           className="fixed w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100]"
           style={{ top: dropdownPos.top, left: dropdownPos.left }}
         >
-          {/* Admin: "All conferences" option */}
-          {isAdmin && (
-            <button
-              onClick={() => handleSelect(null)}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                currentConference === null ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
-              }`}
-            >
-              {t('conference.all', '전체 대회')}
-            </button>
-          )}
-
           {/* Conference list */}
           {conferences.map((conference) => (
             <button

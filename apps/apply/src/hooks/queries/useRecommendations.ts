@@ -19,7 +19,6 @@ import { APPLY_RECOMMENDATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 import { useConference } from '../../contexts/ConferenceContext'
-import { isAdminRole } from '../../lib/roles'
 import { toDate } from './firestoreUtils'
 
 function mapRecommendation(id: string, data: Record<string, unknown>): LeaderRecommendation {
@@ -35,22 +34,16 @@ export function useRecommendations() {
   const { appUser } = useAuth()
   const { currentConference } = useConference()
   const conferenceId = currentConference?.id
-  const isAdmin = isAdminRole(appUser?.role)
 
   return useQuery({
     queryKey: [...(appUser?.role === 'bishop'
       ? queryKeys.recommendations.byWard(appUser.ward)
       : appUser?.role === 'stake_president'
         ? queryKeys.recommendations.byStake(appUser.stake)
-        : queryKeys.recommendations.all()), conferenceId ?? 'all'],
+        : queryKeys.recommendations.all()), conferenceId],
     queryFn: async () => {
       const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
-      // Admin without a selected conference sees all; others are always scoped
-      if (!isAdmin && conferenceId) {
-        constraints.unshift(where('conferenceId', '==', conferenceId))
-      } else if (isAdmin && conferenceId) {
-        constraints.unshift(where('conferenceId', '==', conferenceId))
-      }
+      if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
       if (appUser?.role === 'bishop') {
         constraints.unshift(where('ward', '==', appUser.ward))
       } else if (appUser?.role === 'stake_president') {
@@ -60,7 +53,7 @@ export function useRecommendations() {
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant' && (isAdmin || !!conferenceId),
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
   })
 }
 

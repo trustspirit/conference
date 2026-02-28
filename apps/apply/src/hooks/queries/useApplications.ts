@@ -19,7 +19,6 @@ import { APPLY_APPLICATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
 import { useConference } from '../../contexts/ConferenceContext'
-import { isAdminRole } from '../../lib/roles'
 import { toDate } from './firestoreUtils'
 
 function mapApplication(id: string, data: Record<string, unknown>): Application {
@@ -35,22 +34,16 @@ export function useApplications() {
   const { appUser } = useAuth()
   const { currentConference } = useConference()
   const conferenceId = currentConference?.id
-  const isAdmin = isAdminRole(appUser?.role)
 
   return useQuery({
     queryKey: [...(appUser?.role === 'bishop'
       ? queryKeys.applications.byWard(appUser.ward)
       : appUser?.role === 'stake_president'
         ? queryKeys.applications.byStake(appUser.stake)
-        : queryKeys.applications.all()), conferenceId ?? 'all'],
+        : queryKeys.applications.all()), conferenceId],
     queryFn: async () => {
       const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
-      // Admin without a selected conference sees all; others are always scoped
-      if (!isAdmin && conferenceId) {
-        constraints.unshift(where('conferenceId', '==', conferenceId))
-      } else if (isAdmin && conferenceId) {
-        constraints.unshift(where('conferenceId', '==', conferenceId))
-      }
+      if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
       if (appUser?.role === 'bishop') {
         constraints.unshift(where('ward', '==', appUser.ward))
       } else if (appUser?.role === 'stake_president') {
@@ -60,7 +53,7 @@ export function useApplications() {
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapApplication(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant' && (isAdmin || !!conferenceId),
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
   })
 }
 
