@@ -10,6 +10,7 @@ export interface Conference {
   id: string
   name: string
   description: string
+  deadline: Date | null
   eligibilityRequirements: string[]
   isActive: boolean
   createdAt: Date

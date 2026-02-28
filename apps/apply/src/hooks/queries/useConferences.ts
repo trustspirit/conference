@@ -9,6 +9,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { Conference } from '../../types'
@@ -20,6 +21,7 @@ function mapConference(id: string, data: Record<string, unknown>): Conference {
   return {
     ...data,
     id,
+    deadline: data.deadline ? toDate(data.deadline) : null,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   } as Conference
@@ -44,10 +46,11 @@ export function useCreateConference() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: { name: string; description: string; createdBy: string }) => {
+    mutationFn: async (data: { name: string; description: string; deadline: string | null; createdBy: string }) => {
       const docRef = await addDoc(collection(db, APPLY_CONFERENCES_COLLECTION), {
         name: data.name,
         description: data.description,
+        deadline: data.deadline ? Timestamp.fromDate(new Date(data.deadline)) : null,
         eligibilityRequirements: [],
         isActive: true,
         createdAt: serverTimestamp(),

@@ -22,12 +22,31 @@ export default function ConferenceSelector() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const [newDeadline, setNewDeadline] = useState('')
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 })
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const hasConferences = conferences.length > 0
+
+  // Position the dropdown below the trigger button using fixed positioning
+  const updateDropdownPos = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left })
+    }
+  }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -49,11 +68,13 @@ export default function ConferenceSelector() {
       await createConference.mutateAsync({
         name: newName.trim(),
         description: newDesc.trim(),
+        deadline: newDeadline || null,
         createdBy: appUser?.uid || '',
       })
       await queryClient.refetchQueries({ queryKey: queryKeys.conferences.all() })
       setNewName('')
       setNewDesc('')
+      setNewDeadline('')
       setShowCreateModal(false)
     } catch {
       // error handled by mutation
@@ -65,75 +86,105 @@ export default function ConferenceSelector() {
     setOpen(false)
   }
 
-  // Admin always sees selector; non-admin only if multiple conferences
-  if (conferences.length === 0 && !isAdmin) return null
-  if (conferences.length <= 1 && !isAdmin) return null
+  const handleTriggerClick = () => {
+    // No conferences → directly open create modal
+    if (!hasConferences && isAdmin) {
+      setShowCreateModal(true)
+      return
+    }
+    updateDropdownPos()
+    setOpen(!open)
+  }
+
+  // Non-admin with 0 or 1 conference: hide selector
+  if (!isAdmin && conferences.length <= 1) return null
+
+  // Determine trigger label
+  let triggerLabel: string
+  if (!hasConferences) {
+    triggerLabel = t('conference.create', '+ 새 대회 생성')
+  } else if (currentConference) {
+    triggerLabel = currentConference.name
+  } else {
+    triggerLabel = t('conference.all', '전체 대회')
+  }
 
   return (
     <>
-      <div ref={ref} className="relative">
-        <button
-          onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors max-w-[200px]"
-        >
-          <span className="truncate">
-            {currentConference?.name || t('conference.all', '전체 대회')}
-          </span>
+      <button
+        ref={triggerRef}
+        onClick={handleTriggerClick}
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors max-w-[200px] shrink-0 ${
+          hasConferences
+            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+        }`}
+      >
+        <span className="truncate">{triggerLabel}</span>
+        {hasConferences && (
           <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
-
-        {open && (
-          <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-            {/* Admin: "All conferences" option */}
-            {isAdmin && (
-              <button
-                onClick={() => handleSelect(null)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  currentConference === null ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
-                }`}
-              >
-                {t('conference.all', '전체 대회')}
-              </button>
-            )}
-
-            {/* Conference list */}
-            {conferences.map((conference) => (
-              <button
-                key={conference.id}
-                onClick={() => handleSelect(conference)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  currentConference?.id === conference.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
-                }`}
-              >
-                <span>{conference.name}</span>
-                {conference.description && (
-                  <p className="text-xs text-gray-400 truncate">{conference.description}</p>
-                )}
-              </button>
-            ))}
-
-            {/* Admin: Create button */}
-            {isAdmin && (
-              <>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={() => {
-                    setOpen(false)
-                    setShowCreateModal(true)
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  + {t('admin.settings.conference.create', '대회 생성')}
-                </button>
-              </>
-            )}
-          </div>
         )}
-      </div>
+      </button>
+
+      {/* Dropdown - fixed position to avoid navbar clipping */}
+      {open && hasConferences && (
+        <div
+          ref={dropdownRef}
+          className="fixed w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100]"
+          style={{ top: dropdownPos.top, left: dropdownPos.left }}
+        >
+          {/* Admin: "All conferences" option */}
+          {isAdmin && (
+            <button
+              onClick={() => handleSelect(null)}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                currentConference === null ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {t('conference.all', '전체 대회')}
+            </button>
+          )}
+
+          {/* Conference list */}
+          {conferences.map((conference) => (
+            <button
+              key={conference.id}
+              onClick={() => handleSelect(conference)}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                currentConference?.id === conference.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              }`}
+            >
+              <span>{conference.name}</span>
+              {conference.deadline && (
+                <p className={`text-xs truncate ${conference.deadline < new Date() ? 'text-red-400' : 'text-gray-400'}`}>
+                  {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
+                  {conference.deadline < new Date() && ` (${t('conference.closed', '마감됨')})`}
+                </p>
+              )}
+            </button>
+          ))}
+
+          {/* Admin: Create button */}
+          {isAdmin && (
+            <>
+              <div className="border-t border-gray-100 my-1" />
+              <button
+                onClick={() => {
+                  setOpen(false)
+                  setShowCreateModal(true)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                + {t('admin.settings.conference.create', '대회 생성')}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Create Conference Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowCreateModal(false)} />
           <div
             role="dialog"
@@ -169,6 +220,17 @@ export default function ConferenceSelector() {
                 placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
                 fullWidth
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('admin.settings.conference.deadline', '신청 마감일')}
+                </label>
+                <input
+                  type="date"
+                  value={newDeadline}
+                  onChange={(e) => setNewDeadline(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-5">

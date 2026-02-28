@@ -19,6 +19,7 @@ export default function AdminSettings() {
   // Conference form
   const [newConferenceName, setNewConferenceName] = useState('')
   const [newConferenceDesc, setNewConferenceDesc] = useState('')
+  const [newConferenceDeadline, setNewConferenceDeadline] = useState('')
 
   // Eligibility for current conference
   const [requirements, setRequirements] = useState<string[]>([])
@@ -36,11 +37,13 @@ export default function AdminSettings() {
       await createConference.mutateAsync({
         name: newConferenceName.trim(),
         description: newConferenceDesc.trim(),
+        deadline: newConferenceDeadline || null,
         createdBy: appUser?.uid || '',
       })
       toast({ variant: 'success', message: t('admin.settings.conference.created', '대회가 생성되었습니다.') })
       setNewConferenceName('')
       setNewConferenceDesc('')
+      setNewConferenceDeadline('')
     } catch {
       toast({ variant: 'danger', message: t('errors.generic', '오류가 발생했습니다.') })
     }
@@ -126,6 +129,12 @@ export default function AdminSettings() {
                       {conference.description}
                     </p>
                   )}
+                  {conference.deadline && (
+                    <p style={{ fontSize: '0.75rem', marginTop: '0.125rem', color: conference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
+                      {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
+                      {conference.deadline < new Date() && ` (${t('conference.closed', '마감됨')})`}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => handleDeleteConference(conference.id)}
@@ -165,6 +174,23 @@ export default function AdminSettings() {
             placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
             fullWidth
           />
+          <div>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+              {t('admin.settings.conference.deadline', '신청 마감일')}
+            </label>
+            <input
+              type="date"
+              value={newConferenceDeadline}
+              onChange={(e) => setNewConferenceDeadline(e.target.value)}
+              style={{
+                width: '100%',
+                borderRadius: '0.5rem',
+                border: '1px solid #d1d5db',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.875rem',
+              }}
+            />
+          </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="primary"
