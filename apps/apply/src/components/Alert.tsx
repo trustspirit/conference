@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
 
-type AlertVariant = 'info' | 'success' | 'warning' | 'error'
+type AlertVariant = 'info' | 'success' | 'warning' | 'error' | 'danger'
 
 const VARIANT_STYLES: Record<AlertVariant, { bg: string; border: string; color: string; icon: string }> = {
   info: { bg: '#eff6ff', border: '#bfdbfe', color: '#1e40af', icon: 'i' },
   success: { bg: '#f0fdf4', border: '#bbf7d0', color: '#166534', icon: '\u2713' },
   warning: { bg: '#fffbeb', border: '#fde68a', color: '#92400e', icon: '!' },
   error: { bg: '#fef2f2', border: '#fecaca', color: '#991b1b', icon: '\u2717' },
+  danger: { bg: '#fef2f2', border: '#fecaca', color: '#991b1b', icon: '\u2717' },
 }
 
 interface AlertProps {

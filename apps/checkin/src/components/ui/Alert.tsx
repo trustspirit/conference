@@ -1,6 +1,6 @@
 import React from 'react'
 
-type AlertVariant = 'success' | 'error' | 'warning' | 'info'
+type AlertVariant = 'success' | 'error' | 'warning' | 'info' | 'danger'
 
 interface AlertProps {
   children: React.ReactNode
@@ -12,6 +12,7 @@ interface AlertProps {
 const variantClasses: Record<AlertVariant, string> = {
   success: 'bg-[#EFFFF6] border-[#31A24C] text-[#31A24C]',
   error: 'bg-[#FFEBEE] border-[#FA383E] text-[#FA383E]',
+  danger: 'bg-[#FFEBEE] border-[#FA383E] text-[#FA383E]',
   warning: 'bg-[#FFF8E1] border-[#F9A825] text-[#F9A825]',
   info: 'bg-[#E7F3FF] border-[#1877F2] text-[#1877F2]'
 }

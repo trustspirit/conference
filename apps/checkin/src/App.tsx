@@ -17,6 +17,7 @@ import BusDetailPage from './pages/BusDetailPage'
 import SchedulePage from './pages/SchedulePage'
 import AdminManagePage from './pages/AdminManagePage'
 import AddParticipantModal from './components/AddParticipantModal'
+import ToastBridge from './components/ToastBridge'
 import {
   isSyncingAtom,
   lastSyncTimeAtom,
@@ -310,6 +311,7 @@ function App(): React.ReactElement {
         onSuccess={sync}
       />
 
+      <ToastBridge />
     </div>
   )
 }
