@@ -26,7 +26,7 @@
     "react-i18next": "^16.5.4",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0",
-    "trust-ui-react": "^0.1.0"
+    "trust-ui-react": "^0.2.0"
   },
   "devDependencies": {
     "@conference/config": "workspace:*",
