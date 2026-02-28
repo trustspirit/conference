@@ -103,8 +103,9 @@ export const approveStakeWardChange = onCall(async (request) => {
 
   // Verify caller has permission
   const callerDoc = await firestore.doc(`${USERS}/${request.auth.uid}`).get();
-  const callerRole = callerDoc.data()?.role;
-  if (!["admin", "stake_president"].includes(callerRole)) {
+  const callerData = callerDoc.data();
+  const callerRole = callerData?.role;
+  if (!["admin", "stake_president", "bishop"].includes(callerRole)) {
     throw new HttpsError("permission-denied", "Insufficient permissions");
   }
 
@@ -118,12 +119,24 @@ export const approveStakeWardChange = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "Request already processed");
   }
 
+  // Non-admin callers must match the requested stake/ward
+  if (callerRole !== "admin") {
+    const callerStake = callerData?.stake || "";
+    const callerWard = callerData?.ward || "";
+    if (callerRole === "stake_president" && callerStake !== requestData.requestedStake) {
+      throw new HttpsError("permission-denied", "Can only approve requests for your stake");
+    }
+    if (callerRole === "bishop" && (callerStake !== requestData.requestedStake || callerWard !== requestData.requestedWard)) {
+      throw new HttpsError("permission-denied", "Can only approve requests for your ward");
+    }
+  }
+
   if (!approved) {
     await requestDoc.ref.update({
       status: "rejected",
       approvedAt: admin.firestore.FieldValue.serverTimestamp(),
       approvedBy: request.auth.uid,
-      approvedByName: callerDoc.data()?.name || "",
+      approvedByName: callerData?.name || "",
     });
     return { success: true };
   }

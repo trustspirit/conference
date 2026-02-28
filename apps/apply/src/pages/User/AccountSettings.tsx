@@ -296,9 +296,10 @@ function ApprovalsTab() {
   const approveChange = useApproveStakeWardChange()
 
   const filteredRequests = useMemo(() => {
-    if (!requests) return []
-    return requests.filter((req) => canApproveStakeWardChange(appUser?.role, req.userRole))
-  }, [requests, appUser?.role])
+    if (!requests || !appUser) return []
+    const approver = { role: appUser.role, stake: appUser.stake, ward: appUser.ward }
+    return requests.filter((req) => canApproveStakeWardChange(approver, { requestedStake: req.requestedStake, requestedWard: req.requestedWard }))
+  }, [requests, appUser])
 
   const handleApprove = (requestId: string) => {
     approveChange.mutate({ requestId, approved: true }, {

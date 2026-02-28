@@ -36,11 +36,14 @@ export function canManageRoles(role: UserRole | null | undefined): boolean {
 }
 
 export function canApproveStakeWardChange(
-  approverRole: UserRole | null | undefined,
-  requestRole: UserRole,
+  approver: { role: UserRole | null | undefined; stake: string; ward: string },
+  request: { requestedStake: string; requestedWard: string },
 ): boolean {
-  if (approverRole === 'admin') return true
-  if (approverRole === 'stake_president' && requestRole === 'bishop') return true
+  if (approver.role === 'admin') return true
+  // Stake president can approve requests targeting their stake
+  if (approver.role === 'stake_president' && approver.stake === request.requestedStake) return true
+  // Bishop can approve requests targeting their stake + ward
+  if (approver.role === 'bishop' && approver.stake === request.requestedStake && approver.ward === request.requestedWard) return true
   return false
 }
 

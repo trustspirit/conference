@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast, TextField, Button, Badge, Dialog } from 'trust-ui-react'
+import { useToast, TextField, Button, Badge, Dialog, Tooltip } from 'trust-ui-react'
 import { useConference } from '../../contexts/ConferenceContext'
 import { useUpdateConference, useDeleteConference, useDeactivatedConferences, useRestoreConference, usePermanentlyDeleteConference } from '../../hooks/queries/useConferences'
 import { usePositions, useCreatePosition, useUpdatePosition, useDeletePosition } from '../../hooks/queries/usePositions'
@@ -328,9 +328,23 @@ export default function AdminSettings() {
                         {position.name}
                       </span>
                       {position.eligibilityRequirements.length > 0 && (
-                        <Badge variant="secondary" size="sm">
-                          {t('admin.settings.position.requirementCount', '요건 {{count}}개', { count: position.eligibilityRequirements.length })}
-                        </Badge>
+                        <Tooltip
+                          content={
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              {position.eligibilityRequirements.map((req, i) => (
+                                <span key={i} style={{ fontSize: '0.75rem' }}>{i + 1}. {req}</span>
+                              ))}
+                            </div>
+                          }
+                          placement="top"
+                          maxWidth={320}
+                        >
+                          <span style={{ cursor: 'default' }}>
+                            <Badge variant="secondary" size="sm">
+                              {t('admin.settings.position.requirementCount', '요건 {{count}}개', { count: position.eligibilityRequirements.length })}
+                            </Badge>
+                          </span>
+                        </Tooltip>
                       )}
                     </div>
                     <button
