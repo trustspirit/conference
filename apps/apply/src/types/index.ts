@@ -12,11 +12,21 @@ export interface Conference {
   description: string
   deadline: Date | null
   isClosed: boolean
-  eligibilityRequirements: string[]
   isActive: boolean
   createdAt: Date
   updatedAt: Date
   createdBy: string
+}
+
+// Position (포지션/직분)
+export interface Position {
+  id: string
+  conferenceId: string
+  name: string
+  description: string
+  eligibilityRequirements: string[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 // User (Firebase Auth + Firestore)
@@ -38,6 +48,8 @@ export interface AppUser {
 export interface Application {
   id: string
   conferenceId?: string
+  positionId?: string
+  positionName?: string
   userId: string
   name: string
   age: number
@@ -59,6 +71,8 @@ export interface Application {
 export interface LeaderRecommendation {
   id: string
   conferenceId?: string
+  positionId?: string
+  positionName?: string
   leaderId: string
   name: string
   age: number
@@ -148,6 +162,7 @@ export interface ReviewItem {
   stake: string
   ward: string
   moreInfo: string
+  positionName?: string
   comments?: RecommendationComment[]
   createdAt: Date
   updatedAt: Date

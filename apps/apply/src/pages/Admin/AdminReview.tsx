@@ -62,6 +62,7 @@ export default function AdminReview() {
         stake: app.stake,
         ward: app.ward,
         moreInfo: app.moreInfo,
+        positionName: app.positionName,
         createdAt: app.createdAt,
         updatedAt: app.updatedAt,
         hasRecommendation: !!app.linkedRecommendationId,
@@ -84,6 +85,7 @@ export default function AdminReview() {
         stake: rec.stake,
         ward: rec.ward,
         moreInfo: rec.moreInfo,
+        positionName: rec.positionName,
         comments: rec.comments,
         createdAt: rec.createdAt,
         updatedAt: rec.updatedAt,
@@ -234,6 +236,9 @@ export default function AdminReview() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                 <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '50%' }}>{item.name}</span>
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {item.positionName && (
+                    <Badge variant="secondary" size="sm">{item.positionName}</Badge>
+                  )}
                   <Badge variant={item.type === 'application' ? 'info' : 'success'} size="sm">
                     {item.type === 'application' ? t('admin.review.tags.applied', '신청') : t('admin.review.tags.recommended', '추천')}
                   </Badge>
@@ -277,6 +282,7 @@ export default function AdminReview() {
                   { label: t('common.email', 'Email'), value: selected.email },
                   { label: t('common.phone', 'Phone'), value: selected.phone },
                   { label: t('admin.review.age', 'Age'), value: String(selected.age) },
+                  { label: t('position.label', '포지션'), value: selected.positionName || '-' },
                   { label: t('admin.review.gender', 'Gender'), value: t(`gender.${selected.gender}`, selected.gender) },
                   { label: t('common.stake', 'Stake'), value: selected.stake },
                   { label: t('common.ward', 'Ward'), value: selected.ward },

@@ -5,3 +5,4 @@ export const APPLY_RECOMMENDATION_COMMENTS_COLLECTION = 'apply_recommendation_co
 export const APPLY_MEMOS_COLLECTION = 'apply_memos'
 export const APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION = 'apply_stakeWardChangeRequests'
 export const APPLY_CONFERENCES_COLLECTION = 'apply_conferences'
+export const APPLY_POSITIONS_COLLECTION = 'apply_positions'

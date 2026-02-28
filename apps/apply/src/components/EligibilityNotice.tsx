@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next'
-import { useConference } from '../contexts/ConferenceContext'
 
-export default function EligibilityNotice() {
+interface EligibilityNoticeProps {
+  requirements?: string[]
+}
+
+export default function EligibilityNotice({ requirements = [] }: EligibilityNoticeProps) {
   const { t } = useTranslation()
-  const { currentConference } = useConference()
 
-  const requirements = currentConference?.eligibilityRequirements || []
   if (requirements.length === 0) return null
 
   return (

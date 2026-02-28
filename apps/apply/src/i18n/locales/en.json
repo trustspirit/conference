@@ -229,7 +229,9 @@
         "today": "Today"
       },
       "charts": {
-        "trendTitle": "7-Day Trend"
+        "trendTitle": "7-Day Trend",
+        "positionDistribution": "Submissions by Position",
+        "submissions": "Submissions"
       }
     },
     "settings": {
@@ -259,6 +261,26 @@
         "description": "Displayed on the application and recommendation forms.",
         "empty": "No eligibility requirements registered.",
         "placeholder": "Enter a new eligibility requirement",
+        "noConference": "Please create a conference first."
+      },
+      "position": {
+        "title": "Position Management",
+        "forConference": "positions",
+        "description": "Set eligibility requirements per position. Applicants select a position when submitting.",
+        "empty": "No positions registered.",
+        "created": "Position created successfully.",
+        "deleted": "Position deleted successfully.",
+        "editing": "Edit Position",
+        "name": "Position Name",
+        "desc": "Description",
+        "requirements": "Eligibility Requirements",
+        "requirementCount": "{{count}} requirement(s)",
+        "requirementPlaceholder": "Enter a new eligibility requirement",
+        "newName": "New Position Name",
+        "newNamePlaceholder": "e.g., Committee Member",
+        "newDesc": "Description (optional)",
+        "newDescPlaceholder": "e.g., Oversees conference operations",
+        "add": "Add Position",
         "noConference": "Please create a conference first."
       }
     },
@@ -326,6 +348,8 @@
       "charts": {
         "stakeWardDistribution": "Stake & Ward Distribution",
         "genderBreakdown": "Gender Breakdown",
+        "positionDistribution": "Recommendations by Position",
+        "recommendations": "Recommendations",
         "noData": "No data yet to show location distribution."
       }
     },
@@ -448,6 +472,16 @@
     "male": "Male",
     "female": "Female"
   },
+  "position": {
+    "label": "Position",
+    "select": "Select Position",
+    "selectPlaceholder": "Select a position",
+    "unspecified": "Unspecified"
+  },
+  "eligibility": {
+    "title": "Eligibility Requirements",
+    "description": "Only applicants who meet the following requirements may apply."
+  },
   "settings": {
     "title": "Account Settings"
   },
@@ -502,6 +536,7 @@
       "additionalInfo": "Additional Information",
       "additionalInfoPlaceholder": "Share any relevant experience or context."
     },
+    "deadline": "Application Deadline",
     "actions": {
       "submit": "Submit Application",
       "saveDraft": "Save Draft",

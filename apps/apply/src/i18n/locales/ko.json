@@ -229,7 +229,9 @@
         "today": "오늘"
       },
       "charts": {
-        "trendTitle": "7일 추세"
+        "trendTitle": "7일 추세",
+        "positionDistribution": "포지션별 신청 현황",
+        "submissions": "제출 수"
       }
     },
     "settings": {
@@ -259,6 +261,26 @@
         "description": "신청서/추천서 작성 화면에 표시됩니다.",
         "empty": "등록된 자격 요건이 없습니다.",
         "placeholder": "새 자격 요건을 입력하세요",
+        "noConference": "대회를 먼저 생성해주세요."
+      },
+      "position": {
+        "title": "포지션 관리",
+        "forConference": "대회의 포지션",
+        "description": "포지션별 자격 요건을 설정합니다. 신청서/추천서 작성 시 포지션을 선택합니다.",
+        "empty": "등록된 포지션이 없습니다.",
+        "created": "포지션이 생성되었습니다.",
+        "deleted": "포지션이 삭제되었습니다.",
+        "editing": "포지션 편집",
+        "name": "포지션명",
+        "desc": "설명",
+        "requirements": "자격 요건",
+        "requirementCount": "요건 {{count}}개",
+        "requirementPlaceholder": "새 자격 요건을 입력하세요",
+        "newName": "새 포지션명",
+        "newNamePlaceholder": "예: 운영 위원",
+        "newDesc": "설명 (선택)",
+        "newDescPlaceholder": "예: 대회 운영을 총괄하는 역할",
+        "add": "포지션 추가",
         "noConference": "대회를 먼저 생성해주세요."
       }
     },
@@ -326,6 +348,8 @@
       "charts": {
         "stakeWardDistribution": "스테이크 및 와드 분포",
         "genderBreakdown": "성별 구성",
+        "positionDistribution": "포지션별 추천 현황",
+        "recommendations": "추천 수",
         "noData": "위치 분포를 표시할 데이터가 아직 없습니다."
       }
     },
@@ -448,6 +472,16 @@
     "male": "형제",
     "female": "자매"
   },
+  "position": {
+    "label": "포지션",
+    "select": "포지션 선택",
+    "selectPlaceholder": "포지션을 선택하세요",
+    "unspecified": "미지정"
+  },
+  "eligibility": {
+    "title": "자격 요건",
+    "description": "아래 요건을 충족하는 분만 신청/추천할 수 있습니다."
+  },
   "settings": {
     "title": "계정 설정"
   },
@@ -502,6 +536,7 @@
       "additionalInfo": "추가 정보",
       "additionalInfoPlaceholder": "관련 경험이나 맥락을 공유해주세요."
     },
+    "deadline": "신청 마감일",
     "actions": {
       "submit": "신청서 제출",
       "saveDraft": "초안 저장",

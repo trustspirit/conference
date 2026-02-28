@@ -32,4 +32,9 @@ export const queryKeys = {
     all: () => ['conferences'] as const,
     detail: (id: string) => ['conferences', id] as const,
   },
+  positions: {
+    all: () => ['positions'] as const,
+    byConference: (conferenceId: string) => ['positions', 'conference', conferenceId] as const,
+    detail: (id: string) => ['positions', id] as const,
+  },
 } as const

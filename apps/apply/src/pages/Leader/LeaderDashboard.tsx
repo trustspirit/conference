@@ -11,6 +11,7 @@ import { ROUTES } from '../../utils/constants'
 
 const PIE_COLORS = ['#3b82f6', '#ec4899']
 const BAR_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']
+const POSITION_COLORS = ['#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6']
 
 function isToday(date: Date): boolean {
   const now = new Date()
@@ -59,6 +60,18 @@ export default function LeaderDashboard() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 10)
   }, [applications])
+
+  const positionData = useMemo(() => {
+    const recs = recommendations || []
+    const map: Record<string, number> = {}
+    recs.forEach((r) => {
+      const key = r.positionName || t('position.unspecified', '미지정')
+      map[key] = (map[key] || 0) + 1
+    })
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+  }, [recommendations, t])
 
   if (loadingApps || loadingRecs) return <PageLoader />
 
@@ -120,6 +133,28 @@ export default function LeaderDashboard() {
                 </Pie>
                 <Tooltip />
               </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+          )}
+        </div>
+
+        {/* Position Distribution */}
+        <div className="rounded-xl bg-white border border-gray-200 p-5 lg:col-span-2">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.positionDistribution', '포지션별 추천 현황')}</h3>
+          {positionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={positionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="value" name={t('leader.dashboard.charts.recommendations', '추천 수')} radius={[4, 4, 0, 0]}>
+                  {positionData.map((_, i) => (
+                    <Cell key={i} fill={POSITION_COLORS[i % POSITION_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>

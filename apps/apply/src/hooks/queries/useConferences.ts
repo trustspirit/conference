@@ -52,7 +52,6 @@ export function useCreateConference() {
         name: data.name,
         description: data.description,
         deadline: data.deadline ? Timestamp.fromDate(new Date(data.deadline)) : null,
-        eligibilityRequirements: [],
         isActive: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

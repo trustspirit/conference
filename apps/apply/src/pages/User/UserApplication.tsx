@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMyApplication, useCreateApplication, useUpdateApplication } from '../../hooks/queries/useApplications'
+import { usePositions } from '../../hooks/queries/usePositions'
 import { useToast, TextField, Select, Switch, Button, Badge } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useConference } from '../../contexts/ConferenceContext'
 import { StakeWardSelector } from '../../components/form'
 import Spinner from '../../components/Spinner'
 import Alert from '../../components/Alert'
@@ -25,9 +27,11 @@ export default function UserApplication() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
   const { data: existingApp, isLoading } = useMyApplication()
   const createApp = useCreateApplication()
   const updateApp = useUpdateApplication()
+  const { data: positions = [] } = usePositions(currentConference?.id)
 
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
@@ -38,6 +42,7 @@ export default function UserApplication() {
   const [moreInfo, setMoreInfo] = useState('')
   const [servedMission, setServedMission] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [positionId, setPositionId] = useState('')
 
   const hasApp = !!existingApp
   const isLocked = existingApp?.status === 'approved' || existingApp?.status === 'rejected'
@@ -54,8 +59,19 @@ export default function UserApplication() {
       setGender(existingApp.gender)
       setMoreInfo(existingApp.moreInfo)
       setServedMission(existingApp.servedMission || false)
+      setPositionId(existingApp.positionId || '')
     }
   }, [existingApp])
+
+  const selectedPosition = useMemo(
+    () => positions.find((p) => p.id === positionId) ?? null,
+    [positions, positionId],
+  )
+
+  const positionOptions = useMemo(
+    () => positions.map((p) => ({ value: p.id, label: p.name })),
+    [positions],
+  )
 
   if (isLoading) {
     return (
@@ -83,6 +99,8 @@ export default function UserApplication() {
     gender,
     moreInfo,
     servedMission,
+    positionId: positionId || undefined,
+    positionName: selectedPosition?.name || undefined,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,7 +147,24 @@ export default function UserApplication() {
       <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('application.title', '신청서')}</h1>
       <p className="text-sm text-gray-500 mb-6">{getSubtitle()}</p>
 
-      <EligibilityNotice />
+      {/* Conference Deadline Notice */}
+      {currentConference?.deadline && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.5rem',
+            backgroundColor: currentConference.deadline < new Date() ? '#fef2f2' : '#f0fdf4',
+            border: `1px solid ${currentConference.deadline < new Date() ? '#fecaca' : '#bbf7d0'}`,
+          }}
+        >
+          <p style={{ fontSize: '0.8125rem', color: currentConference.deadline < new Date() ? '#dc2626' : '#16a34a', fontWeight: 500 }}>
+            {t('application.deadline', '신청 마감일')}: {currentConference.deadline.toLocaleDateString()}
+          </p>
+        </div>
+      )}
+
+      <EligibilityNotice requirements={selectedPosition?.eligibilityRequirements} />
 
       {/* Recommendation Alert */}
       {hasRecommendation && (
@@ -169,6 +204,7 @@ export default function UserApplication() {
               { label: t('application.overview.email', 'Email'), value: existingApp!.email },
               { label: t('application.overview.phone', 'Phone'), value: existingApp!.phone },
               { label: t('application.overview.age', 'Age'), value: String(existingApp!.age) },
+              { label: t('position.label', '포지션'), value: existingApp!.positionName || '-' },
               { label: t('application.overview.stake', 'Stake'), value: existingApp!.stake },
               { label: t('application.overview.ward', 'Ward'), value: existingApp!.ward },
               { label: t('application.overview.servedMission', 'Mission'), value: existingApp!.servedMission ? t('common.yes') : t('common.no') },
@@ -208,6 +244,28 @@ export default function UserApplication() {
       {/* Edit Form */}
       {showForm && (editing || !hasApp) && (
         <form onSubmit={handleSubmit} style={{ borderRadius: '0.75rem', border: '1px solid #e5e7eb', backgroundColor: '#fff', padding: '1.5rem' }}>
+          {/* Position Selector */}
+          {positions.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+                {t('position.select', '포지션 선택')} <span style={{ color: '#dc2626' }}>*</span>
+              </p>
+              <Select
+                options={positionOptions}
+                value={positionId}
+                onChange={(value) => setPositionId(value as string)}
+                disabled={isLocked}
+                placeholder={t('position.selectPlaceholder', '포지션을 선택하세요')}
+                fullWidth
+              />
+              {selectedPosition?.description && (
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                  {selectedPosition.description}
+                </p>
+              )}
+            </div>
+          )}
+
           <div style={{ marginBottom: '1rem' }}>
             <TextField
               label={t('application.form.name', 'Name')}
@@ -301,7 +359,7 @@ export default function UserApplication() {
               <Button
                 type="submit"
                 variant="primary"
-                disabled={createApp.isPending || updateApp.isPending}
+                disabled={createApp.isPending || updateApp.isPending || (positions.length > 0 && !positionId)}
               >
                 {createApp.isPending || updateApp.isPending ? t('common.saving') : t('application.actions.submit', '신청서 제출')}
               </Button>
@@ -339,6 +397,7 @@ export default function UserApplication() {
               { label: t('application.overview.email', 'Email'), value: email || '-' },
               { label: t('application.overview.phone', 'Phone'), value: phone || '-' },
               { label: t('application.overview.age', 'Age'), value: age || '-' },
+              { label: t('position.label', '포지션'), value: selectedPosition?.name || '-' },
               { label: t('application.overview.stake', 'Stake'), value: appUser?.stake || '-' },
               { label: t('application.overview.ward', 'Ward'), value: appUser?.ward || '-' },
               { label: t('application.form.gender', 'Gender'), value: t(`gender.${gender}`) },

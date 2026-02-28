@@ -86,6 +86,23 @@ export default function AdminDashboard() {
       .slice(0, 10)
   }, [applications])
 
+  const positionData = useMemo(() => {
+    const apps = applications || []
+    const recs = recommendations || []
+    const map: Record<string, number> = {}
+    apps.forEach((a) => {
+      const key = a.positionName || t('position.unspecified', '미지정')
+      map[key] = (map[key] || 0) + 1
+    })
+    recs.forEach((r) => {
+      const key = r.positionName || t('position.unspecified', '미지정')
+      map[key] = (map[key] || 0) + 1
+    })
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+  }, [applications, recommendations, t])
+
   if (loadingApps || loadingRecs) return <PageLoader />
 
   return (
@@ -155,6 +172,28 @@ export default function AdminDashboard() {
                 </Pie>
                 <Tooltip />
               </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+          )}
+        </div>
+
+        {/* Position Distribution */}
+        <div className="rounded-xl bg-white border border-gray-200 p-5 lg:col-span-2">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('admin.dashboard.charts.positionDistribution', '포지션별 신청 현황')}</h3>
+          {positionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={positionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="value" name={t('admin.dashboard.charts.submissions', '제출 수')} radius={[4, 4, 0, 0]}>
+                  {positionData.map((_, i) => (
+                    <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>

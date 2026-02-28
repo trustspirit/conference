@@ -7,9 +7,11 @@ import {
   useDeleteRecommendation,
   useUpdateRecommendationStatus,
 } from '../../hooks/queries/useRecommendations'
+import { usePositions } from '../../hooks/queries/usePositions'
 import { useRecommendationComments, useCreateComment, useDeleteComment } from '../../hooks/queries/useRecommendationComments'
 import { useToast, TextField, Select, Switch, Tabs, Badge, Button, Dialog } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useConference } from '../../contexts/ConferenceContext'
 import Spinner from '../../components/Spinner'
 import DetailsGrid from '../../components/DetailsGrid'
 import Alert from '../../components/Alert'
@@ -33,11 +35,13 @@ export default function LeaderRecommendations() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
   const { data: recommendations, isLoading } = useMyRecommendations()
   const createRec = useCreateRecommendation()
   const updateRec = useUpdateRecommendation()
   const deleteRec = useDeleteRecommendation()
   const updateStatus = useUpdateRecommendationStatus()
+  const { data: positions = [] } = usePositions(currentConference?.id)
 
   const [activeTab, setActiveTab] = useState<string>(RECOMMENDATION_TABS.ALL)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -55,6 +59,17 @@ export default function LeaderRecommendations() {
   const [formGender, setFormGender] = useState<Gender>('male')
   const [formMoreInfo, setFormMoreInfo] = useState('')
   const [formServedMission, setFormServedMission] = useState(false)
+  const [formPositionId, setFormPositionId] = useState('')
+
+  const selectedPosition = useMemo(
+    () => positions.find((p) => p.id === formPositionId) ?? null,
+    [positions, formPositionId],
+  )
+
+  const positionOptions = useMemo(
+    () => positions.map((p) => ({ value: p.id, label: p.name })),
+    [positions],
+  )
 
   const selected = selectedId ? recommendations?.find((r) => r.id === selectedId) || null : null
 
@@ -85,6 +100,7 @@ export default function LeaderRecommendations() {
     setFormGender('male')
     setFormMoreInfo('')
     setFormServedMission(false)
+    setFormPositionId('')
     setEditingId(null)
   }
 
@@ -105,6 +121,7 @@ export default function LeaderRecommendations() {
     setFormGender(rec.gender)
     setFormMoreInfo(rec.moreInfo)
     setFormServedMission(rec.servedMission || false)
+    setFormPositionId(rec.positionId || '')
     setEditingId(rec.id)
     setDrawerMode('form')
   }
@@ -131,6 +148,8 @@ export default function LeaderRecommendations() {
       gender: formGender,
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
+      positionId: formPositionId || undefined,
+      positionName: selectedPosition?.name || undefined,
     }
     try {
       if (editingId) {
@@ -156,6 +175,8 @@ export default function LeaderRecommendations() {
       gender: formGender,
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
+      positionId: formPositionId || undefined,
+      positionName: selectedPosition?.name || undefined,
     }
     try {
       if (editingId) {
@@ -281,10 +302,30 @@ export default function LeaderRecommendations() {
               </h2>
             </Drawer.Header>
             <Drawer.Content>
-              <EligibilityNotice />
+              <EligibilityNotice requirements={selectedPosition?.eligibilityRequirements} />
               {editingId && (
                 <div style={{ marginBottom: '0.75rem' }}>
                   <Alert variant="warning">{t('leader.recommendations.form.editingAlert')}</Alert>
+                </div>
+              )}
+              {/* Position Selector */}
+              {positions.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+                    {t('position.select', '포지션 선택')} <span style={{ color: '#dc2626' }}>*</span>
+                  </p>
+                  <Select
+                    options={positionOptions}
+                    value={formPositionId}
+                    onChange={(value) => setFormPositionId(value as string)}
+                    placeholder={t('position.selectPlaceholder', '포지션을 선택하세요')}
+                    fullWidth
+                  />
+                  {selectedPosition?.description && (
+                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                      {selectedPosition.description}
+                    </p>
+                  )}
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
@@ -364,7 +405,7 @@ export default function LeaderRecommendations() {
                 <Button
                   variant="primary"
                   onClick={handleSubmitRec}
-                  disabled={!formName || !formPhone || createRec.isPending || updateRec.isPending}
+                  disabled={!formName || !formPhone || (positions.length > 0 && !formPositionId) || createRec.isPending || updateRec.isPending}
                 >
                   {t('leader.recommendations.form.submitRecommendation', '추천서 제출')}
                 </Button>
@@ -402,6 +443,7 @@ export default function LeaderRecommendations() {
                   { label: t('common.email', 'Email'), value: selected.email || '-' },
                   { label: t('common.phone', 'Phone'), value: selected.phone },
                   { label: t('admin.review.age', 'Age'), value: String(selected.age) },
+                  { label: t('position.label', '포지션'), value: selected.positionName || '-' },
                   { label: t('admin.review.gender', 'Gender'), value: t(`gender.${selected.gender}`, selected.gender) },
                   { label: t('common.stake', 'Stake'), value: selected.stake },
                   { label: t('common.ward', 'Ward'), value: selected.ward },
