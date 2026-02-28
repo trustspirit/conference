@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useSetAtom } from 'jotai'
-import { addToastAtom } from '../../stores/toastStore'
+import { useToast, Button, TextField } from 'trust-ui-react'
 import { getAdmins, addAdmin, removeAdmin, type AdminEntry } from '../../services/admins'
-import { Button, Input, Spinner } from '../../components/ui'
+import Spinner from '../../components/ui/Spinner'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 
 function AdminManagePage(): React.ReactElement {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const [admins, setAdmins] = useState<AdminEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
@@ -35,9 +34,9 @@ function AdminManagePage(): React.ReactElement {
       await addAdmin(email)
       setEmail('')
       await load()
-      addToast({ message: t('adminManage.added'), type: 'success' })
+      toast({ message: t('adminManage.added'), variant: 'success' })
     } catch {
-      addToast({ message: t('adminManage.addFailed'), type: 'error' })
+      toast({ message: t('adminManage.addFailed'), variant: 'danger' })
     } finally {
       setAdding(false)
     }
@@ -47,7 +46,7 @@ function AdminManagePage(): React.ReactElement {
     if (!confirm(t('adminManage.removeConfirm', { email: adminEmail }))) return
     await removeAdmin(adminEmail)
     await load()
-    addToast({ message: t('adminManage.removed'), type: 'success' })
+    toast({ message: t('adminManage.removed'), variant: 'success' })
   }
 
   if (loading) return <Spinner />
@@ -61,14 +60,14 @@ function AdminManagePage(): React.ReactElement {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-900 mb-3">{t('adminManage.addTitle')}</h2>
           <form onSubmit={handleAdd} className="flex gap-3">
-            <Input
+            <TextField
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('adminManage.emailPlaceholder')}
               className="flex-1"
             />
-            <Button type="submit" disabled={adding || !email.trim()}>
+            <Button type="submit" disabled={adding || !email.trim()} loading={adding}>
               {adding ? t('common.loading') : t('adminManage.add')}
             </Button>
           </form>

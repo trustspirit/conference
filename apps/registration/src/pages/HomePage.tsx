@@ -6,7 +6,8 @@ import { authUserAtom, authLoadingAtom } from '../stores/authStore'
 import { onAuthChange, signInWithGoogle, signOut } from '../services/firebase'
 import { findCodeByEmail } from '../services/email'
 import { lookupByCode } from '../services/responses'
-import { Spinner, Button, Input } from '../components/ui'
+import { Button, TextField } from 'trust-ui-react'
+import Spinner from '../components/ui/Spinner'
 
 function HomePage(): React.ReactElement {
   const { t } = useTranslation()
@@ -65,7 +66,7 @@ function HomePage(): React.ReactElement {
     setEmailError(null)
     try {
       await findCodeByEmail(email)
-      // Always show success — don't reveal whether email is registered
+      // Always show success - don't reveal whether email is registered
       setEmailSent(true)
     } catch (err: unknown) {
       const errCode = (err as { code?: string })?.code
@@ -93,15 +94,16 @@ function HomePage(): React.ReactElement {
           <h1 className="text-xl font-bold text-gray-900 text-center mb-6">{t('home.title')}</h1>
 
           <form onSubmit={handleCodeSubmit} className="space-y-3">
-            <Input
+            <TextField
               value={code}
               onChange={(e) => { setCode(e.target.value.toUpperCase()); setCodeError(null) }}
               placeholder={t('home.codePlaceholder')}
               className="text-center font-mono tracking-widest text-lg"
               maxLength={8}
+              fullWidth
             />
             {codeError && <p className="text-xs text-red-500 text-center">{codeError}</p>}
-            <Button type="submit" size="lg" disabled={codeLoading || !code.trim()}>
+            <Button type="submit" fullWidth disabled={codeLoading || !code.trim()} loading={codeLoading}>
               {codeLoading ? t('common.loading') : t('home.openSurvey')}
             </Button>
           </form>
@@ -131,14 +133,15 @@ function HomePage(): React.ReactElement {
               ) : (
                 <form onSubmit={handleEmailSubmit} className="space-y-3">
                   <p className="text-xs text-gray-500">{t('home.findCodeDesc')}</p>
-                  <Input
+                  <TextField
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setEmailError(null) }}
                     placeholder={t('home.emailPlaceholder')}
+                    fullWidth
                   />
                   {emailError && <p className="text-xs text-red-500">{emailError}</p>}
-                  <Button type="submit" size="md" className="w-full" disabled={emailLoading || !email.trim()}>
+                  <Button type="submit" fullWidth disabled={emailLoading || !email.trim()} loading={emailLoading}>
                     {emailLoading ? t('common.loading') : t('home.findCodeSubmit')}
                   </Button>
                 </form>

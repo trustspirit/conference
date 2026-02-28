@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Textarea, Label } from './ui'
+import { Button, TextField, Dialog } from 'trust-ui-react'
 
 interface CreateSurveyModalProps {
   isOpen: boolean
@@ -31,27 +31,35 @@ function CreateSurveyModal({ isOpen, onClose, onCreate }: CreateSurveyModalProps
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{t('survey.create.title')}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>{t('survey.create.titleLabel')}</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
-          </div>
-          <div>
-            <Label>{t('survey.create.descriptionLabel')}</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-          </div>
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-            <Button type="submit" disabled={isCreating || !title.trim()}>
-              {isCreating ? t('survey.create.creating') : t('survey.create.create')}
-            </Button>
-          </div>
+    <Dialog open={isOpen} onClose={onClose} size="sm">
+      <Dialog.Title onClose={onClose}>{t('survey.create.title')}</Dialog.Title>
+      <Dialog.Content>
+        <form id="create-survey-form" onSubmit={handleSubmit} className="space-y-4">
+          <TextField
+            label={t('survey.create.titleLabel')}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            autoFocus
+            fullWidth
+          />
+          <TextField
+            label={t('survey.create.descriptionLabel')}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+          />
         </form>
-      </div>
-    </div>
+      </Dialog.Content>
+      <Dialog.Actions>
+        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+        <Button type="submit" form="create-survey-form" disabled={isCreating || !title.trim()} loading={isCreating}>
+          {isCreating ? t('survey.create.creating') : t('survey.create.create')}
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
   )
 }
 

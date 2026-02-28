@@ -17,7 +17,7 @@ import ReceiptGallery from '../components/ReceiptGallery'
 import { ApprovalModal, RejectionModal } from '../components/AdminRequestModals'
 import StatusProgress from '../components/StatusProgress'
 import ReviewChecklist from '../components/ReviewChecklist'
-import Modal from '../components/Modal'
+import { Dialog, Button } from 'trust-ui-react'
 import { REVIEW_CHECKLIST, APPROVAL_CHECKLIST } from '../constants/reviewChecklist'
 
 export default function RequestDetailPage() {
@@ -211,17 +211,16 @@ export default function RequestDetailPage() {
         {(request.status === 'rejected' || request.status === 'cancelled' || request.status === 'force_rejected') && user?.uid === request.requestedBy.uid && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
             <span className="text-sm text-blue-800">{t('approval.resubmitDescription').split('.')[0]}.</span>
-            <button onClick={() => navigate(`/request/resubmit/${request.id}`)}
-              className="ml-4 shrink-0 bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+            <Button variant="primary" onClick={() => navigate(`/request/resubmit/${request.id}`)}>
               {t('approval.resubmit')}
-            </button>
+            </Button>
           </div>
         )}
 
         {request.status === 'pending' && user?.uid === request.requestedBy.uid && (
           <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
             <span className="text-sm text-gray-600">{t('approval.cancelConfirm')}</span>
-            <button onClick={() => {
+            <Button variant="danger" onClick={() => {
               if (!confirm(t('approval.cancelConfirm'))) return
               cancelMutation.mutate(
                 { requestId: request.id, projectId: currentProject!.id },
@@ -229,9 +228,9 @@ export default function RequestDetailPage() {
               )
             }}
               disabled={cancelMutation.isPending}
-              className="ml-4 shrink-0 bg-red-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-600 disabled:bg-gray-400">
+              loading={cancelMutation.isPending}>
               {cancelMutation.isPending ? t('common.saving') : t('approval.cancelRequest')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -309,29 +308,30 @@ export default function RequestDetailPage() {
         {(canDoReview || canDoApprove || canDoReject) && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
             {canDoReview && (
-              <button
+              <Button
+                variant="primary"
                 onClick={handleReview}
                 disabled={reviewMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400"
+                loading={reviewMutation.isPending}
               >
                 {reviewMutation.isPending ? t('common.submitting') : t('approval.review')}
-              </button>
+              </Button>
             )}
             {canDoApprove && (
-              <button
+              <Button
+                variant="primary"
                 onClick={handleApproveOpen}
-                className="px-4 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700"
               >
                 {t('approval.approve')}
-              </button>
+              </Button>
             )}
             {canDoReject && (
-              <button
+              <Button
+                variant="danger"
                 onClick={handleRejectOpen}
-                className="px-4 py-2 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
               >
                 {t('approval.reject')}
-              </button>
+              </Button>
             )}
             {remainingCount > 0 && (
               <span className="ml-auto px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
@@ -381,19 +381,20 @@ export default function RequestDetailPage() {
       </div>
 
       {/* Review confirm modal */}
-      <Modal open={showReviewConfirm} onClose={() => setShowReviewConfirm(false)} title={t('checklist.confirmReview')}>
-        <p className="text-sm text-gray-600 mb-6">{t('checklist.confirmReview')}</p>
-        <div className="flex gap-3 justify-end">
-          <button onClick={() => setShowReviewConfirm(false)}
-            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
+      <Dialog open={showReviewConfirm} onClose={() => setShowReviewConfirm(false)} size="md">
+        <Dialog.Title onClose={() => setShowReviewConfirm(false)} showClose>{t('checklist.confirmReview')}</Dialog.Title>
+        <Dialog.Content>
+          <p className="text-sm text-gray-600">{t('checklist.confirmReview')}</p>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button variant="outline" onClick={() => setShowReviewConfirm(false)}>
             {t('common.cancel')}
-          </button>
-          <button onClick={handleReviewConfirm}
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
+          </Button>
+          <Button variant="primary" onClick={handleReviewConfirm}>
             {t('approval.review')}
-          </button>
-        </div>
-      </Modal>
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
 
       <ApprovalModal
         key={showApprovalModal ? 'open' : 'closed'}

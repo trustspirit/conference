@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { useToast } from 'trust-ui-react'
 import {
   searchParticipants,
   checkInParticipant,
   checkOutParticipant,
   updateParticipant
 } from '../services/firebase'
-import { addToastAtom } from '../stores/toastStore'
 import type { Participant } from '../types'
 import { CheckInStatus } from '../types'
 import {
@@ -33,7 +33,7 @@ function HomePage(): React.ReactElement {
   const navigate = useNavigate()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const groups = useAtomValue(groupsAtom)
   const rooms = useAtomValue(roomsAtom)
 
@@ -121,20 +121,20 @@ function HomePage(): React.ReactElement {
         const activeCheckIn = participant.checkIns.find((ci) => !ci.checkOutTime)
         if (activeCheckIn) {
           await checkOutParticipant(participant.id, activeCheckIn.id)
-          addToast({ type: 'success', message: t('toast.checkOutSuccess') })
+          toast({ variant: 'success', message: t('toast.checkOutSuccess') })
         }
       } else {
         // Check in
         await checkInParticipant(participant.id)
-        addToast({ type: 'success', message: t('toast.checkInSuccess') })
+        toast({ variant: 'success', message: t('toast.checkInSuccess') })
       }
 
       // Refresh search results
       await performSearch(searchTerm)
     } catch (error) {
       console.error('Check-in/out error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.actionFailed'))
       })
     } finally {
@@ -150,8 +150,8 @@ function HomePage(): React.ReactElement {
     try {
       const newPaidStatus = !participant.isPaid
       await updateParticipant(participant.id, { isPaid: newPaidStatus })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: newPaidStatus ? t('toast.markedAsPaid') : t('toast.markedAsUnpaid')
       })
 
@@ -159,8 +159,8 @@ function HomePage(): React.ReactElement {
       await performSearch(searchTerm)
     } catch (error) {
       console.error('Payment toggle error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.actionFailed'))
       })
     } finally {

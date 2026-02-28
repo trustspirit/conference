@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../hooks/queries/queryKeys'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../../lib/utils'
+import { TextField, Button } from 'trust-ui-react'
 import BankSelect from '../BankSelect'
 import { useAuth } from '../../contexts/AuthContext'
 import { Committee } from '../../types'
@@ -69,36 +70,29 @@ export default function PersonalSettings() {
       <div className="mb-6 p-4 border border-gray-200 rounded-lg">
         <label className="block text-sm font-medium text-gray-700 mb-2">{i18n.language.startsWith('ko') ? '언어' : 'Language'}</label>
         <div className="flex gap-2">
-          <button onClick={() => i18n.changeLanguage('ko')} className={`px-4 py-2 rounded text-sm font-medium ${i18n.language.startsWith('ko') ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>한국어</button>
-          <button onClick={() => i18n.changeLanguage('en')} className={`px-4 py-2 rounded text-sm font-medium ${i18n.language.startsWith('en') ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>English</button>
+          <Button variant={i18n.language.startsWith('ko') ? 'primary' : 'secondary'} size="sm" onClick={() => i18n.changeLanguage('ko')}>한국어</Button>
+          <Button variant={i18n.language.startsWith('en') ? 'primary' : 'secondary'} size="sm" onClick={() => i18n.changeLanguage('en')}>English</Button>
         </div>
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.googleName')}</label>
-        <input type="text" readOnly value={appUser?.name || ''} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 text-gray-500" />
+        <TextField label={t('field.googleName')} value={appUser?.name || ''} disabled fullWidth />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.email')}</label>
-        <input type="text" readOnly value={appUser?.email || ''} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 text-gray-500" />
+        <TextField label={t('field.email')} value={appUser?.email || ''} disabled fullWidth />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.displayName')} <span className="text-red-500">*</span></label>
-        <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-        <p className="text-xs text-gray-400 mt-1">{t('settings.displayNameHint')}</p>
+        <TextField label={t('field.displayName')} required value={displayName} onChange={(e) => setDisplayName(e.target.value)} helperText={t('settings.displayNameHint')} fullWidth />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.phone')}</label>
-        <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+        <TextField label={t('field.phone')} type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" fullWidth />
       </div>
       <div className="mb-4">
         <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} />
       </div>
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.bankAccount')}</label>
-        <input type="text" value={bankAccount}
+        <TextField label={t('field.bankAccount')} value={bankAccount}
           onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-          placeholder={t('field.bankAccount')}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          placeholder={t('field.bankAccount')} fullWidth />
       </div>
       <div className="mb-4 p-4 border border-gray-200 rounded-lg">
         <label className="block text-sm font-medium text-gray-700 mb-2">{t('field.bankBook')} <span className="text-red-500">*</span></label>
@@ -119,9 +113,9 @@ export default function PersonalSettings() {
           }} className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
           {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
           {bankBookFile && (
-            <button onClick={handleUploadBankBook} disabled={uploadingBankBook} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 disabled:bg-gray-400 whitespace-nowrap">
+            <Button variant="primary" size="sm" onClick={handleUploadBankBook} disabled={uploadingBankBook} loading={uploadingBankBook}>
               {uploadingBankBook ? t('settings.bankBookUploading') : t('settings.bankBookUpload')}
-            </button>
+            </Button>
           )}
         </div>
         <p className="text-xs text-gray-400 mt-2">{hasBankBook ? t('settings.bankBookReplaceHint') : t('settings.bankBookRequiredHint')}</p>
@@ -146,9 +140,9 @@ export default function PersonalSettings() {
         <p className="text-xs text-gray-400 mt-1">{t('settings.signatureHint')}</p>
       </div>
       <div className="flex items-center gap-3">
-        <button onClick={handleSave} disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400">
+        <Button variant="primary" onClick={handleSave} disabled={saving} loading={saving}>
           {saving ? t('common.saving') : t('common.save')}
-        </button>
+        </Button>
         {saved && <span className="text-sm text-green-600">{t('common.saved')}</span>}
       </div>
     </>

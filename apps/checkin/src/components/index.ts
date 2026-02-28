@@ -1,8 +1,6 @@
-export { default as Tooltip } from './Tooltip'
-export { default as TabBar } from './TabBar'
 export { default as ViewModeToggle } from './ViewModeToggle'
-export { default as StatusDot, getCapacityStatus, getRoomStatus } from './StatusDot'
 export { default as OccupancyBar, getOccupancyColorClasses } from './OccupancyBar'
+export { default as StatusDot, getCapacityStatus, getRoomStatus } from './StatusDot'
 export {
   default as CheckInStatusBadge,
   getCheckInStatusFromParticipant

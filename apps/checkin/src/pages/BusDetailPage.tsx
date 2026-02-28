@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   getBusRouteById,
   updateBusRoute,
@@ -25,7 +25,7 @@ function BusDetailPage(): React.ReactElement {
   const navigate = useNavigate()
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const [bus, setBus] = useState<BusRoute | null>(null)
   const [allBuses, setAllBuses] = useState<BusRoute[]>([])
@@ -80,7 +80,7 @@ function BusDetailPage(): React.ReactElement {
 
   const handleSaveEdit = async () => {
     if (!bus || !editForm.name.trim() || !editForm.region.trim()) {
-      addToast({ type: 'error', message: t('bus.nameRegionRequired') })
+      toast({ variant: 'danger', message: t('bus.nameRegionRequired') })
       return
     }
 
@@ -96,12 +96,12 @@ function BusDetailPage(): React.ReactElement {
         notes: editForm.notes.trim() || undefined
       })
 
-      addToast({ type: 'success', message: t('bus.busUpdated') })
+      toast({ variant: 'success', message: t('bus.busUpdated') })
       setIsEditing(false)
       loadData()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.updateFailed') })
+      toast({ variant: 'danger', message: t('toast.updateFailed') })
     } finally {
       setIsSaving(false)
     }
@@ -112,11 +112,11 @@ function BusDetailPage(): React.ReactElement {
 
     try {
       await removeParticipantFromBus(participant.id)
-      addToast({ type: 'success', message: t('bus.participantRemoved') })
+      toast({ variant: 'success', message: t('bus.participantRemoved') })
       loadData()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.removeParticipantFailed') })
+      toast({ variant: 'danger', message: t('toast.removeParticipantFailed') })
     }
   }
 
@@ -142,8 +142,8 @@ function BusDetailPage(): React.ReactElement {
 
     try {
       await moveParticipantsToBus(selectedParticipants, targetBusId, targetBus.name)
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: t('bus.movedToBus', { name: targetBus.name, count: selectedParticipants.length })
       })
       setSelectedParticipants([])
@@ -151,7 +151,7 @@ function BusDetailPage(): React.ReactElement {
       loadData()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.moveParticipantFailed') })
+      toast({ variant: 'danger', message: t('toast.moveParticipantFailed') })
     }
   }
 
@@ -163,17 +163,17 @@ function BusDetailPage(): React.ReactElement {
     try {
       if (isCancel) {
         await cancelBusArrival(id)
-        addToast({ type: 'success', message: t('bus.arrivalCancelled') })
+        toast({ variant: 'success', message: t('bus.arrivalCancelled') })
       } else {
         await markBusAsArrived(id)
-        addToast({ type: 'success', message: t('bus.busArrived') })
+        toast({ variant: 'success', message: t('bus.busArrived') })
       }
 
       loadData()
       sync()
     } catch (error) {
       console.error('Failed to toggle arrival:', error)
-      addToast({ type: 'error', message: t('toast.updateFailed') })
+      toast({ variant: 'danger', message: t('toast.updateFailed') })
     } finally {
       setShowArrivalConfirm(false)
     }

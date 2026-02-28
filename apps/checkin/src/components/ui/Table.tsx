@@ -1,19 +1,7 @@
+// Re-export trust-ui-react Table as the primary Table component.
+// Legacy compound Table components are kept for backwards compatibility.
 import React from 'react'
-
-interface TableProps {
-  children: React.ReactNode
-  className?: string
-}
-
-function Table({ children, className = '' }: TableProps): React.ReactElement {
-  return (
-    <div className="bg-white rounded-lg border border-[#DADDE1] shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className={`w-full ${className}`}>{children}</table>
-      </div>
-    </div>
-  )
-}
+export { Table as default } from 'trust-ui-react'
 
 interface TableHeadProps {
   children: React.ReactNode
@@ -97,5 +85,3 @@ export function TableCell({
     </td>
   )
 }
-
-export default Table

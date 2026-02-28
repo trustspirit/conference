@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -13,7 +14,6 @@ import {
 } from '../services/firebase'
 import { participantsAtom, groupsAtom, roomsAtom, syncAtom } from '../stores/dataStore'
 import type { Group, Room, CheckInRecord } from '../types'
-import { addToastAtom } from '../stores/toastStore'
 import { DetailPageSkeleton, ParticipantQRCode } from '../components'
 import { ConfirmDialog, PhoneInput, LeaderBadge } from '../components/ui'
 import { formatPhoneNumber } from '../utils/phoneFormat'
@@ -41,7 +41,7 @@ function ParticipantDetailPage(): React.ReactElement {
   const groups = useAtomValue(groupsAtom)
   const rooms = useAtomValue(roomsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isCheckingIn, setIsCheckingIn] = useState(false)
@@ -124,8 +124,8 @@ function ParticipantDetailPage(): React.ReactElement {
     try {
       const newStatus = !participant.isPaid
       await updateParticipant(participant.id, { isPaid: newStatus })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: t('toast.paymentUpdated', {
           status: newStatus ? t('participant.paid') : t('participant.unpaid')
         })
@@ -133,7 +133,7 @@ function ParticipantDetailPage(): React.ReactElement {
       await sync()
     } catch (error) {
       console.error('Payment update error:', error)
-      addToast({ type: 'error', message: t('toast.paymentUpdateFailed') })
+      toast({ variant: 'danger', message: t('toast.paymentUpdateFailed') })
     } finally {
       setIsUpdatingPayment(false)
       setShowPaymentConfirm(false)
@@ -164,12 +164,12 @@ function ParticipantDetailPage(): React.ReactElement {
     setIsSavingMemo(true)
     try {
       await updateParticipant(participant.id, { memo: newMemo })
-      addToast({ type: 'success', message: t('participant.memoUpdated') })
+      toast({ variant: 'success', message: t('participant.memoUpdated') })
       await sync()
       setIsEditingMemo(false)
     } catch (error) {
       console.error('Memo update error:', error)
-      addToast({ type: 'error', message: t('toast.saveFailed') })
+      toast({ variant: 'danger', message: t('toast.saveFailed') })
     } finally {
       setIsSavingMemo(false)
     }
@@ -275,7 +275,7 @@ function ParticipantDetailPage(): React.ReactElement {
   const handleSaveEdit = async () => {
     if (!participant) return
     if (!editForm.name.trim() || !editForm.email.trim()) {
-      addToast({ type: 'error', message: t('participant.nameRequired') })
+      toast({ variant: 'danger', message: t('participant.nameRequired') })
       return
     }
 
@@ -336,12 +336,12 @@ function ParticipantDetailPage(): React.ReactElement {
         memo: editForm.memo.trim() || undefined
       })
 
-      addToast({ type: 'success', message: t('participant.updateSuccess') })
+      toast({ variant: 'success', message: t('participant.updateSuccess') })
       setIsEditing(false)
       await sync()
     } catch (error) {
       const message = getErrorMessage(error, t('toast.updateFailed'))
-      addToast({ type: 'error', message })
+      toast({ variant: 'danger', message })
     } finally {
       setIsSaving(false)
     }

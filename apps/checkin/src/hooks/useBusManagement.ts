@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { syncAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   createOrGetBusRoute,
   deleteBusRoute,
@@ -48,7 +48,7 @@ interface CreateBusData {
 export function useBusManagement(): UseBusManagementReturn {
   const { t } = useTranslation()
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const { displayedItems: buses, isLoading, hasMore, loadMore, refresh } =
     useBatchedInfiniteScrollWithRealtime<BusRoute>({
@@ -81,7 +81,7 @@ export function useBusManagement(): UseBusManagementReturn {
   const handleAddBus = useCallback(
     async (data: CreateBusData): Promise<boolean> => {
       if (!data.name.trim() || !data.region.trim()) {
-        addToast({ type: 'error', message: t('bus.nameRegionRequired') })
+        toast({ variant: 'danger', message: t('bus.nameRegionRequired') })
         return false
       }
 
@@ -96,7 +96,7 @@ export function useBusManagement(): UseBusManagementReturn {
           notes: data.notes?.trim() || undefined
         })
 
-        addToast({ type: 'success', message: t('bus.busCreated', { name: bus.name }) })
+        toast({ variant: 'success', message: t('bus.busCreated', { name: bus.name }) })
 
         refresh()
         loadRegions()
@@ -104,11 +104,11 @@ export function useBusManagement(): UseBusManagementReturn {
         return true
       } catch (error) {
         console.error('Failed to create bus:', error)
-        addToast({ type: 'error', message: t('toast.createFailed') })
+        toast({ variant: 'danger', message: t('toast.createFailed') })
         return false
       }
     },
-    [addToast, t, refresh, loadRegions, sync]
+    [toast, t, refresh, loadRegions, sync]
   )
 
   const handleDeleteBus = useCallback(
@@ -122,17 +122,17 @@ export function useBusManagement(): UseBusManagementReturn {
 
       try {
         await deleteBusRoute(bus.id)
-        addToast({ type: 'success', message: t('bus.busDeleted', { name: bus.name }) })
+        toast({ variant: 'success', message: t('bus.busDeleted', { name: bus.name }) })
         refresh()
         loadRegions()
         sync()
         return true
       } catch {
-        addToast({ type: 'error', message: t('toast.deleteFailed') })
+        toast({ variant: 'danger', message: t('toast.deleteFailed') })
         return false
       }
     },
-    [addToast, t, refresh, loadRegions, sync]
+    [toast, t, refresh, loadRegions, sync]
   )
 
   const handleArrivalToggle = useCallback(
@@ -140,10 +140,10 @@ export function useBusManagement(): UseBusManagementReturn {
       try {
         if (isCancel) {
           await cancelBusArrival(busId)
-          addToast({ type: 'success', message: t('bus.arrivalCancelled') })
+          toast({ variant: 'success', message: t('bus.arrivalCancelled') })
         } else {
           await markBusAsArrived(busId)
-          addToast({ type: 'success', message: t('bus.busArrived') })
+          toast({ variant: 'success', message: t('bus.busArrived') })
         }
 
         refresh()
@@ -151,11 +151,11 @@ export function useBusManagement(): UseBusManagementReturn {
         return true
       } catch (error) {
         console.error('Failed to toggle arrival:', error)
-        addToast({ type: 'error', message: t('toast.updateFailed') })
+        toast({ variant: 'danger', message: t('toast.updateFailed') })
         return false
       }
     },
-    [addToast, t, refresh, sync]
+    [toast, t, refresh, sync]
   )
 
   // Parse time string to comparable value

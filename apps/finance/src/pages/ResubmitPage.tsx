@@ -18,6 +18,7 @@ import BankSelect from '../components/BankSelect'
 import ErrorAlert from '../components/ErrorAlert'
 import Spinner from '../components/Spinner'
 import { useTranslation } from 'react-i18next'
+import { TextField, Button } from 'trust-ui-react'
 
 const emptyItem = (): RequestItem => ({ description: '', budgetCode: 0, amount: 0 })
 
@@ -221,36 +222,20 @@ export default function ResubmitPage() {
         <ErrorAlert errors={errors} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.payee')} <span className="text-red-500">*</span></label>
-            <input type="text" value={payee} onChange={(e) => setPayee(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
+          <TextField label={t('field.payee')} required value={payee} onChange={(e) => setPayee(e.target.value)} fullWidth />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.date')} <span className="text-red-500">*</span></label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.phone')} <span className="text-red-500">*</span></label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.session')}</label>
-            <input type="text" readOnly value={session}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100" />
-          </div>
+          <TextField label={t('field.phone')} required type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} fullWidth />
+          <TextField label={t('field.session')} value={session} disabled fullWidth />
           <div>
             <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.bankAccount')} <span className="text-red-500">*</span></label>
-            <input type="text" value={bankAccount}
-              onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-              placeholder={t('field.bankAccount')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
+          <TextField label={t('field.bankAccount')} required value={bankAccount}
+            onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
+            placeholder={t('field.bankAccount')} fullWidth />
           <div className="sm:col-span-2">
             <CommitteeSelect value={committee} onChange={setCommittee} />
           </div>
@@ -259,8 +244,7 @@ export default function ResubmitPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-gray-700">{t('field.items')} <span className="text-red-500">*</span></h3>
-            <button type="button" onClick={addItem} disabled={items.length >= 10}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400">{t('form.addItem')}</button>
+            <Button type="button" variant="ghost" size="sm" onClick={addItem} disabled={items.length >= 10}>{t('form.addItem')}</Button>
           </div>
           <div className="space-y-2">
             {items.map((item, i) => (
@@ -282,17 +266,15 @@ export default function ResubmitPage() {
         />
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.comments')}</label>
-          <textarea value={comments} onChange={(e) => setComments(e.target.value)}
-            rows={3} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <TextField label={t('field.comments')} value={comments} onChange={(e) => setComments(e.target.value)}
+            multiline rows={3} fullWidth />
         </div>
 
         <div className="flex items-center justify-between">
           <Link to={`/request/${original.id}`} className="text-sm text-gray-500 hover:underline">{t('approval.originalRequest')}</Link>
-          <button type="submit" disabled={submitting}
-            className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400">
+          <Button type="submit" variant="primary" disabled={submitting} loading={submitting}>
             {submitting ? t('common.submitting') : t('approval.resubmit')}
-          </button>
+          </Button>
         </div>
       </form>
 

@@ -5,10 +5,10 @@ import { functions } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { Committee } from '../types'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../lib/utils'
+import { Dialog, TextField, Button } from 'trust-ui-react'
 import BankSelect from './BankSelect'
 import ErrorAlert from './ErrorAlert'
 import CommitteeSelect from './CommitteeSelect'
-import FormField from './FormField'
 
 export default function DisplayNameModal() {
   const { t } = useTranslation()
@@ -88,36 +88,48 @@ export default function DisplayNameModal() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-bold mb-1">{t('setup.title')}</h3>
+    <Dialog open onClose={() => {}} size="md">
+      <Dialog.Title>{t('setup.title')}</Dialog.Title>
+      <Dialog.Content>
         <p className="text-sm text-gray-500 mb-4">{t('setup.description')}</p>
 
         <ErrorAlert errors={errors} />
 
         <div className="space-y-3">
-          <FormField label={t('field.displayName')} required hint={t('settings.displayNameHint')}>
-            <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-              autoFocus className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </FormField>
+          <TextField
+            label={t('field.displayName')}
+            required
+            helperText={t('settings.displayNameHint')}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            autoFocus
+            fullWidth
+          />
 
-          <FormField label={t('field.phone')} required>
-            <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))}
-              placeholder="010-0000-0000"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </FormField>
+          <TextField
+            label={t('field.phone')}
+            required
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+            placeholder="010-0000-0000"
+            fullWidth
+          />
 
           <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
 
-          <FormField label={t('field.bankAccount')} required>
-            <input type="text" value={bankAccount}
-              onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-              placeholder={t('field.bankAccount')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </FormField>
+          <TextField
+            label={t('field.bankAccount')}
+            required
+            value={bankAccount}
+            onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
+            placeholder={t('field.bankAccount')}
+            fullWidth
+          />
 
           {/* Bank Book Upload */}
-          <FormField label={t('field.bankBook')} hint={t('settings.bankBookRequiredHint')}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.bankBook')}</label>
             <input type="file" accept=".png,.jpg,.jpeg,.pdf"
               onChange={(e) => {
                 const f = e.target.files?.[0] || null
@@ -133,17 +145,18 @@ export default function DisplayNameModal() {
             {bankBookFile && (
               <p className="text-xs text-green-600 mt-1">{bankBookFile.name} ({(bankBookFile.size / 1024).toFixed(0)}KB)</p>
             )}
-          </FormField>
+            <p className="text-xs text-gray-400 mt-1">{t('settings.bankBookRequiredHint')}</p>
+          </div>
 
           <CommitteeSelect value={committee} onChange={setCommittee}
             name="init-committee" label={t('field.defaultCommittee')} />
         </div>
-
-        <button onClick={handleSave} disabled={saving}
-          className="w-full mt-5 bg-blue-600 text-white py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400">
+      </Dialog.Content>
+      <Dialog.Actions>
+        <Button variant="primary" onClick={handleSave} loading={saving} fullWidth>
           {saving ? t('setup.saving') : t('setup.start')}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Dialog.Actions>
+    </Dialog>
   )
 }

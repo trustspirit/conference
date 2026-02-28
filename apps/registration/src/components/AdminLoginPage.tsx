@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { signInWithGoogle } from '../services/firebase'
-import { Button } from './ui'
+import { Button } from 'trust-ui-react'
 
 function AdminLoginPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -28,7 +28,7 @@ function AdminLoginPage(): React.ReactElement {
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
         )}
-        <Button size="lg" disabled={isLoading} onClick={handleLogin}>
+        <Button size="lg" fullWidth disabled={isLoading} loading={isLoading} onClick={handleLogin}>
           {isLoading ? t('auth.signingIn') : t('auth.signInWithGoogle')}
         </Button>
       </div>

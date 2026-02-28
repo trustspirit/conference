@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Select, Input } from '../ui'
+import { Select, TextField } from 'trust-ui-react'
 import { stakeList, getWardsByStake } from '../../services/stakeWardData'
 
 const OTHER_KEY = '__other__'
@@ -33,9 +33,21 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
     }
   }
 
-  const handleStakeSelect = (v: string) => {
-    onChange({ stake: v === OTHER_KEY ? OTHER_KEY : v, ward: '' })
+  const handleStakeSelect = (v: string | string[]) => {
+    const val = v as string
+    onChange({ stake: val === OTHER_KEY ? OTHER_KEY : val, ward: '' })
   }
+
+  const stakeOptions = [
+    { value: '', label: '' },
+    ...stakeList.map((s) => ({ value: s, label: s })),
+    { value: OTHER_KEY, label: t('builder.churchInfoOther') },
+  ]
+
+  const wardOptions = [
+    { value: '', label: '' },
+    ...wards.map((w) => ({ value: w, label: w })),
+  ]
 
   return (
     <div className="space-y-3">
@@ -50,53 +62,46 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
       </label>
 
       <div className="flex flex-wrap gap-4">
-        {/* 스테이크 */}
+        {/* Stake */}
         <div className="flex-1 basis-[180px] min-w-0">
           <label className="block text-[12px] text-gray-500 mb-1">{t('builder.participantFields.stake')}</label>
           <Select
+            options={stakeOptions}
             value={selectValue}
-            onChange={(e) => handleStakeSelect(e.target.value)}
-            required={required && !isNonMember}
+            onChange={handleStakeSelect}
             disabled={isNonMember}
-          >
-            <option value="">{''}</option>
-            {stakeList.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-            <option value={OTHER_KEY}>{t('builder.churchInfoOther')}</option>
-          </Select>
+            fullWidth
+          />
           {isOther && (
-            <Input
-              className="mt-2"
-              value={value.stake === OTHER_KEY ? '' : value.stake}
-              onChange={(e) => onChange({ stake: e.target.value || OTHER_KEY, ward: '' })}
-              placeholder={t('builder.churchInfoStakePlaceholder')}
-            />
+            <div className="mt-2">
+              <TextField
+                value={value.stake === OTHER_KEY ? '' : value.stake}
+                onChange={(e) => onChange({ stake: e.target.value || OTHER_KEY, ward: '' })}
+                placeholder={t('builder.churchInfoStakePlaceholder')}
+                fullWidth
+              />
+            </div>
           )}
         </div>
 
-        {/* 와드 */}
+        {/* Ward */}
         <div className="flex-1 basis-[180px] min-w-0">
           <label className="block text-[12px] text-gray-500 mb-1">{t('builder.participantFields.ward')}</label>
           {isOther ? (
-            <Input
+            <TextField
               value={value.ward}
               onChange={(e) => onChange({ ...value, ward: e.target.value })}
               placeholder={t('builder.churchInfoWardPlaceholder')}
-              required={required && !isNonMember}
+              fullWidth
             />
           ) : (
             <Select
+              options={wardOptions}
               value={value.ward}
-              onChange={(e) => onChange({ ...value, ward: e.target.value })}
+              onChange={(v) => onChange({ ...value, ward: v as string })}
               disabled={isNonMember || wards.length === 0}
-              required={required && !isNonMember}
-            >
-              <option value="">{''}</option>
-              {wards.map((w) => (
-                <option key={w} value={w}>{w}</option>
-              ))}
-            </Select>
+              fullWidth
+            />
           )}
         </div>
       </div>

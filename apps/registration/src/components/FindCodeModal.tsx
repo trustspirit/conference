@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input } from './ui'
+import { Button, TextField, Dialog } from 'trust-ui-react'
 import { sendPersonalCodeEmail } from '../services/email'
 
 interface FindCodeModalProps {
@@ -40,9 +40,9 @@ function FindCodeModal({ surveyId, onClose }: FindCodeModalProps): React.ReactEl
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">{t('register.findCode.title')}</h2>
+    <Dialog open onClose={onClose} size="sm">
+      <Dialog.Title onClose={onClose}>{t('register.findCode.title')}</Dialog.Title>
+      <Dialog.Content>
         <p className="text-sm text-gray-500 mb-5">{t('register.findCode.desc')}</p>
 
         {sent ? (
@@ -58,24 +58,26 @@ function FindCodeModal({ surveyId, onClose }: FindCodeModalProps): React.ReactEl
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
+            <TextField
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@example.com"
               required
+              fullWidth
+              error={!!error}
+              errorMessage={error || undefined}
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex gap-3">
               <Button variant="ghost" className="flex-1" onClick={onClose}>{t('common.cancel')}</Button>
-              <Button type="submit" className="flex-1" disabled={loading || !email.trim()}>
+              <Button type="submit" className="flex-1" disabled={loading || !email.trim()} loading={loading}>
                 {loading ? t('common.loading') : t('register.findCode.submit')}
               </Button>
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </Dialog.Content>
+    </Dialog>
   )
 }
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Label } from '../ui'
+import { Button } from 'trust-ui-react'
 import type { GridConfig } from '../../types'
 
 interface GridEditorProps {
@@ -31,7 +31,7 @@ function GridEditor({ config, onChange }: GridEditorProps): React.ReactElement {
   return (
     <div className="space-y-4">
       <div>
-        <Label size="xs" className="text-gray-600 mb-2">{t('builder.grid.rows')}</Label>
+        <label className="block text-xs font-medium text-gray-600 mb-2">{t('builder.grid.rows')}</label>
         {config.rows.map((row, i) => (
           <div key={i} className="flex items-center gap-2 mb-1">
             <input
@@ -41,16 +41,16 @@ function GridEditor({ config, onChange }: GridEditorProps): React.ReactElement {
               className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150"
             />
             {config.rows.length > 1 && (
-              <button type="button" onClick={() => removeRow(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none">×</button>
+              <button type="button" onClick={() => removeRow(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none">x</button>
             )}
           </div>
         ))}
-        <Button variant="link" size="sm" onClick={addRow} className="p-0">
+        <Button variant="ghost" size="sm" onClick={addRow} className="p-0">
           + {t('builder.grid.addRow')}
         </Button>
       </div>
       <div>
-        <Label size="xs" className="text-gray-600 mb-2">{t('builder.grid.columns')}</Label>
+        <label className="block text-xs font-medium text-gray-600 mb-2">{t('builder.grid.columns')}</label>
         {config.columns.map((col, i) => (
           <div key={i} className="flex items-center gap-2 mb-1">
             <input
@@ -60,11 +60,11 @@ function GridEditor({ config, onChange }: GridEditorProps): React.ReactElement {
               className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150"
             />
             {config.columns.length > 1 && (
-              <button type="button" onClick={() => removeColumn(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none">×</button>
+              <button type="button" onClick={() => removeColumn(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none">x</button>
             )}
           </div>
         ))}
-        <Button variant="link" size="sm" onClick={addColumn} className="p-0">
+        <Button variant="ghost" size="sm" onClick={addColumn} className="p-0">
           + {t('builder.grid.addColumn')}
         </Button>
       </div>

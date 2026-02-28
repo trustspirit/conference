@@ -1,8 +1,8 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { Tabs } from 'trust-ui-react'
 import { useParticipantsListPage } from '../hooks'
 import {
-  TabBar,
   ParticipantsListSkeleton,
   ParticipantsTab,
   GroupsTab,
@@ -24,7 +24,15 @@ function ParticipantsListPage(): React.ReactElement {
         <p className="text-[#65676B]">{t('participant.viewAllSubtitle')}</p>
       </div>
 
-      <TabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs value={activeTab} onChange={(value: string) => setActiveTab(value as typeof activeTab)}>
+        <Tabs.List>
+          {tabs.map((tab) => (
+            <Tabs.Trigger key={tab.id} value={tab.id}>
+              {tab.label}{tab.count !== undefined ? ` (${tab.count})` : ''}
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
+      </Tabs>
 
       {activeTab === 'participants' && <ParticipantsTab />}
       {activeTab === 'groups' && <GroupsTab />}

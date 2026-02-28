@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useSetAtom } from 'jotai'
-import { addToastAtom } from '../../stores/toastStore'
+import { useToast, Button } from 'trust-ui-react'
 import { getSurveyById, updateSurvey } from '../../services/surveys'
-import { Button, Spinner } from '../../components/ui'
+import Spinner from '../../components/ui/Spinner'
 import SurveyBuilder from '../../components/survey-builder/SurveyBuilder'
 import ThemeEditor from '../../components/survey-builder/ThemeEditor'
 import type { Survey, SurveyField, SurveyTheme } from '../../types'
@@ -31,7 +30,7 @@ function SurveyEditPage(): React.ReactElement {
   const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
   const navigate = useNavigate()
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -81,9 +80,9 @@ function SurveyEditPage(): React.ReactElement {
     try {
       await updateSurvey(surveyId, { title, description, fields: sanitizeFields(fields), theme })
       isDirty.current = false
-      addToast({ message: t('builder.saved'), type: 'success' })
+      toast({ message: t('builder.saved'), variant: 'success' })
     } catch {
-      addToast({ message: t('builder.saveFailed'), type: 'error' })
+      toast({ message: t('builder.saveFailed'), variant: 'danger' })
     } finally {
       setSaving(false)
     }
@@ -118,7 +117,7 @@ function SurveyEditPage(): React.ReactElement {
       <nav className="bg-white shadow-sm sticky top-0 z-10">
         <div className="px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="link" size="sm" className="p-0" onClick={() => navigate('/admin')}>
+            <Button variant="ghost" size="sm" className="p-0" onClick={() => navigate('/admin')}>
               {t('common.back')}
             </Button>
             <h1 className="text-lg font-bold text-gray-900">{t('builder.editSurvey')}</h1>
@@ -130,7 +129,7 @@ function SurveyEditPage(): React.ReactElement {
             <Button variant="ghost" onClick={() => navigate('/admin')}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleSave} disabled={saving || !title.trim()}>
+            <Button onClick={handleSave} disabled={saving || !title.trim()} loading={saving}>
               {saving ? t('builder.saving') : t('builder.save')}
             </Button>
           </div>

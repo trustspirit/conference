@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
+import { ThemeProvider, ToastProvider } from 'trust-ui-react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ProjectProvider } from './contexts/ProjectContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -63,9 +64,13 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
+      <ThemeProvider>
+        <ToastProvider position="bottom-right">
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )

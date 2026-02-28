@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import Select from '../ui/Select'
+import { Select } from 'trust-ui-react'
 import type { LinearScaleConfig } from '../../types'
 
 interface LinearScaleEditorProps {
@@ -15,31 +15,38 @@ function LinearScaleEditor({ config, onChange }: LinearScaleEditorProps): React.
     onChange({ ...config, ...patch })
   }
 
+  const minOptions = [
+    { value: '0', label: '0' },
+    { value: '1', label: '1' },
+  ]
+
+  const maxOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
+    value: String(n),
+    label: String(n),
+  }))
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.min')}</label>
           <Select
-            value={config.min}
-            onChange={(e) => update({ min: Number(e.target.value) })}
-            className="text-sm py-1.5"
-          >
-            <option value={0}>0</option>
-            <option value={1}>1</option>
-          </Select>
+            options={minOptions}
+            value={String(config.min)}
+            onChange={(v) => update({ min: Number(v) })}
+            size="sm"
+            fullWidth
+          />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.max')}</label>
           <Select
-            value={config.max}
-            onChange={(e) => update({ max: Number(e.target.value) })}
-            className="text-sm py-1.5"
-          >
-            {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </Select>
+            options={maxOptions}
+            value={String(config.max)}
+            onChange={(v) => update({ max: Number(v) })}
+            size="sm"
+            fullWidth
+          />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

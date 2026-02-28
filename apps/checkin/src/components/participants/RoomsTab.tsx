@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Tooltip, ExpandArrow, MemberSelectionTable, OccupancyBar, MoveToModal } from '../'
+import { Tooltip } from 'trust-ui-react'
+import { ExpandArrow, MemberSelectionTable, OccupancyBar, MoveToModal } from '../'
 import { useRoomsTabLogic } from '../../hooks'
 import { useBatchedInfiniteScrollWithRealtime } from '../../hooks/useBatchedInfiniteScrollWithRealtime'
 import { getRoomsPaginated, subscribeToRooms } from '../../services/firebase'
@@ -91,12 +92,25 @@ export function RoomsTab() {
                         <ExpandArrow isExpanded={isExpanded} />
                       </td>
                       <td className="px-4 py-3 font-semibold text-[#050505] relative">
-                        Room {room.roomNumber}
-                        {hoveredRoomId === room.id && members.length > 0 && !isExpanded && (
+                        {members.length > 0 && !isExpanded ? (
                           <Tooltip
-                            title={t('common.occupants')}
-                            items={members.map((m) => ({ id: m.id, name: m.name }))}
-                          />
+                            content={
+                              <div>
+                                <div className="font-semibold mb-1">{t('common.occupants')}:</div>
+                                {members.slice(0, 5).map((m) => (
+                                  <div key={m.id} className="truncate">{m.name}</div>
+                                ))}
+                                {members.length > 5 && (
+                                  <div className="text-gray-400 mt-1">+{members.length - 5} {t('common.more')}</div>
+                                )}
+                              </div>
+                            }
+                            placement="bottom"
+                          >
+                            <span>Room {room.roomNumber}</span>
+                          </Tooltip>
+                        ) : (
+                          <>Room {room.roomNumber}</>
                         )}
                       </td>
                       <td className="px-4 py-3">

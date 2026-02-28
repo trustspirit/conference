@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input } from '../ui'
+import { Button, TextField } from 'trust-ui-react'
 import type { SurveyField, FieldType, ParticipantFieldKey } from '../../types'
 import FieldTypeSelector from './FieldTypeSelector'
 import FieldOptionsEditor from './FieldOptionsEditor'
@@ -37,7 +37,7 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
   const isChurchInfo = field.type === 'church_info'
   const hasOptions = field.type === 'radio' || field.type === 'checkbox' || field.type === 'dropdown'
 
-  // Church info — locked card, only draggable
+  // Church info - locked card, only draggable
   if (isChurchInfo) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-primary/40">
@@ -60,7 +60,7 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
       {/* Main row */}
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <Input
+          <TextField
             value={field.label}
             onChange={(e) => update({ label: e.target.value })}
             placeholder={isSection ? t('builder.sectionTitlePlaceholder') : t('builder.labelPlaceholder')}
@@ -69,11 +69,12 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
           <FieldTypeSelector value={field.type} onChange={handleTypeChange} />
         </div>
 
-        <Input
+        <TextField
           value={field.description || ''}
           onChange={(e) => update({ description: e.target.value })}
           placeholder={t('builder.descriptionPlaceholder')}
           className="border-gray-200 text-sm text-gray-600"
+          fullWidth
         />
 
         {hasOptions && (

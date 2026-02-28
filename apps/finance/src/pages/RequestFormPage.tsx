@@ -15,6 +15,7 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
+import { TextField, Button, Dialog } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
@@ -298,45 +299,20 @@ export default function RequestFormPage() {
         <ErrorAlert errors={errors} title={t('form.checkErrors')} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <TextField label={t('field.payee')} required value={payee} onChange={(e) => setPayee(e.target.value)} fullWidth />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.payee')} <span className="text-red-500">*</span>
-            </label>
-            <input type="text" value={payee} onChange={(e) => setPayee(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.date')} <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.date')} <span className="text-red-500">*</span></label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.phone')} <span className="text-red-500">*</span>
-            </label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))}
-              placeholder="010-0000-0000"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.session')}</label>
-            <input type="text" readOnly value={session}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100" />
-          </div>
+          <TextField label={t('field.phone')} required type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" fullWidth />
+          <TextField label={t('field.session')} value={session} disabled fullWidth />
           <div>
             <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.bankAccount')} <span className="text-red-500">*</span>
-            </label>
-            <input type="text" value={bankAccount}
-              onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-              placeholder={t('field.bankAccount')}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-          </div>
+          <TextField label={t('field.bankAccount')} required value={bankAccount}
+            onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
+            placeholder={t('field.bankAccount')} fullWidth />
           <div className="sm:col-span-2">
             <CommitteeSelect value={committee} onChange={setCommittee} />
           </div>
@@ -347,10 +323,9 @@ export default function RequestFormPage() {
             <h3 className="text-sm font-medium text-gray-700">
               {t('field.items')} <span className="text-red-500">*</span>
             </h3>
-            <button type="button" onClick={addItem} disabled={items.length >= 10}
-              className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400">
+            <Button type="button" variant="ghost" size="sm" onClick={addItem} disabled={items.length >= 10}>
               {t('form.addItem')}
-            </button>
+            </Button>
           </div>
           <div className="space-y-2">
             {items.map((item, i) => (
@@ -366,16 +341,14 @@ export default function RequestFormPage() {
         <FileUpload files={files} onFilesChange={setFiles} />
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.comments')}</label>
-          <textarea value={comments} onChange={(e) => setComments(e.target.value)}
-            rows={3} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <TextField label={t('field.comments')} value={comments} onChange={(e) => setComments(e.target.value)}
+            multiline rows={3} fullWidth />
         </div>
 
         <div className="flex justify-end">
-          <button type="submit" disabled={submitting}
-            className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400">
+          <Button type="submit" variant="primary" disabled={submitting} loading={submitting}>
             {submitting ? t('common.submitting') : t('form.submitRequest')}
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -406,24 +379,22 @@ export default function RequestFormPage() {
 
       {/* 페이지 이동 확인 모달 */}
       {blocker.state === 'blocked' && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm mx-4">
-            <h3 className="text-lg font-bold mb-2">{t('form.blockerTitle')}</h3>
-            <p className="text-sm text-gray-500 mb-4">
+        <Dialog open onClose={() => blocker.reset?.()} size="sm">
+          <Dialog.Title onClose={() => blocker.reset?.()} showClose>{t('form.blockerTitle')}</Dialog.Title>
+          <Dialog.Content>
+            <p className="text-sm text-gray-500">
               {t('form.blockerMessage')}
             </p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => blocker.reset?.()}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
-                {t('form.continueEditing')}
-              </button>
-              <button onClick={() => { clearDraft(); blocker.proceed?.() }}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
-                {t('form.leavePage')}
-              </button>
-            </div>
-          </div>
-        </div>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button variant="outline" onClick={() => blocker.reset?.()}>
+              {t('form.continueEditing')}
+            </Button>
+            <Button variant="primary" onClick={() => { clearDraft(); blocker.proceed?.() }}>
+              {t('form.leavePage')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       )}
     </Layout>
   )

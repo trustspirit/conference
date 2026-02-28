@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { Select } from 'trust-ui-react'
 import { BANKS } from '../constants/banks'
-import Select from './Select'
 
 interface Props {
   value: string
@@ -13,21 +13,26 @@ export default function BankSelect({ value, onChange, label, required }: Props) 
   const { t } = useTranslation()
   const isKnownBank = !value || BANKS.some(b => b.name === value)
 
+  const options = [
+    { value: '', label: t('field.bankSelect') },
+    ...(!isKnownBank ? [{ value, label: `${value} (기존 입력)` }] : []),
+    ...BANKS.map((bank) => ({
+      value: bank.name,
+      label: bank.name,
+    })),
+  ]
+
   return (
-    <Select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      label={label ?? `${t('field.bankSelect')} ${required ? '*' : ''}`}
-    >
-      <option value="">{t('field.bankSelect')}</option>
-      {!isKnownBank && (
-        <option value={value}>{value} (기존 입력)</option>
-      )}
-      {BANKS.map((bank) => (
-        <option key={bank.code} value={bank.name}>
-          {bank.name}
-        </option>
-      ))}
-    </Select>
+    <div>
+      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}{required ? ' *' : ''}</label>}
+      <Select
+        options={options}
+        value={value}
+        onChange={(v) => onChange(v as string)}
+        placeholder={t('field.bankSelect')}
+        fullWidth
+        searchable
+      />
+    </div>
   )
 }

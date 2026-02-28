@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +9,6 @@ import {
   removeParticipantFromRoom,
   assignParticipantToRoom
 } from '../services/firebase'
-import { addToastAtom } from '../stores/toastStore'
 import type { Room, RoomGenderType, RoomType } from '../types'
 import { DetailPageSkeleton } from '../components'
 import { getErrorMessage } from '../utils/errorMessage'
@@ -22,7 +22,7 @@ function RoomDetailPage(): React.ReactElement {
   const groups = useAtomValue(groupsAtom)
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -65,12 +65,12 @@ function RoomDetailPage(): React.ReactElement {
   const handleSaveEdit = async () => {
     if (!room || !id) return
     if (!editRoomNumber.trim()) {
-      addToast({ type: 'error', message: t('room.roomRequired') })
+      toast({ variant: 'danger', message: t('room.roomRequired') })
       return
     }
 
     if (editCapacity < room.currentOccupancy) {
-      addToast({ type: 'error', message: t('room.capacityError') })
+      toast({ variant: 'danger', message: t('room.capacityError') })
       return
     }
 
@@ -99,11 +99,11 @@ function RoomDetailPage(): React.ReactElement {
 
       await sync()
       setIsEditing(false)
-      addToast({ type: 'success', message: t('room.roomUpdated') })
+      toast({ variant: 'success', message: t('room.roomUpdated') })
     } catch (error) {
       console.error('Update room error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.updateRoomFailed'))
       })
     } finally {
@@ -117,11 +117,11 @@ function RoomDetailPage(): React.ReactElement {
     try {
       await removeParticipantFromRoom(participantId)
       await sync()
-      addToast({ type: 'success', message: t('room.participantRemoved') })
+      toast({ variant: 'success', message: t('room.participantRemoved') })
     } catch (error) {
       console.error('Remove participant error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.removeParticipantFailed'))
       })
     }
@@ -138,14 +138,14 @@ function RoomDetailPage(): React.ReactElement {
       await assignParticipantToRoom(participantId, targetRoom.id, targetRoom.roomNumber)
       await sync()
       setMovingParticipantId(null)
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: t('room.movedToRoom', { number: targetRoom.roomNumber })
       })
     } catch (error) {
       console.error('Move participant error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.moveParticipantFailed'))
       })
     }
@@ -164,13 +164,13 @@ function RoomDetailPage(): React.ReactElement {
 
       await sync()
       setLeaderConfirm({ open: false, participantId: '', participantName: '', isRemoving: false })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: isRemoving ? t('room.leaderRemoved') : t('room.leaderSet')
       })
     } catch (error) {
       console.error('Set leader error:', error)
-      addToast({ type: 'error', message: t('toast.updateRoomFailed') })
+      toast({ variant: 'danger', message: t('toast.updateRoomFailed') })
     }
   }
 

@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { authUserAtom, authLoadingAtom } from '../stores/authStore'
 import { onAuthChange, signOut } from '../services/firebase'
 import { isAdmin } from '../services/admins'
-import { Spinner, Button } from './ui'
+import { Button } from 'trust-ui-react'
+import Spinner from './ui/Spinner'
 import AdminLoginPage from './AdminLoginPage'
 
 function AdminAuthGuard({ children }: { children: React.ReactNode }): React.ReactElement {

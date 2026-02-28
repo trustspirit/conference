@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { authUserAtom } from '../../stores/authStore'
-import { addToastAtom } from '../../stores/toastStore'
+import { useToast, Button } from 'trust-ui-react'
 import { getAllSurveys, createSurvey, deleteSurvey, updateSurvey } from '../../services/surveys'
 import { getDefaultFields } from '../../services/surveyDefaults'
-import { Button, Spinner } from '../../components/ui'
+import Spinner from '../../components/ui/Spinner'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import SurveyCard from '../../components/admin/SurveyCard'
 import DashboardOverview from '../../components/admin/DashboardOverview'
@@ -17,7 +17,7 @@ function SurveyListPage(): React.ReactElement {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useAtomValue(authUserAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -46,7 +46,7 @@ function SurveyListPage(): React.ReactElement {
       )
       navigate(`/admin/survey/${survey.id}/edit`)
     } catch {
-      addToast({ message: t('builder.createFailed'), type: 'error' })
+      toast({ message: t('builder.createFailed'), variant: 'danger' })
       setCreating(false)
     }
   }
@@ -54,9 +54,9 @@ function SurveyListPage(): React.ReactElement {
   const handleToggleActive = async (survey: Survey) => {
     await updateSurvey(survey.id, { isActive: !survey.isActive })
     await loadSurveys()
-    addToast({
+    toast({
       message: t(survey.isActive ? 'toast.surveyDeactivated' : 'toast.surveyActivated'),
-      type: 'success',
+      variant: 'success',
     })
   }
 
@@ -64,12 +64,12 @@ function SurveyListPage(): React.ReactElement {
     if (!confirm(t('survey.deleteConfirm'))) return
     await deleteSurvey(id)
     await loadSurveys()
-    addToast({ message: t('toast.surveyDeleted'), type: 'success' })
+    toast({ message: t('toast.surveyDeleted'), variant: 'success' })
   }
 
   const copyLink = (survey: Survey) => {
     navigator.clipboard.writeText(`${window.location.origin}/register/${survey.id}?token=${survey.shareToken}`)
-    addToast({ message: t('toast.linkCopied'), type: 'success' })
+    toast({ message: t('toast.linkCopied'), variant: 'success' })
   }
 
   return (
@@ -78,7 +78,7 @@ function SurveyListPage(): React.ReactElement {
       <main className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{t('survey.title')}</h2>
-          <Button onClick={handleCreate} disabled={creating}>
+          <Button onClick={handleCreate} disabled={creating} loading={creating}>
             {creating ? t('survey.create.creating') : t('survey.newSurvey')}
           </Button>
         </div>

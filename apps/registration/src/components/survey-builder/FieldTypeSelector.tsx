@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import Select from '../ui/Select'
+import { Select } from 'trust-ui-react'
 import type { FieldType } from '../../types'
 
 interface FieldTypeSelectorProps {
@@ -24,18 +24,18 @@ const FIELD_TYPES: FieldType[] = [
 function FieldTypeSelector({ value, onChange }: FieldTypeSelectorProps): React.ReactElement {
   const { t } = useTranslation()
 
+  const options = FIELD_TYPES.map((type) => ({
+    value: type,
+    label: t(`builder.fieldType.${type}`),
+  }))
+
   return (
     <Select
+      options={options}
       value={value}
-      onChange={(e) => onChange(e.target.value as FieldType)}
-      className="text-sm"
-    >
-      {FIELD_TYPES.map((type) => (
-        <option key={type} value={type}>
-          {t(`builder.fieldType.${type}`)}
-        </option>
-      ))}
-    </Select>
+      onChange={(v) => onChange(v as FieldType)}
+      size="sm"
+    />
   )
 }
 

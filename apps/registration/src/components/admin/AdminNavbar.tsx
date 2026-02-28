@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { authUserAtom } from '../../stores/authStore'
 import { signOut } from '../../services/firebase'
-import { Button } from '../ui'
+import { Button } from 'trust-ui-react'
 
 function AdminNavbar(): React.ReactElement {
   const { t } = useTranslation()

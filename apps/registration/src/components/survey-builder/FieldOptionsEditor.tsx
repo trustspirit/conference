@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Label } from '../ui'
+import { Button } from 'trust-ui-react'
 
 interface FieldOptionsEditorProps {
   options: string[]
@@ -26,7 +26,7 @@ function FieldOptionsEditor({ options, onChange }: FieldOptionsEditorProps): Rea
 
   return (
     <div className="space-y-2">
-      <Label size="xs" className="text-gray-600">{t('builder.options')}</Label>
+      <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.options')}</label>
       {options.map((opt, index) => (
         <div key={index} className="flex items-center gap-2">
           <span className="text-sm text-gray-400 w-5">{index + 1}.</span>
@@ -42,12 +42,12 @@ function FieldOptionsEditor({ options, onChange }: FieldOptionsEditorProps): Rea
               onClick={() => removeOption(index)}
               className="text-gray-400 hover:text-red-500 text-lg leading-none"
             >
-              ×
+              x
             </button>
           )}
         </div>
       ))}
-      <Button variant="link" size="sm" onClick={addOption} className="p-0">
+      <Button variant="ghost" size="sm" onClick={addOption} className="p-0">
         + {t('builder.addOption')}
       </Button>
     </div>

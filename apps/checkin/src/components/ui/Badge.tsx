@@ -1,4 +1,5 @@
 import React from 'react'
+import { Badge as TrustBadge } from 'trust-ui-react'
 
 type BadgeVariant = 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info'
 
@@ -9,32 +10,29 @@ interface BadgeProps {
   className?: string
 }
 
-const variantClasses: Record<BadgeVariant, string> = {
-  primary: 'bg-[#E7F3FF] text-[#1877F2]',
-  secondary: 'bg-[#F0F2F5] text-[#65676B]',
-  success: 'bg-[#EFFFF6] text-[#31A24C]',
-  error: 'bg-[#FFEBEE] text-[#FA383E]',
-  warning: 'bg-[#FFF8E1] text-[#F9A825]',
-  info: 'bg-[#E7F3FF] text-[#1877F2]'
-}
-
-const sizeClasses = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2 py-1 text-sm'
+const variantMap: Record<BadgeVariant, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+  primary: 'primary',
+  secondary: 'secondary',
+  success: 'success',
+  error: 'danger',
+  warning: 'warning',
+  info: 'info'
 }
 
 function Badge({
   children,
   variant = 'secondary',
   size = 'md',
-  className = ''
+  className
 }: BadgeProps): React.ReactElement {
   return (
-    <span
-      className={`inline-flex items-center rounded-md font-semibold ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+    <TrustBadge
+      variant={variantMap[variant]}
+      size={size}
+      className={className}
     >
       {children}
-    </span>
+    </TrustBadge>
   )
 }
 

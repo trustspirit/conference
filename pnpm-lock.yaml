@@ -138,6 +138,9 @@ importers:
       react-router-dom:
         specifier: ^7.10.1
         version: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      trust-ui-react:
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -208,6 +211,9 @@ importers:
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@16.13.1)(react@19.2.4)(redux@5.0.1)
+      trust-ui-react:
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -260,6 +266,9 @@ importers:
       react-i18next:
         specifier: ^16.5.2
         version: 16.5.4(i18next@25.8.13(typescript@5.9.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+      trust-ui-react:
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -327,6 +336,9 @@ importers:
       react-router-dom:
         specifier: ^7.13.0
         version: 7.13.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      trust-ui-react:
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*

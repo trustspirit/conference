@@ -1,5 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { Badge } from 'trust-ui-react'
 
 interface LeaderBadgeProps {
   type: 'room' | 'group'
@@ -10,30 +11,26 @@ interface LeaderBadgeProps {
 function LeaderBadge({ type, className = '', size = 'sm' }: LeaderBadgeProps): React.ReactElement {
   const { t } = useTranslation()
 
-  const sizeClasses = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'
-
   const typeConfig = {
     room: {
-      icon: '👑',
+      icon: '\u{1F451}',
       label: t('room.leader'),
-      bgClass: 'bg-amber-100 text-amber-800 border-amber-300'
+      variant: 'warning' as const
     },
     group: {
-      icon: '⭐',
+      icon: '\u2B50',
       label: t('group.leader'),
-      bgClass: 'bg-purple-100 text-purple-800 border-purple-300'
+      variant: 'info' as const
     }
   }
 
   const config = typeConfig[type]
 
   return (
-    <span
-      className={`inline-flex items-center gap-0.5 ${sizeClasses} font-semibold rounded-full border ${config.bgClass} ${className}`}
-    >
+    <Badge variant={config.variant} size={size} className={className}>
       <span>{config.icon}</span>
       <span>{config.label}</span>
-    </span>
+    </Badge>
   )
 }
 

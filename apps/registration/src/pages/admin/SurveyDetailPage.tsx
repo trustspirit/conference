@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useSetAtom } from 'jotai'
-import { addToastAtom } from '../../stores/toastStore'
+import { useToast, Button } from 'trust-ui-react'
 import { getSurveyById } from '../../services/surveys'
 import { getResponsesBySurvey } from '../../services/responses'
-import { Button, Spinner } from '../../components/ui'
+import Spinner from '../../components/ui/Spinner'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import ResponseTable from '../../components/admin/ResponseTable'
 import SurveyStats from '../../components/admin/SurveyStats'
@@ -15,7 +14,7 @@ function SurveyDetailPage(): React.ReactElement {
   const { t } = useTranslation()
   const { surveyId } = useParams<{ surveyId: string }>()
   const navigate = useNavigate()
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [responses, setResponses] = useState<SurveyResponse[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +37,7 @@ function SurveyDetailPage(): React.ReactElement {
   const copyLink = () => {
     if (!survey) return
     navigator.clipboard.writeText(`${window.location.origin}/register/${surveyId}?token=${survey.shareToken}`)
-    addToast({ message: t('toast.linkCopied'), type: 'success' })
+    toast({ message: t('toast.linkCopied'), variant: 'success' })
   }
 
   if (loading) return <Spinner />
@@ -56,7 +55,7 @@ function SurveyDetailPage(): React.ReactElement {
       <AdminNavbar />
       <main className="max-w-5xl mx-auto p-6">
         <div className="mb-4">
-          <Button variant="link" size="sm" className="p-0" onClick={() => navigate('/admin')}>
+          <Button variant="ghost" size="sm" className="p-0" onClick={() => navigate('/admin')}>
             {t('common.back')}
           </Button>
         </div>

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Input, Label } from '../ui'
+import { Button, TextField } from 'trust-ui-react'
 import { uploadHeaderImage } from '../../services/storage'
 import type { SurveyTheme } from '../../types'
 import { sanitizeCssUrl } from '../../utils/sanitizeUrl'
@@ -81,7 +81,7 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
 
       <div className="space-y-3">
         <div>
-          <Label size="xs">{t('builder.theme.primaryColor')}</Label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.theme.primaryColor')}</label>
           <div className="flex items-center gap-3">
             <input
               type="color"
@@ -89,7 +89,7 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
               onChange={handleColorChange}
               className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5"
             />
-            <Input
+            <TextField
               value={theme.primaryColor || DEFAULT_COLOR}
               onChange={(e) => onChange({ ...theme, primaryColor: e.target.value })}
               className="font-mono text-sm"
@@ -98,7 +98,7 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
         </div>
 
         <div>
-          <Label size="xs">{t('builder.theme.headerImage')}</Label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.theme.headerImage')}</label>
 
           {/* Hidden file input */}
           <input
@@ -148,10 +148,11 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
                 <span className="text-xs text-gray-400">{t('builder.theme.orEnterUrl')}</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
-              <Input
+              <TextField
                 value={theme.headerImageUrl || ''}
                 onChange={handleUrlChange}
                 placeholder={t('builder.theme.headerImagePlaceholder')}
+                fullWidth
               />
             </div>
           )}

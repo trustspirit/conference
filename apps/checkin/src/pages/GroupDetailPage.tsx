@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +9,6 @@ import {
   removeParticipantFromGroup,
   assignParticipantToGroup
 } from '../services/firebase'
-import { addToastAtom } from '../stores/toastStore'
 import type { Group } from '../types'
 import { DetailPageSkeleton } from '../components'
 import { getErrorMessage } from '../utils/errorMessage'
@@ -22,7 +22,7 @@ function GroupDetailPage(): React.ReactElement {
   const rooms = useAtomValue(roomsAtom)
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -66,7 +66,7 @@ function GroupDetailPage(): React.ReactElement {
   const handleSaveEdit = async () => {
     if (!group || !id) return
     if (!editGroupName.trim()) {
-      addToast({ type: 'error', message: t('validation.groupNameRequired') })
+      toast({ variant: 'danger', message: t('validation.groupNameRequired') })
       return
     }
 
@@ -97,11 +97,11 @@ function GroupDetailPage(): React.ReactElement {
 
       await sync()
       setIsEditing(false)
-      addToast({ type: 'success', message: t('group.groupUpdated') })
+      toast({ variant: 'success', message: t('group.groupUpdated') })
     } catch (error) {
       console.error('Update group error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.updateGroupFailed'))
       })
     } finally {
@@ -115,11 +115,11 @@ function GroupDetailPage(): React.ReactElement {
     try {
       await removeParticipantFromGroup(participantId)
       await sync()
-      addToast({ type: 'success', message: t('group.participantRemoved') })
+      toast({ variant: 'success', message: t('group.participantRemoved') })
     } catch (error) {
       console.error('Remove participant error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.removeParticipantFailed'))
       })
     }
@@ -136,11 +136,11 @@ function GroupDetailPage(): React.ReactElement {
       await assignParticipantToGroup(participantId, targetGroup.id, targetGroup.name)
       await sync()
       setMovingParticipantId(null)
-      addToast({ type: 'success', message: t('group.movedTo', { name: targetGroup.name }) })
+      toast({ variant: 'success', message: t('group.movedTo', { name: targetGroup.name }) })
     } catch (error) {
       console.error('Move participant error:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('toast.moveParticipantFailed'))
       })
     }
@@ -159,13 +159,13 @@ function GroupDetailPage(): React.ReactElement {
 
       await sync()
       setLeaderConfirm({ open: false, participantId: '', participantName: '', isRemoving: false })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: isRemoving ? t('group.leaderRemoved') : t('group.leaderSet')
       })
     } catch (error) {
       console.error('Set leader error:', error)
-      addToast({ type: 'error', message: t('toast.updateGroupFailed') })
+      toast({ variant: 'danger', message: t('toast.updateGroupFailed') })
     }
   }
 

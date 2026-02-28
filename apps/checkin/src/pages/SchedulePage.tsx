@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import {
@@ -10,7 +11,6 @@ import {
   setupScheduleListenerAtom,
   cleanupScheduleListenerAtom
 } from '../stores/scheduleStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   ScheduleHeader,
   ScheduleWeekView,
@@ -37,7 +37,7 @@ function SchedulePage(): React.ReactElement {
   const selectedDate = useAtomValue(selectedDateAtom)
   const setupListener = useSetAtom(setupScheduleListenerAtom)
   const cleanupListener = useSetAtom(cleanupScheduleListenerAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   // Refs for PDF export
   const printableRef = useRef<HTMLDivElement>(null)
@@ -104,22 +104,22 @@ function SchedulePage(): React.ReactElement {
   // Export handlers
   const handleExportCSV = useCallback(() => {
     exportScheduleToCSV(schedules, 'schedule')
-    addToast({ type: 'success', message: t('schedule.exportSuccess') })
-  }, [schedules, addToast, t])
+    toast({ variant: 'success', message: t('schedule.exportSuccess') })
+  }, [schedules, toast, t])
 
   const handleExportICS = useCallback(() => {
     exportScheduleToICS(schedules, 'schedule')
-    addToast({ type: 'success', message: t('schedule.exportSuccess') })
-  }, [schedules, addToast, t])
+    toast({ variant: 'success', message: t('schedule.exportSuccess') })
+  }, [schedules, toast, t])
 
   const handleCopyToClipboard = useCallback(async () => {
     const success = await copyScheduleToClipboard(schedules, selectedDate, viewMode)
     if (success) {
-      addToast({ type: 'success', message: t('schedule.copiedToClipboard') })
+      toast({ variant: 'success', message: t('schedule.copiedToClipboard') })
     } else {
-      addToast({ type: 'error', message: t('schedule.copyFailed') })
+      toast({ variant: 'danger', message: t('schedule.copyFailed') })
     }
-  }, [schedules, selectedDate, viewMode, addToast, t])
+  }, [schedules, selectedDate, viewMode, toast, t])
 
   // Determine which view to render
   const renderView = () => {

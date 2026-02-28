@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useToast } from 'trust-ui-react'
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { participantsAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   checkInParticipant,
   checkOutParticipant,
@@ -35,7 +35,7 @@ function QRScannerModal({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const participants = useAtomValue(participantsAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const [isScanning, setIsScanning] = useState(false)
   const [scannedParticipant, setScannedParticipant] = useState<ScannedParticipant | null>(null)
@@ -178,13 +178,13 @@ function QRScannerModal({
         const activeCheckIn = participant.checkIns.find((ci) => !ci.checkOutTime)
         if (activeCheckIn) {
           await checkOutParticipant(participant.id, activeCheckIn.id)
-          addToast({ type: 'success', message: t('toast.checkOutSuccess') })
+          toast({ variant: 'success', message: t('toast.checkOutSuccess') })
           playSound('checkout')
         }
       } else {
         // Check in
         await checkInParticipant(participant.id)
-        addToast({ type: 'success', message: t('toast.checkInSuccess') })
+        toast({ variant: 'success', message: t('toast.checkInSuccess') })
         playSound('checkin')
       }
 
@@ -196,8 +196,8 @@ function QRScannerModal({
       }, 1000)
     } catch (err) {
       console.error('Check-in error:', err)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(err, t('toast.actionFailed'))
       })
     } finally {
@@ -215,7 +215,7 @@ function QRScannerModal({
   }
 
   // Play sound effect
-  const playSound = (type: 'success' | 'checkin' | 'checkout' | 'error') => {
+  const playSound = (soundType: 'success' | 'checkin' | 'checkout' | 'error') => {
     // Create audio context for sound effects
     try {
       const audioContext = new (
@@ -228,7 +228,7 @@ function QRScannerModal({
       oscillator.connect(gainNode)
       gainNode.connect(audioContext.destination)
 
-      switch (type) {
+      switch (soundType) {
         case 'success':
         case 'checkin':
           oscillator.frequency.value = 880

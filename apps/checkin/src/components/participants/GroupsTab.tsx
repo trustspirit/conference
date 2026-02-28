@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Tooltip, ExpandArrow, MemberSelectionTable, MoveToModal } from '../'
+import { Tooltip } from 'trust-ui-react'
+import { ExpandArrow, MemberSelectionTable, MoveToModal } from '../'
 import { useGroupsTabLogic } from '../../hooks'
 import { useBatchedInfiniteScrollWithRealtime } from '../../hooks/useBatchedInfiniteScrollWithRealtime'
 import { getGroupsPaginated, subscribeToGroups } from '../../services/firebase'
@@ -87,12 +88,25 @@ export function GroupsTab() {
                         <ExpandArrow isExpanded={isExpanded} />
                       </td>
                       <td className="px-4 py-3 font-semibold text-[#050505] relative">
-                        {group.name}
-                        {hoveredGroupId === group.id && members.length > 0 && !isExpanded && (
+                        {members.length > 0 && !isExpanded ? (
                           <Tooltip
-                            title={t('common.membersTitle')}
-                            items={members.map((m) => ({ id: m.id, name: m.name }))}
-                          />
+                            content={
+                              <div>
+                                <div className="font-semibold mb-1">{t('common.membersTitle')}:</div>
+                                {members.slice(0, 5).map((m) => (
+                                  <div key={m.id} className="truncate">{m.name}</div>
+                                ))}
+                                {members.length > 5 && (
+                                  <div className="text-gray-400 mt-1">+{members.length - 5} {t('common.more')}</div>
+                                )}
+                              </div>
+                            }
+                            placement="bottom"
+                          >
+                            <span>{group.name}</span>
+                          </Tooltip>
+                        ) : (
+                          <>{group.name}</>
                         )}
                       </td>
                       <td className="px-4 py-3">

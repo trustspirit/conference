@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   createOrGetGroup,
   deleteGroup,
@@ -32,7 +32,7 @@ function GroupsPage(): React.ReactElement {
   const navigate = useNavigate()
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   // Batched infinite scroll pagination with realtime sync
   const {
@@ -101,7 +101,7 @@ function GroupsPage(): React.ReactElement {
         expectedCapacity: capacity,
         tags: newGroupTags.length > 0 ? newGroupTags : undefined
       })
-      addToast({ type: 'success', message: t('group.groupCreated', { name: group.name }) })
+      toast({ variant: 'success', message: t('group.groupCreated', { name: group.name }) })
       setNewGroupName('')
       setNewGroupCapacity('')
       setNewGroupTags([])
@@ -110,7 +110,7 @@ function GroupsPage(): React.ReactElement {
       refresh()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.createFailed') })
+      toast({ variant: 'danger', message: t('toast.createFailed') })
     }
   }
 
@@ -134,11 +134,11 @@ function GroupsPage(): React.ReactElement {
     if (!confirm(t('group.confirmDelete', { name: group.name }))) return
     try {
       await deleteGroup(group.id)
-      addToast({ type: 'success', message: t('group.groupDeleted', { name: group.name }) })
+      toast({ variant: 'success', message: t('group.groupDeleted', { name: group.name }) })
       refresh()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.deleteFailed') })
+      toast({ variant: 'danger', message: t('toast.deleteFailed') })
     }
   }
 
@@ -172,7 +172,7 @@ function GroupsPage(): React.ReactElement {
       }
     }
 
-    addToast({ type: 'success', message: t('group.importedCount', { count: created }) })
+    toast({ variant: 'success', message: t('group.importedCount', { count: created }) })
     setCsvInput('')
     setIsImporting(false)
     refresh()
@@ -205,7 +205,7 @@ function GroupsPage(): React.ReactElement {
       }
     }
 
-    addToast({ type: 'success', message: t('group.importedFromCSV', { count: created }) })
+    toast({ variant: 'success', message: t('group.importedFromCSV', { count: created }) })
     refresh()
     sync()
   }
@@ -224,15 +224,15 @@ function GroupsPage(): React.ReactElement {
         leaderId: participantId,
         leaderName: participantName
       })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: participantId ? t('group.leaderSet') : t('group.leaderRemoved')
       })
       refresh()
       sync()
     } catch (error) {
       console.error('Failed to set group leader:', error)
-      addToast({ type: 'error', message: t('toast.updateFailed') })
+      toast({ variant: 'danger', message: t('toast.updateFailed') })
     }
   }
 

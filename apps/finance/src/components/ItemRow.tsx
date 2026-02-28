@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { RequestItem } from '../types'
 import { BUDGET_CODES } from '../constants/budgetCodes'
-import Select from './Select'
+import { Select, Button, TextField } from 'trust-ui-react'
 
 interface Props {
   index: number
@@ -14,42 +14,50 @@ interface Props {
 export default function ItemRow({ index, item, onChange, onRemove, canRemove }: Props) {
   const { t } = useTranslation()
 
+  const budgetOptions = [
+    { value: '', label: t('budgetCode.select') },
+    ...BUDGET_CODES.map((bc, i) => ({
+      value: String(i),
+      label: `${bc.code} - ${t(`budgetCode.items.${bc.descKey}`)}`,
+    })),
+  ]
+
+  // Find the matching option index for the current budgetCode + description
+  const currentIndex = BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode)
+  const currentValue = currentIndex >= 0 ? String(currentIndex) : ''
+
   return (
     <div className="flex gap-2 items-start">
       <span className="text-sm text-gray-400 pt-2 w-6">{index + 1}</span>
-      <input
-        type="text"
+      <TextField
         placeholder={t('field.items')}
         value={item.description}
         onChange={(e) => onChange(index, { ...item, description: e.target.value })}
-        className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
       />
-      <Select
-        value={item.budgetCode || ''}
-        onChange={(e) => {
-          const code = parseInt(e.target.value)
-          onChange(index, { ...item, budgetCode: isNaN(code) ? 0 : code })
-        }}
-        selectClassName="w-64"
-      >
-        <option value="">{t('budgetCode.select')}</option>
-        {BUDGET_CODES.map((bc, i) => (
-          <option key={i} value={bc.code}>
-            {bc.code} - {t(`budgetCode.items.${bc.descKey}`)}
-          </option>
-        ))}
-      </Select>
-      <input
+      <div className="w-64 shrink-0">
+        <Select
+          options={budgetOptions}
+          value={currentValue}
+          onChange={(v) => {
+            const idx = parseInt(v as string)
+            const code = isNaN(idx) ? 0 : (BUDGET_CODES[idx]?.code ?? 0)
+            onChange(index, { ...item, budgetCode: code })
+          }}
+          placeholder={t('budgetCode.select')}
+          fullWidth
+          searchable
+        />
+      </div>
+      <TextField
         type="number"
         placeholder={t('field.totalAmount')}
         value={item.amount || ''}
         onChange={(e) => onChange(index, { ...item, amount: parseInt(e.target.value) || 0 })}
-        className="w-32 border border-gray-300 rounded px-3 py-2 text-sm text-right"
       />
       {canRemove && (
-        <button type="button" onClick={() => onRemove(index)} className="text-red-400 hover:text-red-600 pt-2">
-          ✕
-        </button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onRemove(index)}>
+          <span className="text-red-400 hover:text-red-600">&#10005;</span>
+        </Button>
       )}
     </div>
   )

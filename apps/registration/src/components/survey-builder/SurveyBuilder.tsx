@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '../ui'
+import { Button } from 'trust-ui-react'
 import type { SurveyField, ParticipantFieldKey } from '../../types'
 import { createEmptyField, generateFieldId } from '../../services/surveyDefaults'
 import FieldEditor from './FieldEditor'

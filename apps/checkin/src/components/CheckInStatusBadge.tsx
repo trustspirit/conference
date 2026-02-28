@@ -1,4 +1,5 @@
 import React from 'react'
+import { Badge } from 'trust-ui-react'
 import { CheckInStatus } from '../types'
 
 interface CheckInStatusBadgeProps {
@@ -8,16 +9,16 @@ interface CheckInStatusBadgeProps {
 function CheckInStatusBadge({ status }: CheckInStatusBadgeProps): React.ReactElement {
   if (status === CheckInStatus.CheckedIn) {
     return (
-      <span className="px-2 py-1 bg-[#EFFFF6] text-[#31A24C] rounded-md text-xs font-semibold">
+      <Badge variant="success" size="sm">
         Checked In
-      </span>
+      </Badge>
     )
   }
 
   return (
-    <span className="px-2 py-1 bg-[#F0F2F5] text-[#65676B] rounded-md text-xs font-semibold">
+    <Badge variant="secondary" size="sm">
       Not Checked In
-    </span>
+    </Badge>
   )
 }
 

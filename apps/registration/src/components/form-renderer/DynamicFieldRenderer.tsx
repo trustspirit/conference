@@ -1,5 +1,5 @@
 import React from 'react'
-import { Input, Textarea, Select } from '../ui'
+import { TextField, Select } from 'trust-ui-react'
 import type { SurveyField } from '../../types'
 import LinearScaleInput from './LinearScaleInput'
 import GridInput from './GridInput'
@@ -37,13 +37,14 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       // Tel — auto-format
       if (inputType === 'tel') {
         return (
-          <Input
+          <TextField
             type="tel"
             inputMode="numeric"
             value={(value as string) || ''}
             onChange={(e) => onChange(formatPhone(e.target.value))}
             placeholder="010-0000-0000"
             required={field.required}
+            fullWidth
           />
         )
       }
@@ -51,12 +52,13 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       // Email — pattern validation
       if (inputType === 'email') {
         return (
-          <Input
+          <TextField
             type="email"
             value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder="email@example.com"
             required={field.required}
+            fullWidth
           />
         )
       }
@@ -64,34 +66,38 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       // Number
       if (inputType === 'number') {
         return (
-          <Input
+          <TextField
             type="number"
             inputMode="numeric"
             value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             required={field.required}
+            fullWidth
           />
         )
       }
 
       // Default text
       return (
-        <Input
+        <TextField
           type="text"
           value={(value as string) || ''}
           onChange={(e) => onChange(e.target.value)}
           required={field.required}
+          fullWidth
         />
       )
     }
 
     case 'long_text':
       return (
-        <Textarea
+        <TextField
+          multiline
+          rows={4}
           value={(value as string) || ''}
           onChange={(e) => onChange(e.target.value)}
           required={field.required}
-          rows={4}
+          fullWidth
         />
       )
 
@@ -141,18 +147,18 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
     case 'dropdown': {
       const opts = resolveOptions(field, formData)
       const disabled = field.dependsOn && opts.length === 0
+      const selectOptions = [
+        { value: '', label: '' },
+        ...opts.map((opt) => ({ value: opt, label: opt })),
+      ]
       return (
         <Select
+          options={selectOptions}
           value={(value as string) || ''}
-          onChange={(e) => onChange(e.target.value)}
-          required={field.required}
+          onChange={(v) => onChange(v as string)}
           disabled={!!disabled}
-        >
-          <option value="">{''}</option>
-          {opts.map((opt, idx) => (
-            <option key={`${field.id}_${idx}`} value={opt}>{opt}</option>
-          ))}
-        </Select>
+          fullWidth
+        />
       )
     }
 
@@ -174,10 +180,26 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       return <GridInput config={field.grid} value={(value as Record<string, string | string[]>) || {}} onChange={onChange} />
 
     case 'date':
-      return <Input type="date" value={(value as string) || ''} onChange={(e) => onChange(e.target.value)} required={field.required} />
+      return (
+        <input
+          type="date"
+          value={(value as string) || ''}
+          onChange={(e) => onChange(e.target.value)}
+          required={field.required}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150"
+        />
+      )
 
     case 'time':
-      return <Input type="time" value={(value as string) || ''} onChange={(e) => onChange(e.target.value)} required={field.required} />
+      return (
+        <input
+          type="time"
+          value={(value as string) || ''}
+          onChange={(e) => onChange(e.target.value)}
+          required={field.required}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-150"
+        />
+      )
 
     case 'section':
       return <></>

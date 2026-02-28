@@ -1,6 +1,5 @@
 import { useState, useCallback, RefObject } from 'react'
-import { useSetAtom } from 'jotai'
-import { addToastAtom } from '../stores/toastStore'
+import { useToast } from 'trust-ui-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 
@@ -20,7 +19,7 @@ export function useExportPDF(
 ): UseExportPDFReturn {
   const { filename = 'export', backgroundColor = '#F0F2F5' } = options
   const [isExporting, setIsExporting] = useState(false)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const exportPDF = useCallback(async (): Promise<void> => {
     if (!elementRef.current || isExporting) return
@@ -108,14 +107,14 @@ export function useExportPDF(
       const fullFilename = `${filename}_${dateStr}.pdf`
 
       pdf.save(fullFilename)
-      addToast({ type: 'success', message: 'PDF exported successfully' })
+      toast({ variant: 'success', message: 'PDF exported successfully' })
     } catch (error) {
       console.error('Error exporting PDF:', error)
-      addToast({ type: 'error', message: 'Failed to export PDF' })
+      toast({ variant: 'danger', message: 'Failed to export PDF' })
     } finally {
       setIsExporting(false)
     }
-  }, [elementRef, isExporting, filename, backgroundColor, addToast])
+  }, [elementRef, isExporting, filename, backgroundColor, toast])
 
   return { isExporting, exportPDF }
 }

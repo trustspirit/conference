@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Label } from '../ui'
+import { Button } from 'trust-ui-react'
 import type { SurveyField } from '../../types'
 import DynamicFieldRenderer from './DynamicFieldRenderer'
 
@@ -34,7 +34,7 @@ function splitBySections(fields: SurveyField[]): SectionGroup[] {
   return groups
 }
 
-/** Split fields into rows: consecutive fields with same group → one row */
+/** Split fields into rows: consecutive fields with same group -> one row */
 function splitIntoRows(fields: SurveyField[]): SurveyField[][] {
   const rows: SurveyField[][] = []
   let i = 0
@@ -67,10 +67,10 @@ function renderField(
       key={field.id}
       className={colCount === -1 ? 'flex-1 min-w-0' : colCount > 1 ? 'flex-1 basis-[180px] min-w-0' : 'w-full'}
     >
-      <Label className="text-[13px] text-gray-600 font-semibold uppercase tracking-wide mb-2">
+      <label className="block text-[13px] text-gray-600 font-semibold uppercase tracking-wide mb-2">
         {field.label}
         {field.required && <span className="text-red-400 ml-0.5">*</span>}
-      </Label>
+      </label>
       {field.description && (
         <p className="text-xs text-gray-400 mb-2 normal-case tracking-normal font-normal">{field.description}</p>
       )}
@@ -180,7 +180,7 @@ function DynamicForm({ fields, initialData, onSubmit, isLoading, submitLabel }: 
       })}
 
       <div className="px-8 pb-8 pt-2">
-        <Button type="submit" size="lg" disabled={isLoading || !isValid}>
+        <Button type="submit" fullWidth disabled={isLoading || !isValid} loading={isLoading}>
           {isLoading ? t('register.submitting') : submitLabel}
         </Button>
       </div>

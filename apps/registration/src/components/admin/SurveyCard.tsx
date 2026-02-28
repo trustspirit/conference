@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button } from '../ui'
+import { Button } from 'trust-ui-react'
 import type { Survey } from '../../types'
 
 interface SurveyCardProps {

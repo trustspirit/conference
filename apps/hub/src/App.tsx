@@ -1,5 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button } from 'trust-ui-react'
 import { changeLanguage, getCurrentLanguage } from './i18n'
 
 interface ServiceDef {
@@ -133,12 +134,9 @@ function App(): React.ReactElement {
     <div className="min-h-screen bg-[#F0F2F5]">
       <nav className="bg-white shadow-sm px-6 h-14 flex items-center justify-between sticky top-0 z-50">
         <h1 className="text-[28px] font-bold text-[#1877F2] tracking-tighter">conference</h1>
-        <button
-          onClick={toggleLanguage}
-          className="px-3 py-1.5 text-sm font-medium text-[#65676B] bg-[#E4E6EB] hover:bg-[#D8DADF] rounded-lg transition-colors"
-        >
+        <Button variant="secondary" size="sm" onClick={toggleLanguage}>
           {currentLang === 'ko' ? 'EN' : '한국어'}
-        </button>
+        </Button>
       </nav>
 
       <main className="max-w-4xl mx-auto px-6 py-16">

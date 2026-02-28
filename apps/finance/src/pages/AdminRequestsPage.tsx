@@ -11,7 +11,7 @@ import PageHeader from "../components/PageHeader";
 import InfiniteScrollSentinel from "../components/InfiniteScrollSentinel";
 import Tooltip from "../components/Tooltip";
 import { useTranslation } from "react-i18next";
-import Select from "../components/Select";
+import { Select } from "trust-ui-react";
 import {
   canSeeCommitteeRequests,
   DEFAULT_APPROVAL_THRESHOLD,
@@ -259,23 +259,23 @@ export default function AdminRequestsPage() {
           <div className="sm:hidden">
             <div className="flex items-center gap-2 mb-3">
               <Select
+                options={[
+                  { value: "date-desc", label: `${t("field.date")} \u2193` },
+                  { value: "date-asc", label: `${t("field.date")} \u2191` },
+                  { value: "payee-asc", label: `${t("field.payee")} \u2191` },
+                  { value: "payee-desc", label: `${t("field.payee")} \u2193` },
+                  { value: "totalAmount-desc", label: `${t("field.totalAmount")} \u2193` },
+                  { value: "totalAmount-asc", label: `${t("field.totalAmount")} \u2191` },
+                  { value: "status-asc", label: `${t("status.label")} \u2191` },
+                  { value: "status-desc", label: `${t("status.label")} \u2193` },
+                ]}
                 value={`${sortKey}-${sortDir}`}
-                onChange={(e) => {
-                  const [k, d] = e.target.value.split("-") as [SortKey, SortDir];
+                onChange={(v) => {
+                  const [k, d] = (v as string).split("-") as [SortKey, SortDir];
                   setSortKey(k);
                   setSortDir(d);
                 }}
-                selectClassName="text-xs text-gray-600"
-              >
-                <option value="date-desc">{t("field.date")} ↓</option>
-                <option value="date-asc">{t("field.date")} ↑</option>
-                <option value="payee-asc">{t("field.payee")} ↑</option>
-                <option value="payee-desc">{t("field.payee")} ↓</option>
-                <option value="totalAmount-desc">{t("field.totalAmount")} ↓</option>
-                <option value="totalAmount-asc">{t("field.totalAmount")} ↑</option>
-                <option value="status-asc">{t("status.label")} ↑</option>
-                <option value="status-desc">{t("status.label")} ↓</option>
-              </Select>
+              />
             </div>
 
             <div className={`space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? "opacity-40" : ""}`}>

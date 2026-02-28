@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { useToast } from 'trust-ui-react'
 import { resetAllData } from '../services/firebase'
 import { signOut } from '../services/firebase'
 import { syncAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import { userNameAtom } from '../stores/userStore'
 import {
   eventPeriodStartAtom,
@@ -20,7 +20,7 @@ import { userRoleAtom } from '../stores/authStore'
 function SettingsPage(): React.ReactElement {
   const { t } = useTranslation()
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
   const currentUser = useAtomValue(userNameAtom)
   const eventPeriodStart = useAtomValue(eventPeriodStartAtom)
   const eventPeriodEnd = useAtomValue(eventPeriodEndAtom)
@@ -61,7 +61,7 @@ function SettingsPage(): React.ReactElement {
 
   const handleSaveEventPeriod = () => {
     if (!eventStartInput || !eventEndInput) {
-      addToast({ type: 'error', message: t('settings.eventPeriodRequired') })
+      toast({ variant: 'danger', message: t('settings.eventPeriodRequired') })
       return
     }
 
@@ -69,19 +69,19 @@ function SettingsPage(): React.ReactElement {
     const endDate = parseDateFromInput(eventEndInput)
 
     if (startDate > endDate) {
-      addToast({ type: 'error', message: t('settings.eventPeriodInvalid') })
+      toast({ variant: 'danger', message: t('settings.eventPeriodInvalid') })
       return
     }
 
     setEventPeriod({ startDate, endDate })
-    addToast({ type: 'success', message: t('settings.eventPeriodSaved') })
+    toast({ variant: 'success', message: t('settings.eventPeriodSaved') })
   }
 
   const handleClearEventPeriod = () => {
     clearEventPeriod()
     setEventStartInput('')
     setEventEndInput('')
-    addToast({ type: 'success', message: t('settings.eventPeriodCleared') })
+    toast({ variant: 'success', message: t('settings.eventPeriodCleared') })
   }
 
   const handleLanguageChange = (lang: string) => {
@@ -95,17 +95,17 @@ function SettingsPage(): React.ReactElement {
       const result = await resetAllData()
       if (result.success) {
         await sync()
-        addToast({
-          type: 'success',
+        toast({
+          variant: 'success',
           message: `${t('settings.resetDataSuccess')} (${t('settings.deleted')}: ${result.participantsDeleted} ${t('nav.participants')}, ${result.groupsDeleted} ${t('nav.groups')}, ${result.roomsDeleted} ${t('nav.rooms')})`
         })
         setShowResetDialog(false)
       } else {
-        addToast({ type: 'error', message: result.error || t('settings.resetDataFailed') })
+        toast({ variant: 'danger', message: result.error || t('settings.resetDataFailed') })
       }
     } catch (error) {
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: getErrorMessage(error, t('settings.resetDataFailed'))
       })
     } finally {

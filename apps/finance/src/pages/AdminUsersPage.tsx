@@ -8,7 +8,7 @@ import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
-import Select from '../components/Select'
+import { Select, Button } from 'trust-ui-react'
 import { TrashIcon } from '../components/Icons'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 
@@ -228,20 +228,21 @@ export default function AdminUsersPage() {
                           ) : (
                             <>
                               <Select
+                                options={[
+                                  { value: 'user', label: t('role.user') },
+                                  { value: 'finance_ops', label: t('role.finance_ops') },
+                                  { value: 'approver_ops', label: t('role.approver_ops') },
+                                  { value: 'finance_prep', label: t('role.finance_prep') },
+                                  { value: 'approver_prep', label: t('role.approver_prep') },
+                                  { value: 'session_director', label: t('role.session_director') },
+                                  { value: 'logistic_admin', label: t('role.logistic_admin') },
+                                  { value: 'executive', label: t('role.executive') },
+                                  { value: 'admin', label: t('role.admin') },
+                                ]}
                                 value={u.role}
                                 disabled={u.uid === currentUser?.uid}
-                                onChange={(e) => handleRoleChange(u.uid, e.target.value as UserRole)}
-                              >
-                                <option value="user">{t('role.user')}</option>
-                                <option value="finance_ops">{t('role.finance_ops')}</option>
-                                <option value="approver_ops">{t('role.approver_ops')}</option>
-                                <option value="finance_prep">{t('role.finance_prep')}</option>
-                                <option value="approver_prep">{t('role.approver_prep')}</option>
-                                <option value="session_director">{t('role.session_director')}</option>
-                                <option value="logistic_admin">{t('role.logistic_admin')}</option>
-                                <option value="executive">{t('role.executive')}</option>
-                                <option value="admin">{t('role.admin')}</option>
-                              </Select>
+                                onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
+                              />
                               {successUid === u.uid && (
                                 <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
                               )}
@@ -251,14 +252,14 @@ export default function AdminUsersPage() {
                       )}
                       {isAdmin && (
                         <td className="px-4 py-3 text-center">
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDeleteUser(u.uid)}
                             disabled={u.uid === currentUser?.uid || u.role === 'super_admin'}
-                            className="p-1 text-gray-400 hover:text-red-500 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                            title={t('users.deleteUser')}
                           >
                             <TrashIcon className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </td>
                       )}
                     </tr>
@@ -291,34 +292,35 @@ export default function AdminUsersPage() {
                     ) : (
                       <>
                         <Select
+                          options={[
+                            { value: 'user', label: t('role.user') },
+                            { value: 'finance_ops', label: t('role.finance_ops') },
+                            { value: 'approver_ops', label: t('role.approver_ops') },
+                            { value: 'finance_prep', label: t('role.finance_prep') },
+                            { value: 'approver_prep', label: t('role.approver_prep') },
+                            { value: 'session_director', label: t('role.session_director') },
+                            { value: 'logistic_admin', label: t('role.logistic_admin') },
+                            { value: 'executive', label: t('role.executive') },
+                            { value: 'admin', label: t('role.admin') },
+                          ]}
                           value={u.role}
                           disabled={u.uid === currentUser?.uid}
-                          onChange={(e) => handleRoleChange(u.uid, e.target.value as UserRole)}
-                          selectClassName="w-full"
-                        >
-                          <option value="user">{t('role.user')}</option>
-                          <option value="finance_ops">{t('role.finance_ops')}</option>
-                          <option value="approver_ops">{t('role.approver_ops')}</option>
-                          <option value="finance_prep">{t('role.finance_prep')}</option>
-                          <option value="approver_prep">{t('role.approver_prep')}</option>
-                          <option value="session_director">{t('role.session_director')}</option>
-                          <option value="logistic_admin">{t('role.logistic_admin')}</option>
-                          <option value="executive">{t('role.executive')}</option>
-                          <option value="admin">{t('role.admin')}</option>
-                        </Select>
+                          onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
+                          fullWidth
+                        />
                         {successUid === u.uid && (
                           <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
                         )}
                       </>
                     )}
                     {u.uid !== currentUser?.uid && u.role !== 'super_admin' && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDeleteUser(u.uid)}
-                        className="mt-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        title={t('users.deleteUser')}
                       >
                         <TrashIcon className="w-4 h-4" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 ) : (

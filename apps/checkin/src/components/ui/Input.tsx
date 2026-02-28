@@ -1,4 +1,7 @@
 import React from 'react'
+import { TextField } from 'trust-ui-react'
+
+type TextFieldType = 'text' | 'email' | 'password' | 'number' | 'search' | 'tel' | 'url'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -10,9 +13,34 @@ function Input({
   label,
   error,
   required,
-  className = '',
+  className,
+  type,
+  size: _size,
   ...props
 }: InputProps): React.ReactElement {
+  const supportedTypes: string[] = ['text', 'email', 'password', 'number', 'search', 'tel', 'url']
+  const isSupported = !type || supportedTypes.includes(type)
+
+  if (isSupported) {
+    return (
+      <TextField
+        label={label ? (required ? `${label} *` : label) : undefined}
+        type={(type as TextFieldType) || undefined}
+        error={!!error}
+        errorMessage={error}
+        fullWidth
+        className={className}
+        value={props.value as string | undefined}
+        onChange={props.onChange}
+        placeholder={props.placeholder}
+        disabled={props.disabled}
+        name={props.name}
+        id={props.id}
+      />
+    )
+  }
+
+  // For unsupported types (date, time, etc.) fall back to native input
   return (
     <div className="w-full">
       {label && (
@@ -22,11 +50,12 @@ function Input({
         </label>
       )}
       <input
+        type={type}
         className={`
           w-full px-4 py-2 bg-[#F0F2F5] rounded-lg outline-none
           focus:ring-2 focus:ring-[#1877F2] placeholder-[#65676B]
           ${error ? 'ring-2 ring-[#FA383E]' : ''}
-          ${className}
+          ${className || ''}
         `}
         {...props}
       />

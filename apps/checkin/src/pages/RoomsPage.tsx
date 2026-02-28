@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useToast } from 'trust-ui-react'
 import { useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { participantsAtom, syncAtom } from '../stores/dataStore'
-import { addToastAtom } from '../stores/toastStore'
 import {
   createOrGetRoom,
   deleteRoom,
@@ -32,7 +32,7 @@ function RoomsPage(): React.ReactElement {
   const navigate = useNavigate()
   const participants = useAtomValue(participantsAtom)
   const sync = useSetAtom(syncAtom)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   // Batched infinite scroll pagination with realtime sync
   const {
@@ -107,7 +107,7 @@ function RoomsPage(): React.ReactElement {
         genderType: newGenderType || undefined,
         roomType: newRoomType || undefined
       })
-      addToast({ type: 'success', message: t('room.roomCreated', { number: room.roomNumber }) })
+      toast({ variant: 'success', message: t('room.roomCreated', { number: room.roomNumber }) })
       setNewRoomNumber('')
       setNewRoomCapacity(4)
       setNewGenderType('')
@@ -116,7 +116,7 @@ function RoomsPage(): React.ReactElement {
       refresh()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.createFailed') })
+      toast({ variant: 'danger', message: t('toast.createFailed') })
     }
   }
 
@@ -131,11 +131,11 @@ function RoomsPage(): React.ReactElement {
     if (!confirm(warningMsg)) return
     try {
       await deleteRoom(room.id)
-      addToast({ type: 'success', message: t('room.roomDeleted', { number: room.roomNumber }) })
+      toast({ variant: 'success', message: t('room.roomDeleted', { number: room.roomNumber }) })
       refresh()
       sync()
     } catch {
-      addToast({ type: 'error', message: t('toast.deleteFailed') })
+      toast({ variant: 'danger', message: t('toast.deleteFailed') })
     }
   }
 
@@ -184,7 +184,7 @@ function RoomsPage(): React.ReactElement {
       }
     }
 
-    addToast({ type: 'success', message: t('room.importedCount', { count: created }) })
+    toast({ variant: 'success', message: t('room.importedCount', { count: created }) })
     setCsvInput('')
     setIsImporting(false)
     refresh()
@@ -224,7 +224,7 @@ function RoomsPage(): React.ReactElement {
       }
     }
 
-    addToast({ type: 'success', message: t('room.importedFromCSV', { count: created }) })
+    toast({ variant: 'success', message: t('room.importedFromCSV', { count: created }) })
     refresh()
     sync()
   }
@@ -243,15 +243,15 @@ function RoomsPage(): React.ReactElement {
         leaderId: participantId,
         leaderName: participantName
       })
-      addToast({
-        type: 'success',
+      toast({
+        variant: 'success',
         message: participantId ? t('room.leaderSet') : t('room.leaderRemoved')
       })
       refresh()
       sync()
     } catch (error) {
       console.error('Failed to set room leader:', error)
-      addToast({ type: 'error', message: t('toast.updateFailed') })
+      toast({ variant: 'danger', message: t('toast.updateFailed') })
     }
   }
 

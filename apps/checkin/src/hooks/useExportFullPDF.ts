@@ -1,6 +1,5 @@
 import { useState, useCallback, RefObject } from 'react'
-import { useSetAtom } from 'jotai'
-import { addToastAtom } from '../stores/toastStore'
+import { useToast } from 'trust-ui-react'
 import jsPDF from 'jspdf'
 import domToImage from 'dom-to-image-more'
 
@@ -236,7 +235,7 @@ export function useExportFullPDF(
 ): UseExportFullPDFReturn {
   const { filename = 'export', backgroundColor = '#FFFFFF', orientation = 'landscape' } = options
   const [isExporting, setIsExporting] = useState(false)
-  const addToast = useSetAtom(addToastAtom)
+  const { toast } = useToast()
 
   const exportFullPDF = useCallback(async (): Promise<void> => {
     if (!elementRef.current || isExporting) return
@@ -290,17 +289,17 @@ export function useExportFullPDF(
       // Save
       const dateStr = new Date().toISOString().split('T')[0]
       pdf.save(`${filename}_${dateStr}.pdf`)
-      addToast({ type: 'success', message: 'PDF exported successfully' })
+      toast({ variant: 'success', message: 'PDF exported successfully' })
     } catch (error) {
       console.error('Error exporting PDF:', error)
-      addToast({
-        type: 'error',
+      toast({
+        variant: 'danger',
         message: `PDF 내보내기 실패: ${error instanceof Error ? error.message : 'Unknown error'}`
       })
     } finally {
       setIsExporting(false)
     }
-  }, [elementRef, isExporting, filename, backgroundColor, orientation, addToast])
+  }, [elementRef, isExporting, filename, backgroundColor, orientation, toast])
 
   return { isExporting, exportFullPDF }
 }

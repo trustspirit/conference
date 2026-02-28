@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import Select from '../ui/Select'
+import { Select } from 'trust-ui-react'
 import type { ParticipantFieldKey } from '../../types'
 
 interface ParticipantFieldPickerProps {
@@ -16,21 +16,24 @@ const ALL_PARTICIPANT_FIELDS: ParticipantFieldKey[] = [
 function ParticipantFieldPicker({ value, onChange, usedFields }: ParticipantFieldPickerProps): React.ReactElement {
   const { t } = useTranslation()
 
+  const options = [
+    { value: '', label: t('builder.noMapping') },
+    ...ALL_PARTICIPANT_FIELDS.map((field) => ({
+      value: field,
+      label: t(`builder.participantFields.${field}`),
+      disabled: usedFields.includes(field) && field !== value,
+    })),
+  ]
+
   return (
     <div>
       <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.participantField')}</label>
       <Select
+        options={options}
         value={value || ''}
-        onChange={(e) => onChange(e.target.value ? (e.target.value as ParticipantFieldKey) : undefined)}
-        className="text-sm py-1.5"
-      >
-        <option value="">{t('builder.noMapping')}</option>
-        {ALL_PARTICIPANT_FIELDS.map((field) => (
-          <option key={field} value={field} disabled={usedFields.includes(field) && field !== value}>
-            {t(`builder.participantFields.${field}`)}
-          </option>
-        ))}
-      </Select>
+        onChange={(v) => onChange((v as string) ? (v as ParticipantFieldKey) : undefined)}
+        size="sm"
+      />
     </div>
   )
 }
