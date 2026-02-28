@@ -11,12 +11,14 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  type QueryConstraint,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { Application, ApplicationStatus } from '../../types'
 import { APPLY_APPLICATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
+import { useConference } from '../../contexts/ConferenceContext'
 import { toDate } from './firestoreUtils'
 
 function mapApplication(id: string, data: Record<string, unknown>): Application {
@@ -30,42 +32,48 @@ function mapApplication(id: string, data: Record<string, unknown>): Application 
 
 export function useApplications() {
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
+  const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: appUser?.role === 'bishop'
+    queryKey: [...(appUser?.role === 'bishop'
       ? queryKeys.applications.byWard(appUser.ward)
       : appUser?.role === 'stake_president'
         ? queryKeys.applications.byStake(appUser.stake)
-        : queryKeys.applications.all(),
+        : queryKeys.applications.all()), conferenceId],
     queryFn: async () => {
-      let q
+      const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
+      if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
       if (appUser?.role === 'bishop') {
-        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
+        constraints.unshift(where('ward', '==', appUser.ward))
       } else if (appUser?.role === 'stake_president') {
-        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
-      } else {
-        q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), orderBy('createdAt', 'desc'))
+        constraints.unshift(where('stake', '==', appUser.stake))
       }
+      const q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), ...constraints)
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapApplication(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant',
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
   })
 }
 
 export function useMyApplication() {
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
+  const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: queryKeys.applications.byUser(appUser?.uid || ''),
+    queryKey: [...queryKeys.applications.byUser(appUser?.uid || ''), conferenceId],
     queryFn: async () => {
-      const q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), where('userId', '==', appUser!.uid))
+      const constraints: QueryConstraint[] = [where('userId', '==', appUser!.uid)]
+      if (conferenceId) constraints.push(where('conferenceId', '==', conferenceId))
+      const q = query(collection(db, APPLY_APPLICATIONS_COLLECTION), ...constraints)
       const snap = await getDocs(q)
       if (snap.empty) return null
       const d = snap.docs[0]
       return mapApplication(d.id, d.data())
     },
-    enabled: !!appUser,
+    enabled: !!appUser && !!conferenceId,
   })
 }
 
@@ -84,6 +92,7 @@ export function useApplicationDetail(id: string) {
 export function useCreateApplication() {
   const queryClient = useQueryClient()
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
 
   return useMutation({
     mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & { status?: ApplicationStatus }) => {
@@ -91,6 +100,7 @@ export function useCreateApplication() {
       const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
         ...rest,
         userId: appUser!.uid,
+        conferenceId: currentConference?.id || '',
         status: status || ('awaiting' as ApplicationStatus),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

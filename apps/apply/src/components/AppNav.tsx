@@ -7,6 +7,7 @@ import { getRoleTone } from '../utils/constants'
 import { Badge, Avatar, Menu } from 'trust-ui-react'
 import { ROLE_LABELS } from '../utils/roleConfig'
 import { ChevronDownIcon } from './Icons'
+import ConferenceSelector from './ConferenceSelector'
 
 const TONE_TO_BADGE_VARIANT: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
   admin: 'primary',
@@ -82,7 +83,8 @@ export default function AppNav() {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="mx-auto max-w-7xl px-4 flex items-center justify-between h-14">
         <div className="flex items-center gap-1 overflow-x-auto">
-          <span className="text-lg font-bold text-blue-600 mr-4 shrink-0">Apply</span>
+          <span className="text-lg font-bold text-blue-600 mr-2 shrink-0">Apply</span>
+          <ConferenceSelector />
           {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={linkStyle}>
               {item.label}

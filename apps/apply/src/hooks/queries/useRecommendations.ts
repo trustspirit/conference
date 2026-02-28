@@ -11,12 +11,14 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  type QueryConstraint,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { LeaderRecommendation, RecommendationStatus } from '../../types'
 import { APPLY_RECOMMENDATIONS_COLLECTION } from '../../collections'
 import { queryKeys } from './queryKeys'
 import { useAuth } from '../../contexts/AuthContext'
+import { useConference } from '../../contexts/ConferenceContext'
 import { toDate } from './firestoreUtils'
 
 function mapRecommendation(id: string, data: Record<string, unknown>): LeaderRecommendation {
@@ -30,44 +32,46 @@ function mapRecommendation(id: string, data: Record<string, unknown>): LeaderRec
 
 export function useRecommendations() {
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
+  const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: appUser?.role === 'bishop'
+    queryKey: [...(appUser?.role === 'bishop'
       ? queryKeys.recommendations.byWard(appUser.ward)
       : appUser?.role === 'stake_president'
         ? queryKeys.recommendations.byStake(appUser.stake)
-        : queryKeys.recommendations.all(),
+        : queryKeys.recommendations.all()), conferenceId],
     queryFn: async () => {
-      let q
+      const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
+      if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
       if (appUser?.role === 'bishop') {
-        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), where('ward', '==', appUser.ward), orderBy('createdAt', 'desc'))
+        constraints.unshift(where('ward', '==', appUser.ward))
       } else if (appUser?.role === 'stake_president') {
-        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), where('stake', '==', appUser.stake), orderBy('createdAt', 'desc'))
-      } else {
-        q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), orderBy('createdAt', 'desc'))
+        constraints.unshift(where('stake', '==', appUser.stake))
       }
+      const q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), ...constraints)
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant',
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
   })
 }
 
 export function useMyRecommendations() {
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
+  const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: queryKeys.recommendations.byLeader(appUser?.uid || ''),
+    queryKey: [...queryKeys.recommendations.byLeader(appUser?.uid || ''), conferenceId],
     queryFn: async () => {
-      const q = query(
-        collection(db, APPLY_RECOMMENDATIONS_COLLECTION),
-        where('leaderId', '==', appUser!.uid),
-        orderBy('createdAt', 'desc'),
-      )
+      const constraints: QueryConstraint[] = [where('leaderId', '==', appUser!.uid), orderBy('createdAt', 'desc')]
+      if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
+      const q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), ...constraints)
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
     },
-    enabled: !!appUser,
+    enabled: !!appUser && !!conferenceId,
   })
 }
 
@@ -86,6 +90,7 @@ export function useRecommendationDetail(id: string) {
 export function useCreateRecommendation() {
   const queryClient = useQueryClient()
   const { appUser } = useAuth()
+  const { currentConference } = useConference()
 
   return useMutation({
     mutationFn: async (
@@ -95,6 +100,7 @@ export function useCreateRecommendation() {
       const docRef = await addDoc(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), {
         ...rest,
         leaderId: appUser!.uid,
+        conferenceId: currentConference?.id || '',
         status: status || ('draft' as RecommendationStatus),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

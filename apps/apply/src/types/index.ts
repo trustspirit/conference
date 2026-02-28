@@ -5,6 +5,18 @@ export type ApplicationStatus = 'draft' | 'awaiting' | 'approved' | 'rejected'
 export type RecommendationStatus = 'draft' | 'submitted' | 'approved' | 'rejected'
 export type Gender = 'male' | 'female'
 
+// Conference (대회/행사)
+export interface Conference {
+  id: string
+  name: string
+  description: string
+  eligibilityRequirements: string[]
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
 // User (Firebase Auth + Firestore)
 export interface AppUser {
   uid: string
@@ -23,6 +35,7 @@ export interface AppUser {
 // Application
 export interface Application {
   id: string
+  conferenceId?: string
   userId: string
   name: string
   age: number
@@ -43,6 +56,7 @@ export interface Application {
 // Leader Recommendation
 export interface LeaderRecommendation {
   id: string
+  conferenceId?: string
   leaderId: string
   name: string
   age: number

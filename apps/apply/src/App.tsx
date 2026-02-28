@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ConferenceProvider } from './contexts/ConferenceContext'
 import {
   RequireAuth,
   RequireAdmin,
@@ -49,12 +50,12 @@ function PublicLayout() {
 
 function AuthenticatedLayout() {
   return (
-    <>
+    <ConferenceProvider>
       <AppNav />
       <Suspense fallback={<FullPageLoader />}>
         <Outlet />
       </Suspense>
-    </>
+    </ConferenceProvider>
   )
 }
 

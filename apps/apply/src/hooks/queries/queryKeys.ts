@@ -28,7 +28,8 @@ export const queryKeys = {
     all: () => ['stakeWardChanges'] as const,
     pending: () => ['stakeWardChanges', 'pending'] as const,
   },
-  settings: {
-    eligibility: () => ['settings', 'eligibility'] as const,
+  conferences: {
+    all: () => ['conferences'] as const,
+    detail: (id: string) => ['conferences', id] as const,
   },
 } as const

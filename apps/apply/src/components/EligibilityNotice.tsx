@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { useEligibility } from '../hooks/queries/useSettings'
+import { useConference } from '../contexts/ConferenceContext'
 
 export default function EligibilityNotice() {
   const { t } = useTranslation()
-  const { data } = useEligibility()
+  const { currentConference } = useConference()
 
-  const requirements = data?.requirements || []
+  const requirements = currentConference?.eligibilityRequirements || []
   if (requirements.length === 0) return null
 
   return (
