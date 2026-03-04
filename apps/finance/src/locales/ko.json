@@ -149,7 +149,14 @@
     "committeeRequired": "소속 위원회를 선택해주세요.",
     "displayNameRequired": "선호하는 이름을 입력해주세요.",
     "invalidFileType": "\"{{name}}\" - 허용되지 않는 형식 (PNG, JPG, PDF만 가능)",
-    "fileTooLarge": "\"{{name}}\" - 2MB 초과 ({{size}}MB)"
+    "fileTooLarge": "\"{{name}}\" - 2MB 초과 ({{size}}MB)",
+    "consentRequired": "개인정보 처리 동의가 필요합니다."
+  },
+  "consent": {
+    "title": "개인정보 처리 동의",
+    "agreement": "본 서비스는 예수 그리스도 후기성도 교회의 공식 웹 서비스가 아닙니다. 입력하신 개인 정보는 Google의 보안 저장소(Firebase)에 안전하게 저장되지만, 데이터의 손실 또는 노출 시 예수 그리스도 후기성도 교회는 이에 대한 책임을 지지 않습니다.",
+    "checkboxLabel": "위 내용을 읽었으며 동의합니다.",
+    "confirm": "동의하고 계속하기"
   },
   "approval": {
     "signTitle": "승인 서명",

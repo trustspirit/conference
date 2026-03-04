@@ -43,6 +43,7 @@ export interface AppUser {
   bankBookDriveUrl?: string
   role: UserRole
   projectIds: string[]
+  consentAgreedAt?: string
 }
 
 export type Committee = 'operations' | 'preparation'

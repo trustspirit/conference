@@ -155,6 +155,12 @@
     "surveyDeactivated": "Survey deactivated",
     "surveyDeleted": "Survey deleted"
   },
+  "consent": {
+    "title": "Data Handling Consent",
+    "agreement": "This service is not an official web service of The Church of Jesus Christ of Latter-day Saints. Your personal information is securely stored in Google's secure storage (Firebase); however, The Church of Jesus Christ of Latter-day Saints bears no responsibility for any loss or exposure of data.",
+    "checkboxLabel": "I have read and agree to the above terms.",
+    "confirm": "Agree and Continue"
+  },
   "builder": {
     "editSurvey": "Edit Survey",
     "tabQuestions": "Questions",

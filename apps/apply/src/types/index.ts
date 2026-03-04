@@ -44,6 +44,7 @@ export interface AppUser {
   picture: string
   pendingWard?: string
   pendingStake?: string
+  consentAgreedAt?: string
 }
 
 /** Returns the preferred name if set, otherwise the account name */

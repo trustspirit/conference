@@ -5,7 +5,7 @@ import { functions } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { Committee } from '../types'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../lib/utils'
-import { Dialog, TextField, Button, useToast } from 'trust-ui-react'
+import { Dialog, TextField, Button, Checkbox, useToast } from 'trust-ui-react'
 import BankSelect from './BankSelect'
 import ErrorAlert from './ErrorAlert'
 import CommitteeSelect from './CommitteeSelect'
@@ -21,6 +21,7 @@ export default function DisplayNameModal() {
   const [committee, setCommittee] = useState<Committee | ''>('')
   const [bankBookFile, setBankBookFile] = useState<File | null>(null)
   const [bankBookError, setBankBookError] = useState<string | null>(null)
+  const [consentAgreed, setConsentAgreed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
 
@@ -38,6 +39,7 @@ export default function DisplayNameModal() {
     if (!bankName.trim()) errs.push(t('validation.bankRequired'))
     if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
     if (!committee) errs.push(t('validation.committeeRequired'))
+    if (!consentAgreed) errs.push(t('validation.consentRequired'))
     // bankBook is optional at initial setup - required at request submission
     return errs
   }
@@ -69,6 +71,7 @@ export default function DisplayNameModal() {
           bankBookImage: '',
           bankBookPath: storagePath,
           bankBookUrl: url,
+          consentAgreedAt: new Date().toISOString(),
         })
       } else {
         await updateAppUser({
@@ -77,6 +80,7 @@ export default function DisplayNameModal() {
           bankName: bankName.trim(),
           bankAccount: bankAccount.trim(),
           defaultCommittee: committee as Committee,
+          consentAgreedAt: new Date().toISOString(),
         })
       }
       setNeedsDisplayName(false)
@@ -151,6 +155,17 @@ export default function DisplayNameModal() {
 
           <CommitteeSelect value={committee} onChange={setCommittee}
             name="init-committee" label={t('field.defaultCommittee')} />
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {t('consent.agreement')}
+            </p>
+            <Checkbox
+              checked={consentAgreed}
+              onChange={(e) => setConsentAgreed(e.target.checked)}
+              label={t('consent.checkboxLabel')}
+            />
+          </div>
         </div>
       </Dialog.Content>
       <Dialog.Actions>

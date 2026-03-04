@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
-import { Select, Button, TextField } from 'trust-ui-react'
+import { Select, Button, TextField, Checkbox } from 'trust-ui-react'
 import { StakeWardSelector } from '../../components/form'
 import Alert from '../../components/Alert'
 import { useConferences } from '../../hooks/queries/useConferences'
@@ -29,6 +29,7 @@ export default function CompleteProfilePage() {
   const [ward, setWard] = useState('')
   const [stake, setStake] = useState('')
   const [selectedConferenceId, setSelectedConferenceId] = useState('')
+  const [consentAgreed, setConsentAgreed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -47,6 +48,7 @@ export default function CompleteProfilePage() {
         stake,
         leaderStatus: role === 'applicant' ? null : 'pending',
         name: trimmedName,
+        consentAgreedAt: new Date().toISOString(),
       }
       // If the entered name differs from the Google account name, save as preferredName too
       if (googleName && trimmedName !== googleName) {
@@ -130,11 +132,22 @@ export default function CompleteProfilePage() {
           </div>
         )}
 
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {t('consent.agreement')}
+          </p>
+          <Checkbox
+            checked={consentAgreed}
+            onChange={(e) => setConsentAgreed(e.target.checked)}
+            label={t('consent.checkboxLabel')}
+          />
+        </div>
+
         <Button
           type="submit"
           variant="primary"
           fullWidth
-          disabled={saving || !role || !stake || !ward || !name.trim()}
+          disabled={saving || !role || !stake || !ward || !name.trim() || !consentAgreed}
         >
           {saving ? t('auth.completeProfile.buttonLoading', '프로필 완성 중...') : t('auth.completeProfile.button', '프로필 완성')}
         </Button>

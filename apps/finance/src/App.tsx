@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ProjectProvider } from './contexts/ProjectContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import DisplayNameModal from './components/DisplayNameModal'
+import ConsentDialog from './components/ConsentDialog'
 import Spinner from './components/Spinner'
 
 // Lazy-loaded pages
@@ -27,11 +28,12 @@ const ResubmitPage = lazy(() => import('./pages/ResubmitPage'))
 const ReceiptsPage = lazy(() => import('./pages/ReceiptsPage'))
 
 function AppLayout() {
-  const { needsDisplayName, user } = useAuth()
+  const { needsDisplayName, needsConsent, user } = useAuth()
   return (
     <ProjectProvider>
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Spinner /></div>}>
         {user && needsDisplayName && <DisplayNameModal />}
+        {user && !needsDisplayName && needsConsent && <ConsentDialog />}
         <Outlet />
       </Suspense>
     </ProjectProvider>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Checkbox } from 'trust-ui-react'
 import { getSurveyById } from '../services/surveys'
 import { submitRegistration, getResponseByCode, updateRegistration, submitDynamicRegistration, updateDynamicRegistration } from '../services/responses'
 import Spinner from '../components/ui/Spinner'
@@ -25,6 +26,7 @@ function RegisterPage(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showFindCode, setShowFindCode] = useState(false)
+  const [consentAgreed, setConsentAgreed] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +49,9 @@ function RegisterPage(): React.ReactElement {
           const resp = await getResponseByCode(surveyId, editCode)
           if (resp) {
             setExistingResponse(resp)
+            if (resp.data?.consentAgreedAt) {
+              setConsentAgreed(true)
+            }
           } else {
             setError(t('register.error.invalidCode'))
           }
@@ -61,16 +66,17 @@ function RegisterPage(): React.ReactElement {
   }, [surveyId, editCode])
 
   const handleLegacySubmit = async (data: RegistrationData) => {
-    if (!surveyId) return
+    if (!surveyId || !consentAgreed) return
     setError(null)
     setSubmitting(true)
+    const dataWithConsent = { ...data, consentAgreedAt: new Date().toISOString() }
     try {
       if (existingResponse) {
-        await updateRegistration(existingResponse.id, existingResponse.participantId, data)
+        await updateRegistration(existingResponse.id, existingResponse.participantId, dataWithConsent)
         sessionStorage.setItem('registrationCode', existingResponse.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
-        const result = await submitRegistration(surveyId, data)
+        const result = await submitRegistration(surveyId, dataWithConsent)
         sessionStorage.setItem('registrationCode', result.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}`)
       }
@@ -82,16 +88,17 @@ function RegisterPage(): React.ReactElement {
   }
 
   const handleDynamicSubmit = async (data: Record<string, unknown>) => {
-    if (!surveyId || !survey?.fields) return
+    if (!surveyId || !survey?.fields || !consentAgreed) return
     setError(null)
     setSubmitting(true)
+    const dataWithConsent = { ...data, consentAgreedAt: new Date().toISOString() }
     try {
       if (existingResponse) {
-        await updateDynamicRegistration(existingResponse.id, existingResponse.participantId, data, survey.fields)
+        await updateDynamicRegistration(existingResponse.id, existingResponse.participantId, dataWithConsent, survey.fields)
         sessionStorage.setItem('registrationCode', existingResponse.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
-        const result = await submitDynamicRegistration(surveyId, data, survey.fields)
+        const result = await submitDynamicRegistration(surveyId, dataWithConsent, survey.fields)
         sessionStorage.setItem('registrationCode', result.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}`)
       }
@@ -128,6 +135,19 @@ function RegisterPage(): React.ReactElement {
 
           {error && (
             <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+          )}
+
+          {!consentAgreed && (
+            <div className="mx-8 mt-4 p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {t('consent.agreement')}
+              </p>
+              <Checkbox
+                checked={consentAgreed}
+                onChange={(e) => setConsentAgreed(e.target.checked)}
+                label={t('consent.checkboxLabel')}
+              />
+            </div>
           )}
 
           {useDynamic ? (

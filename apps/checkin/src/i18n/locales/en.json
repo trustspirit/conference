@@ -601,7 +601,8 @@
     "signInWithGoogle": "Sign in with Google",
     "signingIn": "Signing in...",
     "signInFailed": "Sign-in failed. Please try again.",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "notAuthorized": "Your account does not have access to the admin panel."
   },
   "admin": {
     "title": "User Management",
@@ -639,5 +640,11 @@
     "totalBuses": "Total Buses",
     "totalPassengers": "Total Passengers",
     "printedAt": "Printed at"
+  },
+  "consent": {
+    "title": "Data Handling Consent",
+    "agreement": "This service is not an official web service of The Church of Jesus Christ of Latter-day Saints. Your personal information is securely stored in Google's secure storage (Firebase); however, The Church of Jesus Christ of Latter-day Saints bears no responsibility for any loss or exposure of data.",
+    "checkboxLabel": "I have read and agree to the above terms.",
+    "confirm": "Agree and Continue"
   }
 }

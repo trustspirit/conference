@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAtom } from 'jotai'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { Checkbox } from 'trust-ui-react'
 import { authUserAtom, authLoadingAtom, userRoleAtom } from '../stores/authStore'
 import { onAuthChange, signOut, db } from '../services/firebase'
 import { getUserRole } from '../services/firebase'
 import LoginPage from './LoginPage'
 
 function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElement {
+  const { t } = useTranslation()
   const [user, setUser] = useAtom(authUserAtom)
   const [loading, setLoading] = useAtom(authLoadingAtom)
   const [, setUserRole] = useAtom(userRoleAtom)
   const [adminChecked, setAdminChecked] = useState(false)
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const [needsConsent, setNeedsConsent] = useState(false)
+  const [consentAgreed, setConsentAgreed] = useState(false)
+  const [consentSaving, setConsentSaving] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthChange((firebaseUser) => {
@@ -47,6 +53,10 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
             name: user.displayName || '',
             photoURL: user.photoURL || '',
           })
+          setNeedsConsent(true)
+        } else {
+          const data = userDoc.data()
+          setNeedsConsent(!data.consentAgreedAt)
         }
       } catch (err) {
         console.error('Failed to create user document:', err)
@@ -93,7 +103,7 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
             </svg>
           </div>
           <p className="text-[#050505] font-medium mb-2">
-            관리자 페이지에 접근할 수 없는 계정입니다.
+            {t('auth.notAuthorized')}
           </p>
           <p className="text-[#65676B] text-sm mb-6">
             {user.email}
@@ -102,8 +112,63 @@ function AuthGuard({ children }: { children: React.ReactNode }): React.ReactElem
             onClick={() => signOut()}
             className="w-full py-3 bg-[#E4E6EB] text-[#050505] rounded-lg font-semibold hover:bg-[#D8DADF] transition-colors"
           >
-            로그아웃
+            {t('auth.signOut')}
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (needsConsent) {
+    const handleConsentSubmit = async () => {
+      if (!user) return
+      setConsentSaving(true)
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          consentAgreedAt: new Date().toISOString(),
+        })
+        setNeedsConsent(false)
+      } catch (err) {
+        console.error('Failed to save consent:', err)
+      } finally {
+        setConsentSaving(false)
+      }
+    }
+
+    return (
+      <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md space-y-5">
+          <h2 className="text-lg font-bold text-[#050505]">
+            {t('consent.title')}
+          </h2>
+
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {t('consent.agreement')}
+            </p>
+          </div>
+
+          <Checkbox
+            checked={consentAgreed}
+            onChange={(e) => setConsentAgreed(e.target.checked)}
+            label={t('consent.checkboxLabel')}
+          />
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => signOut()}
+              className="flex-1 py-3 bg-[#E4E6EB] text-[#050505] rounded-lg font-semibold hover:bg-[#D8DADF] transition-colors"
+            >
+              {t('auth.signOut')}
+            </button>
+            <button
+              onClick={handleConsentSubmit}
+              disabled={!consentAgreed || consentSaving}
+              className="flex-1 py-3 bg-[#1877F2] text-white rounded-lg font-semibold hover:bg-[#166FE5] transition-colors disabled:opacity-50"
+            >
+              {consentSaving ? '...' : t('consent.confirm')}
+            </button>
+          </div>
         </div>
       </div>
     )

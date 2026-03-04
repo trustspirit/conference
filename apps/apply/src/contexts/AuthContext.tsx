@@ -11,10 +11,12 @@ interface AuthContextType {
   appUser: AppUser | null
   loading: boolean
   needsProfile: boolean
+  needsConsent: boolean
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   updateAppUser: (fields: Partial<AppUser>) => Promise<void>
   setNeedsProfile: (v: boolean) => void
+  setNeedsConsent: (v: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [appUser, setAppUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [needsProfile, setNeedsProfile] = useState(false)
+  const [needsConsent, setNeedsConsent] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -35,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = userDoc.data() as AppUser
             setAppUser(data)
             setNeedsProfile(!data.role)
+            setNeedsConsent(!!data.role && !data.consentAgreedAt)
           } else {
             const newUser: AppUser = {
               uid: firebaseUser.uid,
@@ -50,15 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await setDoc(doc(db, APPLY_USERS_COLLECTION, firebaseUser.uid), newUser)
             setAppUser(newUser)
             setNeedsProfile(true)
+            setNeedsConsent(false)
           }
         } else {
           setAppUser(null)
           setNeedsProfile(false)
+          setNeedsConsent(false)
         }
       } catch (error) {
         console.error('Auth state error:', error)
         setAppUser(null)
         setNeedsProfile(false)
+        setNeedsConsent(false)
       } finally {
         setLoading(false)
       }
@@ -88,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, appUser, loading, needsProfile, signInWithGoogle, logout, updateAppUser, setNeedsProfile }}
+      value={{ user, appUser, loading, needsProfile, needsConsent, signInWithGoogle, logout, updateAppUser, setNeedsProfile, setNeedsConsent }}
     >
       {children}
     </AuthContext.Provider>

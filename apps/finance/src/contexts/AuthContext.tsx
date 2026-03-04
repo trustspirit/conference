@@ -11,10 +11,12 @@ interface AuthContextType {
   appUser: AppUser | null
   loading: boolean
   needsDisplayName: boolean
+  needsConsent: boolean
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   updateAppUser: (fields: Partial<AppUser>) => Promise<void>
   setNeedsDisplayName: (v: boolean) => void
+  setNeedsConsent: (v: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [appUser, setAppUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [needsDisplayName, setNeedsDisplayName] = useState(false)
+  const [needsConsent, setNeedsConsent] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -38,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = userDoc.data() as AppUser
             setAppUser(data)
             setNeedsDisplayName(!data.displayName)
+            setNeedsConsent(!!data.displayName && !data.consentAgreedAt)
           } else {
             // Get default project ID
             let defaultProjectIds: string[] = []
@@ -77,15 +81,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             setAppUser(newUser)
             setNeedsDisplayName(true)
+            setNeedsConsent(false)
           }
         } else {
           setAppUser(null)
           setNeedsDisplayName(false)
+          setNeedsConsent(false)
         }
       } catch (error) {
         console.error('Auth state error:', error)
         setAppUser(null)
         setNeedsDisplayName(false)
+        setNeedsConsent(false)
       } finally {
         setLoading(false)
       }
@@ -118,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, needsDisplayName, signInWithGoogle, logout, updateAppUser, setNeedsDisplayName }}>
+    <AuthContext.Provider value={{ user, appUser, loading, needsDisplayName, needsConsent, signInWithGoogle, logout, updateAppUser, setNeedsDisplayName, setNeedsConsent }}>
       {children}
     </AuthContext.Provider>
   )

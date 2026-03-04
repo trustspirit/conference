@@ -17,6 +17,7 @@ import {
 import AppNav from './components/AppNav'
 import { ThemeProvider, ToastProvider } from 'trust-ui-react'
 import Spinner from './components/Spinner'
+import ConsentDialog from './components/ConsentDialog'
 import { getDefaultRoute } from './lib/roles'
 import { ROUTES } from './utils/constants'
 
@@ -50,8 +51,10 @@ function PublicLayout() {
 }
 
 function AuthenticatedLayout() {
+  const { needsConsent } = useAuth()
   return (
     <ConferenceProvider>
+      {needsConsent && <ConsentDialog />}
       <AppNav />
       <Suspense fallback={<FullPageLoader />}>
         <Outlet />
