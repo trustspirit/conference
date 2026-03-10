@@ -27,7 +27,7 @@ interface BatchGroup {
   settlementCount: number
 }
 
-function groupByBatch(settlements: Settlement[], t: (key: string) => string): BatchGroup[] {
+function groupByBatch(settlements: Settlement[]): BatchGroup[] {
   const map = new Map<string, BatchGroup>()
   for (const s of settlements) {
     const key = s.batchId || s.id // fallback for legacy settlements without batchId
@@ -69,7 +69,7 @@ export default function SettlementListPage() {
   } = useInfiniteSettlements(currentProject?.id, committeeFilter === 'all' ? undefined : committeeFilter)
 
   const settlements = data?.pages.flatMap(p => p.items) ?? []
-  const batches = useMemo(() => groupByBatch(settlements, t), [settlements, t])
+  const batches = useMemo(() => groupByBatch(settlements), [settlements])
 
   const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
     { value: 'all', label: t('status.all') },

@@ -331,7 +331,7 @@ export async function exportBatchSettlementPdf(
           </div>`
           return `<div class="receipt-card">
             <div class="receipt-number">${escapeHtml(nr.label)}</div>
-            <img src="${img.dataUrl}" />
+            <img src="${escapeHtml(img.dataUrl)}" />
             <p class="receipt-name">${escapeHtml(img.fileName)}</p>
           </div>`
         }).join('')}
@@ -348,7 +348,7 @@ export async function exportBatchSettlementPdf(
       <div class="bankbook-grid">
         ${bankBooks.map(bb => `
           <div class="bankbook-card">
-            <img src="${bb.url}" />
+            <img src="${escapeHtml(bb.url)}" />
             <p class="bankbook-label">${escapeHtml(bb.payee)}</p>
           </div>
         `).join('')}

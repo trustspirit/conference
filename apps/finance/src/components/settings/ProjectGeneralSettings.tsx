@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Project } from '../../types'
 import { useUpdateProject } from '../../hooks/queries/useProjects'
-
-const DEFAULT_PER_KM_RATE = 150
+import { DEFAULT_PER_KM_RATE } from '../ItemRow'
 
 export default function ProjectGeneralSettings({ project }: { project: Project }) {
   const { t } = useTranslation()

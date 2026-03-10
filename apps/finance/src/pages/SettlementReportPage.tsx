@@ -6,7 +6,7 @@ import { useProject } from '../contexts/ProjectContext'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
 import { useSettlement, useSettlementBatch } from '../hooks/queries/useSettlements'
-import { DEFAULT_PER_KM_RATE, calcCarTransportAmount } from '../components/ItemRow'
+import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import InfoGrid from '../components/InfoGrid'
@@ -36,12 +36,18 @@ export default function SettlementReportPage() {
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
     setExporting(true)
-    const success = await exportBatchSettlementPdf(
-      settlements, documentNo, projectName, perKmRate,
-      { includeBankBooks },
-    )
-    if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
-    setExporting(false)
+    try {
+      const success = await exportBatchSettlementPdf(
+        settlements, documentNo, projectName, perKmRate,
+        { includeBankBooks },
+      )
+      if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
+    } catch (err) {
+      console.error('PDF export failed:', err)
+      toast({ variant: 'danger', message: 'PDF export failed.' })
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (isLoading || batchLoading) return <Layout><Spinner /></Layout>
@@ -57,15 +63,12 @@ export default function SettlementReportPage() {
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
   const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
 
-  // Budget code summary
+  // Budget code summary (use stored item.amount — already calculated at submission time)
   const budgetMap = new Map<number, { name: string; total: number }>()
   for (const s of settlements) {
     for (const item of s.items) {
       const existing = budgetMap.get(item.budgetCode) || { name: item.description, total: 0 }
-      const amt = item.transportDetail?.transportType === 'car'
-        ? calcCarTransportAmount(item.transportDetail, perKmRate)
-        : item.amount
-      existing.total += amt
+      existing.total += item.amount
       budgetMap.set(item.budgetCode, existing)
     }
   }

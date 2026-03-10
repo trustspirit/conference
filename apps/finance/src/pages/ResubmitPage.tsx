@@ -87,7 +87,8 @@ export default function ResubmitPage() {
       const orig = original.items[i]
       return curr.description !== orig.description ||
              curr.budgetCode !== orig.budgetCode ||
-             curr.amount !== orig.amount
+             curr.amount !== orig.amount ||
+             JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
     })
     if (itemsChanged) return true
     return false
