@@ -110,7 +110,17 @@
     "requestedBy": "Requested by",
     "approvedBy": "Approved by",
     "remarks": "Remarks",
-    "bankSelect": "Select Bank"
+    "bankSelect": "Select Bank",
+    "transportType": "Transport Type",
+    "transportCar": "Personal Car",
+    "transportPublic": "Public Transport",
+    "tripType": "Trip Type",
+    "tripRound": "Round Trip",
+    "tripOneWay": "One Way",
+    "departure": "Departure",
+    "destination": "Destination",
+    "distanceKm": "Distance (km)",
+    "distanceKmHint": "Check the distance between departure and destination on Naver Map and enter it here. Please capture and attach the Naver Map screenshot as a receipt file."
   },
   "form": {
     "title": "Payment / Reimbursement Request Form",
@@ -141,6 +151,11 @@
     "dateRequired": "Date is required.",
     "itemsRequired": "At least one item is required (description and amount).",
     "budgetCodeRequired": "Budget code is required for all items.",
+    "transportTypeRequired": "Please select the transport type for transportation items.",
+    "transportDepartureRequired": "Please enter the departure for transportation items.",
+    "transportDestinationRequired": "Please enter the destination for transportation items.",
+    "transportDistanceRequired": "Please enter the distance for personal car transportation items.",
+    "transportTripTypeRequired": "Please select the trip type (round/one-way) for transportation items.",
     "receiptsRequired": "Please attach receipt files.",
     "signatureRequired": "Signature is required. Please register your signature in settings.",
     "bankBookRequired": "Bank book copy is required. Please upload in settings.",
@@ -224,7 +239,15 @@
     "backToSelect": "← Back to Selection",
     "backToSelectConfirm": "Review progress will be lost. Go back?",
     "includedCount": "Included {{count}}",
-    "rejectedCount": "Rejected {{count}}"
+    "rejectedCount": "Rejected {{count}}",
+    "budgetSummary": "Budget Code Summary",
+    "reimbursementDetail": "Reimbursement Detail",
+    "multiPayee": "Multiple",
+    "transportCost": "Transport Cost",
+    "batchReport": "Combined Report",
+    "includeBankBooks": "Include bank books",
+    "payeeCount_one": "{{count}} person",
+    "payeeCount_other": "{{count}} people"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -322,7 +345,9 @@
     "restore": "Restore",
     "restoreFailed": "Failed to restore project.",
     "createFailed": "Failed to create project.",
-    "autoDeleteDays": "Auto-delete in {{days}} days"
+    "autoDeleteDays": "Auto-delete in {{days}} days",
+    "perKmRate": "Per-km Rate (Personal Car)",
+    "perKmRateHint": "Rate applied per km when calculating personal car transportation costs."
   },
   "budget": {
     "warning": "{{percent}}% of the budget has been used. (Warning threshold: {{threshold}}%)",

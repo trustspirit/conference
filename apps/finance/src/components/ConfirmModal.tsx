@@ -81,7 +81,17 @@ export default function ConfirmModal({
                   <tbody>
                     {requestItems.map((item, i) => (
                       <tr key={i}>
-                        <td className="py-0.5 text-gray-600">{item.description}</td>
+                        <td className="py-0.5 text-gray-600">
+                          {item.description}
+                          {item.transportDetail && (
+                            <div className="text-[10px] text-gray-400 mt-0.5">
+                              {item.transportDetail.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')}
+                              {' · '}{item.transportDetail.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')}
+                              {' · '}{item.transportDetail.departure} → {item.transportDetail.destination}
+                              {item.transportDetail.transportType === 'car' && item.transportDetail.distanceKm && ` · ${item.transportDetail.distanceKm}km`}
+                            </div>
+                          )}
+                        </td>
                         <td className="py-0.5 text-right text-gray-900 font-medium">{'\u20A9'}{item.amount.toLocaleString()}</td>
                       </tr>
                     ))}

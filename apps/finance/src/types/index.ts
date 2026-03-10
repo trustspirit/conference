@@ -15,6 +15,7 @@ export interface Project {
   documentNo: string
   directorApprovalThreshold: number
   budgetWarningThreshold?: number
+  perKmRate?: number
   memberUids: string[]
   isActive: boolean
   deletedAt?: Date | null
@@ -50,10 +51,22 @@ export type Committee = 'operations' | 'preparation'
 
 export type RequestStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled' | 'cancelled' | 'force_rejected'
 
+export type TransportType = 'car' | 'public'
+export type TripType = 'round' | 'one_way'
+
+export interface TransportDetail {
+  transportType: TransportType
+  tripType: TripType
+  departure: string
+  destination: string
+  distanceKm?: number // only for car
+}
+
 export interface RequestItem {
   description: string
   budgetCode: number
   amount: number
+  transportDetail?: TransportDetail
 }
 
 export interface Receipt {
@@ -96,12 +109,14 @@ export interface PaymentRequest {
 export interface Settlement {
   id: string
   projectId: string
+  batchId: string
   createdAt: Date
   createdBy: { uid: string; name: string; email: string }
   payee: string
   phone: string
   bankName: string
   bankAccount: string
+  bankBookUrl?: string
   session: string
   committee: Committee
   items: RequestItem[]

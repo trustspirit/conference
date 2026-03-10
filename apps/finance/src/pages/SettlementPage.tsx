@@ -196,39 +196,43 @@ export default function SettlementPage() {
       }
 
       const requesterUids = [...new Set(Object.values(groupedByPayee).map(reqs => reqs[0].requestedBy.uid))]
-      const signatureMap = new Map<string, string | null>()
+      const userDataMap = new Map<string, AppUser | null>()
       await Promise.all(
         requesterUids.map(async (uid) => {
           try {
             const snap = await getDoc(doc(db, 'users', uid))
-            const userData = snap.exists() ? (snap.data() as AppUser) : null
-            signatureMap.set(uid, userData?.signature || null)
+            userDataMap.set(uid, snap.exists() ? (snap.data() as AppUser) : null)
           } catch {
-            signatureMap.set(uid, null)
+            userDataMap.set(uid, null)
           }
         })
       )
+
+      const batchId = crypto.randomUUID()
 
       const settlementData = Object.values(groupedByPayee).map((reqs) => {
         const first = reqs[0]
         const allItems = reqs.flatMap((r) => r.items)
         const allReceipts = reqs.flatMap((r) => r.receipts)
         const totalAmount = allItems.reduce((sum, item) => sum + item.amount, 0)
+        const userData = userDataMap.get(first.requestedBy.uid)
 
         return {
           projectId: currentProject.id,
+          batchId,
           createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
           payee: first.payee,
           phone: first.phone,
           bankName: first.bankName,
           bankAccount: first.bankAccount,
+          bankBookUrl: userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
           session: first.session,
           committee: first.committee,
           items: allItems,
           totalAmount,
           receipts: allReceipts,
           requestIds: reqs.map((r) => r.id),
-          requestedBySignature: signatureMap.get(first.requestedBy.uid) || null,
+          requestedBySignature: userData?.signature || null,
           approvedBy: first.approvedBy,
           approvalSignature: first.approvalSignature || null,
         }

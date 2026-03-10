@@ -23,13 +23,32 @@ export default function ItemsTable({ items, totalAmount }: Props) {
         <tbody className="divide-y">
           {items.map((item, i) => (
             <tr key={i}>
-              <td className="px-3 py-2">{i + 1}</td>
-              <td className="px-3 py-2">{item.description}</td>
+              <td className="px-3 py-2 align-top">{i + 1}</td>
               <td className="px-3 py-2">
+                <div>{item.description}</div>
+                {item.transportDetail && (
+                  <div className="mt-1 text-xs text-gray-500 bg-blue-50 rounded px-2 py-1.5 space-y-0.5">
+                    <div>
+                      <span className="font-medium">{t('field.transportType')}:</span>{' '}
+                      {item.transportDetail.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')}
+                      {' · '}
+                      <span className="font-medium">{t('field.tripType')}:</span>{' '}
+                      {item.transportDetail.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')}
+                    </div>
+                    <div>
+                      {item.transportDetail.departure} → {item.transportDetail.destination}
+                      {item.transportDetail.transportType === 'car' && item.transportDetail.distanceKm && (
+                        <span> · {item.transportDetail.distanceKm}km</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </td>
+              <td className="px-3 py-2 align-top">
                 {item.budgetCode}
                 <span className="ml-1 text-gray-400 text-xs">{t(`budgetCode.${item.budgetCode}`)}</span>
               </td>
-              <td className="px-3 py-2 text-right">₩{item.amount.toLocaleString()}</td>
+              <td className="px-3 py-2 text-right align-top">₩{item.amount.toLocaleString()}</td>
             </tr>
           ))}
         </tbody>

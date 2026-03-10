@@ -110,7 +110,17 @@
     "requestedBy": "신청자",
     "approvedBy": "승인자",
     "remarks": "비고",
-    "bankSelect": "은행 선택"
+    "bankSelect": "은행 선택",
+    "transportType": "교통 수단",
+    "transportCar": "자차",
+    "transportPublic": "대중교통",
+    "tripType": "구간 유형",
+    "tripRound": "왕복",
+    "tripOneWay": "편도",
+    "departure": "출발지",
+    "destination": "도착지",
+    "distanceKm": "거리 (km)",
+    "distanceKmHint": "네이버 맵에서 출발지와 도착지 간 거리를 확인하여 입력해주세요. 해당 네이버 맵 화면을 캡쳐하여 영수증 파일에 첨부해주세요."
   },
   "form": {
     "title": "지불 / 환불 신청서",
@@ -141,6 +151,11 @@
     "dateRequired": "날짜를 선택해주세요.",
     "itemsRequired": "최소 1개 이상의 항목을 입력해주세요. (설명과 금액 필수)",
     "budgetCodeRequired": "모든 항목의 예산 코드를 선택해주세요.",
+    "transportTypeRequired": "교통비 항목의 교통 수단을 선택해주세요.",
+    "transportDepartureRequired": "교통비 항목의 출발지를 입력해주세요.",
+    "transportDestinationRequired": "교통비 항목의 도착지를 입력해주세요.",
+    "transportDistanceRequired": "자차 교통비 항목의 거리를 입력해주세요.",
+    "transportTripTypeRequired": "교통비 항목의 구간 유형(왕복/편도)을 선택해주세요.",
     "receiptsRequired": "영수증 파일을 첨부해주세요.",
     "signatureRequired": "서명이 등록되지 않았습니다. 설정에서 서명을 등록해주세요.",
     "bankBookRequired": "통장사본이 등록되지 않았습니다. 설정에서 통장사본을 업로드해주세요.",
@@ -224,7 +239,15 @@
     "backToSelect": "← 목록으로 돌아가기",
     "backToSelectConfirm": "검토 진행 상태가 초기화됩니다. 돌아가시겠습니까?",
     "includedCount": "포함 {{count}}건",
-    "rejectedCount": "반려 {{count}}건"
+    "rejectedCount": "반려 {{count}}건",
+    "budgetSummary": "예산 코드별 요약",
+    "reimbursementDetail": "환급 대상 상세",
+    "multiPayee": "다수",
+    "transportCost": "교통비용",
+    "batchReport": "통합 리포트",
+    "includeBankBooks": "통장 사본 포함",
+    "payeeCount_one": "{{count}}명",
+    "payeeCount_other": "{{count}}명"
   },
   "dashboard": {
     "title": "대시보드",
@@ -322,7 +345,9 @@
     "restore": "복원",
     "restoreFailed": "프로젝트 복원에 실패했습니다.",
     "createFailed": "프로젝트 생성에 실패했습니다.",
-    "autoDeleteDays": "{{days}}일 후 자동 삭제"
+    "autoDeleteDays": "{{days}}일 후 자동 삭제",
+    "perKmRate": "자차 km당 단가",
+    "perKmRateHint": "자차 교통비 산정 시 km당 적용되는 금액입니다."
   },
   "budget": {
     "warning": "예산의 {{percent}}%를 사용했습니다. (경고 기준: {{threshold}}%)",

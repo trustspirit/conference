@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,6 +15,45 @@ import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 
 type CommitteeFilter = 'all' | Committee
 
+interface BatchGroup {
+  batchId: string
+  /** First settlement ID — used for linking to report page */
+  firstId: string
+  payees: string[]
+  committees: string[]
+  totalAmount: number
+  totalRequests: number
+  date: string
+  settlementCount: number
+}
+
+function groupByBatch(settlements: Settlement[], t: (key: string) => string): BatchGroup[] {
+  const map = new Map<string, BatchGroup>()
+  for (const s of settlements) {
+    const key = s.batchId || s.id // fallback for legacy settlements without batchId
+    const existing = map.get(key)
+    if (existing) {
+      if (!existing.payees.includes(s.payee)) existing.payees.push(s.payee)
+      if (!existing.committees.includes(s.committee)) existing.committees.push(s.committee)
+      existing.totalAmount += s.totalAmount
+      existing.totalRequests += s.requestIds.length
+      existing.settlementCount += 1
+    } else {
+      map.set(key, {
+        batchId: key,
+        firstId: s.id,
+        payees: [s.payee],
+        committees: [s.committee],
+        totalAmount: s.totalAmount,
+        totalRequests: s.requestIds.length,
+        date: formatFirestoreDate(s.createdAt),
+        settlementCount: 1,
+      })
+    }
+  }
+  return [...map.values()]
+}
+
 export default function SettlementListPage() {
   const { t } = useTranslation()
   const { appUser } = useAuth()
@@ -30,14 +69,21 @@ export default function SettlementListPage() {
   } = useInfiniteSettlements(currentProject?.id, committeeFilter === 'all' ? undefined : committeeFilter)
 
   const settlements = data?.pages.flatMap(p => p.items) ?? []
-
-  const formatDate = (s: Settlement) => formatFirestoreDate(s.createdAt)
+  const batches = useMemo(() => groupByBatch(settlements, t), [settlements, t])
 
   const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
     { value: 'all', label: t('status.all') },
     { value: 'operations', label: t('committee.operationsShort') },
     { value: 'preparation', label: t('committee.preparationShort') },
   ]
+
+  const payeeLabel = (b: BatchGroup) =>
+    b.payees.length === 1 ? b.payees[0] : `${t('settlement.multiPayee')} (${b.payees.length})`
+
+  const committeeLabel = (b: BatchGroup) =>
+    b.committees.length === 1
+      ? (b.committees[0] === 'operations' ? t('committee.operationsShort') : t('committee.preparationShort'))
+      : '-'
 
   return (
     <Layout>
@@ -64,7 +110,7 @@ export default function SettlementListPage() {
 
       {loading ? (
         <Spinner />
-      ) : settlements.length === 0 ? (
+      ) : batches.length === 0 ? (
         <EmptyState
           title={t('settlement.noSettlements')}
           description={t('settlement.description')}
@@ -82,23 +128,21 @@ export default function SettlementListPage() {
                     <th className="text-left px-4 py-3 font-medium text-gray-600">{t('settlement.settlementDate')}</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.payee')}</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.committee')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.bankAndAccount')}</th>
                     <th className="text-right px-4 py-3 font-medium text-gray-600">{t('field.totalAmount')}</th>
                     <th className="text-center px-4 py-3 font-medium text-gray-600">{t('settlement.requestCount')}</th>
                     <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {settlements.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">{formatDate(s)}</td>
-                      <td className="px-4 py-3">{s.payee}</td>
-                      <td className="px-4 py-3">{s.committee === 'operations' ? t('committee.operationsShort') : t('committee.preparationShort')}</td>
-                      <td className="px-4 py-3 text-gray-500">{s.bankName} {s.bankAccount}</td>
-                      <td className="px-4 py-3 text-right font-medium">₩{s.totalAmount.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-center">{t('form.itemCount', { count: s.requestIds.length })}</td>
+                  {batches.map((b) => (
+                    <tr key={b.batchId} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">{b.date}</td>
+                      <td className="px-4 py-3">{payeeLabel(b)}</td>
+                      <td className="px-4 py-3">{committeeLabel(b)}</td>
+                      <td className="px-4 py-3 text-right font-medium">₩{b.totalAmount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-center">{t('form.itemCount', { count: b.totalRequests })}</td>
                       <td className="px-4 py-3 text-center">
-                        <Link to={`/admin/settlement/${s.id}`}
+                        <Link to={`/admin/settlement/${b.firstId}`}
                           className="text-purple-600 hover:underline text-sm">{t('settlement.report')}</Link>
                       </td>
                     </tr>
@@ -110,20 +154,19 @@ export default function SettlementListPage() {
 
           {/* Mobile */}
           <div className="sm:hidden space-y-3">
-            {settlements.map((s) => (
-              <Link key={s.id} to={`/admin/settlement/${s.id}`}
+            {batches.map((b) => (
+              <Link key={b.batchId} to={`/admin/settlement/${b.firstId}`}
                 className="block bg-white rounded-lg shadow p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{s.payee}</span>
-                  <span className="text-xs text-gray-400">{formatDate(s)}</span>
+                  <span className="text-sm font-medium">{payeeLabel(b)}</span>
+                  <span className="text-xs text-gray-400">{b.date}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">
-                    {s.committee === 'operations' ? t('committee.operationsShort') : t('committee.preparationShort')} | {t('form.itemCount', { count: s.requestIds.length })}
+                    {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
                   </span>
-                  <span className="font-medium text-purple-700">₩{s.totalAmount.toLocaleString()}</span>
+                  <span className="font-medium text-purple-700">₩{b.totalAmount.toLocaleString()}</span>
                 </div>
-                <div className="text-xs text-gray-400 mt-1">{s.bankName} {s.bankAccount}</div>
               </Link>
             ))}
           </div>

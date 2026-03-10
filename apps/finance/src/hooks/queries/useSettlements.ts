@@ -82,6 +82,22 @@ export function useSettlement(id: string | undefined) {
   });
 }
 
+export function useSettlementBatch(batchId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.settlements.batch(batchId!),
+    queryFn: async () => {
+      const q = query(
+        collection(db, "settlements"),
+        where("batchId", "==", batchId),
+        orderBy("payee", "asc"),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Settlement);
+    },
+    enabled: !!batchId,
+  });
+}
+
 export function useCreateSettlement() {
   const queryClient = useQueryClient();
 

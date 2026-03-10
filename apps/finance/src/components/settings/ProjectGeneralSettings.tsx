@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Project } from '../../types'
 import { useUpdateProject } from '../../hooks/queries/useProjects'
 
+const DEFAULT_PER_KM_RATE = 150
+
 export default function ProjectGeneralSettings({ project }: { project: Project }) {
   const { t } = useTranslation()
 
@@ -11,6 +13,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
   const [documentNo, setDocumentNo] = useState(project.documentNo || '')
   const [threshold, setThreshold] = useState(project.directorApprovalThreshold ?? 600000)
   const [warningPct, setWarningPct] = useState(project.budgetWarningThreshold ?? 85)
+  const [perKmRate, setPerKmRate] = useState(project.perKmRate ?? DEFAULT_PER_KM_RATE)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -20,14 +23,15 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
     description !== (project.description || '') ||
     documentNo !== (project.documentNo || '') ||
     threshold !== (project.directorApprovalThreshold ?? 600000) ||
-    warningPct !== (project.budgetWarningThreshold ?? 85)
+    warningPct !== (project.budgetWarningThreshold ?? 85) ||
+    perKmRate !== (project.perKmRate ?? DEFAULT_PER_KM_RATE)
 
   const handleSave = async () => {
     setSaving(true); setSaved(false)
     try {
       await updateProject.mutateAsync({
         projectId: project.id,
-        data: { name, description, documentNo, directorApprovalThreshold: threshold, budgetWarningThreshold: warningPct },
+        data: { name, description, documentNo, directorApprovalThreshold: threshold, budgetWarningThreshold: warningPct, perKmRate },
       })
       setSaved(true); setTimeout(() => setSaved(false), 2000)
     } catch (err) { console.error('Failed to save:', err) }
@@ -70,6 +74,17 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           <span className="text-sm text-gray-500">%</span>
         </div>
         <p className="text-xs text-gray-400 mt-1">{t('budget.warningThresholdHint')}</p>
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{t('project.perKmRate')}</label>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">₩</span>
+          <input type="number" value={perKmRate}
+            onChange={(e) => setPerKmRate(Number(e.target.value) || 0)}
+            className="w-full border border-gray-300 rounded px-3 py-2 text-sm" step="10" min="0" />
+          <span className="text-sm text-gray-500 whitespace-nowrap">/ km</span>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">{t('project.perKmRateHint')}</p>
       </div>
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">

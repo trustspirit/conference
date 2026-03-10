@@ -120,6 +120,16 @@ export default function ResubmitPage() {
     if (validItems.length === 0) errs.push(t('validation.itemsRequired'))
     const missingBudgetCode = validItems.some((item) => !item.budgetCode)
     if (missingBudgetCode) errs.push(t('validation.budgetCodeRequired'))
+    // Transport detail validation for budget code 5110
+    const transportItems = validItems.filter((item) => item.budgetCode === 5110)
+    for (const ti of transportItems) {
+      const d = ti.transportDetail
+      if (!d?.transportType) { errs.push(t('validation.transportTypeRequired')); break }
+      if (!d?.tripType) { errs.push(t('validation.transportTripTypeRequired')); break }
+      if (!d?.departure?.trim()) { errs.push(t('validation.transportDepartureRequired')); break }
+      if (!d?.destination?.trim()) { errs.push(t('validation.transportDestinationRequired')); break }
+      if (d.transportType === 'car' && !d.distanceKm) { errs.push(t('validation.transportDistanceRequired')); break }
+    }
     // receipts: use new files or keep original
     if (files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
       errs.push(t('validation.receiptsRequired'))
@@ -250,7 +260,7 @@ export default function ResubmitPage() {
           <div className="space-y-2">
             {items.map((item, i) => (
               <ItemRow key={i} index={i} item={item} onChange={updateItem} onRemove={removeItem}
-                canRemove={items.length > 1} />
+                canRemove={items.length > 1} perKmRate={currentProject?.perKmRate} />
             ))}
           </div>
           <div className="flex justify-end mt-3 pt-3 border-t">
