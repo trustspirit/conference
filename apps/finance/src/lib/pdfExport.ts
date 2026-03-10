@@ -313,6 +313,32 @@ export async function exportBatchSettlementPdf(
         </tr>
       </tbody>
     </table>
+
+    <h2 style="margin-top:24px;">${t('settlement.payeeSummary')}</h2>
+    <table>
+      <thead><tr>
+        <th>#</th>
+        <th>${t('field.payee')}</th>
+        <th>${t('field.bank')}</th>
+        <th>${t('field.bankAccount')}</th>
+        <th class="text-right">${t('field.totalAmount')}</th>
+      </tr></thead>
+      <tbody>
+        ${settlements.map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${escapeHtml(s.payee)}</td>
+            <td>${escapeHtml(s.bankName)}</td>
+            <td>${escapeHtml(s.bankAccount)}</td>
+            <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
+          </tr>
+        `).join('')}
+        <tr class="total-row">
+          <td colspan="4" class="text-right">${t('field.totalAmount')}</td>
+          <td class="text-right">₩${grandTotal.toLocaleString()}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   `)
 

@@ -139,7 +139,7 @@
     "continueEditing": "Continue Editing",
     "leavePage": "Leave Page",
     "submitFailed": "Submission failed. Please try again.",
-    "receiptHint": "PNG, JPG, PDF only (max 2MB per file)",
+    "receiptHint": "PNG, JPG, PDF only (max 750KB per file)",
     "receiptPreview": "Receipt preview — verify items and amounts match",
     "totalAmountCheck": "Please verify that the receipt amounts match the total (₩{{amount}})."
   },
@@ -164,7 +164,7 @@
     "committeeRequired": "Please select a committee.",
     "displayNameRequired": "Preferred name is required.",
     "invalidFileType": "\"{{name}}\" - Invalid format (PNG, JPG, PDF only)",
-    "fileTooLarge": "\"{{name}}\" - Exceeds 2MB ({{size}}MB)",
+    "fileTooLarge": "\"{{name}}\" - Exceeds 750KB ({{size}}KB)",
     "consentRequired": "You must agree to the data handling terms."
   },
   "consent": {
@@ -246,6 +246,7 @@
     "transportCost": "Transport Cost",
     "batchReport": "Combined Report",
     "includeBankBooks": "Include bank books",
+    "payeeSummary": "Payee Summary",
     "payeeCount_one": "{{count}} person",
     "payeeCount_other": "{{count}} people"
   },

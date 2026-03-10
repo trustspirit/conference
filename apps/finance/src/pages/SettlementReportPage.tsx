@@ -64,11 +64,12 @@ export default function SettlementReportPage() {
   const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
 
   // Budget code summary (use stored item.amount — already calculated at submission time)
-  const budgetMap = new Map<number, { name: string; total: number }>()
+  const budgetMap = new Map<number, { total: number; count: number }>()
   for (const s of settlements) {
     for (const item of s.items) {
-      const existing = budgetMap.get(item.budgetCode) || { name: item.description, total: 0 }
+      const existing = budgetMap.get(item.budgetCode) || { total: 0, count: 0 }
       existing.total += item.amount
+      existing.count += 1
       budgetMap.set(item.budgetCode, existing)
     }
   }
@@ -118,20 +119,24 @@ export default function SettlementReportPage() {
               <thead className="bg-gray-100 border-b">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.budgetCode')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.comments')}</th>
+                  <th className="text-center px-3 py-2 font-medium text-gray-600">{t('dashboard.count')}</th>
                   <th className="text-right px-3 py-2 font-medium text-gray-600">{t('field.totalAmount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {budgetSummary.map(([code, { total }]) => (
+                {budgetSummary.map(([code, { total, count }]) => (
                   <tr key={code}>
                     <td className="px-3 py-2">{code}</td>
+                    <td className="px-3 py-2 text-gray-600">{t(`budgetCode.${code}`)}</td>
+                    <td className="px-3 py-2 text-center">{count}</td>
                     <td className="px-3 py-2 text-right font-medium">₩{total.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="border-t bg-gray-100">
                 <tr>
-                  <td className="px-3 py-2 font-semibold">{t('field.totalAmount')}</td>
+                  <td colSpan={3} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
                   <td className="px-3 py-2 text-right font-bold">₩{totalAmount.toLocaleString()}</td>
                 </tr>
               </tfoot>
@@ -161,6 +166,43 @@ export default function SettlementReportPage() {
             <ReceiptGallery receipts={s.receipts} />
           </div>
         ))}
+
+        {/* Payee summary */}
+        {isBatch && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('settlement.payeeSummary')}</h3>
+            <div className="bg-gray-50 border rounded overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 border-b">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">#</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.payee')}</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.bank')}</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.bankAccount')}</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-600">{t('field.totalAmount')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {settlements.map((s, i) => (
+                    <tr key={s.id}>
+                      <td className="px-3 py-2 text-gray-500">{i + 1}</td>
+                      <td className="px-3 py-2">{s.payee}</td>
+                      <td className="px-3 py-2 text-gray-500">{s.bankName}</td>
+                      <td className="px-3 py-2 text-gray-500">{s.bankAccount}</td>
+                      <td className="px-3 py-2 text-right font-medium">₩{s.totalAmount.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t bg-gray-100">
+                  <tr>
+                    <td colSpan={4} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
+                    <td className="px-3 py-2 text-right font-bold">₩{totalAmount.toLocaleString()}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )

@@ -56,7 +56,7 @@ export function formatFirestoreTime(date: unknown): string {
 export function validateFiles(files: File[], t?: (key: string, opts?: Record<string, unknown>) => string): { valid: File[]; errors: string[] } {
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
   const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf']
-  const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+  const MAX_FILE_SIZE = 750 * 1024 // 750KB
 
   const errors: string[] = []
   const valid: File[] = []
@@ -69,8 +69,8 @@ export function validateFiles(files: File[], t?: (key: string, opts?: Record<str
         : `"${f.name}" - Invalid format (PNG, JPG, PDF only)`)
     } else if (f.size > MAX_FILE_SIZE) {
       errors.push(t
-        ? t('validation.fileTooLarge', { name: f.name, size: (f.size / 1024 / 1024).toFixed(1) })
-        : `"${f.name}" - Exceeds 2MB (${(f.size / 1024 / 1024).toFixed(1)}MB)`)
+        ? t('validation.fileTooLarge', { name: f.name, size: (f.size / 1024).toFixed(0) })
+        : `"${f.name}" - Exceeds 750KB (${(f.size / 1024).toFixed(0)}KB)`)
     } else {
       valid.push(f)
     }

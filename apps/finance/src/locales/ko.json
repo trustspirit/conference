@@ -139,7 +139,7 @@
     "continueEditing": "계속 작성",
     "leavePage": "페이지 이동",
     "submitFailed": "제출에 실패했습니다. 다시 시도해주세요.",
-    "receiptHint": "PNG, JPG, PDF 파일만 가능 (파일당 최대 2MB)",
+    "receiptHint": "PNG, JPG, PDF 파일만 가능 (파일당 최대 750KB)",
     "receiptPreview": "영수증 미리보기 — 항목과 금액이 일치하는지 확인해주세요",
     "totalAmountCheck": "영수증 금액과 항목 총액(₩{{amount}})이 일치하는지 확인해주세요."
   },
@@ -164,7 +164,7 @@
     "committeeRequired": "소속 위원회를 선택해주세요.",
     "displayNameRequired": "선호하는 이름을 입력해주세요.",
     "invalidFileType": "\"{{name}}\" - 허용되지 않는 형식 (PNG, JPG, PDF만 가능)",
-    "fileTooLarge": "\"{{name}}\" - 2MB 초과 ({{size}}MB)",
+    "fileTooLarge": "\"{{name}}\" - 750KB 초과 ({{size}}KB)",
     "consentRequired": "개인정보 처리 동의가 필요합니다."
   },
   "consent": {
@@ -246,6 +246,7 @@
     "transportCost": "교통비용",
     "batchReport": "통합 리포트",
     "includeBankBooks": "통장 사본 포함",
+    "payeeSummary": "수령인별 요약",
     "payeeCount_one": "{{count}}명",
     "payeeCount_other": "{{count}}명"
   },
