@@ -137,12 +137,12 @@ export async function exportBatchSettlementPdf(
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
   const uniqueApprovers = [...new Set(settlements.map(s => s.approvedBy?.name).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
-  const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : ''
+  const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
 
   // Cover page display values
   const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
   const bankDisplay = isBatch
-    ? t('settlement.seeAttached')
+    ? t('settlement.seeBelow')
     : `${settlements[0].bankName} ${settlements[0].bankAccount}`
 
   // Build numbered reimbursement rows
@@ -253,7 +253,6 @@ export async function exportBatchSettlementPdf(
     <thead><tr>
       <th>${t('field.budgetCode')}</th>
       <th>${t('field.comments')}</th>
-      <th class="text-center">${t('dashboard.count')}</th>
       <th class="text-right">${t('field.totalAmount')}</th>
     </tr></thead>
     <tbody>
@@ -263,12 +262,11 @@ export async function exportBatchSettlementPdf(
         return `<tr>
           <td>${code}</td>
           <td>${t(`budgetCode.${code}`)}</td>
-          <td class="text-center">${entry.count}</td>
           <td class="text-right">₩${entry.total.toLocaleString()}</td>
         </tr>`
       }).join('')}
       <tr class="total-row">
-        <td colspan="3" class="text-right">${t('field.totalAmount')}</td>
+        <td colspan="2" class="text-right">${t('field.totalAmount')}</td>
         <td class="text-right">₩${grandTotal.toLocaleString()}</td>
       </tr>
     </tbody>
@@ -279,13 +277,13 @@ export async function exportBatchSettlementPdf(
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
       ${!isBatch && settlements[0].requestedBySignature
         ? `<img src="${settlements[0].requestedBySignature}" alt="requester signature" style="max-height:50px;" />`
-        : isBatch ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeAttached')}</p>` : ''}
+        : isBatch ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>` : ''}
       <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(payeeDisplay)}</div>
     </div>
     <div style="flex:1; text-align:center;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by (signature of budget approver)</p>
       ${uniqueApprovers.length > 1
-        ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeAttached')}</p>`
+        ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>`
         : settlements[0].approvalSignature ? `<img src="${settlements[0].approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
       <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${uniqueApprovers.length > 1 ? 'Multi' : settlements[0].approvedBy ? escapeHtml(settlements[0].approvedBy.name) : '&nbsp;'}</div>
     </div>

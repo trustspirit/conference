@@ -246,7 +246,7 @@
     "transportCost": "Transport Cost",
     "batchReport": "Payment / Reimbursement Request Form (Combined)",
     "individualForm": "Individual Request Form",
-    "seeAttached": "See attached below",
+    "seeBelow": "See below",
     "includeBankBooks": "Include bank books",
     "payeeSummary": "Payee Summary",
     "payeeCount_one": "{{count}} person",

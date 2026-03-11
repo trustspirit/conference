@@ -58,7 +58,7 @@ export default function SettlementReportPage() {
   const dateStr = formatFirestoreDate(settlement.createdAt)
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
   const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
-  const bankDisplay = isBatch ? t('settlement.seeAttached') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
+  const bankDisplay = isBatch ? t('settlement.seeBelow') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : '-'
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
@@ -122,23 +122,21 @@ export default function SettlementReportPage() {
                 <tr>
                   <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.budgetCode')}</th>
                   <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.comments')}</th>
-                  <th className="text-center px-3 py-2 font-medium text-gray-600">{t('dashboard.count')}</th>
                   <th className="text-right px-3 py-2 font-medium text-gray-600">{t('field.totalAmount')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {budgetSummary.map(([code, { total, count }]) => (
+                {budgetSummary.map(([code, { total }]) => (
                   <tr key={code}>
                     <td className="px-3 py-2">{code}</td>
                     <td className="px-3 py-2 text-gray-600">{t(`budgetCode.${code}`)}</td>
-                    <td className="px-3 py-2 text-center">{count}</td>
                     <td className="px-3 py-2 text-right font-medium">₩{total.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="border-t bg-gray-100">
                 <tr>
-                  <td colSpan={3} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
+                  <td colSpan={2} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
                   <td className="px-3 py-2 text-right font-bold">₩{totalAmount.toLocaleString()}</td>
                 </tr>
               </tfoot>

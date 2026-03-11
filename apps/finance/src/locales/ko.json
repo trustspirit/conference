@@ -246,7 +246,7 @@
     "transportCost": "교통비용",
     "batchReport": "지불 / 환불 통합 신청서",
     "individualForm": "개별 신청서",
-    "seeAttached": "See attached below",
+    "seeBelow": "See below",
     "includeBankBooks": "통장 사본 포함",
     "payeeSummary": "수령인별 요약",
     "payeeCount_one": "{{count}}명",
