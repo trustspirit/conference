@@ -106,7 +106,7 @@ export default function SettlementReportPage() {
 
         {/* Overview */}
         <InfoGrid className="mb-6" items={[
-          { label: t('field.payee'), value: isBatch ? `${payeeDisplay} (${uniquePayees.length}명)` : payeeDisplay },
+          { label: t('field.payee'), value: isBatch ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})` : payeeDisplay },
           { label: t('field.bankAndAccount'), value: bankDisplay },
           { label: t('settlement.settlementDate'), value: dateStr },
           { label: t('committee.label'), value: committeeLabel },

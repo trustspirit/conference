@@ -135,6 +135,7 @@ export async function exportBatchSettlementPdf(
   const dateStr = formatFirestoreDate(settlements[0].createdAt) || new Date().toLocaleDateString('ko-KR')
 
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
+  const uniqueApprovers = [...new Set(settlements.map(s => s.approvedBy?.name).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : ''
 
@@ -240,7 +241,7 @@ export async function exportBatchSettlementPdf(
   <p class="subtitle">${t('settlement.reportSubtitle')}</p>
 
   <div class="info-grid">
-    <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeDisplay)}${isBatch ? ` (${uniquePayees.length}명)` : ''}</div>
+    <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeDisplay)}${isBatch ? ` (${t('settlement.payeeCount', { count: uniquePayees.length })})` : ''}</div>
     <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(bankDisplay)}</div>
     <div><span class="label">${t('settlement.settlementDate')}:</span> ${escapeHtml(dateStr)}</div>
     ${committeeLabel ? `<div><span class="label">${t('committee.label')}:</span> ${committeeLabel}</div>` : ''}
@@ -283,8 +284,10 @@ export async function exportBatchSettlementPdf(
     </div>
     <div style="flex:1; text-align:center;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by (signature of budget approver)</p>
-      ${settlements[0].approvalSignature ? `<img src="${settlements[0].approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
-      <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${settlements[0].approvedBy ? escapeHtml(settlements[0].approvedBy.name) : '&nbsp;'}</div>
+      ${uniqueApprovers.length > 1
+        ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeAttached')}</p>`
+        : settlements[0].approvalSignature ? `<img src="${settlements[0].approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
+      <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${uniqueApprovers.length > 1 ? 'Multi' : settlements[0].approvedBy ? escapeHtml(settlements[0].approvedBy.name) : '&nbsp;'}</div>
     </div>
   </div>
 
