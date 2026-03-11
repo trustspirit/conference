@@ -23,7 +23,7 @@ import {
 } from "firebase/firestore";
 import { db } from '@conference/firebase';
 import { queryKeys } from "./queryKeys";
-import type { Settlement, Committee } from "../../types";
+import type { Settlement, Committee, PaymentRequest } from "../../types";
 
 const PAGE_SIZE = 20;
 
@@ -95,6 +95,25 @@ export function useSettlementBatch(batchId: string | undefined) {
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Settlement);
     },
     enabled: !!batchId,
+  });
+}
+
+/** Load original requests by IDs (for settlement report individual forms) */
+export function useRequestsByIds(requestIds: string[]) {
+  return useQuery({
+    queryKey: ['requests', 'byIds', ...requestIds],
+    queryFn: async () => {
+      if (requestIds.length === 0) return []
+      const results = await Promise.all(
+        requestIds.map(async (id) => {
+          const snap = await getDoc(doc(db, 'requests', id))
+          if (!snap.exists()) return null
+          return { id: snap.id, ...snap.data() } as PaymentRequest
+        })
+      )
+      return results.filter((r): r is PaymentRequest => r !== null)
+    },
+    enabled: requestIds.length > 0,
   });
 }
 

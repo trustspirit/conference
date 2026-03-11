@@ -5,7 +5,7 @@ import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
-import { useSettlement, useSettlementBatch } from '../hooks/queries/useSettlements'
+import { useSettlement, useSettlementBatch, useRequestsByIds } from '../hooks/queries/useSettlements'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -33,13 +33,17 @@ export default function SettlementReportPage() {
   const settlements = batchSettlements && batchSettlements.length > 0 ? batchSettlements : settlement ? [settlement] : []
   const isBatch = settlements.length > 1
 
+  // Load original requests for individual forms (preserves per-request approval signatures)
+  const allRequestIds = settlements.flatMap(s => s.requestIds)
+  const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
+
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
     setExporting(true)
     try {
       const success = await exportBatchSettlementPdf(
         settlements, documentNo, projectName, perKmRate,
-        { includeBankBooks },
+        { includeBankBooks, originalRequests: originalRequests || [] },
       )
       if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
     } catch (err) {
@@ -50,7 +54,7 @@ export default function SettlementReportPage() {
     }
   }
 
-  if (isLoading || batchLoading) return <Layout><Spinner /></Layout>
+  if (isLoading || batchLoading || requestsLoading) return <Layout><Spinner /></Layout>
   if (!settlement || (currentProject && settlement.projectId !== currentProject.id)) {
     return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
   }
@@ -181,26 +185,27 @@ export default function SettlementReportPage() {
           </div>
         )}
 
-        {/* Per-payee individual forms + receipts */}
-        {settlements.map((s, idx) => (
-          <div key={s.id} className="mb-6 border rounded-lg p-4">
+        {/* Per-request individual forms + receipts */}
+        {(originalRequests || []).map((req, idx) => (
+          <div key={req.id} className="mb-6 border rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold">
-                {isBatch && <span className="text-purple-600 mr-1">#{idx + 1}</span>}
-                {t('settlement.individualForm')} — {s.payee}
+                <span className="text-purple-600 mr-1">#{idx + 1}</span>
+                {t('settlement.individualForm')} — {req.payee}
               </h3>
-              <span className="text-xs text-gray-500">₩{s.totalAmount.toLocaleString()}</span>
+              <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
             </div>
 
             <InfoGrid className="mb-3" items={[
-              { label: t('field.phone'), value: s.phone },
-              { label: t('field.session'), value: s.session },
-              { label: t('field.bankAndAccount'), value: `${s.bankName} ${s.bankAccount}` },
-              { label: t('committee.label'), value: t(`committee.${s.committee}`) },
+              { label: t('field.phone'), value: req.phone },
+              { label: t('field.session'), value: req.session },
+              { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
+              { label: t('committee.label'), value: t(`committee.${req.committee}`) },
+              { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' },
             ]} />
 
-            <ItemsTable items={s.items} totalAmount={s.totalAmount} />
-            <ReceiptGallery receipts={s.receipts} />
+            <ItemsTable items={req.items} totalAmount={req.totalAmount} />
+            <ReceiptGallery receipts={req.receipts} />
           </div>
         ))}
       </div>

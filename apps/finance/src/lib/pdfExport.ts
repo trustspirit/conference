@@ -1,6 +1,6 @@
 import { httpsCallable } from 'firebase/functions'
 import * as pdfjsLib from 'pdfjs-dist'
-import { Settlement, Receipt } from '../types'
+import { Settlement, PaymentRequest, Receipt } from '../types'
 import { functions } from '@conference/firebase'
 import i18n from './i18n'
 import { formatFirestoreDate } from './utils'
@@ -113,6 +113,7 @@ interface ReimbursementRow {
 
 export interface PdfExportOptions {
   includeBankBooks?: boolean
+  originalRequests?: PaymentRequest[]
 }
 
 /**
@@ -134,8 +135,12 @@ export async function exportBatchSettlementPdf(
   const isBatch = settlements.length > 1
   const dateStr = formatFirestoreDate(settlements[0].createdAt) || new Date().toLocaleDateString('ko-KR')
 
+  const originalRequests = options.originalRequests || []
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
-  const uniqueApprovers = [...new Set(settlements.map(s => s.approvedBy?.name).filter(Boolean))]
+  // Use original requests for accurate approver list (settlements only store first approver)
+  const uniqueApprovers = originalRequests.length > 0
+    ? [...new Set(originalRequests.map(r => r.approvedBy?.name).filter(Boolean))]
+    : [...new Set(settlements.map(s => s.approvedBy?.name).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
 
@@ -188,35 +193,35 @@ export async function exportBatchSettlementPdf(
   }
   const grandTotal = rows.reduce((sum, r) => sum + r.amount, 0)
 
-  // Collect receipts per settlement (for per-payee grouping)
-  const receiptsBySettlement = new Map<string, { label: string; receipt: Receipt }[]>()
-  for (const settlement of settlements) {
-    const firstRow = rows.find(r => r.settlementId === settlement.id)
-    const lastRow = [...rows].reverse().find(r => r.settlementId === settlement.id)
-    const label = firstRow && lastRow && firstRow.number !== lastRow.number
-      ? `#${firstRow.number}-${lastRow.number}`
-      : `#${firstRow?.number || '?'}`
-    const entries = settlement.receipts.map(receipt => ({
-      label: `${label} ${settlement.payee}`,
+  // Determine individual form sources: original requests if available, otherwise settlements
+  const useOriginalRequests = originalRequests.length > 0
+  const formSources = useOriginalRequests ? originalRequests : settlements
+
+  // Collect receipts per form source (original request or settlement)
+  const receiptsByForm = new Map<string, { label: string; receipt: Receipt }[]>()
+  for (const source of formSources) {
+    const idx = formSources.indexOf(source)
+    const entries = source.receipts.map(receipt => ({
+      label: `#${idx + 1} ${'payee' in source ? source.payee : ''}`,
       receipt,
     }))
-    receiptsBySettlement.set(settlement.id, entries)
+    receiptsByForm.set(source.id, entries)
   }
 
   // Preload all receipts at once (flat list for efficient batch download)
-  const allNumberedReceipts = [...receiptsBySettlement.values()].flat()
+  const allNumberedReceipts = [...receiptsByForm.values()].flat()
   const allImages = await preloadReceipts(allNumberedReceipts.map(nr => nr.receipt))
 
-  // Build index map: settlement id → image indices
+  // Build index map: form source id → image indices
   let imageOffset = 0
-  const imagesBySettlement = new Map<string, { nr: { label: string; receipt: Receipt }; img: { fileName: string; dataUrl: string | null } }[]>()
-  for (const settlement of settlements) {
-    const entries = receiptsBySettlement.get(settlement.id) || []
+  const imagesByForm = new Map<string, { nr: { label: string; receipt: Receipt }; img: { fileName: string; dataUrl: string | null } }[]>()
+  for (const source of formSources) {
+    const entries = receiptsByForm.get(source.id) || []
     const mapped = entries.map((nr, i) => ({
       nr,
       img: allImages[imageOffset + i],
     }))
-    imagesBySettlement.set(settlement.id, mapped)
+    imagesByForm.set(source.id, mapped)
     imageOffset += entries.length
   }
 
@@ -333,21 +338,50 @@ export async function exportBatchSettlementPdf(
     `)
   }
 
-  // ── Page 3+: Per-payee individual forms + receipts ──
-  for (const settlement of settlements) {
-    const settlementRows = rows.filter(r => r.settlementId === settlement.id)
-    const settlementTotal = settlementRows.reduce((sum, r) => sum + r.amount, 0)
+  // ── Page 3+: Individual forms + receipts (per original request or per settlement) ──
+  for (let formIdx = 0; formIdx < formSources.length; formIdx++) {
+    const source = formSources[formIdx]
+    // Build item rows for this form source
+    const formItems: ReimbursementRow[] = []
+    for (const item of source.items) {
+      const d = item.transportDetail
+      let ti = ''
+      let tc = ''
+      if (d) {
+        const typeLabel = d.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')
+        const tripLabel = d.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')
+        ti = `${escapeHtml(d.departure)}→${escapeHtml(d.destination)}<br/>${typeLabel} (${tripLabel})`
+        if (d.transportType === 'car' && d.distanceKm) {
+          const cost = calcCarTransportAmount(d, perKmRate)
+          tc = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+        }
+      }
+      formItems.push({ number: formItems.length + 1, date: '', budgetCode: item.budgetCode, description: item.description, payee: source.payee, bankName: source.bankName, bankAccount: source.bankAccount, transportInfo: ti, transportCost: tc, amount: item.amount, settlementId: source.id })
+    }
+    const formTotal = formItems.reduce((sum, r) => sum + r.amount, 0)
 
-    // Individual request form
+    // Determine signature sources: original request has approvalSignature, settlement has requestedBySignature
+    const isRequest = 'approvalSignature' in source && 'requestedBy' in source && 'status' in source
+    const reqSource = isRequest ? (source as PaymentRequest) : null
+    const setSource = !isRequest ? (source as Settlement) : null
+    // Find the parent settlement for this request (for requestedBySignature)
+    const parentSettlement = reqSource
+      ? settlements.find(s => s.requestIds.includes(reqSource.id))
+      : null
+    const requesterSig = reqSource ? (parentSettlement?.requestedBySignature || null) : (setSource?.requestedBySignature || null)
+    const approverSig = reqSource ? reqSource.approvalSignature : (setSource?.approvalSignature || null)
+    const approverName = reqSource ? reqSource.approvedBy?.name : setSource?.approvedBy?.name
+
+    // Individual form
     parts.push(`
     <div class="page-break">
-      <h2>${t('settlement.individualForm')} — ${escapeHtml(settlement.payee)}</h2>
+      <h2>${t('settlement.individualForm')} #${formIdx + 1} — ${escapeHtml(source.payee)}</h2>
       <div class="info-grid">
-        <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(settlement.payee)}</div>
-        <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(settlement.phone)}</div>
-        <div><span class="label">${t('field.session')}:</span> ${escapeHtml(settlement.session)}</div>
-        <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(settlement.bankName)} ${escapeHtml(settlement.bankAccount)}</div>
-        <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${settlement.committee}`)}</div>
+        <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(source.payee)}</div>
+        <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(source.phone)}</div>
+        <div><span class="label">${t('field.session')}:</span> ${escapeHtml(source.session)}</div>
+        <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>
+        <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${source.committee}`)}</div>
       </div>
 
       <table>
@@ -360,7 +394,7 @@ export async function exportBatchSettlementPdf(
           <th class="text-right">${t('field.totalAmount')}</th>
         </tr></thead>
         <tbody>
-          ${settlementRows.map((row, i) => `
+          ${formItems.map((row, i) => `
             <tr>
               <td>${i + 1}</td>
               <td>${row.budgetCode}<br/><span class="small-text">${t(`budgetCode.${row.budgetCode}`)}</span></td>
@@ -372,7 +406,7 @@ export async function exportBatchSettlementPdf(
           `).join('')}
           <tr class="total-row">
             <td colspan="5" class="text-right">${t('field.totalAmount')}</td>
-            <td class="text-right">₩${settlementTotal.toLocaleString()}</td>
+            <td class="text-right">₩${formTotal.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>
@@ -380,26 +414,26 @@ export async function exportBatchSettlementPdf(
       <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
         <div style="flex:1;">
           <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
-          ${settlement.requestedBySignature ? `<img src="${settlement.requestedBySignature}" alt="requester signature" style="max-height:50px;" />` : ''}
-          <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(settlement.payee)}</div>
+          ${requesterSig ? `<img src="${requesterSig}" alt="requester signature" style="max-height:50px;" />` : ''}
+          <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(source.payee)}</div>
         </div>
         <div style="flex:1; text-align:center;">
           <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by</p>
-          ${settlement.approvalSignature ? `<img src="${settlement.approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
-          <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${settlement.approvedBy ? escapeHtml(settlement.approvedBy.name) : '&nbsp;'}</div>
+          ${approverSig ? `<img src="${approverSig}" alt="signature" style="max-height:50px;" />` : ''}
+          <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${approverName ? escapeHtml(approverName) : '&nbsp;'}</div>
         </div>
       </div>
     </div>
     `)
 
-    // This payee's receipts
-    const payeeReceiptImages = imagesBySettlement.get(settlement.id) || []
-    if (payeeReceiptImages.length > 0) {
+    // This form's receipts
+    const formReceiptImages = imagesByForm.get(source.id) || []
+    if (formReceiptImages.length > 0) {
       parts.push(`
       <div class="page-break">
-        <h2>${t('field.receipts')} — ${escapeHtml(settlement.payee)}</h2>
+        <h2>${t('field.receipts')} — ${escapeHtml(source.payee)}</h2>
         <div class="receipt-grid">
-          ${payeeReceiptImages.map(({ nr, img }) => {
+          ${formReceiptImages.map(({ nr, img }) => {
             if (!img.dataUrl) return `<div class="receipt-card">
               <div class="receipt-number">${escapeHtml(nr.label)}</div>
               <div class="receipt-fail">Failed to load</div>
