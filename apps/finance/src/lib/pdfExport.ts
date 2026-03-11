@@ -1,6 +1,6 @@
 import { httpsCallable } from 'firebase/functions'
 import * as pdfjsLib from 'pdfjs-dist'
-import { Settlement, PaymentRequest, Receipt } from '../types'
+import { Settlement, PaymentRequest, Receipt, AppUser } from '../types'
 import { functions } from '@conference/firebase'
 import i18n from './i18n'
 import { formatFirestoreDate } from './utils'
@@ -114,7 +114,7 @@ interface ReimbursementRow {
 export interface PdfExportOptions {
   includeBankBooks?: boolean
   originalRequests?: PaymentRequest[]
-  payeeUsers?: Map<string, { bankBookUrl?: string; bankBookDriveUrl?: string; [key: string]: unknown }>
+  payeeUsers?: Map<string, AppUser>
 }
 
 /**
