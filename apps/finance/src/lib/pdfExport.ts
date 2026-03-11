@@ -114,6 +114,7 @@ interface ReimbursementRow {
 export interface PdfExportOptions {
   includeBankBooks?: boolean
   originalRequests?: PaymentRequest[]
+  payeeUsers?: Map<string, { bankBookUrl?: string; bankBookDriveUrl?: string; [key: string]: unknown }>
 }
 
 /**
@@ -144,9 +145,13 @@ export async function exportBatchSettlementPdf(
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
 
+  // Determine if individual form pages are needed
+  // Not needed when all requests share the same payee, bank, and approver
+  const needsIndividualForms = uniquePayees.length > 1 || uniqueApprovers.length > 1
+
   // Cover page display values
-  const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
-  const bankDisplay = isBatch
+  const payeeDisplay = needsIndividualForms ? 'Multi' : uniquePayees[0]
+  const bankDisplay = needsIndividualForms
     ? t('settlement.seeBelow')
     : `${settlements[0].bankName} ${settlements[0].bankAccount}`
 
@@ -225,16 +230,20 @@ export async function exportBatchSettlementPdf(
     imageOffset += entries.length
   }
 
-  // Bank books (only if option enabled)
-  const bankBooks = options.includeBankBooks
-    ? [...settlements
-        .filter(s => s.bankBookUrl)
-        .reduce<Map<string, { payee: string; url: string }>>((map, s) => {
-          if (!map.has(s.payee) && s.bankBookUrl) map.set(s.payee, { payee: s.payee, url: s.bankBookUrl })
-          return map
-        }, new Map())
-        .values()]
-    : []
+  // Bank books (only if option enabled) — prefer user profile URL, fall back to settlement snapshot
+  const payeeUsers = options.payeeUsers
+  const bankBooks: { payee: string; url: string }[] = []
+  if (options.includeBankBooks) {
+    const seenPayees = new Set<string>()
+    for (const s of settlements) {
+      if (seenPayees.has(s.payee)) continue
+      seenPayees.add(s.payee)
+      const uid = originalRequests.find(r => r.payee === s.payee)?.requestedBy.uid
+      const userBankBook = uid && payeeUsers ? (payeeUsers.get(uid)?.bankBookUrl || payeeUsers.get(uid)?.bankBookDriveUrl) : undefined
+      const url = userBankBook || s.bankBookUrl
+      if (url) bankBooks.push({ payee: s.payee, url })
+    }
+  }
 
   // ── Construct HTML parts ──
   const parts: string[] = []
@@ -280,17 +289,17 @@ export async function exportBatchSettlementPdf(
   <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
     <div style="flex:1;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
-      ${!isBatch && settlements[0].requestedBySignature
+      ${!needsIndividualForms && settlements[0].requestedBySignature
         ? `<img src="${settlements[0].requestedBySignature}" alt="requester signature" style="max-height:50px;" />`
-        : isBatch ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>` : ''}
+        : needsIndividualForms ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>` : ''}
       <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(payeeDisplay)}</div>
     </div>
     <div style="flex:1; text-align:center;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by (signature of budget approver)</p>
-      ${uniqueApprovers.length > 1
+      ${needsIndividualForms
         ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>`
         : settlements[0].approvalSignature ? `<img src="${settlements[0].approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
-      <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${uniqueApprovers.length > 1 ? 'Multi' : settlements[0].approvedBy ? escapeHtml(settlements[0].approvedBy.name) : '&nbsp;'}</div>
+      <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${needsIndividualForms ? 'Multi' : settlements[0].approvedBy ? escapeHtml(settlements[0].approvedBy.name) : '&nbsp;'}</div>
     </div>
   </div>
 
@@ -305,8 +314,8 @@ export async function exportBatchSettlementPdf(
   </div>
   `)
 
-  // ── Page 2: Payee Summary (batch only) ──
-  if (isBatch) {
+  // ── Page 2: Payee Summary (only when multiple payees) ──
+  if (uniquePayees.length > 1) {
     parts.push(`
     <div class="page-break">
       <h2>${t('settlement.payeeSummary')}</h2>
@@ -338,102 +347,125 @@ export async function exportBatchSettlementPdf(
     `)
   }
 
-  // ── Page 3+: Individual forms + receipts (per original request or per settlement) ──
-  for (let formIdx = 0; formIdx < formSources.length; formIdx++) {
-    const source = formSources[formIdx]
-    // Build item rows for this form source
-    const formItems: ReimbursementRow[] = []
-    for (const item of source.items) {
-      const d = item.transportDetail
-      let ti = ''
-      let tc = ''
-      if (d) {
-        const typeLabel = d.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')
-        const tripLabel = d.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')
-        ti = `${escapeHtml(d.departure)}→${escapeHtml(d.destination)}<br/>${typeLabel} (${tripLabel})`
-        if (d.transportType === 'car' && d.distanceKm) {
-          const cost = calcCarTransportAmount(d, perKmRate)
-          tc = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+  if (needsIndividualForms) {
+    // ── Page 3+: Individual forms + receipts (per original request or per settlement) ──
+    for (let formIdx = 0; formIdx < formSources.length; formIdx++) {
+      const source = formSources[formIdx]
+      // Build item rows for this form source
+      const formItems: ReimbursementRow[] = []
+      for (const item of source.items) {
+        const d = item.transportDetail
+        let ti = ''
+        let tc = ''
+        if (d) {
+          const typeLabel = d.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')
+          const tripLabel = d.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')
+          ti = `${escapeHtml(d.departure)}→${escapeHtml(d.destination)}<br/>${typeLabel} (${tripLabel})`
+          if (d.transportType === 'car' && d.distanceKm) {
+            const cost = calcCarTransportAmount(d, perKmRate)
+            tc = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+          }
         }
+        formItems.push({ number: formItems.length + 1, date: '', budgetCode: item.budgetCode, description: item.description, payee: source.payee, bankName: source.bankName, bankAccount: source.bankAccount, transportInfo: ti, transportCost: tc, amount: item.amount, settlementId: source.id })
       }
-      formItems.push({ number: formItems.length + 1, date: '', budgetCode: item.budgetCode, description: item.description, payee: source.payee, bankName: source.bankName, bankAccount: source.bankAccount, transportInfo: ti, transportCost: tc, amount: item.amount, settlementId: source.id })
-    }
-    const formTotal = formItems.reduce((sum, r) => sum + r.amount, 0)
+      const formTotal = formItems.reduce((sum, r) => sum + r.amount, 0)
 
-    // Determine signature sources: original request has approvalSignature, settlement has requestedBySignature
-    const isRequest = 'approvalSignature' in source && 'requestedBy' in source && 'status' in source
-    const reqSource = isRequest ? (source as PaymentRequest) : null
-    const setSource = !isRequest ? (source as Settlement) : null
-    // Find the parent settlement for this request (for requestedBySignature)
-    const parentSettlement = reqSource
-      ? settlements.find(s => s.requestIds.includes(reqSource.id))
-      : null
-    const requesterSig = reqSource ? (parentSettlement?.requestedBySignature || null) : (setSource?.requestedBySignature || null)
-    const approverSig = reqSource ? reqSource.approvalSignature : (setSource?.approvalSignature || null)
-    const approverName = reqSource ? reqSource.approvedBy?.name : setSource?.approvedBy?.name
+      // Determine signature sources
+      const isRequest = 'approvalSignature' in source && 'requestedBy' in source && 'status' in source
+      const reqSource = isRequest ? (source as PaymentRequest) : null
+      const setSource = !isRequest ? (source as Settlement) : null
+      const parentSettlement = reqSource ? settlements.find(s => s.requestIds.includes(reqSource.id)) : null
+      const requesterSig = reqSource ? (parentSettlement?.requestedBySignature || null) : (setSource?.requestedBySignature || null)
+      const approverSig = reqSource ? reqSource.approvalSignature : (setSource?.approvalSignature || null)
+      const approverName = reqSource ? reqSource.approvedBy?.name : setSource?.approvedBy?.name
 
-    // Individual form
-    parts.push(`
-    <div class="page-break">
-      <h2>${t('settlement.individualForm')} #${formIdx + 1} — ${escapeHtml(source.payee)}</h2>
-      <div class="info-grid">
-        <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(source.payee)}</div>
-        <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(source.phone)}</div>
-        <div><span class="label">${t('field.session')}:</span> ${escapeHtml(source.session)}</div>
-        <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>
-        <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${source.committee}`)}</div>
-      </div>
-
-      <table>
-        <thead><tr>
-          <th>#</th>
-          <th>${t('field.budgetCode')}</th>
-          <th>${t('field.comments')}</th>
-          <th>${t('field.transportType')}</th>
-          <th>${t('settlement.transportCost')}</th>
-          <th class="text-right">${t('field.totalAmount')}</th>
-        </tr></thead>
-        <tbody>
-          ${formItems.map((row, i) => `
-            <tr>
-              <td>${i + 1}</td>
-              <td>${row.budgetCode}<br/><span class="small-text">${t(`budgetCode.${row.budgetCode}`)}</span></td>
-              <td>${escapeHtml(row.description)}</td>
-              <td>${row.transportInfo || '-'}</td>
-              <td>${row.transportCost || '-'}</td>
-              <td class="text-right">₩${row.amount.toLocaleString()}</td>
-            </tr>
-          `).join('')}
-          <tr class="total-row">
-            <td colspan="5" class="text-right">${t('field.totalAmount')}</td>
-            <td class="text-right">₩${formTotal.toLocaleString()}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
-        <div style="flex:1;">
-          <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
-          ${requesterSig ? `<img src="${requesterSig}" alt="requester signature" style="max-height:50px;" />` : ''}
-          <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(source.payee)}</div>
-        </div>
-        <div style="flex:1; text-align:center;">
-          <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by</p>
-          ${approverSig ? `<img src="${approverSig}" alt="signature" style="max-height:50px;" />` : ''}
-          <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${approverName ? escapeHtml(approverName) : '&nbsp;'}</div>
-        </div>
-      </div>
-    </div>
-    `)
-
-    // This form's receipts
-    const formReceiptImages = imagesByForm.get(source.id) || []
-    if (formReceiptImages.length > 0) {
+      // Individual form
       parts.push(`
       <div class="page-break">
-        <h2>${t('field.receipts')} — ${escapeHtml(source.payee)}</h2>
+        <h2>${t('settlement.individualForm')} #${formIdx + 1} — ${escapeHtml(source.payee)}</h2>
+        <div class="info-grid">
+          <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(source.payee)}</div>
+          <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(source.phone)}</div>
+          <div><span class="label">${t('field.session')}:</span> ${escapeHtml(source.session)}</div>
+          <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>
+          <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${source.committee}`)}</div>
+        </div>
+
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>${t('field.budgetCode')}</th>
+            <th>${t('field.comments')}</th>
+            <th>${t('field.transportType')}</th>
+            <th>${t('settlement.transportCost')}</th>
+            <th class="text-right">${t('field.totalAmount')}</th>
+          </tr></thead>
+          <tbody>
+            ${formItems.map((row, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>${row.budgetCode}<br/><span class="small-text">${t(`budgetCode.${row.budgetCode}`)}</span></td>
+                <td>${escapeHtml(row.description)}</td>
+                <td>${row.transportInfo || '-'}</td>
+                <td>${row.transportCost || '-'}</td>
+                <td class="text-right">₩${row.amount.toLocaleString()}</td>
+              </tr>
+            `).join('')}
+            <tr class="total-row">
+              <td colspan="5" class="text-right">${t('field.totalAmount')}</td>
+              <td class="text-right">₩${formTotal.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
+          <div style="flex:1;">
+            <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
+            ${requesterSig ? `<img src="${requesterSig}" alt="requester signature" style="max-height:50px;" />` : ''}
+            <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(source.payee)}</div>
+          </div>
+          <div style="flex:1; text-align:center;">
+            <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by</p>
+            ${approverSig ? `<img src="${approverSig}" alt="signature" style="max-height:50px;" />` : ''}
+            <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${approverName ? escapeHtml(approverName) : '&nbsp;'}</div>
+          </div>
+        </div>
+      </div>
+      `)
+
+      // This form's receipts
+      const formReceiptImages = imagesByForm.get(source.id) || []
+      if (formReceiptImages.length > 0) {
+        parts.push(`
+        <div class="page-break">
+          <h2>${t('field.receipts')} — ${escapeHtml(source.payee)}</h2>
+          <div class="receipt-grid">
+            ${formReceiptImages.map(({ nr, img }) => {
+              if (!img.dataUrl) return `<div class="receipt-card">
+                <div class="receipt-number">${escapeHtml(nr.label)}</div>
+                <div class="receipt-fail">Failed to load</div>
+                <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+              </div>`
+              return `<div class="receipt-card">
+                <div class="receipt-number">${escapeHtml(nr.label)}</div>
+                <img src="${escapeHtml(img.dataUrl)}" />
+                <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+              </div>`
+            }).join('')}
+          </div>
+        </div>
+        `)
+      }
+    }
+  } else {
+    // ── Unified: all receipts together (no individual forms needed) ──
+    const allReceiptImages = [...imagesByForm.values()].flat()
+    if (allReceiptImages.length > 0) {
+      parts.push(`
+      <div class="page-break">
+        <h2>${t('field.receipts')}</h2>
         <div class="receipt-grid">
-          ${formReceiptImages.map(({ nr, img }) => {
+          ${allReceiptImages.map(({ nr, img }) => {
             if (!img.dataUrl) return `<div class="receipt-card">
               <div class="receipt-number">${escapeHtml(nr.label)}</div>
               <div class="receipt-fail">Failed to load</div>

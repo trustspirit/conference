@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProject } from '../contexts/ProjectContext'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { formatFirestoreTime } from '../lib/utils'
 import { useInfiniteMyRequests, useCancelRequest } from '../hooks/queries/useRequests'
@@ -19,6 +19,7 @@ type MyFilter = 'all' | 'pending' | 'reviewed' | 'approved' | 'rejected' | 'sett
 
 export default function MyRequestsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { currentProject } = useProject()
   const [filter, setFilter] = useState<MyFilter>('all')
@@ -159,10 +160,10 @@ export default function MyRequestsPage() {
                   </button>
                 )}
                 {(req.status === 'cancelled' || req.status === 'rejected' || req.status === 'force_rejected') && (
-                  <Link to={`/request/resubmit/${req.id}`} onClick={(e) => e.stopPropagation()}
-                    className="mt-3 block w-full text-center px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors">
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/request/resubmit/${req.id}`) }}
+                    className="mt-3 w-full text-center px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors">
                     {t('approval.resubmit')}
-                  </Link>
+                  </button>
                 )}
               </Link>
             ))}

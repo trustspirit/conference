@@ -5,7 +5,7 @@ import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
-import { useSettlement, useSettlementBatch, useRequestsByIds } from '../hooks/queries/useSettlements'
+import { useSettlement, useSettlementBatch, useRequestsByIds, useUsersByUids } from '../hooks/queries/useSettlements'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -37,13 +37,18 @@ export default function SettlementReportPage() {
   const allRequestIds = settlements.flatMap(s => s.requestIds)
   const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
 
+  // Load payee user profiles for bank book URLs
+  const payeeUids = [...new Set(settlements.map(s => s.requestIds).flat())]
+  const requesterUids = [...new Set((originalRequests || []).map(r => r.requestedBy.uid))]
+  const { data: payeeUsers, isLoading: usersLoading } = useUsersByUids(requesterUids)
+
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
     setExporting(true)
     try {
       const success = await exportBatchSettlementPdf(
         settlements, documentNo, projectName, perKmRate,
-        { includeBankBooks, originalRequests: originalRequests || [] },
+        { includeBankBooks, originalRequests: originalRequests || [], payeeUsers },
       )
       if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
     } catch (err) {
@@ -54,17 +59,21 @@ export default function SettlementReportPage() {
     }
   }
 
-  if (isLoading || batchLoading || requestsLoading) return <Layout><Spinner /></Layout>
+  if (isLoading || batchLoading || requestsLoading || usersLoading) return <Layout><Spinner /></Layout>
   if (!settlement || (currentProject && settlement.projectId !== currentProject.id)) {
     return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
   }
 
   const dateStr = formatFirestoreDate(settlement.createdAt)
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
-  const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
-  const bankDisplay = isBatch ? t('settlement.seeBelow') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
+  const uniqueApprovers = (originalRequests || []).length > 0
+    ? [...new Set((originalRequests || []).map(r => r.approvedBy?.uid).filter(Boolean))]
+    : [...new Set(settlements.map(s => s.approvedBy?.uid).filter(Boolean))]
+  const needsIndividualForms = uniquePayees.length > 1 || uniqueApprovers.length > 1
+  const payeeDisplay = needsIndividualForms ? 'Multi' : uniquePayees[0]
+  const bankDisplay = needsIndividualForms ? t('settlement.seeBelow') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
-  const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : '-'
+  const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
   const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
 
@@ -110,7 +119,7 @@ export default function SettlementReportPage() {
 
         {/* Overview */}
         <InfoGrid className="mb-6" items={[
-          { label: t('field.payee'), value: isBatch ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})` : payeeDisplay },
+          { label: t('field.payee'), value: needsIndividualForms ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})` : payeeDisplay },
           { label: t('field.bankAndAccount'), value: bankDisplay },
           { label: t('settlement.settlementDate'), value: dateStr },
           { label: t('committee.label'), value: committeeLabel },
@@ -148,8 +157,8 @@ export default function SettlementReportPage() {
           </div>
         </div>
 
-        {/* Payee summary (batch only — before individual details) */}
-        {isBatch && (
+        {/* Payee summary (only when multiple payees) */}
+        {uniquePayees.length > 1 && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('settlement.payeeSummary')}</h3>
             <div className="bg-gray-50 border rounded overflow-hidden">
@@ -185,29 +194,100 @@ export default function SettlementReportPage() {
           </div>
         )}
 
-        {/* Per-request individual forms + receipts */}
-        {(originalRequests || []).map((req, idx) => (
-          <div key={req.id} className="mb-6 border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold">
-                <span className="text-purple-600 mr-1">#{idx + 1}</span>
-                {t('settlement.individualForm')} — {req.payee}
-              </h3>
-              <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
+        {needsIndividualForms ? (
+          /* Per-request individual forms (only when info differs) */
+          (originalRequests || []).map((req, idx) => (
+            <div key={req.id} className="mb-6 border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold">
+                  <span className="text-purple-600 mr-1">#{idx + 1}</span>
+                  {t('settlement.individualForm')} — {req.payee}
+                </h3>
+                <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
+              </div>
+
+              <InfoGrid className="mb-3" items={[
+                { label: t('field.phone'), value: req.phone },
+                { label: t('field.session'), value: req.session },
+                { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
+                { label: t('committee.label'), value: t(`committee.${req.committee}`) },
+                { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' },
+              ]} />
+
+              <ItemsTable items={req.items} totalAmount={req.totalAmount} />
+
+              <div className="flex justify-between items-end mt-4 pt-4 border-t">
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
+                  {settlements.find(s => s.requestIds.includes(req.id))?.requestedBySignature && (
+                    <img src={settlements.find(s => s.requestIds.includes(req.id))!.requestedBySignature!} alt="signature" className="h-10 mb-1" />
+                  )}
+                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">{req.payee}</div>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-gray-400 mb-1">Approved by</p>
+                  {req.approvalSignature && (
+                    <img src={req.approvalSignature} alt="signature" className="h-10 mb-1 mx-auto" />
+                  )}
+                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">{req.approvedBy?.name || '\u00A0'}</div>
+                </div>
+              </div>
+
+              <ReceiptGallery receipts={req.receipts} />
+            </div>
+          ))
+        ) : (
+          /* Unified — signatures + receipts only (budget summary above is sufficient) */
+          <>
+            <div className="flex justify-between items-end mb-6 pt-4 border-t">
+              <div>
+                <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
+                {settlements[0]?.requestedBySignature && (
+                  <img src={settlements[0].requestedBySignature} alt="signature" className="h-10 mb-1" />
+                )}
+                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">{settlements[0]?.payee}</div>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] text-gray-400 mb-1">Approved by</p>
+                {settlements[0]?.approvalSignature && (
+                  <img src={settlements[0].approvalSignature} alt="signature" className="h-10 mb-1 mx-auto" />
+                )}
+                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">{settlements[0]?.approvedBy?.name || '\u00A0'}</div>
+              </div>
             </div>
 
-            <InfoGrid className="mb-3" items={[
-              { label: t('field.phone'), value: req.phone },
-              { label: t('field.session'), value: req.session },
-              { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
-              { label: t('committee.label'), value: t(`committee.${req.committee}`) },
-              { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' },
-            ]} />
+            <ReceiptGallery receipts={settlements.flatMap(s => s.receipts)} />
+          </>
+        )}
 
-            <ItemsTable items={req.items} totalAmount={req.totalAmount} />
-            <ReceiptGallery receipts={req.receipts} />
-          </div>
-        ))}
+        {/* Bank Book Copies */}
+        {includeBankBooks && (() => {
+          const bankBooks: { payee: string; url: string }[] = []
+          const seenPayees = new Set<string>()
+          for (const s of settlements) {
+            if (seenPayees.has(s.payee)) continue
+            seenPayees.add(s.payee)
+            // Try user profile first, fall back to settlement snapshot
+            const uid = (originalRequests || []).find(r => r.payee === s.payee)?.requestedBy.uid
+            const userBankBook = uid ? (payeeUsers?.get(uid)?.bankBookUrl || payeeUsers?.get(uid)?.bankBookDriveUrl) : undefined
+            const url = userBankBook || s.bankBookUrl
+            if (url) bankBooks.push({ payee: s.payee, url })
+          }
+          if (bankBooks.length === 0) return null
+          return (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('field.bankBook')}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {bankBooks.map(bb => (
+                  <div key={bb.payee} className="border rounded overflow-hidden">
+                    <img src={bb.url} alt={bb.payee} className="w-full max-h-60 object-contain bg-gray-50" />
+                    <p className="text-xs text-gray-600 px-2 py-1 bg-gray-50 border-t">{bb.payee}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </Layout>
   )

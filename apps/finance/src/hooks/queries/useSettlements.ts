@@ -23,7 +23,7 @@ import {
 } from "firebase/firestore";
 import { db } from '@conference/firebase';
 import { queryKeys } from "./queryKeys";
-import type { Settlement, Committee, PaymentRequest } from "../../types";
+import type { Settlement, Committee, PaymentRequest, AppUser } from "../../types";
 
 const PAGE_SIZE = 20;
 
@@ -89,7 +89,6 @@ export function useSettlementBatch(batchId: string | undefined) {
       const q = query(
         collection(db, "settlements"),
         where("batchId", "==", batchId),
-        orderBy("payee", "asc"),
       );
       const snap = await getDocs(q);
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Settlement);
@@ -114,6 +113,28 @@ export function useRequestsByIds(requestIds: string[]) {
       return results.filter((r): r is PaymentRequest => r !== null)
     },
     enabled: requestIds.length > 0,
+  });
+}
+
+/** Load user profiles by UIDs (for bank book URLs in settlement reports) */
+export function useUsersByUids(uids: string[]) {
+  const uniqueUids = [...new Set(uids)]
+  return useQuery({
+    queryKey: ['users', 'byUids', ...uniqueUids],
+    queryFn: async () => {
+      if (uniqueUids.length === 0) return new Map<string, AppUser>()
+      const map = new Map<string, AppUser>()
+      await Promise.all(
+        uniqueUids.map(async (uid) => {
+          try {
+            const snap = await getDoc(doc(db, 'users', uid))
+            if (snap.exists()) map.set(uid, { uid, ...snap.data() } as AppUser)
+          } catch { /* skip */ }
+        })
+      )
+      return map
+    },
+    enabled: uniqueUids.length > 0,
   });
 }
 
