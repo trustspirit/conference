@@ -118,11 +118,10 @@ export function useRequestsByIds(requestIds: string[]) {
 
 /** Load user profiles by UIDs (for bank book URLs in settlement reports) */
 export function useUsersByUids(uids: string[]) {
-  const uniqueUids = [...new Set(uids)]
+  const uniqueUids = [...new Set(uids)].sort()
   return useQuery({
     queryKey: ['users', 'byUids', ...uniqueUids],
     queryFn: async () => {
-      if (uniqueUids.length === 0) return new Map<string, AppUser>()
       const map = new Map<string, AppUser>()
       await Promise.all(
         uniqueUids.map(async (uid) => {
