@@ -57,7 +57,8 @@ export default function SettlementReportPage() {
 
   const dateStr = formatFirestoreDate(settlement.createdAt)
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
-  const payeeLabel = uniquePayees.length === 1 ? uniquePayees[0] : `${t('settlement.multiPayee')} (${uniquePayees.length})`
+  const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
+  const bankDisplay = isBatch ? t('settlement.seeAttached') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : '-'
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
@@ -105,7 +106,8 @@ export default function SettlementReportPage() {
 
         {/* Overview */}
         <InfoGrid className="mb-6" items={[
-          { label: t('field.payee'), value: payeeLabel },
+          { label: t('field.payee'), value: isBatch ? `${payeeDisplay} (${uniquePayees.length}명)` : payeeDisplay },
+          { label: t('field.bankAndAccount'), value: bankDisplay },
           { label: t('settlement.settlementDate'), value: dateStr },
           { label: t('committee.label'), value: committeeLabel },
           { label: t('settlement.requestCount'), value: String(totalRequests) },
@@ -144,30 +146,7 @@ export default function SettlementReportPage() {
           </div>
         </div>
 
-        {/* Per-settlement detail */}
-        {settlements.map((s, idx) => (
-          <div key={s.id} className="mb-6 border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold">
-                {isBatch && <span className="text-purple-600 mr-1">#{idx + 1}</span>}
-                {s.payee}
-              </h3>
-              <span className="text-xs text-gray-500">₩{s.totalAmount.toLocaleString()}</span>
-            </div>
-
-            <InfoGrid className="mb-3" items={[
-              { label: t('field.phone'), value: s.phone },
-              { label: t('field.session'), value: s.session },
-              { label: t('field.bankAndAccount'), value: `${s.bankName} ${s.bankAccount}` },
-              { label: t('committee.label'), value: t(`committee.${s.committee}`) },
-            ]} />
-
-            <ItemsTable items={s.items} totalAmount={s.totalAmount} />
-            <ReceiptGallery receipts={s.receipts} />
-          </div>
-        ))}
-
-        {/* Payee summary */}
+        {/* Payee summary (batch only — before individual details) */}
         {isBatch && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('settlement.payeeSummary')}</h3>
@@ -203,6 +182,29 @@ export default function SettlementReportPage() {
             </div>
           </div>
         )}
+
+        {/* Per-payee individual forms + receipts */}
+        {settlements.map((s, idx) => (
+          <div key={s.id} className="mb-6 border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold">
+                {isBatch && <span className="text-purple-600 mr-1">#{idx + 1}</span>}
+                {t('settlement.individualForm')} — {s.payee}
+              </h3>
+              <span className="text-xs text-gray-500">₩{s.totalAmount.toLocaleString()}</span>
+            </div>
+
+            <InfoGrid className="mb-3" items={[
+              { label: t('field.phone'), value: s.phone },
+              { label: t('field.session'), value: s.session },
+              { label: t('field.bankAndAccount'), value: `${s.bankName} ${s.bankAccount}` },
+              { label: t('committee.label'), value: t(`committee.${s.committee}`) },
+            ]} />
+
+            <ItemsTable items={s.items} totalAmount={s.totalAmount} />
+            <ReceiptGallery receipts={s.receipts} />
+          </div>
+        ))}
       </div>
     </Layout>
   )

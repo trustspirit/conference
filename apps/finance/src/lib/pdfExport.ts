@@ -116,10 +116,10 @@ export interface PdfExportOptions {
 }
 
 /**
- * Export a batch settlement report PDF with 4 sections:
- * Page 1: Budget code summary + signatures
- * Page 2: Detailed reimbursement table
- * Page 3+: Numbered receipts
+ * Export a unified Payment/Reimbursement Request Form PDF:
+ * Page 1: Cover — budget code summary + signatures (Multi/See attached for batch)
+ * Page 2: Payee summary table (batch only)
+ * Page 3+: Per-payee individual forms + their receipts
  * Last (optional): Bank book copies
  */
 export async function exportBatchSettlementPdf(
@@ -131,13 +131,18 @@ export async function exportBatchSettlementPdf(
 ) {
   if (settlements.length === 0) return false
 
+  const isBatch = settlements.length > 1
   const dateStr = formatFirestoreDate(settlements[0].createdAt) || new Date().toLocaleDateString('ko-KR')
 
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
-  const payeeLabel = uniquePayees.length === 1 ? uniquePayees[0] : t('settlement.multiPayee')
-
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.length === 1 ? t(`committee.${uniqueCommittees[0]}`) : ''
+
+  // Cover page display values
+  const payeeDisplay = isBatch ? 'Multi' : uniquePayees[0]
+  const bankDisplay = isBatch
+    ? t('settlement.seeAttached')
+    : `${settlements[0].bankName} ${settlements[0].bankAccount}`
 
   // Build numbered reimbursement rows
   const rows: ReimbursementRow[] = []
@@ -182,23 +187,37 @@ export async function exportBatchSettlementPdf(
   }
   const grandTotal = rows.reduce((sum, r) => sum + r.amount, 0)
 
-  // Collect receipts with numbering per settlement
-  const numberedReceipts: { label: string; receipt: Receipt }[] = []
-  const seenSettlementReceipts = new Set<string>()
+  // Collect receipts per settlement (for per-payee grouping)
+  const receiptsBySettlement = new Map<string, { label: string; receipt: Receipt }[]>()
   for (const settlement of settlements) {
-    if (seenSettlementReceipts.has(settlement.id)) continue
-    seenSettlementReceipts.add(settlement.id)
     const firstRow = rows.find(r => r.settlementId === settlement.id)
     const lastRow = [...rows].reverse().find(r => r.settlementId === settlement.id)
     const label = firstRow && lastRow && firstRow.number !== lastRow.number
       ? `#${firstRow.number}-${lastRow.number}`
       : `#${firstRow?.number || '?'}`
-    for (const receipt of settlement.receipts) {
-      numberedReceipts.push({ label: `${label} ${settlement.payee}`, receipt })
-    }
+    const entries = settlement.receipts.map(receipt => ({
+      label: `${label} ${settlement.payee}`,
+      receipt,
+    }))
+    receiptsBySettlement.set(settlement.id, entries)
   }
 
-  const images = await preloadReceipts(numberedReceipts.map(nr => nr.receipt))
+  // Preload all receipts at once (flat list for efficient batch download)
+  const allNumberedReceipts = [...receiptsBySettlement.values()].flat()
+  const allImages = await preloadReceipts(allNumberedReceipts.map(nr => nr.receipt))
+
+  // Build index map: settlement id → image indices
+  let imageOffset = 0
+  const imagesBySettlement = new Map<string, { nr: { label: string; receipt: Receipt }; img: { fileName: string; dataUrl: string | null } }[]>()
+  for (const settlement of settlements) {
+    const entries = receiptsBySettlement.get(settlement.id) || []
+    const mapped = entries.map((nr, i) => ({
+      nr,
+      img: allImages[imageOffset + i],
+    }))
+    imagesBySettlement.set(settlement.id, mapped)
+    imageOffset += entries.length
+  }
 
   // Bank books (only if option enabled)
   const bankBooks = options.includeBankBooks
@@ -214,14 +233,15 @@ export async function exportBatchSettlementPdf(
   // ── Construct HTML parts ──
   const parts: string[] = []
 
-  // Page 1: Budget Code Summary
+  // ── Page 1: Cover — Budget Code Summary ──
   parts.push(`
   <h1>${t('settlement.reportTitle')}</h1>
   ${projectName ? `<p class="subtitle" style="font-weight:600;">${escapeHtml(projectName)}</p>` : ''}
   <p class="subtitle">${t('settlement.reportSubtitle')}</p>
 
   <div class="info-grid">
-    <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeLabel)}${uniquePayees.length > 1 ? ` (${uniquePayees.length}명)` : ''}</div>
+    <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeDisplay)}${isBatch ? ` (${uniquePayees.length}명)` : ''}</div>
+    <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(bankDisplay)}</div>
     <div><span class="label">${t('settlement.settlementDate')}:</span> ${escapeHtml(dateStr)}</div>
     ${committeeLabel ? `<div><span class="label">${t('committee.label')}:</span> ${committeeLabel}</div>` : ''}
     <div><span class="label">${t('settlement.requestCount')}:</span> ${settlements.reduce((sum, s) => sum + s.requestIds.length, 0)}</div>
@@ -256,8 +276,10 @@ export async function exportBatchSettlementPdf(
   <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
     <div style="flex:1;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
-      ${uniquePayees.length === 1 && settlements[0].requestedBySignature ? `<img src="${settlements[0].requestedBySignature}" alt="requester signature" style="max-height:50px;" />` : ''}
-      <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(payeeLabel)}</div>
+      ${!isBatch && settlements[0].requestedBySignature
+        ? `<img src="${settlements[0].requestedBySignature}" alt="requester signature" style="max-height:50px;" />`
+        : isBatch ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeAttached')}</p>` : ''}
+      <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(payeeDisplay)}</div>
     </div>
     <div style="flex:1; text-align:center;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by (signature of budget approver)</p>
@@ -277,96 +299,124 @@ export async function exportBatchSettlementPdf(
   </div>
   `)
 
-  // Page 2: Detailed Reimbursement Table
-  parts.push(`
-  <div class="page-break">
-    <h2>${t('settlement.reimbursementDetail')}</h2>
-    <table>
-      <thead><tr>
-        <th>#</th>
-        <th>${t('field.date')}</th>
-        <th>${t('field.budgetCode')}</th>
-        <th>${t('field.comments')}</th>
-        <th>${t('field.payee')}</th>
-        <th>${t('field.bank')} / ${t('field.bankAccount')}</th>
-        <th>${t('field.transportType')}</th>
-        <th>${t('settlement.transportCost')}</th>
-        <th class="text-right">${t('field.totalAmount')}</th>
-      </tr></thead>
-      <tbody>
-        ${rows.map(row => `
-          <tr>
-            <td>${row.number}</td>
-            <td style="white-space:nowrap;">${escapeHtml(row.date)}</td>
-            <td>${row.budgetCode}<br/><span class="small-text">${t(`budgetCode.${row.budgetCode}`)}</span></td>
-            <td>${escapeHtml(row.description)}</td>
-            <td>${escapeHtml(row.payee)}</td>
-            <td>${escapeHtml(row.bankName)}<br/>${escapeHtml(row.bankAccount)}</td>
-            <td>${row.transportInfo || '-'}</td>
-            <td>${row.transportCost || '-'}</td>
-            <td class="text-right">₩${row.amount.toLocaleString()}</td>
-          </tr>
-        `).join('')}
-        <tr class="total-row">
-          <td colspan="8" class="text-right">${t('field.totalAmount')}</td>
-          <td class="text-right">₩${grandTotal.toLocaleString()}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2 style="margin-top:24px;">${t('settlement.payeeSummary')}</h2>
-    <table>
-      <thead><tr>
-        <th>#</th>
-        <th>${t('field.payee')}</th>
-        <th>${t('field.bank')}</th>
-        <th>${t('field.bankAccount')}</th>
-        <th class="text-right">${t('field.totalAmount')}</th>
-      </tr></thead>
-      <tbody>
-        ${settlements.map((s, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${escapeHtml(s.payee)}</td>
-            <td>${escapeHtml(s.bankName)}</td>
-            <td>${escapeHtml(s.bankAccount)}</td>
-            <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
-          </tr>
-        `).join('')}
-        <tr class="total-row">
-          <td colspan="4" class="text-right">${t('field.totalAmount')}</td>
-          <td class="text-right">₩${grandTotal.toLocaleString()}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  `)
-
-  // Page 3+: Receipts
-  if (images.length > 0) {
+  // ── Page 2: Payee Summary (batch only) ──
+  if (isBatch) {
     parts.push(`
     <div class="page-break">
-      <h2>${t('field.receipts')}</h2>
-      <div class="receipt-grid">
-        ${numberedReceipts.map((nr, i) => {
-          const img = images[i]
-          if (!img.dataUrl) return `<div class="receipt-card">
-            <div class="receipt-number">${escapeHtml(nr.label)}</div>
-            <div class="receipt-fail">Failed to load</div>
-            <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-          </div>`
-          return `<div class="receipt-card">
-            <div class="receipt-number">${escapeHtml(nr.label)}</div>
-            <img src="${escapeHtml(img.dataUrl)}" />
-            <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-          </div>`
-        }).join('')}
-      </div>
+      <h2>${t('settlement.payeeSummary')}</h2>
+      <table>
+        <thead><tr>
+          <th>#</th>
+          <th>${t('field.payee')}</th>
+          <th>${t('field.bank')}</th>
+          <th>${t('field.bankAccount')}</th>
+          <th class="text-right">${t('field.totalAmount')}</th>
+        </tr></thead>
+        <tbody>
+          ${settlements.map((s, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(s.payee)}</td>
+              <td>${escapeHtml(s.bankName)}</td>
+              <td>${escapeHtml(s.bankAccount)}</td>
+              <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td colspan="4" class="text-right">${t('field.totalAmount')}</td>
+            <td class="text-right">₩${grandTotal.toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     `)
   }
 
-  // Page 4: Bank Book Copies (optional)
+  // ── Page 3+: Per-payee individual forms + receipts ──
+  for (const settlement of settlements) {
+    const settlementRows = rows.filter(r => r.settlementId === settlement.id)
+    const settlementTotal = settlementRows.reduce((sum, r) => sum + r.amount, 0)
+
+    // Individual request form
+    parts.push(`
+    <div class="page-break">
+      <h2>${t('settlement.individualForm')} — ${escapeHtml(settlement.payee)}</h2>
+      <div class="info-grid">
+        <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(settlement.payee)}</div>
+        <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(settlement.phone)}</div>
+        <div><span class="label">${t('field.session')}:</span> ${escapeHtml(settlement.session)}</div>
+        <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(settlement.bankName)} ${escapeHtml(settlement.bankAccount)}</div>
+        <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${settlement.committee}`)}</div>
+      </div>
+
+      <table>
+        <thead><tr>
+          <th>#</th>
+          <th>${t('field.budgetCode')}</th>
+          <th>${t('field.comments')}</th>
+          <th>${t('field.transportType')}</th>
+          <th>${t('settlement.transportCost')}</th>
+          <th class="text-right">${t('field.totalAmount')}</th>
+        </tr></thead>
+        <tbody>
+          ${settlementRows.map((row, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${row.budgetCode}<br/><span class="small-text">${t(`budgetCode.${row.budgetCode}`)}</span></td>
+              <td>${escapeHtml(row.description)}</td>
+              <td>${row.transportInfo || '-'}</td>
+              <td>${row.transportCost || '-'}</td>
+              <td class="text-right">₩${row.amount.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td colspan="5" class="text-right">${t('field.totalAmount')}</td>
+            <td class="text-right">₩${settlementTotal.toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="flex:1;">
+          <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
+          ${settlement.requestedBySignature ? `<img src="${settlement.requestedBySignature}" alt="requester signature" style="max-height:50px;" />` : ''}
+          <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(settlement.payee)}</div>
+        </div>
+        <div style="flex:1; text-align:center;">
+          <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by</p>
+          ${settlement.approvalSignature ? `<img src="${settlement.approvalSignature}" alt="signature" style="max-height:50px;" />` : ''}
+          <div style="border-top:1px solid #ccc; width:200px; margin:4px auto 0; padding-top:2px; font-size:10px;">${settlement.approvedBy ? escapeHtml(settlement.approvedBy.name) : '&nbsp;'}</div>
+        </div>
+      </div>
+    </div>
+    `)
+
+    // This payee's receipts
+    const payeeReceiptImages = imagesBySettlement.get(settlement.id) || []
+    if (payeeReceiptImages.length > 0) {
+      parts.push(`
+      <div class="page-break">
+        <h2>${t('field.receipts')} — ${escapeHtml(settlement.payee)}</h2>
+        <div class="receipt-grid">
+          ${payeeReceiptImages.map(({ nr, img }) => {
+            if (!img.dataUrl) return `<div class="receipt-card">
+              <div class="receipt-number">${escapeHtml(nr.label)}</div>
+              <div class="receipt-fail">Failed to load</div>
+              <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+            </div>`
+            return `<div class="receipt-card">
+              <div class="receipt-number">${escapeHtml(nr.label)}</div>
+              <img src="${escapeHtml(img.dataUrl)}" />
+              <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+            </div>`
+          }).join('')}
+        </div>
+      </div>
+      `)
+    }
+  }
+
+  // ── Last page: Bank Book Copies (optional) ──
   if (bankBooks.length > 0) {
     parts.push(`
     <div class="page-break">
@@ -386,13 +436,13 @@ export async function exportBatchSettlementPdf(
   const fullHtml = `<!DOCTYPE html>
 <html><head>
   <meta charset="utf-8">
-  <title>${t('settlement.reportTitle')} - ${escapeHtml(payeeLabel)}</title>
+  <title>${t('settlement.reportTitle')} - ${escapeHtml(payeeDisplay)}</title>
   <style>${buildPdfStyles()}</style>
 </head><body>
   ${parts.join('')}
 </body></html>`
 
-  // Open in new window for printing
+  // Open in new window for printing (pre-existing pattern in this codebase)
   const printWindow = window.open('', '_blank')
   if (!printWindow) return false
   printWindow.document.open()
