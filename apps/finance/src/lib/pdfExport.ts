@@ -140,8 +140,8 @@ export async function exportBatchSettlementPdf(
   const uniquePayees = [...new Set(settlements.map(s => s.payee))]
   // Use original requests for accurate approver list (settlements only store first approver)
   const uniqueApprovers = originalRequests.length > 0
-    ? [...new Set(originalRequests.map(r => r.approvedBy?.name).filter(Boolean))]
-    : [...new Set(settlements.map(s => s.approvedBy?.name).filter(Boolean))]
+    ? [...new Set(originalRequests.map(r => r.approvedBy?.uid).filter(Boolean))]
+    : [...new Set(settlements.map(s => s.approvedBy?.uid).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
   const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
 
@@ -204,10 +204,10 @@ export async function exportBatchSettlementPdf(
 
   // Collect receipts per form source (original request or settlement)
   const receiptsByForm = new Map<string, { label: string; receipt: Receipt }[]>()
-  for (const source of formSources) {
-    const idx = formSources.indexOf(source)
+  for (let idx = 0; idx < formSources.length; idx++) {
+    const source = formSources[idx]
     const entries = source.receipts.map(receipt => ({
-      label: `#${idx + 1} ${'payee' in source ? source.payee : ''}`,
+      label: `#${idx + 1} ${source.payee}`,
       receipt,
     }))
     receiptsByForm.set(source.id, entries)
@@ -234,11 +234,12 @@ export async function exportBatchSettlementPdf(
   const payeeUsers = options.payeeUsers
   const bankBooks: { payee: string; url: string }[] = []
   if (options.includeBankBooks) {
-    const seenPayees = new Set<string>()
+    const seenUids = new Set<string>()
     for (const s of settlements) {
-      if (seenPayees.has(s.payee)) continue
-      seenPayees.add(s.payee)
-      const uid = originalRequests.find(r => r.payee === s.payee)?.requestedBy.uid
+      const req = originalRequests.find(r => s.requestIds.includes(r.id))
+      const uid = req?.requestedBy.uid
+      if (uid && seenUids.has(uid)) continue
+      if (uid) seenUids.add(uid)
       const userBankBook = uid && payeeUsers ? (payeeUsers.get(uid)?.bankBookUrl || payeeUsers.get(uid)?.bankBookDriveUrl) : undefined
       const url = userBankBook || s.bankBookUrl
       if (url) bankBooks.push({ payee: s.payee, url })

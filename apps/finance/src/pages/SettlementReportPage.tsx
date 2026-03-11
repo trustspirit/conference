@@ -38,7 +38,6 @@ export default function SettlementReportPage() {
   const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
 
   // Load payee user profiles for bank book URLs
-  const payeeUids = [...new Set(settlements.map(s => s.requestIds).flat())]
   const requesterUids = [...new Set((originalRequests || []).map(r => r.requestedBy.uid))]
   const { data: payeeUsers, isLoading: usersLoading } = useUsersByUids(requesterUids)
 
@@ -263,12 +262,14 @@ export default function SettlementReportPage() {
         {/* Bank Book Copies */}
         {includeBankBooks && (() => {
           const bankBooks: { payee: string; url: string }[] = []
-          const seenPayees = new Set<string>()
+          const seenUids = new Set<string>()
           for (const s of settlements) {
-            if (seenPayees.has(s.payee)) continue
-            seenPayees.add(s.payee)
+            // Find the requester UID for this settlement via original requests or requestIds
+            const req = (originalRequests || []).find(r => s.requestIds.includes(r.id))
+            const uid = req?.requestedBy.uid
+            if (uid && seenUids.has(uid)) continue
+            if (uid) seenUids.add(uid)
             // Try user profile first, fall back to settlement snapshot
-            const uid = (originalRequests || []).find(r => r.payee === s.payee)?.requestedBy.uid
             const userBankBook = uid ? (payeeUsers?.get(uid)?.bankBookUrl || payeeUsers?.get(uid)?.bankBookDriveUrl) : undefined
             const url = userBankBook || s.bankBookUrl
             if (url) bankBooks.push({ payee: s.payee, url })
