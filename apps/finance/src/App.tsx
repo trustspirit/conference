@@ -66,7 +66,7 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <ThemeProvider defaultTheme="light">
         <ToastProvider position="bottom-right">
           <AuthProvider>
             <RouterProvider router={router} />

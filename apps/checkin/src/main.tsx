@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/key-generator" element={<ThemeProvider><ToastProvider position="bottom-right"><KeyGeneratorPage /></ToastProvider></ThemeProvider>} />
+          <Route path="/key-generator" element={<ThemeProvider defaultTheme="light"><ToastProvider position="bottom-right"><KeyGeneratorPage /></ToastProvider></ThemeProvider>} />
           <Route
             path="/*"
             element={

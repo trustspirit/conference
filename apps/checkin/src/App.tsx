@@ -75,7 +75,7 @@ function App(): React.ReactElement {
   }, [])
 
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="light">
     <ToastProvider position="bottom-right">
     <div className="min-h-screen flex flex-col bg-[#F0F2F5]">
       <nav className="bg-white shadow-sm px-4 h-14 flex items-center justify-between sticky top-0 z-50">

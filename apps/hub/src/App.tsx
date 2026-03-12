@@ -131,7 +131,7 @@ function App(): React.ReactElement {
   }
 
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="light">
       <div className="min-h-screen bg-[#F0F2F5]">
         <nav className="bg-white shadow-sm px-6 h-14 flex items-center justify-between sticky top-0 z-50">
           <h1 className="text-[28px] font-bold text-[#1877F2] tracking-tighter">conference</h1>

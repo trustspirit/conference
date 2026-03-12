@@ -180,7 +180,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
+        <ThemeProvider defaultTheme="light">
           <ToastProvider position="bottom-right">
             <RouterProvider router={router} />
           </ToastProvider>

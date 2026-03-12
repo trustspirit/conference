@@ -15,7 +15,7 @@ const AdminManagePage = lazy(() => import('./pages/admin/AdminManagePage'))
 
 function App(): React.ReactElement {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="light">
       <ToastProvider position="bottom-right">
         <Suspense fallback={<Spinner />}>
           <Routes>
