@@ -120,7 +120,8 @@
     "departure": "Departure",
     "destination": "Destination",
     "distanceKm": "Distance (km)",
-    "distanceKmHint": "Check the distance between departure and destination on Naver Map and enter it here. Please capture and attach the Naver Map screenshot as a receipt file."
+    "distanceKmHint": "Check the distance between departure and destination on Naver Map and enter it here. Please capture and attach the Naver Map screenshot as a receipt file.",
+    "carAmountAutoCalc": "Auto-calculated by distance"
   },
   "form": {
     "title": "Payment / Reimbursement Request Form",

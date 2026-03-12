@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RequestItem, TransportDetail, TransportType, TripType } from '../types'
 import { BUDGET_CODES } from '../constants/budgetCodes'
@@ -31,6 +32,7 @@ export function calcCarTransportAmount(detail: TransportDetail, perKmRate: numbe
 
 export default function ItemRow({ index, item, onChange, onRemove, canRemove, perKmRate = DEFAULT_PER_KM_RATE }: Props) {
   const { t } = useTranslation()
+  const [showDistanceHint, setShowDistanceHint] = useState(false)
 
   const budgetOptions = [
     { value: '', label: t('budgetCode.select') },
@@ -70,43 +72,49 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
   return (
     <div className="space-y-2">
       <div className="flex gap-2 items-start">
-        <span className="text-sm text-gray-400 pt-2 w-6">{index + 1}</span>
-        <TextField
-          placeholder={t('field.items')}
-          value={item.description}
-          onChange={(e) => onChange(index, { ...item, description: e.target.value })}
-        />
-        <div className="w-64 shrink-0">
-          <Select
-            options={budgetOptions}
-            value={currentValue}
-            onChange={(v) => {
-              const idx = parseInt(v as string)
-              const code = isNaN(idx) ? 0 : (BUDGET_CODES[idx]?.code ?? 0)
-              const updated: RequestItem = { ...item, budgetCode: code }
-              // Auto-add transport detail when selecting transport code
-              if (code === TRANSPORT_BUDGET_CODE && !item.transportDetail) {
-                updated.transportDetail = emptyTransportDetail()
-                updated.amount = 0
-              }
-              // Clear transport detail when switching away from transport code
-              if (code !== TRANSPORT_BUDGET_CODE) {
-                updated.transportDetail = undefined
-              }
-              onChange(index, updated)
-            }}
-            placeholder={t('budgetCode.select')}
-            fullWidth
-            searchable
-          />
+        <span className="text-sm text-gray-400 pt-2 w-6 shrink-0">{index + 1}</span>
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row gap-2">
+          <div className="flex-1 min-w-0">
+            <TextField
+              placeholder={t('field.items')}
+              value={item.description}
+              onChange={(e) => onChange(index, { ...item, description: e.target.value })}
+              fullWidth
+            />
+          </div>
+          <div className="sm:w-64 sm:shrink-0">
+            <Select
+              options={budgetOptions}
+              value={currentValue}
+              onChange={(v) => {
+                const idx = parseInt(v as string)
+                const code = isNaN(idx) ? 0 : (BUDGET_CODES[idx]?.code ?? 0)
+                const updated: RequestItem = { ...item, budgetCode: code }
+                if (code === TRANSPORT_BUDGET_CODE && !item.transportDetail) {
+                  updated.transportDetail = emptyTransportDetail()
+                  updated.amount = 0
+                }
+                if (code !== TRANSPORT_BUDGET_CODE) {
+                  updated.transportDetail = undefined
+                }
+                onChange(index, updated)
+              }}
+              placeholder={t('budgetCode.select')}
+              fullWidth
+              searchable
+            />
+          </div>
+          <div className="sm:w-32 sm:shrink-0">
+            <TextField
+              type="number"
+              placeholder={isAmountDisabled ? t('field.carAmountAutoCalc') : t('field.totalAmount')}
+              value={item.amount || ''}
+              onChange={(e) => onChange(index, { ...item, amount: parseInt(e.target.value) || 0 })}
+              disabled={isAmountDisabled}
+              fullWidth
+            />
+          </div>
         </div>
-        <TextField
-          type="number"
-          placeholder={t('field.totalAmount')}
-          value={item.amount || ''}
-          onChange={(e) => onChange(index, { ...item, amount: parseInt(e.target.value) || 0 })}
-          disabled={isAmountDisabled}
-        />
         {canRemove && (
           <Button type="button" variant="ghost" size="sm" onClick={() => onRemove(index)}>
             <span className="text-red-400 hover:text-red-600">&#10005;</span>
@@ -115,8 +123,8 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
       </div>
 
       {isTransport && (
-        <div className="ml-8 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="ml-0 sm:ml-8 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
                 {t('field.transportType')} <span className="text-red-500">*</span>
@@ -146,7 +154,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <TextField
               label={`${t('field.departure')} *`}
               placeholder={t('field.departure')}
@@ -164,17 +172,25 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
           </div>
           {detail.transportType === 'car' && (
             <>
-              <div className="flex items-end gap-3">
-                <div className="w-1/2 relative">
+              <div className="space-y-2">
+                <div className="relative">
                   <div className="flex items-center gap-1 mb-1">
                     <label className="text-xs font-medium text-gray-600">
                       {t('field.distanceKm')} <span className="text-red-500">*</span>
                     </label>
-                    <span className="group relative">
-                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold cursor-help">?</span>
-                      <span className="hidden group-hover:block group-focus-within:block absolute z-10 left-0 top-5 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
-                        {t('field.distanceKmHint')}
-                      </span>
+                    <span className="relative">
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold cursor-help"
+                        onClick={() => setShowDistanceHint((v) => !v)}
+                        onMouseEnter={() => setShowDistanceHint(true)}
+                        onMouseLeave={() => setShowDistanceHint(false)}
+                      >?</button>
+                      {showDistanceHint && (
+                        <span className="absolute z-10 left-0 top-5 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
+                          {t('field.distanceKmHint')}
+                        </span>
+                      )}
                     </span>
                   </div>
                   <TextField
@@ -186,7 +202,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                   />
                 </div>
                 {detail.distanceKm && (
-                  <p className="text-xs text-gray-500 pb-2">
+                  <p className="text-xs text-gray-500">
                     = {detail.distanceKm}km × ₩{perKmRate} × {detail.tripType === 'round' ? '2' : '1'} = <span className="font-medium">₩{calcCarTransportAmount(detail, perKmRate).toLocaleString()}</span>
                   </p>
                 )}
