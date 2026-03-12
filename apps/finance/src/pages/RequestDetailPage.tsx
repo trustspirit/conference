@@ -406,7 +406,7 @@ export default function RequestDetailPage() {
       </Dialog>
 
       <ApprovalModal
-        key={showApprovalModal ? 'open' : 'closed'}
+        key={showApprovalModal ? 'approval-open' : 'approval-closed'}
         open={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
         request={request}
@@ -418,7 +418,7 @@ export default function RequestDetailPage() {
       />
 
       <RejectionModal
-        key={showRejectionModal ? 'open' : 'closed'}
+        key={showRejectionModal ? 'rejection-open' : 'rejection-closed'}
         open={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
         onConfirm={handleRejectConfirm}

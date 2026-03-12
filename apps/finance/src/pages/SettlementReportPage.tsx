@@ -58,7 +58,10 @@ export default function SettlementReportPage() {
     }
   }
 
-  if (isLoading || batchLoading || requestsLoading || usersLoading) return <Layout><Spinner /></Layout>
+  const isDataLoading = isLoading || batchLoading
+    || (allRequestIds.length > 0 && requestsLoading)
+    || (requesterUids.length > 0 && usersLoading)
+  if (isDataLoading) return <Layout><Spinner /></Layout>
   if (!settlement || (currentProject && settlement.projectId !== currentProject.id)) {
     return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
   }
@@ -91,29 +94,29 @@ export default function SettlementReportPage() {
   return (
     <Layout>
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 max-w-4xl mx-auto">
-        <Link to="/admin/settlements" className="inline-block text-sm text-purple-600 hover:underline mb-4">
-          {t('settlement.backToList')}
-        </Link>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold">
-              {isBatch ? t('settlement.batchReport') : t('settlement.reportTitle')}
-            </h2>
-            <p className="text-sm text-gray-500">{t('settlement.reportSubtitle')}</p>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <Link to="/admin/settlements" className="text-sm text-purple-600 hover:underline">
+            {t('settlement.backToList')}
+          </Link>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer whitespace-nowrap">
               <input type="checkbox" checked={includeBankBooks}
                 onChange={(e) => setIncludeBankBooks(e.target.checked)}
                 className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
               {t('settlement.includeBankBooks')}
             </label>
             <button onClick={handleExportPdf} disabled={exporting}
-              className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400">
+              className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400 whitespace-nowrap">
               {exporting ? t('settlement.exporting') : t('settlement.exportPdf')}
             </button>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-xl font-bold">
+            {isBatch ? t('settlement.batchReport') : t('settlement.reportTitle')}
+          </h2>
+          <p className="text-sm text-gray-500">{t('settlement.reportSubtitle')}</p>
         </div>
 
         {/* Overview */}
