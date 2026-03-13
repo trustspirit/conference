@@ -214,7 +214,7 @@ export default function AdminUsersPage() {
                     <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.email')}</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.phone')}</th>
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-gray-600">{t('role.label')}</th>
+                      <th className="text-center px-4 py-3 font-medium text-gray-600 min-w-[180px]">{t('role.label')}</th>
                     )}
                     {isAdmin && (
                       <th className="text-center px-4 py-3 font-medium text-gray-600 w-16"></th>
@@ -255,6 +255,7 @@ export default function AdminUsersPage() {
                                 value={u.role}
                                 disabled={u.uid === currentUser?.uid}
                                 onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
+                                fullWidth
                               />
                               {successUid === u.uid && (
                                 <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
