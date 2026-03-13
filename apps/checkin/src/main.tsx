@@ -3,11 +3,11 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider, ToastProvider } from 'trust-ui-react'
+import './styles/global.css'
 import 'trust-ui-react/styles.css'
 import AuthGuard from './components/AuthGuard'
 import App from './App'
 import KeyGeneratorPage from './pages/KeyGeneratorPage'
-import './styles/global.css'
 import './i18n'
 
 const queryClient = new QueryClient({
