@@ -120,8 +120,13 @@
     "departure": "Departure",
     "destination": "Destination",
     "distanceKm": "Distance (km)",
-    "distanceKmHint": "Check the distance between departure and destination on Naver Map and enter it here. Please capture and attach the Naver Map screenshot as a receipt file.",
-    "carAmountAutoCalc": "Auto-calculated by distance"
+    "distanceKmHint": "Distance is auto-calculated when you search departure and destination. Manual entry is also available.",
+    "carAmountAutoCalc": "Auto-calculated by distance",
+    "placeSearchPlaceholder": "Search place...",
+    "manualInput": "Enter manually",
+    "calculatingDistance": "Calculating distance...",
+    "noRouteFound": "No route found",
+    "searchFailed": "Search failed. Please enter manually"
   },
   "form": {
     "title": "Payment / Reimbursement Request Form",

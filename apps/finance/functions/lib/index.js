@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -45,6 +45,7 @@ admin.initializeApp();
 // --- Email notification secrets & config ---
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
 const gmailAppPassword = (0, params_1.defineSecret)('GMAIL_APP_PASSWORD');
+const kakaoMobilityKey = (0, params_1.defineSecret)('KAKAO_MOBILITY_API_KEY');
 function createTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -238,6 +239,34 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     }
     console.log(`User ${uid} deleted by ${request.auth.uid}`);
     return { success: true };
+});
+// --- Kakao Mobility distance calculation ---
+exports.calculateDistance = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] }, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    }
+    const { origin, destination } = request.data;
+    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+        throw new https_1.HttpsError('invalid-argument', 'Origin and destination coordinates are required');
+    }
+    // Kakao Mobility uses longitude,latitude order
+    const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}`;
+    const response = await fetch(url, {
+        headers: {
+            Authorization: `KakaoAK ${kakaoMobilityKey.value()}`,
+        },
+    });
+    if (!response.ok) {
+        console.error('Kakao Mobility API error:', response.status, await response.text());
+        throw new https_1.HttpsError('internal', 'Failed to calculate distance');
+    }
+    const data = await response.json();
+    const routes = data.routes;
+    if (!routes || routes.length === 0 || routes[0].result_code !== 0) {
+        throw new https_1.HttpsError('not-found', 'No route found');
+    }
+    const distanceMeters = routes[0].summary.distance;
+    return { distanceMeters };
 });
 // --- Email Notification Functions ---
 const COMMITTEE_LABELS = {

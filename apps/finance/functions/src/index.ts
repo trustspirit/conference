@@ -11,6 +11,7 @@ admin.initializeApp()
 // --- Email notification secrets & config ---
 const gmailUser = defineSecret('GMAIL_USER')
 const gmailAppPassword = defineSecret('GMAIL_APP_PASSWORD')
+const kakaoMobilityKey = defineSecret('KAKAO_MOBILITY_API_KEY')
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -256,6 +257,48 @@ export const deleteUserAccount = onCall(async (request) => {
   console.log(`User ${uid} deleted by ${request.auth.uid}`)
   return { success: true }
 })
+
+// --- Kakao Mobility distance calculation ---
+export const calculateDistance = onCall(
+  { secrets: [kakaoMobilityKey] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Must be logged in')
+    }
+
+    const { origin, destination } = request.data as {
+      origin: { lat: number; lng: number }
+      destination: { lat: number; lng: number }
+    }
+
+    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+      throw new HttpsError('invalid-argument', 'Origin and destination coordinates are required')
+    }
+
+    // Kakao Mobility uses longitude,latitude order
+    const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}`
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `KakaoAK ${kakaoMobilityKey.value()}`,
+      },
+    })
+
+    if (!response.ok) {
+      console.error('Kakao Mobility API error:', response.status, await response.text())
+      throw new HttpsError('internal', 'Failed to calculate distance')
+    }
+
+    const data = await response.json() as { routes: { result_code: number; summary: { distance: number } }[] }
+    const routes = data.routes
+    if (!routes || routes.length === 0 || routes[0].result_code !== 0) {
+      throw new HttpsError('not-found', 'No route found')
+    }
+
+    const distanceMeters = routes[0].summary.distance
+    return { distanceMeters }
+  }
+)
 
 // --- Email Notification Functions ---
 

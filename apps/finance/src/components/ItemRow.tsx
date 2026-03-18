@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RequestItem, TransportDetail, TransportType, TripType } from '../types'
 import { BUDGET_CODES } from '../constants/budgetCodes'
 import { Select, Button, TextField } from 'trust-ui-react'
+import PlaceSearchInput from './PlaceSearchInput'
+import MiniMap from './MiniMap'
+import { loadKakaoSDK } from '../lib/kakaoLoader'
+import { httpsCallable } from 'firebase/functions'
+import { functions } from '@conference/firebase'
 
 interface Props {
   index: number
@@ -33,6 +38,9 @@ export function calcCarTransportAmount(detail: TransportDetail, perKmRate: numbe
 export default function ItemRow({ index, item, onChange, onRemove, canRemove, perKmRate = DEFAULT_PER_KM_RATE }: Props) {
   const { t } = useTranslation()
   const [showDistanceHint, setShowDistanceHint] = useState(false)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [sdkLoaded, setSdkLoaded] = useState(false)
+  const abortRef = useRef(false)
 
   const budgetOptions = [
     { value: '', label: t('budgetCode.select') },
@@ -42,7 +50,6 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
     })),
   ]
 
-  // Find the matching option index for the current budgetCode + description
   const currentIndex = BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode)
   const currentValue = currentIndex >= 0 ? String(currentIndex) : ''
 
@@ -53,21 +60,61 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
 
   const updateTransportDetail = (patch: Partial<TransportDetail>) => {
     const updated = { ...detail, ...patch }
-    // Clear distanceKm when switching to public transport
     if (patch.transportType === 'public') {
       updated.distanceKm = undefined
+      updated.departureCoord = undefined
+      updated.destinationCoord = undefined
     }
     const newItem: RequestItem = { ...item, transportDetail: updated }
-    // Auto-calculate amount for car
     if (updated.transportType === 'car') {
       newItem.amount = calcCarTransportAmount(updated, perKmRate)
     }
-    // Reset amount when switching to public (user enters manually)
     if (patch.transportType === 'public') {
       newItem.amount = 0
     }
     onChange(index, newItem)
   }
+
+  // Load Kakao SDK when car transport is selected
+  useEffect(() => {
+    if (isTransport && detail.transportType === 'car') {
+      loadKakaoSDK().then(() => setSdkLoaded(true)).catch(() => {})
+    }
+  }, [isTransport, detail.transportType])
+
+  // Auto-calculate distance when both coords exist
+  useEffect(() => {
+    const depCoord = detail.departureCoord
+    const destCoord = detail.destinationCoord
+    if (!depCoord || !destCoord || detail.transportType !== 'car') return
+
+    abortRef.current = false
+    setIsCalculating(true)
+
+    const calcDistance = httpsCallable<
+      { origin: { lat: number; lng: number }; destination: { lat: number; lng: number } },
+      { distanceMeters: number }
+    >(functions, 'calculateDistance')
+
+    calcDistance({
+      origin: { lat: depCoord.lat, lng: depCoord.lng },
+      destination: { lat: destCoord.lat, lng: destCoord.lng },
+    })
+      .then((result) => {
+        if (abortRef.current) return
+        const km = Math.round(result.data.distanceMeters / 1000)
+        updateTransportDetail({ distanceKm: km })
+      })
+      .catch((err) => {
+        if (abortRef.current) return
+        console.error('Distance calculation failed:', err)
+      })
+      .finally(() => {
+        if (!abortRef.current) setIsCalculating(false)
+      })
+
+    return () => { abortRef.current = true }
+  }, [detail.departureCoord?.lat, detail.departureCoord?.lng, detail.destinationCoord?.lat, detail.destinationCoord?.lng, detail.transportType])
 
   return (
     <div className="space-y-2">
@@ -155,21 +202,61 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TextField
-              label={`${t('field.departure')} *`}
-              placeholder={t('field.departure')}
-              value={detail.departure}
-              onChange={(e) => updateTransportDetail({ departure: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label={`${t('field.destination')} *`}
-              placeholder={t('field.destination')}
-              value={detail.destination}
-              onChange={(e) => updateTransportDetail({ destination: e.target.value })}
-              fullWidth
-            />
+            {detail.transportType === 'car' && sdkLoaded ? (
+              <>
+                <PlaceSearchInput
+                  label={`${t('field.departure')} *`}
+                  value={detail.departure}
+                  coord={detail.departureCoord}
+                  onChange={(text, coord) =>
+                    updateTransportDetail({
+                      departure: text,
+                      departureCoord: coord,
+                      ...(coord ? {} : { distanceKm: undefined }),
+                    })
+                  }
+                  placeholder={t('field.placeSearchPlaceholder')}
+                />
+                <PlaceSearchInput
+                  label={`${t('field.destination')} *`}
+                  value={detail.destination}
+                  coord={detail.destinationCoord}
+                  onChange={(text, coord) =>
+                    updateTransportDetail({
+                      destination: text,
+                      destinationCoord: coord,
+                      ...(coord ? {} : { distanceKm: undefined }),
+                    })
+                  }
+                  placeholder={t('field.placeSearchPlaceholder')}
+                />
+              </>
+            ) : (
+              <>
+                <TextField
+                  label={`${t('field.departure')} *`}
+                  placeholder={t('field.departure')}
+                  value={detail.departure}
+                  onChange={(e) => updateTransportDetail({ departure: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label={`${t('field.destination')} *`}
+                  placeholder={t('field.destination')}
+                  value={detail.destination}
+                  onChange={(e) => updateTransportDetail({ destination: e.target.value })}
+                  fullWidth
+                />
+              </>
+            )}
           </div>
+          {detail.transportType === 'car' && sdkLoaded &&
+            (detail.departureCoord || detail.destinationCoord) && (
+            <MiniMap
+              departure={detail.departureCoord}
+              destination={detail.destinationCoord}
+            />
+          )}
           {detail.transportType === 'car' && (
             <>
               <div className="space-y-2">
@@ -195,9 +282,10 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                   </div>
                   <TextField
                     type="number"
-                    placeholder="km"
+                    placeholder={isCalculating ? t('field.calculatingDistance') : 'km'}
                     value={detail.distanceKm || ''}
                     onChange={(e) => updateTransportDetail({ distanceKm: parseInt(e.target.value) || undefined })}
+                    disabled={isCalculating}
                     fullWidth
                   />
                 </div>

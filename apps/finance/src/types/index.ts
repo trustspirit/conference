@@ -54,12 +54,21 @@ export type RequestStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | '
 export type TransportType = 'car' | 'public'
 export type TripType = 'round' | 'one_way'
 
+export interface PlaceCoord {
+  lat: number
+  lng: number
+  placeName: string
+  addressName: string
+}
+
 export interface TransportDetail {
   transportType: TransportType
   tripType: TripType
   departure: string
   destination: string
-  distanceKm?: number // only for car
+  departureCoord?: PlaceCoord
+  destinationCoord?: PlaceCoord
+  distanceKm?: number
 }
 
 export interface RequestItem {
