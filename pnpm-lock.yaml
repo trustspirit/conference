@@ -212,8 +212,8 @@ importers:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@16.13.1)(react@19.2.4)(redux@5.0.1)
       trust-ui-react:
-        specifier: ^0.3.9
-        version: 0.3.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.3.10
+        version: 0.3.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -3091,6 +3091,12 @@ packages:
 
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
+  trust-ui-react@0.3.10:
+    resolution: {integrity: sha512-SPkL1Jkz5SDiVdJ/4E6I59RJLO/42zAgalGgofZ/WnyJkIDjucV4W52hBwNoVPUW2P6p2l4xaAWEMN9Nh36p0w==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   trust-ui-react@0.3.9:
     resolution: {integrity: sha512-Zsqdu2TWUiBL/aFRtrWMmKJg/LOOLifiTlWerg9HMbqaOBoLSANes7iAtf+wwKYIgCEr++dVTgyiaBpFUiWcNw==}
@@ -6390,6 +6396,11 @@ snapshots:
       picomatch: 4.0.3
 
   tr46@0.0.3: {}
+
+  trust-ui-react@0.3.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   trust-ui-react@0.3.9(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
