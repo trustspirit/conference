@@ -50,10 +50,13 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
     })),
   ]
 
-  const currentIndex = BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode)
+  const currentIndex = item.budgetDescKey
+    ? BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode && bc.descKey === item.budgetDescKey)
+    : BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode)
   const currentValue = currentIndex >= 0 ? String(currentIndex) : ''
 
-  const isTransport = item.budgetCode === TRANSPORT_BUDGET_CODE
+  const matchedBudget = currentIndex >= 0 ? BUDGET_CODES[currentIndex] : undefined
+  const isTransport = item.budgetCode === TRANSPORT_BUDGET_CODE && matchedBudget?.category === 'Transportation'
   const detail = item.transportDetail || emptyTransportDetail()
 
   const isAmountDisabled = isTransport && detail.transportType === 'car'
@@ -120,8 +123,8 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
     <div className="space-y-2">
       <div className="flex gap-2 items-start">
         <span className="text-sm text-gray-400 pt-2 w-6 shrink-0">{index + 1}</span>
-        <div className="flex-1 min-w-0 flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:flex-wrap gap-2">
+          <div className="flex-1 min-w-[120px]">
             <TextField
               placeholder={t('field.items')}
               value={item.description}
@@ -135,13 +138,15 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
               value={currentValue}
               onChange={(v) => {
                 const idx = parseInt(v as string)
-                const code = isNaN(idx) ? 0 : (BUDGET_CODES[idx]?.code ?? 0)
-                const updated: RequestItem = { ...item, budgetCode: code }
-                if (code === TRANSPORT_BUDGET_CODE && !item.transportDetail) {
+                const bc = isNaN(idx) ? undefined : BUDGET_CODES[idx]
+                const code = bc?.code ?? 0
+                const updated: RequestItem = { ...item, budgetCode: code, budgetDescKey: bc?.descKey }
+                const isTransportItem = code === TRANSPORT_BUDGET_CODE && bc?.category === 'Transportation'
+                if (isTransportItem && !item.transportDetail) {
                   updated.transportDetail = emptyTransportDetail()
                   updated.amount = 0
                 }
-                if (code !== TRANSPORT_BUDGET_CODE) {
+                if (!isTransportItem) {
                   updated.transportDetail = undefined
                 }
                 onChange(index, updated)
@@ -285,7 +290,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                     placeholder={isCalculating ? t('field.calculatingDistance') : 'km'}
                     value={detail.distanceKm || ''}
                     onChange={(e) => updateTransportDetail({ distanceKm: parseInt(e.target.value) || undefined })}
-                    disabled={isCalculating}
+                    disabled={isCalculating || !!(detail.departureCoord && detail.destinationCoord)}
                     fullWidth
                   />
                 </div>

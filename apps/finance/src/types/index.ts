@@ -74,6 +74,7 @@ export interface TransportDetail {
 export interface RequestItem {
   description: string
   budgetCode: number
+  budgetDescKey?: string
   amount: number
   transportDetail?: TransportDetail
 }
