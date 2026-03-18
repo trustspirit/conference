@@ -121,8 +121,8 @@ export default function ResubmitPage() {
     if (validItems.length === 0) errs.push(t('validation.itemsRequired'))
     const missingBudgetCode = validItems.some((item) => !item.budgetCode)
     if (missingBudgetCode) errs.push(t('validation.budgetCodeRequired'))
-    // Transport detail validation for budget code 5110
-    const transportItems = validItems.filter((item) => item.budgetCode === 5110)
+    // Transport detail validation for items with transport detail
+    const transportItems = validItems.filter((item) => item.transportDetail)
     for (const ti of transportItems) {
       const d = ti.transportDetail
       if (!d?.transportType) { errs.push(t('validation.transportTypeRequired')); break }
