@@ -258,6 +258,30 @@ export default function SettlementReportPage() {
               </div>
             </div>
 
+            {/* Route map images for transport items */}
+            {settlements.flatMap(s => s.items).some(item => item.transportDetail?.routeMapImage?.url) && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('field.routeMap')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {settlements.flatMap(s => s.items).filter(item => item.transportDetail?.routeMapImage?.url).map((item, idx) => (
+                    <div key={idx} className="border rounded-lg overflow-hidden">
+                      <a href={item.transportDetail!.routeMapImage!.url} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={item.transportDetail!.routeMapImage!.url}
+                          alt={`${item.transportDetail!.departure} → ${item.transportDetail!.destination}`}
+                          className="w-full max-h-[160px] object-contain bg-gray-50"
+                        />
+                      </a>
+                      <div className="px-3 py-1.5 bg-gray-50 border-t text-xs text-gray-600">
+                        {item.transportDetail!.departure} → {item.transportDetail!.destination}
+                        {item.transportDetail!.distanceKm && ` · ${item.transportDetail!.distanceKm}km`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <ReceiptGallery receipts={settlements.flatMap(s => s.receipts)} />
           </>
         )}
