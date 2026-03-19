@@ -39,13 +39,13 @@ export interface TransportDetail {
 
 경로 좌표는 Firestore에 저장하지 않는다. 화면 표시와 캡처 용도로만 사용하고, 캡처된 PNG가 영구 기록이 된다.
 
+**경로 좌표 크기 관리:** 장거리 경로(서울-부산 등)의 경우 vertexes가 10,000+ 좌표쌍이 될 수 있다. 서버에서 Douglas-Peucker 간소화를 적용하여 200px 높이 맵에서 시각적으로 충분한 수준으로 좌표를 줄인다 (최대 ~2,000 좌표쌍).
+
 ### Storage 경로
 
 ```
 routemaps/{projectId}/{committee}/{timestamp}_route.png
 ```
-
-기존 `uploadFileToStorage` Cloud Function을 재사용한다.
 
 ## 2. Backend Changes (`functions/src/index.ts`)
 
@@ -53,6 +53,7 @@ routemaps/{projectId}/{committee}/{timestamp}_route.png
 
 - Mobility API 응답에서 `routes[0].sections[].roads[].vertexes`를 추출
 - 모든 section의 모든 road의 vertexes를 하나의 flat array로 합침
+- 좌표 수가 많을 경우 Douglas-Peucker 간소화 적용
 - 거리와 함께 `routePath`로 반환
 
 ```typescript
@@ -65,8 +66,26 @@ for (const section of route.sections) {
     routePath.push(...road.vertexes)
   }
 }
-return { distanceMeters, routePath }
+// 필요 시 간소화
+return { distanceMeters, routePath: simplifyPath(routePath) }
 ```
+
+### uploadRouteMap 함수 추가
+
+기존 `uploadReceiptsV2`는 `receipts/` 경로가 하드코딩되어 있으므로, 경로맵 전용 업로드 함수를 추가한다. 내부적으로 기존 `uploadFileToStorage` 헬퍼를 재사용한다.
+
+```typescript
+export const uploadRouteMap = onCall(async (request) => {
+  // auth 체크
+  const { file, committee, projectId } = request.data
+  const storagePath = `routemaps/${projectId}/${committee}/${Date.now()}_route.png`
+  return await uploadFileToStorage(file, storagePath)
+})
+```
+
+### cleanupDeletedProjects 수정
+
+기존 `receipts/{projectId}/` 정리 후에 `routemaps/{projectId}/` 폴더도 함께 정리하도록 추가한다.
 
 ## 3. Frontend — Route Visualization
 
@@ -74,7 +93,7 @@ return { distanceMeters, routePath }
 
 **Props 추가:**
 - `routePath?: number[]` — 경로 좌표 배열
-- `containerRef`를 외부에서 접근 가능하게 (캡처용) — `forwardRef` 사용
+- `ref` — React 19에서는 일반 prop으로 전달 (`forwardRef` deprecated). 캡처 시 DOM 컨테이너 접근용.
 
 **동작:**
 - `routePath`가 있으면 `kakao.maps.Polyline`으로 파란색 실선 경로 표시
@@ -91,9 +110,26 @@ return { distanceMeters, routePath }
 
 `routePath`는 ItemRow의 local state로 관리한다 (`useState<number[]>`).
 
+**MiniMap ref 노출:**
+- ItemRow에 `miniMapRef?: React.RefObject<HTMLDivElement>` prop 추가
+- ItemRow는 이 ref를 내부 MiniMap의 container `ref`로 전달
+- 상위 컴포넌트가 직접 MiniMap DOM에 접근 가능
+
 ## 4. Frontend — Map Capture & Upload
 
-### 제출 시 캡처 (`pages/RequestFormPage.tsx`)
+### 캡처 전략: html2canvas + CORS 대응
+
+카카오 맵 타일은 외부 도메인(`*.daumcdn.net`)에서 로드되므로, `html2canvas`로 캡처 시 cross-origin 이미지가 tainted canvas를 유발할 수 있다.
+
+**대응 방안:**
+1. `html2canvas({ useCORS: true, allowTaint: true })` 옵션 사용
+2. 카카오 맵 `tilesloaded` 이벤트 대기 후 캡처 (렌더링 완료 보장)
+3. 캡처 결과 검증: canvas가 비어 있거나 단색이면 실패로 간주
+4. **Fallback**: 캡처 실패 시 경로 정보 텍스트("출발→도착, 30km")만 포함하고 제출 진행 (캡처 실패가 제출 자체를 막지는 않음)
+
+### 제출 시 캡처 (`pages/RequestFormPage.tsx`, `pages/ResubmitPage.tsx`)
+
+**두 페이지 모두** 동일한 캡처 로직을 적용한다. 공통 로직은 유틸 함수로 추출한다.
 
 제출 흐름 순서:
 ```
@@ -103,19 +139,38 @@ return { distanceMeters, routePath }
 4. createRequest
 ```
 
-**캡처 방법:**
-- 각 ItemRow의 MiniMap DOM 컨테이너를 `html2canvas`로 캡처 → PNG data URL
-- 기존 `uploadFileToStorage` (Cloud Function `uploadReceiptsV2` 경유)로 Storage에 업로드
-- 반환된 `{ storagePath, url }`을 해당 item의 `transportDetail.routeMapImage`에 세팅
+**캡처 유틸 함수 (`lib/captureRouteMap.ts`):**
+```typescript
+export async function captureAndUploadRouteMaps(
+  items: RequestItem[],
+  miniMapRefs: Map<number, HTMLDivElement>,
+  committee: string,
+  projectId: string,
+): Promise<RequestItem[]>
+```
+- 교통 항목(car + 양쪽 좌표 있는 경우)을 순회
+- 해당 MiniMap DOM을 `html2canvas`로 캡처
+- `uploadRouteMap` Cloud Function으로 업로드
+- 성공 시 `routeMapImage` 세팅, 실패 시 해당 항목은 `routeMapImage` 없이 진행
+- 수정된 items 배열 반환
+
+**MiniMap ref 관리 (RequestFormPage, ResubmitPage):**
+```typescript
+const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
+// ItemRow에 miniMapRef callback 전달
+<ItemRow
+  miniMapRef={(el) => {
+    if (el) miniMapRefs.current.set(i, el)
+    else miniMapRefs.current.delete(i)
+  }}
+  ...
+/>
+```
 
 **견고성:**
-- 캡처/업로드 실패 시 제출 중단 + 에러 토스트 (불완전한 신청서 방지)
-- 여러 교통 항목 → 순차 처리 (Promise 체이닝)
-- 캡처 전 맵 렌더링 완료 대기 (짧은 delay)
-
-**MiniMap ref 접근 방식:**
-- 각 ItemRow에서 MiniMap의 container ref를 상위(RequestFormPage)에서 접근할 수 있도록 구조화
-- `items` 배열의 index를 key로 한 ref map 사용
+- 캡처/업로드 실패 시 → 경고 토스트 표시하되 제출은 계속 진행 (경로맵 없는 신청서도 유효)
+- `tilesloaded` 이벤트로 맵 렌더링 완료 대기 (고정 delay 대신)
+- 여러 교통 항목 → 순차 처리로 안정성 확보
 
 ## 5. PDF & Settlement Integration
 
@@ -123,6 +178,10 @@ return { distanceMeters, routePath }
 
 - 교통 항목에 `routeMapImage?.url`이 존재하면 교통 정보 아래에 썸네일 이미지 표시
 - 클릭 시 원본 크기 확대 (기존 영수증 갤러리 패턴)
+
+### 신청서 상세 페이지 (`pages/RequestDetailPage.tsx`)
+
+- `ItemsTable` 컴포넌트에서 교통 항목의 `routeMapImage` 표시 지원 추가
 
 ### PDF Export (`lib/pdfExport.ts`)
 
@@ -156,17 +215,22 @@ class Polyline {
 ## 7. CSP & Dependencies
 
 - **CSP:** 변경 없음 (카카오 도메인 이미 허용, html2canvas는 로컬 DOM 캡처)
-- **Dependencies:** `html2canvas` 이미 설치됨. 추가 패키지 불필요.
+- **Dependencies:** `html2canvas`를 finance 앱에 추가 설치 필요 (`pnpm add html2canvas -w apps/finance`)
 
 ## File Change Summary
 
 | File | Change |
 |------|--------|
+| `apps/finance/package.json` | `html2canvas` 의존성 추가 |
 | `apps/finance/src/types/index.ts` | `RouteMapImage` 인터페이스 추가, `TransportDetail`에 `routeMapImage` 필드 추가 |
-| `apps/finance/functions/src/index.ts` | `calculateDistance`가 `routePath` 좌표 배열도 반환 |
+| `apps/finance/functions/src/index.ts` | `calculateDistance`가 `routePath` 반환, `uploadRouteMap` 함수 추가, `cleanupDeletedProjects`에 `routemaps/` 정리 추가 |
 | `apps/finance/src/kakao.d.ts` | `Polyline` 클래스 타입 추가 |
-| `apps/finance/src/components/MiniMap.tsx` | `routePath` prop, Polyline 렌더링, `forwardRef`, 높이 조정 |
-| `apps/finance/src/components/ItemRow.tsx` | `routePath` state 관리, MiniMap에 전달, ref 노출 |
-| `apps/finance/src/pages/RequestFormPage.tsx` | 제출 시 경로맵 캡처 → 업로드 → `routeMapImage` 세팅 로직 |
+| `apps/finance/src/components/MiniMap.tsx` | `routePath` prop, Polyline 렌더링, `ref` prop (React 19), 높이 조정 |
+| `apps/finance/src/components/ItemRow.tsx` | `routePath` state 관리, MiniMap에 전달, `miniMapRef` prop 노출 |
+| `apps/finance/src/components/ItemsTable.tsx` | 교통 항목의 `routeMapImage` 썸네일 표시 |
+| `apps/finance/src/lib/captureRouteMap.ts` | NEW: 경로맵 캡처 & 업로드 유틸 함수 |
+| `apps/finance/src/pages/RequestFormPage.tsx` | 제출 시 캡처 유틸 호출, miniMapRefs 관리 |
+| `apps/finance/src/pages/ResubmitPage.tsx` | 제출 시 캡처 유틸 호출, miniMapRefs 관리 |
+| `apps/finance/src/pages/RequestDetailPage.tsx` | 경로맵 썸네일 표시 |
 | `apps/finance/src/pages/SettlementReportPage.tsx` | 경로맵 썸네일 표시 |
 | `apps/finance/src/lib/pdfExport.ts` | PDF에 경로맵 이미지 삽입 |
