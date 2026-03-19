@@ -118,6 +118,25 @@ export const uploadBankBookV2 = onCall(async (request) => {
   return await uploadFileToStorage(file, storagePath)
 })
 
+// 경로맵 업로드
+export const uploadRouteMap = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
+  }
+
+  const { file, committee, projectId } = request.data as {
+    file: FileInput
+    committee: string
+    projectId: string
+  }
+  if (!file) {
+    throw new HttpsError('invalid-argument', 'No file provided')
+  }
+
+  const storagePath = `routemaps/${projectId || 'default'}/${committee}/${Date.now()}_route.png`
+  return await uploadFileToStorage(file, storagePath)
+})
+
 // 파일 다운로드 프록시 (CORS 우회)
 export const downloadFileV2 = onCall(async (request) => {
   if (!request.auth) {
@@ -201,9 +220,15 @@ export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
       f.delete().catch(() => { /* ignore */ })
     ))
 
+    // Delete orphaned route map files
+    const [orphanedRouteMaps] = await bucket.getFiles({ prefix: `routemaps/${projectId}/` })
+    await Promise.all(orphanedRouteMaps.map(f =>
+      f.delete().catch(() => { /* ignore */ })
+    ))
+
     // Delete the project document
     await projectDoc.ref.delete()
-    console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length} files`)
+    console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`)
   }
 })
 
