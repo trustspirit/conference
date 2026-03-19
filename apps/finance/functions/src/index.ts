@@ -258,6 +258,51 @@ export const deleteUserAccount = onCall(async (request) => {
   return { success: true }
 })
 
+/**
+ * Douglas-Peucker line simplification for [lng, lat, lng, lat, ...] flat arrays.
+ */
+function simplifyPath(coords: number[], tolerance = 0.0001): number[] {
+  const points: [number, number][] = []
+  for (let i = 0; i < coords.length; i += 2) {
+    points.push([coords[i], coords[i + 1]])
+  }
+  if (points.length <= 2) return coords
+
+  function perpendicularDistance(pt: [number, number], lineStart: [number, number], lineEnd: [number, number]): number {
+    const dx = lineEnd[0] - lineStart[0]
+    const dy = lineEnd[1] - lineStart[1]
+    const mag = Math.sqrt(dx * dx + dy * dy)
+    if (mag === 0) return Math.sqrt((pt[0] - lineStart[0]) ** 2 + (pt[1] - lineStart[1]) ** 2)
+    const u = ((pt[0] - lineStart[0]) * dx + (pt[1] - lineStart[1]) * dy) / (mag * mag)
+    const closestX = lineStart[0] + u * dx
+    const closestY = lineStart[1] + u * dy
+    return Math.sqrt((pt[0] - closestX) ** 2 + (pt[1] - closestY) ** 2)
+  }
+
+  function simplify(pts: [number, number][], tol: number): [number, number][] {
+    if (pts.length <= 2) return pts
+    let maxDist = 0
+    let maxIdx = 0
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = perpendicularDistance(pts[i], pts[0], pts[pts.length - 1])
+      if (d > maxDist) { maxDist = d; maxIdx = i }
+    }
+    if (maxDist > tol) {
+      const left = simplify(pts.slice(0, maxIdx + 1), tol)
+      const right = simplify(pts.slice(maxIdx), tol)
+      return [...left.slice(0, -1), ...right]
+    }
+    return [pts[0], pts[pts.length - 1]]
+  }
+
+  const simplified = simplify(points, tolerance)
+  const result: number[] = []
+  for (const [x, y] of simplified) {
+    result.push(x, y)
+  }
+  return result
+}
+
 // --- Kakao Mobility distance calculation ---
 export const calculateDistance = onCall(
   { secrets: [kakaoMobilityKey] },
@@ -289,14 +334,29 @@ export const calculateDistance = onCall(
       throw new HttpsError('internal', 'Failed to calculate distance')
     }
 
-    const data = await response.json() as { routes: { result_code: number; summary: { distance: number } }[] }
+    const data = await response.json() as {
+      routes: {
+        result_code: number
+        summary: { distance: number }
+        sections: { roads: { vertexes: number[] }[] }[]
+      }[]
+    }
     const routes = data.routes
     if (!routes || routes.length === 0 || routes[0].result_code !== 0) {
       throw new HttpsError('not-found', 'No route found')
     }
 
     const distanceMeters = routes[0].summary.distance
-    return { distanceMeters }
+
+    // Extract route path coordinates [lng, lat, lng, lat, ...]
+    const routePath: number[] = []
+    for (const section of routes[0].sections) {
+      for (const road of section.roads) {
+        routePath.push(...road.vertexes)
+      }
+    }
+
+    return { distanceMeters, routePath: simplifyPath(routePath) }
   }
 )
 
