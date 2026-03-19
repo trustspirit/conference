@@ -111,7 +111,7 @@ export const uploadRouteMap = onCall(async (request) => {
 `routePath`는 ItemRow의 local state로 관리한다 (`useState<number[]>`).
 
 **MiniMap ref 노출:**
-- ItemRow에 `miniMapRef?: React.RefObject<HTMLDivElement>` prop 추가
+- ItemRow에 `miniMapRef?: (el: HTMLDivElement | null) => void` prop 추가 (callback ref)
 - ItemRow는 이 ref를 내부 MiniMap의 container `ref`로 전달
 - 상위 컴포넌트가 직접 MiniMap DOM에 접근 가능
 
@@ -122,10 +122,10 @@ export const uploadRouteMap = onCall(async (request) => {
 카카오 맵 타일은 외부 도메인(`*.daumcdn.net`)에서 로드되므로, `html2canvas`로 캡처 시 cross-origin 이미지가 tainted canvas를 유발할 수 있다.
 
 **대응 방안:**
-1. `html2canvas({ useCORS: true, allowTaint: true })` 옵션 사용
+1. `html2canvas({ useCORS: true })` 옵션 사용 (`allowTaint`은 사용하지 않음 — tainted canvas에서는 `toDataURL()` 호출 불가)
 2. 카카오 맵 `tilesloaded` 이벤트 대기 후 캡처 (렌더링 완료 보장)
 3. 캡처 결과 검증: canvas가 비어 있거나 단색이면 실패로 간주
-4. **Fallback**: 캡처 실패 시 경로 정보 텍스트("출발→도착, 30km")만 포함하고 제출 진행 (캡처 실패가 제출 자체를 막지는 않음)
+4. **Fallback**: 캡처 실패 시 (CORS 헤더 미지원 등) 경로 정보 텍스트("출발→도착, 30km")만 포함하고 제출 진행 (캡처 실패가 제출 자체를 막지는 않음)
 
 ### 제출 시 캡처 (`pages/RequestFormPage.tsx`, `pages/ResubmitPage.tsx`)
 
