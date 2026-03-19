@@ -126,7 +126,8 @@
     "manualInput": "Enter manually",
     "calculatingDistance": "Calculating distance...",
     "noRouteFound": "No route found",
-    "searchFailed": "Search failed. Please enter manually"
+    "searchFailed": "Search failed. Please enter manually",
+    "routeMap": "Route Map"
   },
   "form": {
     "title": "Payment / Reimbursement Request Form",
@@ -147,7 +148,8 @@
     "submitFailed": "Submission failed. Please try again.",
     "receiptHint": "PNG, JPG, PDF only (max 750KB per file)",
     "receiptPreview": "Receipt preview — verify items and amounts match",
-    "totalAmountCheck": "Please verify that the receipt amounts match the total (₩{{amount}})."
+    "totalAmountCheck": "Please verify that the receipt amounts match the total (₩{{amount}}).",
+    "routeMapCaptureFailed": "{{count}} route map(s) failed to capture (submission continues)"
   },
   "validation": {
     "payeeRequired": "Payee name is required.",
