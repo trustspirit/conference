@@ -169,6 +169,9 @@ export async function exportBatchSettlementPdf(
         if (d.transportType === 'car' && d.distanceKm) {
           const cost = calcCarTransportAmount(d, perKmRate)
           transportCost = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+          if (d.routeMapImage?.url) {
+            transportCost += `<br/><img src="${escapeHtml(d.routeMapImage.url)}" style="max-width:200px; max-height:120px; margin-top:4px; border:1px solid #ddd; border-radius:3px;" onerror="this.style.display='none'" />`
+          }
         }
       }
 
@@ -365,6 +368,9 @@ export async function exportBatchSettlementPdf(
           if (d.transportType === 'car' && d.distanceKm) {
             const cost = calcCarTransportAmount(d, perKmRate)
             tc = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+            if (d.routeMapImage?.url) {
+              tc += `<br/><img src="${escapeHtml(d.routeMapImage.url)}" style="max-width:200px; max-height:120px; margin-top:4px; border:1px solid #ddd; border-radius:3px;" onerror="this.style.display='none'" />`
+            }
           }
         }
         formItems.push({ number: formItems.length + 1, date: '', budgetCode: item.budgetCode, description: item.description, payee: source.payee, bankName: source.bankName, bankAccount: source.bankAccount, transportInfo: ti, transportCost: tc, amount: item.amount, settlementId: source.id })
