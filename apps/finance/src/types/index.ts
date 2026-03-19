@@ -61,6 +61,11 @@ export interface PlaceCoord {
   addressName: string
 }
 
+export interface RouteMapImage {
+  storagePath: string
+  url: string
+}
+
 export interface TransportDetail {
   transportType: TransportType
   tripType: TripType
@@ -69,6 +74,7 @@ export interface TransportDetail {
   departureCoord?: PlaceCoord
   destinationCoord?: PlaceCoord
   distanceKm?: number
+  routeMapImage?: RouteMapImage
 }
 
 export interface RequestItem {
