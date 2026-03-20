@@ -17,6 +17,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
 import { TextField, Button, Dialog, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
+import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
 import { SUBMISSION_CHECKLIST } from '../constants/reviewChecklist'
@@ -85,6 +86,8 @@ export default function RequestFormPage() {
   const [showDraftBanner, setShowDraftBanner] = useState(!!draft)
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
   const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+
+  const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
 
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
@@ -237,6 +240,24 @@ export default function RequestFormPage() {
         })
       }
 
+      // Capture and upload route maps
+      const hasCarTransport = validItems.some(
+        (item) => item.transportDetail?.transportType === 'car' && item.transportDetail.departureCoord && item.transportDetail.destinationCoord
+      )
+      let finalItems = validItems
+      if (hasCarTransport) {
+        const { items: capturedItems, failedCount } = await captureAndUploadRouteMaps(
+          validItems,
+          miniMapRefs.current,
+          committee,
+          currentProject!.id,
+        )
+        finalItems = capturedItems
+        if (failedCount > 0) {
+          toast({ variant: 'info', message: t('form.routeMapCaptureFailed', { count: failedCount }) })
+        }
+      }
+
       const profileUpdates: Record<string, string> = {}
       if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
       if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
@@ -256,8 +277,8 @@ export default function RequestFormPage() {
         date,
         session,
         committee,
-        items: validItems,
-        totalAmount: validItems.reduce((sum, item) => sum + item.amount, 0),
+        items: finalItems,
+        totalAmount: finalItems.reduce((sum, item) => sum + item.amount, 0),
         receipts,
         requestedBy: { uid: user.uid, name: appUser.displayName || appUser.name, email: appUser.email },
         reviewedBy: null,
@@ -346,7 +367,11 @@ export default function RequestFormPage() {
           <div className="space-y-2">
             {items.map((item, i) => (
               <ItemRow key={i} index={i} item={item} onChange={updateItem} onRemove={removeItem}
-                canRemove={items.length > 1} perKmRate={currentProject?.perKmRate} />
+                canRemove={items.length > 1} perKmRate={currentProject?.perKmRate}
+                miniMapRef={(el) => {
+                  if (el) miniMapRefs.current.set(i, el)
+                  else miniMapRefs.current.delete(i)
+                }} />
             ))}
           </div>
           <div className="flex justify-end mt-3 pt-3 border-t">

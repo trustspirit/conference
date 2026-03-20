@@ -19,6 +19,18 @@ declare namespace kakao.maps {
     setMap(map: Map | null): void
     setPosition(position: LatLng): void
   }
+  class Polyline {
+    constructor(options: {
+      map?: Map
+      path: LatLng[]
+      strokeWeight?: number
+      strokeColor?: string
+      strokeOpacity?: number
+      strokeStyle?: string
+    })
+    setMap(map: Map | null): void
+    setPath(path: LatLng[]): void
+  }
   function load(callback: () => void): void
 
   namespace services {

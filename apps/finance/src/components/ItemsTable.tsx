@@ -41,6 +41,17 @@ export default function ItemsTable({ items, totalAmount }: Props) {
                         <span> · {item.transportDetail.distanceKm}km</span>
                       )}
                     </div>
+                    {item.transportDetail.routeMapImage?.url && (
+                      <div className="mt-1.5">
+                        <a href={item.transportDetail.routeMapImage.url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={item.transportDetail.routeMapImage.url}
+                            alt={`${item.transportDetail.departure} → ${item.transportDetail.destination}`}
+                            className="max-w-[200px] max-h-[120px] rounded border border-gray-200 object-contain bg-gray-50"
+                          />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </td>

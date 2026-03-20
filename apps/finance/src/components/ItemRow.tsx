@@ -16,6 +16,7 @@ interface Props {
   onRemove: (index: number) => void
   canRemove: boolean
   perKmRate?: number
+  miniMapRef?: (el: HTMLDivElement | null) => void
 }
 
 export const TRANSPORT_BUDGET_CODE = 5110
@@ -35,12 +36,13 @@ export function calcCarTransportAmount(detail: TransportDetail, perKmRate: numbe
   return detail.distanceKm * perKmRate * multiplier
 }
 
-export default function ItemRow({ index, item, onChange, onRemove, canRemove, perKmRate = DEFAULT_PER_KM_RATE }: Props) {
+export default function ItemRow({ index, item, onChange, onRemove, canRemove, perKmRate = DEFAULT_PER_KM_RATE, miniMapRef }: Props) {
   const { t } = useTranslation()
   const [showDistanceHint, setShowDistanceHint] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
   const [sdkLoaded, setSdkLoaded] = useState(false)
   const abortRef = useRef(false)
+  const [routePath, setRoutePath] = useState<number[]>()
 
   const budgetOptions = [
     { value: '', label: t('budgetCode.select') },
@@ -93,10 +95,11 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
 
     abortRef.current = false
     setIsCalculating(true)
+    setRoutePath(undefined) // Reset route while recalculating
 
     const calcDistance = httpsCallable<
       { origin: { lat: number; lng: number }; destination: { lat: number; lng: number } },
-      { distanceMeters: number }
+      { distanceMeters: number; routePath: number[] }
     >(functions, 'calculateDistance')
 
     calcDistance({
@@ -107,6 +110,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
         if (abortRef.current) return
         const km = Math.round(result.data.distanceMeters / 1000)
         updateTransportDetail({ distanceKm: km })
+        setRoutePath(result.data.routePath)
       })
       .catch((err) => {
         if (abortRef.current) return
@@ -260,6 +264,8 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
             <MiniMap
               departure={detail.departureCoord}
               destination={detail.destinationCoord}
+              routePath={routePath}
+              ref={miniMapRef}
             />
           )}
           {detail.transportType === 'car' && (
