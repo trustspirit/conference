@@ -407,8 +407,8 @@ importers:
   packages/firebase:
     dependencies:
       firebase:
-        specifier: ^12.9.0
-        version: 12.9.0
+        specifier: ^12.10.0
+        version: 12.10.0
     devDependencies:
       '@conference/config':
         specifier: workspace:*

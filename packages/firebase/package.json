@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "firebase": "^12.9.0"
+    "firebase": "^12.10.0"
   },
   "devDependencies": {
     "@conference/config": "workspace:*",
