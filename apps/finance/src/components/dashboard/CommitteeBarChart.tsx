@@ -49,8 +49,8 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} tickFormatter={formatYAxis} />
           <Tooltip
-            formatter={(v: number | undefined) =>
-              `\u20A9${(v ?? 0).toLocaleString()}`
+            formatter={(v) =>
+              `\u20A9${(Number(v) || 0).toLocaleString()}`
             }
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />

@@ -73,8 +73,8 @@ export default function BudgetCodeBarChart({
             width={100}
           />
           <Tooltip
-            formatter={(v: number | undefined) =>
-              `\u20A9${(v ?? 0).toLocaleString()}`
+            formatter={(v) =>
+              `\u20A9${(Number(v) || 0).toLocaleString()}`
             }
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />

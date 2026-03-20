@@ -133,8 +133,8 @@ export default function MonthlyTrendChart({ requests }: Props) {
               }}
             />
             <Tooltip
-              formatter={(value: number | undefined, name?: string) => {
-                const v = value ?? 0;
+              formatter={(value, name) => {
+                const v = Number(value) || 0;
                 if (name === "count")
                   return [
                     t("form.itemCount", { count: v }),
