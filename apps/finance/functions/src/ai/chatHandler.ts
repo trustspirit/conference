@@ -54,6 +54,11 @@ export async function handleChat(
 
   const systemPrompt = await buildSystemPrompt(settings, userRole)
 
+  console.log('User role:', userRole)
+  console.log('System prompt length:', systemPrompt.length)
+  console.log('System prompt context preview:', systemPrompt.includes('<context>') ? 'has context' : 'NO CONTEXT')
+  console.log('Context snippet:', systemPrompt.substring(systemPrompt.indexOf('<context>'), systemPrompt.indexOf('<context>') + 200))
+
   const provider =
     settings.provider === 'claude'
       ? new ClaudeProvider(secrets.anthropicApiKey)

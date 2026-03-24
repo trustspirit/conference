@@ -1,7 +1,7 @@
 {
   "name": "functions",
   "scripts": {
-    "build": "tsc && cp -r src/ai/context lib/ai/context",
+    "build": "tsc && rm -rf lib/ai/context && cp -r src/ai/context lib/ai/context",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions"
   },

@@ -74,6 +74,10 @@ async function handleChat(request, secrets) {
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
     const userRole = userDoc.exists ? (userDoc.data()?.role ?? 'user') : 'user';
     const systemPrompt = await (0, promptBuilder_1.buildSystemPrompt)(settings, userRole);
+    console.log('User role:', userRole);
+    console.log('System prompt length:', systemPrompt.length);
+    console.log('System prompt context preview:', systemPrompt.includes('<context>') ? 'has context' : 'NO CONTEXT');
+    console.log('Context snippet:', systemPrompt.substring(systemPrompt.indexOf('<context>'), systemPrompt.indexOf('<context>') + 200));
     const provider = settings.provider === 'claude'
         ? new claudeProvider_1.ClaudeProvider(secrets.anthropicApiKey)
         : new openaiProvider_1.OpenAIProvider(secrets.openaiApiKey);
