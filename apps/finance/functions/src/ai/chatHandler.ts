@@ -1,4 +1,5 @@
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https'
+import * as admin from 'firebase-admin'
 import { ChatMessage } from './types'
 import { OpenAIProvider } from './openaiProvider'
 import { ClaudeProvider } from './claudeProvider'
@@ -48,7 +49,12 @@ export async function handleChat(
     throw new HttpsError('unavailable', 'AI chatbot is currently unavailable')
   }
 
-  const systemPrompt = await buildSystemPrompt(settings)
+  // Lookup user role from Firestore for role-based context filtering
+  const uid = request.auth.uid
+  const userDoc = await admin.firestore().collection('users').doc(uid).get()
+  const userRole: string = userDoc.exists ? (userDoc.data()?.role ?? 'user') : 'user'
+
+  const systemPrompt = await buildSystemPrompt(settings, userRole)
 
   const provider =
     settings.provider === 'claude'
