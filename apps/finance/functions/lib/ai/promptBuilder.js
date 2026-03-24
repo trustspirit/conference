@@ -54,13 +54,13 @@ const ADMIN_GUIDE_ROLES = new Set([
 /** Map internal role codes to Korean display names */
 const ROLE_LABELS = {
     user: '일반 사용자',
-    finance_ops: '운영 재무담당',
-    finance_prep: '준비 재무담당',
+    finance_ops: '운영 재정담당',
+    finance_prep: '준비 재정담당',
     approver_ops: '운영 결재권자',
     approver_prep: '준비 결재권자',
-    session_director: '운영 국장',
-    logistic_admin: '준비 본부장',
-    executive: '조직장',
+    session_director: '운영 위원장',
+    logistic_admin: '준비 위원장',
+    executive: '대회장',
     admin: '시스템 관리자',
     super_admin: '시스템 관리자',
 };
