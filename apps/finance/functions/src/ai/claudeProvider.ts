@@ -1,6 +1,5 @@
-// Note: Same ESM/CJS consideration as openaiProvider.ts
 import Anthropic from '@anthropic-ai/sdk'
-import { LLMProvider, LLMStreamParams } from './types'
+import { LLMProvider, LLMParams } from './types'
 
 export class ClaudeProvider implements LLMProvider {
   private client: Anthropic
@@ -9,8 +8,8 @@ export class ClaudeProvider implements LLMProvider {
     this.client = new Anthropic({ apiKey })
   }
 
-  async *streamChat(params: LLMStreamParams): AsyncIterable<string> {
-    const stream = await this.client.messages.stream({
+  async chat(params: LLMParams): Promise<string> {
+    const response = await this.client.messages.create({
       model: params.model,
       system: params.systemPrompt,
       messages: params.messages.map((m) => ({
@@ -22,13 +21,7 @@ export class ClaudeProvider implements LLMProvider {
       max_tokens: params.maxTokens,
     })
 
-    for await (const event of stream) {
-      if (
-        event.type === 'content_block_delta' &&
-        event.delta.type === 'text_delta'
-      ) {
-        yield event.delta.text
-      }
-    }
+    const block = response.content[0]
+    return block.type === 'text' ? block.text : ''
   }
 }

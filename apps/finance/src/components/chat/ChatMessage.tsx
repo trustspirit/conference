@@ -17,13 +17,6 @@ export default function ChatMessage({ message }: Props) {
         }`}
       >
         {message.content}
-        {message.isStreaming && !message.content && (
-          <span className="inline-flex gap-1">
-            <span className="animate-bounce text-gray-400">·</span>
-            <span className="animate-bounce text-gray-400 [animation-delay:0.15s]">·</span>
-            <span className="animate-bounce text-gray-400 [animation-delay:0.3s]">·</span>
-          </span>
-        )}
       </div>
     </div>
   )

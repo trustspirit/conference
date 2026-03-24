@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useChatStream } from '../../hooks/useChatStream'
+import { useChat } from '../../hooks/useChatStream'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 
@@ -10,8 +10,8 @@ interface Props {
 
 export default function ChatPanel({ onClose }: Props) {
   const { t } = useTranslation()
-  const { messages, sendMessage, isStreaming, error, clearMessages } =
-    useChatStream()
+  const { messages, sendMessage, isLoading, error, clearMessages } =
+    useChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function ChatPanel({ onClose }: Props) {
       </div>
 
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isStreaming} />
+      <ChatInput onSend={sendMessage} disabled={isLoading} />
     </div>
   )
 }

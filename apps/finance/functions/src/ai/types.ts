@@ -3,7 +3,7 @@ export interface ChatMessage {
   content: string
 }
 
-export interface LLMStreamParams {
+export interface LLMParams {
   systemPrompt: string
   messages: ChatMessage[]
   model: string
@@ -13,7 +13,7 @@ export interface LLMStreamParams {
 }
 
 export interface LLMProvider {
-  streamChat(params: LLMStreamParams): AsyncIterable<string>
+  chat(params: LLMParams): Promise<string>
 }
 
 export interface AiSettings {

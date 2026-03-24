@@ -681,13 +681,11 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
 });
 // --- AI Chatbot ---
 const chatHandler_1 = require("./ai/chatHandler");
-exports.aiChat = (0, https_1.onRequest)({
+exports.aiChat = (0, https_1.onCall)({
     timeoutSeconds: 120,
     memory: '512MiB',
-    region: 'asia-northeast3',
-    cors: true,
     secrets: [openaiApiKey, anthropicApiKey],
-}, (req, res) => (0, chatHandler_1.handleChat)(req, res, {
+}, (request) => (0, chatHandler_1.handleChat)(request, {
     openaiApiKey: openaiApiKey.value(),
     anthropicApiKey: anthropicApiKey.value(),
 }));
