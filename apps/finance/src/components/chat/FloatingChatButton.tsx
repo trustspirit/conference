@@ -1,27 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import ChatPanel from './ChatPanel'
 
 export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  // Click-outside to dismiss
-  useEffect(() => {
-    if (!isOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen])
 
   return (
-    <div ref={containerRef} className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50">
       {/* Chat Panel */}
       {isOpen && (
         <div className="absolute bottom-16 right-0 chat-panel-enter">
