@@ -31,13 +31,16 @@ Frontend (React)
                         │
                         │ SSE / chunked response
                         ▼
-Cloud Function v2 (aiChat)
-  1. Firebase Auth token verification
-  2. Fetch context documents from Firestore ai-context collection
-  3. Build system prompt (role + rules + context injection)
-  4. Call LLM Provider (OpenAI or Claude)
-  5. Parse stream: strip <context_check> tags, forward answer only
-  6. Stream response to client
+Cloud Function v2 — onRequest (aiChat)
+  NOTE: Uses onRequest (not onCall) to support SSE streaming.
+        Frontend uses raw fetch(), not httpsCallable().
+  1. CORS preflight handling
+  2. Firebase Auth token verification (manual verifyIdToken)
+  3. Fetch context documents from Firestore ai-context collection
+  4. Build system prompt (role + rules + context injection)
+  5. Call LLM Provider (OpenAI or Claude)
+  6. Parse stream: buffer until </context_check>, strip tags, forward answer only
+  7. Stream response to client
                         │
             ┌───────────┼───────────┐
             ▼                       ▼
@@ -125,19 +128,21 @@ ai-settings/config
 ## Frontend Components
 
 ```
-src/components/chat/
+apps/finance/src/components/chat/
 ├── FloatingChatButton.tsx   — FAB button, fixed bottom-right
 ├── ChatPanel.tsx            — Chat container (header, messages, input)
 ├── ChatMessage.tsx          — Individual message bubble (user/assistant)
 ├── ChatInput.tsx            — Text input + send button
 └── StreamingText.tsx        — Renders streaming text with typing effect
 
-src/hooks/
+apps/finance/src/hooks/
 └── useChatStream.ts         — fetch + ReadableStream processing
 
-src/services/
-└── chatApi.ts               — Cloud Function call wrapper
+apps/finance/src/services/
+└── chatApi.ts               — Cloud Function call wrapper (raw fetch, not React Query)
 ```
+
+**Note:** `services/` is a new directory. Unlike `hooks/queries/` which uses React Query for Firestore data, `chatApi.ts` uses raw `fetch()` with `ReadableStream` for SSE — a fundamentally different pattern that warrants a separate location.
 
 ### FloatingChatButton
 
@@ -186,7 +191,23 @@ interface UseChatStreamReturn {
 
 ## Cloud Function
 
-### `aiChat` (v2 — Cloud Run based)
+### `aiChat` (v2 — Cloud Run based, `onRequest`)
+
+**Note:** This departs from the existing `onCall` pattern used by other functions. `onRequest` is required because `onCall` does not support SSE streaming. The frontend uses raw `fetch()` instead of `httpsCallable()`.
+
+#### Function Configuration
+
+```typescript
+export const aiChat = onRequest({
+  timeoutSeconds: 120,    // LLM streaming can take 30s+
+  memory: '512MiB',       // OpenAI/Anthropic SDKs need more memory
+  region: 'asia-northeast3',  // Match Firestore region (Seoul)
+  cors: true,             // Required for cross-origin fetch from hosting domain
+  secrets: [openaiApiKey, anthropicApiKey],
+}, handler)
+```
+
+#### File Structure
 
 ```
 functions/src/
@@ -217,10 +238,17 @@ interface LLMProvider {
 
 ### Stream Parser
 
-Processes the raw LLM stream and:
-1. Buffers content until `<context_check>` close tag is detected
-2. Strips everything between `<context_check>` and `</context_check>`
-3. Forwards remaining content chunks to client
+Processes the raw LLM stream with a stateful buffering strategy:
+
+1. **Buffering phase**: Accumulate all chunks until `</context_check>` is detected
+2. **Strip phase**: Remove everything between `<context_check>` and `</context_check>` (inclusive)
+3. **Streaming phase**: Forward remaining content chunks to client
+
+**Edge cases:**
+- Tag split across chunks: the parser buffers until the full closing tag is detected
+- Malformed/unclosed tag: if `</context_check>` is not found within 2000 characters after `<context_check>`, flush buffer as-is and log a warning
+- The system prompt enforces that `<context_check>` always appears **first** before the answer text
+- If the entire response is a refusal (out-of-scope), the answer text after the tag is the refusal message
 
 ### Request/Response Format
 
@@ -240,6 +268,13 @@ Response: text/event-stream
   data: [DONE]
 ```
 
+### Input Validation
+
+- Maximum messages per request: **20** (prevents excessive token usage)
+- Maximum characters per message: **2000**
+- User messages are passed as distinct `user` role in the messages array — never concatenated into the system prompt
+- Reject with 400 if validation fails
+
 ### Authentication
 
 - Extract Bearer token from Authorization header
@@ -253,23 +288,27 @@ Response: text/event-stream
 - LLM API failure → 500 with generic error message
 - Rate limiting: optional, via Firestore counter per user (future consideration)
 
-## Environment Variables (Cloud Functions)
+## Secrets & Configuration (Cloud Functions)
 
-```
-AI_PROVIDER=openai              # or "claude"
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
+API keys use `defineSecret` (consistent with existing codebase pattern):
+
+```typescript
+import { defineSecret } from 'firebase-functions/params'
+
+const openaiApiKey = defineSecret('OPENAI_API_KEY')
+const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY')
 ```
 
-Provider selection can be overridden by Firestore `ai-settings.provider` (Firestore takes precedence over env var).
+Provider selection is controlled by Firestore `ai-settings.provider` field. No environment variable needed for provider switching — it is managed dynamically via Firestore.
 
 ## Security Considerations
 
-- API keys stored only in Cloud Functions environment — never exposed to client
+- API keys stored via `defineSecret` — encrypted at rest, injected only at runtime
 - Firebase Auth required for all requests
-- Context documents are read-only for non-admin users
-- System prompt injection mitigation: user messages are clearly delimited
+- **Firestore rules**: Deny all client-side access to `ai-context` and `ai-settings` collections. All access goes through the Cloud Function using Admin SDK. This prevents leaking system prompt content, refusal messages, and LLM configuration
+- System prompt injection mitigation: user messages are passed as distinct `user` role, never interpolated into the system prompt
 - LLM parameters controlled server-side only
+- Input size limits enforced (20 messages, 2000 chars each)
 
 ## UI/UX Details
 

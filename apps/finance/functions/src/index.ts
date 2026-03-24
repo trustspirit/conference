@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { defineSecret } from 'firebase-functions/params'
@@ -12,6 +12,8 @@ admin.initializeApp()
 const gmailUser = defineSecret('GMAIL_USER')
 const gmailAppPassword = defineSecret('GMAIL_APP_PASSWORD')
 const kakaoMobilityKey = defineSecret('KAKAO_MOBILITY_API_KEY')
+const openaiApiKey = defineSecret('OPENAI_API_KEY')
+const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY')
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -760,4 +762,22 @@ export const weeklyApproverDigest = onSchedule(
       }
     }
   }
+)
+
+// --- AI Chatbot ---
+import { handleChat } from './ai/chatHandler'
+
+export const aiChat = onRequest(
+  {
+    timeoutSeconds: 120,
+    memory: '512MiB',
+    region: 'asia-northeast3',
+    cors: true,
+    secrets: [openaiApiKey, anthropicApiKey],
+  },
+  (req, res) =>
+    handleChat(req, res, {
+      openaiApiKey: openaiApiKey.value(),
+      anthropicApiKey: anthropicApiKey.value(),
+    }),
 )

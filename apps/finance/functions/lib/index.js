@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadRouteMap = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -46,6 +46,8 @@ admin.initializeApp();
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
 const gmailAppPassword = (0, params_1.defineSecret)('GMAIL_APP_PASSWORD');
 const kakaoMobilityKey = (0, params_1.defineSecret)('KAKAO_MOBILITY_API_KEY');
+const openaiApiKey = (0, params_1.defineSecret)('OPENAI_API_KEY');
+const anthropicApiKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
 function createTransporter() {
     return nodemailer.createTransport({
         service: 'gmail',
@@ -124,6 +126,18 @@ exports.uploadBankBookV2 = (0, https_1.onCall)(async (request) => {
     const storagePath = `bankbook/${request.auth.uid}/${Date.now()}_${file.name}`;
     return await uploadFileToStorage(file, storagePath);
 });
+// 경로맵 업로드
+exports.uploadRouteMap = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    }
+    const { file, committee, projectId } = request.data;
+    if (!file) {
+        throw new https_1.HttpsError('invalid-argument', 'No file provided');
+    }
+    const storagePath = `routemaps/${projectId || 'default'}/${committee}/${Date.now()}_route.png`;
+    return await uploadFileToStorage(file, storagePath);
+});
 // 파일 다운로드 프록시 (CORS 우회)
 exports.downloadFileV2 = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
@@ -192,9 +206,12 @@ exports.cleanupDeletedProjects = (0, scheduler_1.onSchedule)('every 24 hours', a
         // Delete entire receipts folder for this project (catch any orphaned files)
         const [orphanedFiles] = await bucket.getFiles({ prefix: `receipts/${projectId}/` });
         await Promise.all(orphanedFiles.map(f => f.delete().catch(() => { })));
+        // Delete orphaned route map files
+        const [orphanedRouteMaps] = await bucket.getFiles({ prefix: `routemaps/${projectId}/` });
+        await Promise.all(orphanedRouteMaps.map(f => f.delete().catch(() => { })));
         // Delete the project document
         await projectDoc.ref.delete();
-        console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length} files`);
+        console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`);
     }
 });
 // 사용자 삭제 (Firestore 문서 + Firebase Auth 계정)
@@ -240,6 +257,53 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     console.log(`User ${uid} deleted by ${request.auth.uid}`);
     return { success: true };
 });
+/**
+ * Douglas-Peucker line simplification for [lng, lat, lng, lat, ...] flat arrays.
+ */
+function simplifyPath(coords, tolerance = 0.0001) {
+    const points = [];
+    for (let i = 0; i < coords.length; i += 2) {
+        points.push([coords[i], coords[i + 1]]);
+    }
+    if (points.length <= 2)
+        return coords;
+    function perpendicularDistance(pt, lineStart, lineEnd) {
+        const dx = lineEnd[0] - lineStart[0];
+        const dy = lineEnd[1] - lineStart[1];
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        if (mag === 0)
+            return Math.sqrt((pt[0] - lineStart[0]) ** 2 + (pt[1] - lineStart[1]) ** 2);
+        const u = ((pt[0] - lineStart[0]) * dx + (pt[1] - lineStart[1]) * dy) / (mag * mag);
+        const closestX = lineStart[0] + u * dx;
+        const closestY = lineStart[1] + u * dy;
+        return Math.sqrt((pt[0] - closestX) ** 2 + (pt[1] - closestY) ** 2);
+    }
+    function simplify(pts, tol) {
+        if (pts.length <= 2)
+            return pts;
+        let maxDist = 0;
+        let maxIdx = 0;
+        for (let i = 1; i < pts.length - 1; i++) {
+            const d = perpendicularDistance(pts[i], pts[0], pts[pts.length - 1]);
+            if (d > maxDist) {
+                maxDist = d;
+                maxIdx = i;
+            }
+        }
+        if (maxDist > tol) {
+            const left = simplify(pts.slice(0, maxIdx + 1), tol);
+            const right = simplify(pts.slice(maxIdx), tol);
+            return [...left.slice(0, -1), ...right];
+        }
+        return [pts[0], pts[pts.length - 1]];
+    }
+    const simplified = simplify(points, tolerance);
+    const result = [];
+    for (const [x, y] of simplified) {
+        result.push(x, y);
+    }
+    return result;
+}
 // --- Kakao Mobility distance calculation ---
 exports.calculateDistance = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] }, async (request) => {
     if (!request.auth) {
@@ -266,7 +330,14 @@ exports.calculateDistance = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] },
         throw new https_1.HttpsError('not-found', 'No route found');
     }
     const distanceMeters = routes[0].summary.distance;
-    return { distanceMeters };
+    // Extract route path coordinates [lng, lat, lng, lat, ...]
+    const routePath = [];
+    for (const section of routes[0].sections) {
+        for (const road of section.roads) {
+            routePath.push(...road.vertexes);
+        }
+    }
+    return { distanceMeters, routePath: simplifyPath(routePath) };
 });
 // --- Email Notification Functions ---
 const COMMITTEE_LABELS = {
@@ -608,4 +679,16 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
         }
     }
 });
+// --- AI Chatbot ---
+const chatHandler_1 = require("./ai/chatHandler");
+exports.aiChat = (0, https_1.onRequest)({
+    timeoutSeconds: 120,
+    memory: '512MiB',
+    region: 'asia-northeast3',
+    cors: true,
+    secrets: [openaiApiKey, anthropicApiKey],
+}, (req, res) => (0, chatHandler_1.handleChat)(req, res, {
+    openaiApiKey: openaiApiKey.value(),
+    anthropicApiKey: anthropicApiKey.value(),
+}));
 //# sourceMappingURL=index.js.map

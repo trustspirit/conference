@@ -404,6 +404,14 @@
       "participationFee": "참가비"
     }
   },
+  "chat": {
+    "title": "AI 도우미",
+    "welcome": "안녕하세요! 경비 정산 앱 사용법이나 규정에 대해 물어보세요.",
+    "placeholder": "질문을 입력하세요...",
+    "send": "전송",
+    "error": "오류가 발생했습니다. 다시 시도해주세요.",
+    "unavailable": "AI 도우미를 사용할 수 없습니다."
+  },
   "checklist": {
     "title": "확인사항 가이드",
     "receiptsMatchItems": "영수증이 항목 내용과 일치하는지",

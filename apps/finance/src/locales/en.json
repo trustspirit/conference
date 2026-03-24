@@ -404,6 +404,14 @@
       "participationFee": "Participation Fee"
     }
   },
+  "chat": {
+    "title": "AI Assistant",
+    "welcome": "Hi! Ask me about app usage or expense policies.",
+    "placeholder": "Type your question...",
+    "send": "Send",
+    "error": "An error occurred. Please try again.",
+    "unavailable": "AI Assistant is currently unavailable."
+  },
   "checklist": {
     "title": "Review Guide",
     "receiptsMatchItems": "Receipts match line items",

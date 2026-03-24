@@ -12,6 +12,7 @@ import {
 } from "../lib/roles";
 import ProjectSelector from "./ProjectSelector";
 import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from "./Icons";
+import FloatingChatButton from "./chat/FloatingChatButton";
 
 interface NavItem {
   to: string;
@@ -402,6 +403,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
       <main className="max-w-6xl mx-auto px-4 py-6 mt-14">{children}</main>
+      <FloatingChatButton />
     </div>
   );
 }

@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "seed": "npx tsx scripts/seed.ts",
+    "seed:ai": "npx tsx scripts/seed-ai.ts",
+    "seed:ai:prod": "npx tsx scripts/seed-ai.ts --prod",
     "seed:clear": "npx tsx scripts/clear.ts",
     "migrate:projects": "npx tsx scripts/migrate-projects.ts",
     "migrate:projects:emulator": "npx tsx scripts/migrate-projects.ts --emulator",
