@@ -8,8 +8,6 @@ import { getAiSettings, buildSystemPrompt } from './promptBuilder'
 const MAX_MESSAGES = 20
 const MAX_CHARS_PER_MESSAGE = 2000
 
-const CONTEXT_CHECK_RE = /<context_check>[\s\S]*?<\/context_check>\s*/
-
 interface ChatRequestData {
   messages: ChatMessage[]
 }
@@ -70,8 +68,5 @@ export async function handleChat(
     maxTokens: settings.maxTokens,
   })
 
-  // Strip <context_check> tags from response
-  const reply = raw.replace(CONTEXT_CHECK_RE, '').trim()
-
-  return { reply }
+  return { reply: raw.trim() }
 }

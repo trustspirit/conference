@@ -1,13 +1,46 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleChat = handleChat;
 const https_1 = require("firebase-functions/v2/https");
+const admin = __importStar(require("firebase-admin"));
 const openaiProvider_1 = require("./openaiProvider");
 const claudeProvider_1 = require("./claudeProvider");
 const promptBuilder_1 = require("./promptBuilder");
 const MAX_MESSAGES = 20;
 const MAX_CHARS_PER_MESSAGE = 2000;
-const CONTEXT_CHECK_RE = /<context_check>[\s\S]*?<\/context_check>\s*/;
 function validate(data) {
     if (!data.messages || !Array.isArray(data.messages)) {
         throw new https_1.HttpsError('invalid-argument', 'messages must be an array');
@@ -36,7 +69,11 @@ async function handleChat(request, secrets) {
     if (!settings.enabled) {
         throw new https_1.HttpsError('unavailable', 'AI chatbot is currently unavailable');
     }
-    const systemPrompt = await (0, promptBuilder_1.buildSystemPrompt)(settings);
+    // Lookup user role from Firestore for role-based context filtering
+    const uid = request.auth.uid;
+    const userDoc = await admin.firestore().collection('users').doc(uid).get();
+    const userRole = userDoc.exists ? (userDoc.data()?.role ?? 'user') : 'user';
+    const systemPrompt = await (0, promptBuilder_1.buildSystemPrompt)(settings, userRole);
     const provider = settings.provider === 'claude'
         ? new claudeProvider_1.ClaudeProvider(secrets.anthropicApiKey)
         : new openaiProvider_1.OpenAIProvider(secrets.openaiApiKey);
@@ -48,8 +85,6 @@ async function handleChat(request, secrets) {
         topP: settings.topP,
         maxTokens: settings.maxTokens,
     });
-    // Strip <context_check> tags from response
-    const reply = raw.replace(CONTEXT_CHECK_RE, '').trim();
-    return { reply };
+    return { reply: raw.trim() };
 }
 //# sourceMappingURL=chatHandler.js.map
