@@ -1,27 +1,22 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useChat } from '../../hooks/useChatStream'
+import type { UseChatReturn } from '../../hooks/useChatStream'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 
 interface Props {
   onClose: () => void
+  chat: UseChatReturn
 }
 
-export default function ChatPanel({ onClose }: Props) {
+export default function ChatPanel({ onClose, chat }: Props) {
   const { t } = useTranslation()
-  const { messages, sendMessage, isLoading, error, clearMessages } =
-    useChat()
+  const { messages, sendMessage, isLoading, error } = chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
-
-  const handleClose = () => {
-    clearMessages()
-    onClose()
-  }
 
   return (
     <div className="flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl max-sm:h-[calc(100dvh-100px)] max-sm:w-[calc(100vw-32px)]">
@@ -29,7 +24,7 @@ export default function ChatPanel({ onClose }: Props) {
       <div className="flex items-center justify-between bg-blue-600 px-4 py-3">
         <h3 className="text-sm font-semibold text-white">{t('chat.title')}</h3>
         <button
-          onClick={handleClose}
+          onClick={onClose}
           className="text-white/80 transition-colors hover:text-white"
           aria-label="Close"
         >

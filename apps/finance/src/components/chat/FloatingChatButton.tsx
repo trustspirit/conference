@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import ChatPanel from './ChatPanel'
+import { useChat } from '../../hooks/useChatStream'
 
 export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const chat = useChat()
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {/* Chat Panel */}
       {isOpen && (
         <div className="absolute bottom-16 right-0 chat-panel-enter">
-          <ChatPanel onClose={() => setIsOpen(false)} />
+          <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
         </div>
       )}
 
