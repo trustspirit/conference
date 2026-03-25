@@ -229,6 +229,23 @@ export default function ResubmitPage() {
             message: t('form.routeMapCaptureFailed', { count: failedCount })
           })
         }
+
+        // Delete old route map files where departure/destination changed
+        const oldMapPaths: string[] = []
+        for (let i = 0; i < original.items.length; i++) {
+          const oldDetail = original.items[i].transportDetail
+          const newDetail = finalItems[i]?.transportDetail
+          if (!oldDetail?.routeMapImage?.storagePath) continue
+          const changed =
+            !newDetail ||
+            oldDetail.departure !== newDetail.departure ||
+            oldDetail.destination !== newDetail.destination
+          if (changed) oldMapPaths.push(oldDetail.routeMapImage.storagePath)
+        }
+        if (oldMapPaths.length > 0) {
+          const deleteFiles = httpsCallable<{ paths: string[] }>(functions, 'deleteStorageFiles')
+          deleteFiles({ paths: oldMapPaths }).catch(() => {})
+        }
       }
 
       let vendorBankBookPath = original?.vendorBankBookPath

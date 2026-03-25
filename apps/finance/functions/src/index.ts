@@ -155,6 +155,19 @@ export const uploadRouteMap = onCall(async (request) => {
   return await uploadFileToStorage(file, storagePath)
 })
 
+// Delete storage files by paths (used to clean up old route maps on resubmit)
+export const deleteStorageFiles = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
+  }
+  const { paths } = request.data as { paths: string[] }
+  if (!paths || paths.length === 0) return { deleted: 0 }
+  // Only allow deleting routemap files for safety
+  const safePaths = paths.filter((p) => p.startsWith('routemaps/'))
+  await Promise.all(safePaths.map((p) => bucket.file(p).delete().catch(() => {})))
+  return { deleted: safePaths.length }
+})
+
 // 파일 다운로드 프록시 (CORS 우회)
 export const downloadFileV2 = onCall(async (request) => {
   if (!request.auth) {
@@ -654,23 +667,7 @@ export const onRequestStatusChange = onDocumentUpdated(
       return
     }
 
-    // Clean up route map images when request is cancelled
-    // (receipts and bank book are kept — they can be reused on resubmit)
-    if (newStatus === 'cancelled') {
-      const items = (after.items || []) as { transportDetail?: { routeMapImage?: { storagePath?: string } } }[]
-      const pathsToDelete: string[] = []
-      for (const item of items) {
-        const mapPath = item.transportDetail?.routeMapImage?.storagePath
-        if (mapPath) pathsToDelete.push(mapPath)
-      }
-      if (pathsToDelete.length > 0) {
-        await Promise.all(
-          pathsToDelete.map((p) => bucket.file(p).delete().catch(() => {}))
-        )
-        console.log(`Cancelled request ${event.params?.requestId}: deleted ${pathsToDelete.length} route map files`)
-      }
-      return
-    }
+    if (newStatus === 'cancelled') return
 
     // 2) 신청자에게 알림: reviewed→approved, pending|reviewed→rejected, approved→force_rejected
     const shouldNotifyRequester =
