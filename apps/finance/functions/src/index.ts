@@ -654,29 +654,20 @@ export const onRequestStatusChange = onDocumentUpdated(
       return
     }
 
-    // Clean up Storage files when request is cancelled
+    // Clean up route map images when request is cancelled
+    // (receipts and bank book are kept — they can be reused on resubmit)
     if (newStatus === 'cancelled') {
       const items = (after.items || []) as { transportDetail?: { routeMapImage?: { storagePath?: string } } }[]
-      const receipts = (after.receipts || []) as { storagePath?: string }[]
-      const vendorBankBookPath = after.vendorBankBookPath as string | undefined
-
       const pathsToDelete: string[] = []
       for (const item of items) {
         const mapPath = item.transportDetail?.routeMapImage?.storagePath
         if (mapPath) pathsToDelete.push(mapPath)
       }
-      for (const receipt of receipts) {
-        if (receipt.storagePath) pathsToDelete.push(receipt.storagePath)
-      }
-      if (vendorBankBookPath) pathsToDelete.push(vendorBankBookPath)
-
       if (pathsToDelete.length > 0) {
         await Promise.all(
-          pathsToDelete.map((p) =>
-            bucket.file(p).delete().catch(() => {})
-          )
+          pathsToDelete.map((p) => bucket.file(p).delete().catch(() => {}))
         )
-        console.log(`Cancelled request ${event.params?.requestId}: deleted ${pathsToDelete.length} files`)
+        console.log(`Cancelled request ${event.params?.requestId}: deleted ${pathsToDelete.length} route map files`)
       }
       return
     }
