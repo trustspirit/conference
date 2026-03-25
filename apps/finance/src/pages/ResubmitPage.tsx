@@ -459,6 +459,7 @@ export default function ResubmitPage() {
           onFilesChange={setFiles}
           existingCount={original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
+          existingFiles={original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))}
         />
 
         {isVendorRequest && (
