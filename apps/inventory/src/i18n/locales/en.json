@@ -61,7 +61,12 @@
     "done": "Done",
     "addRow": "Add Row",
     "saveFailed": "Save failed",
-    "importFailed": "Import failed"
+    "importFailed": "Import failed",
+    "exporting": "Exporting",
+    "exportFailed": "Export failed",
+    "deleteSelected": "Delete",
+    "bulkDeleteConfirm": "Are you sure you want to delete {{count}} items?",
+    "itemsDeleted": "{{count}} items deleted"
   },
   "projects": {
     "title": "Projects",

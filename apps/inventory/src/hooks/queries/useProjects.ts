@@ -12,13 +12,7 @@ import { db } from '@conference/firebase'
 import { INVENTORY_PROJECTS_COLLECTION } from '../../collections'
 import { Project } from '../../types'
 import { queryKeys } from './queryKeys'
-
-function toDate(val: unknown): Date {
-  if (val instanceof Timestamp) return val.toDate()
-  if (val instanceof Date) return val
-  if (typeof val === 'string') return new Date(val)
-  return new Date()
-}
+import { toDate } from '../../lib/firestore'
 
 export function useProjects() {
   return useQuery({

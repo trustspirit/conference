@@ -79,6 +79,218 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "requestedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "stock", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "stock", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "location", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "location", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "stock", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventory_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "projectIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "location", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -61,7 +61,12 @@
     "done": "완료",
     "addRow": "행 추가",
     "saveFailed": "저장에 실패했습니다",
-    "importFailed": "가져오기에 실패했습니다"
+    "importFailed": "가져오기에 실패했습니다",
+    "exporting": "내보내는 중",
+    "exportFailed": "내보내기에 실패했습니다",
+    "deleteSelected": "삭제",
+    "bulkDeleteConfirm": "{{count}}개 항목을 삭제하시겠습니까?",
+    "itemsDeleted": "{{count}}개 항목이 삭제되었습니다"
   },
   "projects": {
     "title": "프로젝트",
