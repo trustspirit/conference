@@ -15,9 +15,13 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, Dialog, useToast } from 'trust-ui-react'
+import { TextField, Button, Dialog, Checkbox, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
+import { validateBankBookFile } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
+import { canCreateVendorRequest } from '../lib/roles'
+import { httpsCallable } from 'firebase/functions'
+import { functions } from '@conference/firebase'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
 import { SUBMISSION_CHECKLIST } from '../constants/reviewChecklist'
@@ -34,6 +38,7 @@ interface DraftData {
   committee: Committee
   items: RequestItem[]
   comments: string
+  isVendorRequest?: boolean
   savedAt: string
 }
 
@@ -88,6 +93,12 @@ export default function RequestFormPage() {
   const [errors, setErrors] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [showDraftBanner, setShowDraftBanner] = useState(!!draft)
+  const [isVendorRequest, setIsVendorRequest] = useState(draft?.isVendorRequest || false)
+  const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
+  const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
+
+  const showVendorOption = appUser ? canCreateVendorRequest(appUser.role) : false
+
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     onConfirm: () => void
@@ -122,11 +133,11 @@ export default function RequestFormPage() {
     if (submitted) return
     const timer = setTimeout(() => {
       if (hasContent()) {
-        saveDraft({ payee, phone, bankName, bankAccount, date, committee, items, comments })
+        saveDraft({ payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest })
       }
     }, 500)
     return () => clearTimeout(timer)
-  }, [payee, phone, bankName, bankAccount, date, committee, items, comments, hasContent, submitted])
+  }, [payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, hasContent, submitted])
 
   // Block navigation when form has content (except to /settings)
   const blocker = useBlocker(({ nextLocation }) => {
@@ -159,7 +170,27 @@ export default function RequestFormPage() {
     setItems([emptyItem()])
     setComments('')
     setFiles([])
+    setIsVendorRequest(false)
+    setVendorBankBookFile(null)
+    setVendorBankBookError(null)
     setShowDraftBanner(false)
+  }
+
+  const handleVendorToggle = (checked: boolean) => {
+    setIsVendorRequest(checked)
+    if (checked) {
+      setPayee('')
+      setPhone('')
+      setBankName('')
+      setBankAccount('')
+      setCommittee('preparation')
+    } else {
+      setPayee(appUser?.displayName || appUser?.name || '')
+      setPhone(appUser?.phone || '')
+      setBankName(appUser?.bankName || '')
+      setBankAccount(appUser?.bankAccount || '')
+      setCommittee(appUser?.defaultCommittee || 'operations')
+    }
   }
 
   const updateItem = (index: number, item: RequestItem) => {
@@ -214,8 +245,13 @@ export default function RequestFormPage() {
     }
     if (files.length === 0) errs.push(t('validation.receiptsRequired'))
     if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
-    if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
-      errs.push(t('validation.bankBookRequired'))
+    // Bank book validation
+    if (isVendorRequest) {
+      if (!vendorBankBookFile) errs.push(t('validation.vendorBankBookRequired'))
+    } else {
+      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
+        errs.push(t('validation.bankBookRequired'))
+    }
     return errs
   }
 
@@ -297,14 +333,30 @@ export default function RequestFormPage() {
         }
       }
 
-      const profileUpdates: Record<string, string> = {}
-      if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
-      if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
-      if (bankAccount.trim() !== (appUser.bankAccount || ''))
-        profileUpdates.bankAccount = bankAccount.trim()
-      if (Object.keys(profileUpdates).length > 0) {
-        await updateAppUser(profileUpdates)
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      // Upload vendor bank book if applicable
+      let vendorBankBookPath: string | undefined
+      let vendorBankBookUrl: string | undefined
+      if (isVendorRequest && vendorBankBookFile) {
+        const data = await fileToBase64(vendorBankBookFile)
+        const uploadFn = httpsCallable<
+          { file: { name: string; data: string } },
+          { fileName: string; storagePath: string; url: string }
+        >(functions, 'uploadVendorBankBook')
+        const result = await uploadFn({ file: { name: vendorBankBookFile.name, data } })
+        vendorBankBookPath = result.data.storagePath
+        vendorBankBookUrl = result.data.url
+      }
+
+      if (!isVendorRequest) {
+        const profileUpdates: Record<string, string> = {}
+        if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
+        if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+        if (bankAccount.trim() !== (appUser.bankAccount || ''))
+          profileUpdates.bankAccount = bankAccount.trim()
+        if (Object.keys(profileUpdates).length > 0) {
+          await updateAppUser(profileUpdates)
+          queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+        }
       }
 
       await createRequest.mutateAsync({
@@ -333,7 +385,10 @@ export default function RequestFormPage() {
         rejectionReason: null,
         settlementId: null,
         originalRequestId: null,
-        comments
+        comments,
+        isVendorRequest: isVendorRequest || undefined,
+        vendorBankBookPath: vendorBankBookPath || undefined,
+        vendorBankBookUrl: vendorBankBookUrl || undefined,
       })
 
       setSubmitted(true)
@@ -382,6 +437,17 @@ export default function RequestFormPage() {
           <h2 className="text-xl font-bold mb-1">{t('form.title')}</h2>
           <p className="text-sm text-gray-500 mb-6">{t('form.subtitle')}</p>
 
+          {showVendorOption && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <Checkbox
+                checked={isVendorRequest}
+                onChange={(e) => handleVendorToggle(e.target.checked)}
+                label={t('form.vendorRequest')}
+              />
+              <p className="text-xs text-gray-500 mt-1 ml-6">{t('form.vendorRequestHint')}</p>
+            </div>
+          )}
+
           <ErrorAlert errors={errors} title={t('form.checkErrors')} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -425,7 +491,16 @@ export default function RequestFormPage() {
               fullWidth
             />
             <div className="sm:col-span-2">
-              <CommitteeSelect value={committee} onChange={setCommittee} />
+              {isVendorRequest ? (
+                <TextField
+                  label={t('field.committee')}
+                  value={t('committee.preparation')}
+                  disabled
+                  fullWidth
+                />
+              ) : (
+                <CommitteeSelect value={committee} onChange={setCommittee} />
+              )}
             </div>
           </div>
 
@@ -469,6 +544,42 @@ export default function RequestFormPage() {
           </div>
 
           <FileUpload files={files} onFilesChange={setFiles} />
+
+          {isVendorRequest && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('form.vendorBankBook')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.pdf"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null
+                  if (f) {
+                    const err = validateBankBookFile(f)
+                    if (err) {
+                      setVendorBankBookError(err)
+                      setVendorBankBookFile(null)
+                      e.target.value = ''
+                      return
+                    }
+                  }
+                  setVendorBankBookError(null)
+                  setVendorBankBookFile(f)
+                }}
+                className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {vendorBankBookError && (
+                <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
+              )}
+              {vendorBankBookFile && (
+                <p className="text-xs text-green-600 mt-1">
+                  {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
+                </p>
+              )}
+              <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
+            </div>
+          )}
 
           <div className="mb-6">
             <TextField

@@ -120,6 +120,22 @@ export const uploadBankBookV2 = onCall(async (request) => {
   return await uploadFileToStorage(file, storagePath)
 })
 
+// 업체 통장사본 업로드
+export const uploadVendorBankBook = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
+  }
+
+  const { file } = request.data as { file: FileInput }
+  if (!file) {
+    throw new HttpsError('invalid-argument', 'No file provided')
+  }
+
+  // No old-file deletion — vendor bank books are per-request, not per-user
+  const storagePath = `vendor-bankbook/${request.auth.uid}/${Date.now()}_${file.name}`
+  return await uploadFileToStorage(file, storagePath)
+})
+
 // 경로맵 업로드
 export const uploadRouteMap = onCall(async (request) => {
   if (!request.auth) {

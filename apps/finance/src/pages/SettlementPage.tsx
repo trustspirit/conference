@@ -20,7 +20,9 @@ import SettlementSummary from '../components/settlement/SettlementSummary'
 type ReviewPhase = 'select' | 'review' | 'summary'
 
 const payeeKey = (req: PaymentRequest) =>
-  `${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+  req.isVendorRequest
+    ? `vendor|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+    : `${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
 
 export default function SettlementPage() {
   const { t } = useTranslation()
@@ -248,7 +250,9 @@ export default function SettlementPage() {
           phone: first.phone,
           bankName: first.bankName,
           bankAccount: first.bankAccount,
-          bankBookUrl: userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
+          bankBookUrl: first.isVendorRequest
+  ? first.vendorBankBookUrl || ''
+  : userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
           session: first.session,
           committee: first.committee,
           items: allItems,

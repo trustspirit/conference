@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Committee } from '../types'
 import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../lib/utils'
 import { Dialog, TextField, Button, Checkbox, useToast } from 'trust-ui-react'
-import BankSelect from './BankSelect'
+import { BANKS } from '../constants/banks'
 import ErrorAlert from './ErrorAlert'
 import CommitteeSelect from './CommitteeSelect'
 
@@ -97,7 +97,7 @@ export default function DisplayNameModal() {
 
   return (
     <Dialog open onClose={() => {}} size="md">
-      <Dialog.Title>{t('setup.title')}</Dialog.Title>
+      <Dialog.Title showClose={false}>{t('setup.title')}</Dialog.Title>
       <Dialog.Content>
         <p className="text-sm text-gray-500 mb-4">{t('setup.description')}</p>
 
@@ -124,7 +124,23 @@ export default function DisplayNameModal() {
             fullWidth
           />
 
-          <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('field.bank')} <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+            >
+              <option value="">{t('field.bankSelect')}</option>
+              {BANKS.map((bank) => (
+                <option key={bank.code} value={bank.name}>
+                  {bank.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <TextField
             label={t('field.bankAccount')}

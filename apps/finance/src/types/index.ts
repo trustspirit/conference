@@ -137,6 +137,9 @@ export interface PaymentRequest {
   settlementId: string | null
   originalRequestId: string | null
   comments: string
+  isVendorRequest?: boolean
+  vendorBankBookPath?: string
+  vendorBankBookUrl?: string
 }
 
 export interface Settlement {

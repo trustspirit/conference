@@ -149,7 +149,12 @@
     "receiptHint": "PNG, JPG, PDF 파일만 가능 (파일당 최대 750KB)",
     "receiptPreview": "영수증 미리보기 — 항목과 금액이 일치하는지 확인해주세요",
     "totalAmountCheck": "영수증 금액과 항목 총액(₩{{amount}})이 일치하는지 확인해주세요.",
-    "routeMapCaptureFailed": "경로맵 캡처 실패 {{count}}건 (제출은 정상 진행)"
+    "routeMapCaptureFailed": "경로맵 캡처 실패 {{count}}건 (제출은 정상 진행)",
+    "vendorRequest": "업체 신청서",
+    "vendorRequestHint": "업체 대상 지불 시 체크하세요. 수취인 정보를 직접 입력합니다.",
+    "vendorBankBook": "업체 통장 사본",
+    "vendorBankBookHint": "업체의 통장 사본을 첨부하세요 (PNG, JPG, PDF / 최대 800KB)",
+    "vendorBankBookExisting": "기존 업체 통장 사본이 있습니다. 새 파일을 업로드하면 교체됩니다."
   },
   "validation": {
     "payeeRequired": "신청자를 입력해주세요.",
@@ -173,7 +178,8 @@
     "displayNameRequired": "선호하는 이름을 입력해주세요.",
     "invalidFileType": "\"{{name}}\" - 허용되지 않는 형식 (PNG, JPG, PDF만 가능)",
     "fileTooLarge": "\"{{name}}\" - 750KB 초과 ({{size}}KB)",
-    "consentRequired": "개인정보 처리 동의가 필요합니다."
+    "consentRequired": "개인정보 처리 동의가 필요합니다.",
+    "vendorBankBookRequired": "업체 통장 사본을 첨부해주세요."
   },
   "consent": {
     "title": "개인정보 처리 동의",

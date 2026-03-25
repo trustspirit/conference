@@ -134,3 +134,8 @@ export const ALL_ROLES: UserRole[] = [
   'executive',
   'admin'
 ]
+
+/** Can create vendor requests (finance staff + admins) */
+export function canCreateVendorRequest(role: UserRole): boolean {
+  return ['finance_ops', 'finance_prep', 'admin', 'super_admin'].includes(role)
+}

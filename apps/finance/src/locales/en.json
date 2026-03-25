@@ -149,7 +149,12 @@
     "receiptHint": "PNG, JPG, PDF only (max 750KB per file)",
     "receiptPreview": "Receipt preview — verify items and amounts match",
     "totalAmountCheck": "Please verify that the receipt amounts match the total (₩{{amount}}).",
-    "routeMapCaptureFailed": "{{count}} route map(s) failed to capture (submission continues)"
+    "routeMapCaptureFailed": "{{count}} route map(s) failed to capture (submission continues)",
+    "vendorRequest": "Vendor Request",
+    "vendorRequestHint": "Check for vendor payments. Enter vendor payee info manually.",
+    "vendorBankBook": "Vendor Bank Book",
+    "vendorBankBookHint": "Attach vendor's bank book copy (PNG, JPG, PDF / max 800KB)",
+    "vendorBankBookExisting": "Existing vendor bank book attached. Upload new to replace."
   },
   "validation": {
     "payeeRequired": "Payee name is required.",
@@ -173,7 +178,8 @@
     "displayNameRequired": "Preferred name is required.",
     "invalidFileType": "\"{{name}}\" - Invalid format (PNG, JPG, PDF only)",
     "fileTooLarge": "\"{{name}}\" - Exceeds 750KB ({{size}}KB)",
-    "consentRequired": "You must agree to the data handling terms."
+    "consentRequired": "You must agree to the data handling terms.",
+    "vendorBankBookRequired": "Please attach the vendor's bank book."
   },
   "consent": {
     "title": "Data Handling Consent",

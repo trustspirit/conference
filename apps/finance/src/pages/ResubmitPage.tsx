@@ -19,7 +19,10 @@ import BankSelect from '../components/BankSelect'
 import ErrorAlert from '../components/ErrorAlert'
 import Spinner from '../components/Spinner'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, useToast } from 'trust-ui-react'
+import { TextField, Button, Checkbox, useToast } from 'trust-ui-react'
+import { validateBankBookFile } from '../lib/utils'
+import { httpsCallable } from 'firebase/functions'
+import { functions } from '@conference/firebase'
 
 const emptyItem = (): RequestItem => ({ description: '', budgetCode: 0, amount: 0 })
 
@@ -49,6 +52,9 @@ export default function ResubmitPage() {
   const [submitting, setSubmitting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  const [isVendorRequest, setIsVendorRequest] = useState(false)
+  const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
+  const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
   const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
 
   useEffect(() => {
@@ -61,6 +67,7 @@ export default function ResubmitPage() {
     setCommittee(original.committee)
     setItems(original.items.length > 0 ? original.items : [emptyItem()])
     setComments(original.comments)
+    setIsVendorRequest(original.isVendorRequest || false)
   }, [original])
 
   // Re-format account number when bank changes
@@ -156,8 +163,13 @@ export default function ResubmitPage() {
       errs.push(t('validation.receiptsRequired'))
     }
     if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
-    if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
-      errs.push(t('validation.bankBookRequired'))
+    if (isVendorRequest) {
+      if (!vendorBankBookFile && !original?.vendorBankBookUrl)
+        errs.push(t('validation.vendorBankBookRequired'))
+    } else {
+      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
+        errs.push(t('validation.bankBookRequired'))
+    }
     if (!hasChanges()) errs.push(t('validation.noChanges'))
     return errs
   }
@@ -218,14 +230,29 @@ export default function ResubmitPage() {
         }
       }
 
-      const profileUpdates: Record<string, string> = {}
-      if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
-      if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
-      if (bankAccount.trim() !== (appUser.bankAccount || ''))
-        profileUpdates.bankAccount = bankAccount.trim()
-      if (Object.keys(profileUpdates).length > 0) {
-        await updateAppUser(profileUpdates)
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+      let vendorBankBookPath = original?.vendorBankBookPath
+      let vendorBankBookUrl = original?.vendorBankBookUrl
+      if (isVendorRequest && vendorBankBookFile) {
+        const data = await fileToBase64(vendorBankBookFile)
+        const uploadFn = httpsCallable<
+          { file: { name: string; data: string } },
+          { fileName: string; storagePath: string; url: string }
+        >(functions, 'uploadVendorBankBook')
+        const result = await uploadFn({ file: { name: vendorBankBookFile.name, data } })
+        vendorBankBookPath = result.data.storagePath
+        vendorBankBookUrl = result.data.url
+      }
+
+      if (!isVendorRequest) {
+        const profileUpdates: Record<string, string> = {}
+        if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
+        if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+        if (bankAccount.trim() !== (appUser.bankAccount || ''))
+          profileUpdates.bankAccount = bankAccount.trim()
+        if (Object.keys(profileUpdates).length > 0) {
+          await updateAppUser(profileUpdates)
+          queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
+        }
       }
 
       await createRequest.mutateAsync({
@@ -254,7 +281,10 @@ export default function ResubmitPage() {
         rejectionReason: null,
         settlementId: null,
         originalRequestId: original.id,
-        comments
+        comments,
+        isVendorRequest: isVendorRequest || undefined,
+        vendorBankBookPath: vendorBankBookPath || undefined,
+        vendorBankBookUrl: vendorBankBookUrl || undefined
       })
 
       navigate('/my-requests')
@@ -309,6 +339,18 @@ export default function ResubmitPage() {
         <h2 className="text-xl font-bold mb-1">{t('approval.resubmitTitle')}</h2>
         <p className="text-sm text-gray-500 mb-6">{t('approval.resubmitDescription')}</p>
 
+        {original?.isVendorRequest && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            <Checkbox
+              checked={true}
+              onChange={() => {}}
+              label={t('form.vendorRequest')}
+              disabled
+            />
+            <p className="text-xs text-gray-500 mt-1 ml-6">{t('form.vendorRequestHint')}</p>
+          </div>
+        )}
+
         <ErrorAlert errors={errors} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -351,7 +393,16 @@ export default function ResubmitPage() {
             fullWidth
           />
           <div className="sm:col-span-2">
-            <CommitteeSelect value={committee} onChange={setCommittee} />
+            {isVendorRequest ? (
+              <TextField
+                label={t('field.committee')}
+                value={t('committee.preparation')}
+                disabled
+                fullWidth
+              />
+            ) : (
+              <CommitteeSelect value={committee} onChange={setCommittee} />
+            )}
           </div>
         </div>
 
@@ -400,6 +451,45 @@ export default function ResubmitPage() {
           existingCount={original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
         />
+
+        {isVendorRequest && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('form.vendorBankBook')} <span className="text-red-500">*</span>
+            </label>
+            {original?.vendorBankBookUrl && !vendorBankBookFile && (
+              <p className="text-xs text-green-600 mb-1">
+                {t('form.vendorBankBookExisting')}
+              </p>
+            )}
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg,.pdf"
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null
+                if (f) {
+                  const err = validateBankBookFile(f)
+                  if (err) {
+                    setVendorBankBookError(err)
+                    setVendorBankBookFile(null)
+                    e.target.value = ''
+                    return
+                  }
+                }
+                setVendorBankBookError(null)
+                setVendorBankBookFile(f)
+              }}
+              className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {vendorBankBookError && <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>}
+            {vendorBankBookFile && (
+              <p className="text-xs text-green-600 mt-1">
+                {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
+              </p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
+          </div>
+        )}
 
         <div className="mb-6">
           <TextField
