@@ -11,7 +11,8 @@
     "firebase-admin": "^13.6.1",
     "firebase-functions": "^7.0.5",
     "nodemailer": "^6.9.0",
-    "openai": "^6.32.0"
+    "openai": "^6.32.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.0",
