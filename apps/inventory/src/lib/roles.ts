@@ -33,7 +33,7 @@ export function canViewDangling(role: UserRole | null | undefined): boolean {
 }
 
 export function getDefaultRoute(role: UserRole | null | undefined): string {
-  if (role === 'admin') return '/admin/items'
+  if (role === 'admin') return '/items'
   if (role === 'writer') return '/items'
   if (role === 'viewer') return '/items'
   return '/login'

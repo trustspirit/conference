@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from 'trust-ui-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -29,7 +29,7 @@ export default function ProjectsPage() {
     endDate: ''
   })
 
-  const now = new Date()
+  const now = useMemo(() => new Date(), [])
 
   const getStatus = (p: Project) => {
     if (now < p.startDate) return 'upcoming'
@@ -87,7 +87,7 @@ export default function ProjectsPage() {
       toast({ variant: 'success', message: t('projects.projectSaved') })
       setShowForm(false)
     } catch {
-      toast({ variant: 'danger', message: 'Failed to save project' })
+      toast({ variant: 'danger', message: t('projects.saveFailed') })
     }
   }
 
@@ -97,7 +97,7 @@ export default function ProjectsPage() {
       await deleteProject.mutateAsync(id)
       toast({ variant: 'success', message: t('projects.projectDeleted') })
     } catch {
-      toast({ variant: 'danger', message: 'Failed to delete' })
+      toast({ variant: 'danger', message: t('projects.deleteFailed') })
     }
   }
 

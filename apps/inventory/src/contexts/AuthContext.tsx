@@ -12,7 +12,7 @@ interface AuthContextType {
   needsConsent: boolean
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
-  updateAppUser: (fields: Partial<AppUser>) => Promise<void>
+  updateAppUser: (fields: Pick<AppUser, 'consentAgreedAt'>) => Promise<void>
   setNeedsConsent: (v: boolean) => void
 }
 
@@ -62,22 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const handleSignIn = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider)
-    } catch (error: unknown) {
-      console.error('Google sign-in error:', error)
-    }
+    await signInWithPopup(auth, googleProvider)
   }
 
   const logout = async () => {
     await signOut(auth)
   }
 
-  const updateAppUser = async (fields: Partial<AppUser>) => {
+  const updateAppUser = async (fields: Pick<AppUser, 'consentAgreedAt'>) => {
     if (!user) return
     const updateData: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(fields)) {
-      updateData[key] = value
+    if ('consentAgreedAt' in fields) {
+      updateData.consentAgreedAt = fields.consentAgreedAt
     }
     await updateDoc(doc(db, INVENTORY_USERS_COLLECTION, user.uid), updateData)
     setAppUser((prev) => (prev ? { ...prev, ...fields } : prev))

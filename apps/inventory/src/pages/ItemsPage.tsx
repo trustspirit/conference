@@ -1,16 +1,18 @@
 import { useState, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from 'trust-ui-react'
+import { doc, collection, Timestamp, writeBatch } from 'firebase/firestore'
+import { db } from '@conference/firebase'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import {
   useItems,
-  useCreateItem,
-  useUpdateItem,
   useDeleteItem,
   useBulkCreateItems,
   useMoveItems
 } from '../hooks/queries/useItems'
+import { INVENTORY_ITEMS_COLLECTION } from '../collections'
 import { useProjects } from '../hooks/queries/useProjects'
 import { canWrite, canMoveItems } from '../lib/roles'
 import Spinner from '../components/Spinner'
@@ -33,8 +35,6 @@ export default function ItemsPage() {
   const { currentProject } = useProject()
   const { data: items = [], isLoading } = useItems(currentProject?.id)
   const { data: allProjects = [] } = useProjects()
-  const createItem = useCreateItem()
-  const updateItem = useUpdateItem()
   const deleteItem = useDeleteItem()
   const bulkCreate = useBulkCreateItems()
   const moveItems = useMoveItems()
@@ -136,19 +136,26 @@ export default function ItemsPage() {
     }
   }
 
+  const queryClient = useQueryClient()
+
   const saveEdits = async () => {
     if (!appUser || !currentProject) return
     const editor = { uid: appUser.uid, name: appUser.name, email: appUser.email }
     try {
+      const batch = writeBatch(db)
       for (const row of editRows) {
         if (row.isNew) {
           if (!row.name.trim()) continue
-          await createItem.mutateAsync({
+          const ref = doc(collection(db, INVENTORY_ITEMS_COLLECTION))
+          batch.set(ref, {
             name: row.name,
             stock: row.stock,
             location: row.location,
             projectIds: [currentProject.id],
-            createdBy: editor
+            createdBy: editor,
+            lastEditedBy: null,
+            lastEditedAt: null,
+            createdAt: Timestamp.now()
           })
         } else {
           const original = items.find((i) => i.id === row.id)
@@ -158,21 +165,23 @@ export default function ItemsPage() {
               original.stock !== row.stock ||
               original.location !== row.location)
           ) {
-            await updateItem.mutateAsync({
-              id: row.id,
+            batch.update(doc(db, INVENTORY_ITEMS_COLLECTION, row.id), {
               name: row.name,
               stock: row.stock,
               location: row.location,
-              editor
+              lastEditedBy: editor,
+              lastEditedAt: Timestamp.now()
             })
           }
         }
       }
+      await batch.commit()
+      queryClient.invalidateQueries({ queryKey: ['inventory-items'] })
       toast({ variant: 'success', message: t('items.itemSaved') })
       setEditing(false)
       setEditRows([])
     } catch {
-      toast({ variant: 'danger', message: 'Save failed' })
+      toast({ variant: 'danger', message: t('items.saveFailed') })
     }
   }
 
@@ -227,7 +236,7 @@ export default function ItemsPage() {
 
       bulkCreate.mutate(newItems, {
         onSuccess: () => toast({ variant: 'success', message: t('items.csvImported') }),
-        onError: () => toast({ variant: 'danger', message: 'Import failed' })
+        onError: () => toast({ variant: 'danger', message: t('items.importFailed') })
       })
     }
     reader.readAsText(file)

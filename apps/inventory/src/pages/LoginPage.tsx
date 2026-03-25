@@ -1,12 +1,22 @@
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useToast } from 'trust-ui-react'
 import { useAuth } from '../contexts/AuthContext'
 import { getDefaultRoute } from '../lib/roles'
 import Spinner from '../components/Spinner'
 
 export default function LoginPage() {
   const { t, i18n } = useTranslation()
+  const { toast } = useToast()
   const { user, appUser, loading, signInWithGoogle } = useAuth()
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle()
+    } catch {
+      toast({ variant: 'danger', message: t('auth.loginFailed') })
+    }
+  }
 
   if (loading) {
     return (
@@ -49,7 +59,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-gray-500">{t('auth.loginDesc')}</p>
         </div>
         <button
-          onClick={signInWithGoogle}
+          onClick={handleSignIn}
           className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">

@@ -59,7 +59,9 @@
     "edit": "편집",
     "editing": "편집 중",
     "done": "완료",
-    "addRow": "행 추가"
+    "addRow": "행 추가",
+    "saveFailed": "저장에 실패했습니다",
+    "importFailed": "가져오기에 실패했습니다"
   },
   "projects": {
     "title": "프로젝트",
@@ -79,6 +81,8 @@
     "noProjects": "프로젝트가 없습니다",
     "projectSaved": "프로젝트가 저장되었습니다",
     "projectDeleted": "프로젝트가 삭제되었습니다",
+    "saveFailed": "프로젝트 저장에 실패했습니다",
+    "deleteFailed": "프로젝트 삭제에 실패했습니다",
     "itemCount": "물품 수",
     "period": "기간"
   },
@@ -95,7 +99,9 @@
     "admin": "관리자",
     "writer": "편집자",
     "viewer": "뷰어",
-    "userUpdated": "사용자가 업데이트되었습니다"
+    "userUpdated": "사용자가 업데이트되었습니다",
+    "save": "저장",
+    "cancel": "취소"
   },
   "dangling": {
     "title": "미배정 물품",

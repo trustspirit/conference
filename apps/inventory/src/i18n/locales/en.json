@@ -59,7 +59,9 @@
     "edit": "Edit",
     "editing": "Editing",
     "done": "Done",
-    "addRow": "Add Row"
+    "addRow": "Add Row",
+    "saveFailed": "Save failed",
+    "importFailed": "Import failed"
   },
   "projects": {
     "title": "Projects",
@@ -79,6 +81,8 @@
     "noProjects": "No projects found",
     "projectSaved": "Project saved",
     "projectDeleted": "Project deleted",
+    "saveFailed": "Failed to save project",
+    "deleteFailed": "Failed to delete project",
     "itemCount": "Items",
     "period": "Period"
   },
@@ -95,7 +99,9 @@
     "admin": "Admin",
     "writer": "Writer",
     "viewer": "Viewer",
-    "userUpdated": "User updated"
+    "userUpdated": "User updated",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "dangling": {
     "title": "Dangling Items",

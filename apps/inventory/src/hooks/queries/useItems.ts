@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   collection,
   getDocs,
+  getDoc,
   doc,
   setDoc,
   updateDoc,
@@ -9,7 +10,8 @@ import {
   query,
   where,
   Timestamp,
-  writeBatch
+  writeBatch,
+  runTransaction
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { INVENTORY_ITEMS_COLLECTION } from '../../collections'
@@ -23,7 +25,7 @@ function toDate(val: unknown): Date {
   return new Date()
 }
 
-function docToItem(d: { id: string; data: () => Record<string, unknown> }): InventoryItem {
+function docToItem(d: { id: string; data(): Record<string, unknown> }): InventoryItem {
   const data = d.data()
   return {
     id: d.id,
@@ -49,7 +51,7 @@ export function useItems(projectId: string | undefined) {
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) =>
-        docToItem(d as unknown as { id: string; data: () => Record<string, unknown> })
+        docToItem(d)
       )
     },
     enabled: !!projectId
@@ -62,7 +64,7 @@ export function useAllItems() {
     queryFn: async () => {
       const snap = await getDocs(collection(db, INVENTORY_ITEMS_COLLECTION))
       return snap.docs.map((d) =>
-        docToItem(d as unknown as { id: string; data: () => Record<string, unknown> })
+        docToItem(d)
       )
     }
   })
@@ -124,23 +126,28 @@ export function useDeleteItem() {
   })
 }
 
+const BATCH_LIMIT = 500
+
 export function useBulkCreateItems() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (
       items: Omit<InventoryItem, 'id' | 'createdAt' | 'lastEditedAt' | 'lastEditedBy'>[]
     ) => {
-      const batch = writeBatch(db)
-      for (const item of items) {
-        const ref = doc(collection(db, INVENTORY_ITEMS_COLLECTION))
-        batch.set(ref, {
-          ...item,
-          lastEditedBy: null,
-          lastEditedAt: null,
-          createdAt: Timestamp.now()
-        })
+      for (let i = 0; i < items.length; i += BATCH_LIMIT) {
+        const chunk = items.slice(i, i + BATCH_LIMIT)
+        const batch = writeBatch(db)
+        for (const item of chunk) {
+          const ref = doc(collection(db, INVENTORY_ITEMS_COLLECTION))
+          batch.set(ref, {
+            ...item,
+            lastEditedBy: null,
+            lastEditedAt: null,
+            createdAt: Timestamp.now()
+          })
+        }
+        await batch.commit()
       }
-      await batch.commit()
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inventory-items'] })
@@ -162,28 +169,27 @@ export function useMoveItems() {
       removeFromProjectId?: string
       editor: { uid: string; name: string; email: string }
     }) => {
-      const batch = writeBatch(db)
-      for (const itemId of itemIds) {
-        const ref = doc(db, INVENTORY_ITEMS_COLLECTION, itemId)
-        const snap = await getDocs(
-          query(collection(db, INVENTORY_ITEMS_COLLECTION), where('__name__', '==', itemId))
+      await runTransaction(db, async (transaction) => {
+        const snapshots = await Promise.all(
+          itemIds.map((id) => getDoc(doc(db, INVENTORY_ITEMS_COLLECTION, id)))
         )
-        if (snap.empty) continue
-        const data = snap.docs[0].data()
-        let projectIds: string[] = data.projectIds || []
-        if (removeFromProjectId) {
-          projectIds = projectIds.filter((id: string) => id !== removeFromProjectId)
+        for (const snap of snapshots) {
+          if (!snap.exists()) continue
+          const data = snap.data()
+          let projectIds: string[] = data.projectIds || []
+          if (removeFromProjectId) {
+            projectIds = projectIds.filter((id: string) => id !== removeFromProjectId)
+          }
+          if (!projectIds.includes(targetProjectId)) {
+            projectIds.push(targetProjectId)
+          }
+          transaction.update(snap.ref, {
+            projectIds,
+            lastEditedBy: editor,
+            lastEditedAt: Timestamp.now()
+          })
         }
-        if (!projectIds.includes(targetProjectId)) {
-          projectIds.push(targetProjectId)
-        }
-        batch.update(ref, {
-          projectIds,
-          lastEditedBy: editor,
-          lastEditedAt: Timestamp.now()
-        })
-      }
-      await batch.commit()
+      })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inventory-items'] })
