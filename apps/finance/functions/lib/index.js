@@ -32,11 +32,8 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiChat = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.generateRouteMap = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -44,7 +41,6 @@ const params_1 = require("firebase-functions/params");
 const admin = __importStar(require("firebase-admin"));
 const nodemailer = __importStar(require("nodemailer"));
 const node_crypto_1 = require("node:crypto");
-const sharp_1 = __importDefault(require("sharp"));
 admin.initializeApp();
 // --- Email notification secrets & config ---
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
@@ -368,172 +364,6 @@ exports.calculateDistance = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] },
         }
     }
     return { distanceMeters, routePath: simplifyPath(routePath) };
-});
-// --- Server-side Route Map Generation (Kakao Static Map + route overlay) ---
-const MAP_WIDTH = 600;
-const MAP_HEIGHT = 400;
-function lat2y(lat) {
-    const rad = (lat * Math.PI) / 180;
-    return (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2;
-}
-function lngToTileX(lng, zoom) {
-    return ((lng + 180) / 360) * Math.pow(2, zoom);
-}
-function latToTileY(lat, zoom) {
-    return lat2y(lat) * Math.pow(2, zoom);
-}
-function fitZoom(minLat, maxLat, minLng, maxLng, width, height) {
-    const TILE = 256;
-    for (let z = 16; z >= 2; z--) {
-        const x0 = lngToTileX(minLng, z) * TILE;
-        const x1 = lngToTileX(maxLng, z) * TILE;
-        const y0 = latToTileY(maxLat, z) * TILE;
-        const y1 = latToTileY(minLat, z) * TILE;
-        if (x1 - x0 < width * 0.8 && y1 - y0 < height * 0.8)
-            return z;
-    }
-    return 2;
-}
-exports.generateRouteMap = (0, https_1.onCall)(async (request) => {
-    if (!request.auth) {
-        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
-    }
-    const { dep, dest, depName, destName, distanceKm, routePath, committee, projectId } = request.data;
-    if (!dep || !dest) {
-        throw new https_1.HttpsError('invalid-argument', 'dep and dest are required');
-    }
-    // Collect all points for bounding box
-    const lats = [dep.lat, dest.lat];
-    const lngs = [dep.lng, dest.lng];
-    if (routePath && routePath.length >= 4) {
-        for (let i = 0; i < routePath.length; i += 2) {
-            lngs.push(routePath[i]);
-            lats.push(routePath[i + 1]);
-        }
-    }
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-    const latSpan = maxLat - minLat || 0.01;
-    const lngSpan = maxLng - minLng || 0.01;
-    const margin = 0.15;
-    const adjMinLat = minLat - latSpan * margin;
-    const adjMaxLat = maxLat + latSpan * margin;
-    const adjMinLng = minLng - lngSpan * margin;
-    const adjMaxLng = maxLng + lngSpan * margin;
-    const centerLat = (adjMinLat + adjMaxLat) / 2;
-    const centerLng = (adjMinLng + adjMaxLng) / 2;
-    // Determine zoom and tile projection
-    const zoom = fitZoom(adjMinLat, adjMaxLat, adjMinLng, adjMaxLng, MAP_WIDTH, MAP_HEIGHT);
-    const TILE = 256;
-    const centerWX = lngToTileX(centerLng, zoom) * TILE;
-    const centerWY = latToTileY(centerLat, zoom) * TILE;
-    const originWX = centerWX - MAP_WIDTH / 2;
-    const originWY = centerWY - MAP_HEIGHT / 2;
-    const toX = (lng) => lngToTileX(lng, zoom) * TILE - originWX;
-    const toY = (lat) => latToTileY(lat, zoom) * TILE - originWY;
-    // Fetch Kakao map tiles (no CORS on server)
-    const n = Math.pow(2, zoom);
-    const tileXMin = Math.floor(originWX / TILE);
-    const tileXMax = Math.floor((originWX + MAP_WIDTH) / TILE);
-    const tileYMin = Math.floor(originWY / TILE);
-    const tileYMax = Math.floor((originWY + MAP_HEIGHT) / TILE);
-    // Use Kakao map tile URL (same as used in the SDK)
-    // Kakao map tiles are publicly accessible on their CDN (no auth needed)
-    const tileComposites = [];
-    const tilePromises = [];
-    for (let tx = tileXMin; tx <= tileXMax; tx++) {
-        for (let ty = tileYMin; ty <= tileYMax; ty++) {
-            const wrappedTx = ((tx % n) + n) % n;
-            if (ty < 0 || ty >= n)
-                continue;
-            const tileUrl = `https://tile.openstreetmap.org/${zoom}/${wrappedTx}/${ty}.png`;
-            const dx = Math.round(tx * TILE - originWX);
-            const dy = Math.round(ty * TILE - originWY);
-            tilePromises.push(fetch(tileUrl, { headers: { 'User-Agent': 'ConferenceFinanceApp/1.0' } })
-                .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
-                .then((buf) => {
-                tileComposites.push({ input: Buffer.from(buf), left: dx, top: dy });
-            })
-                .catch(() => { }) // skip failed tiles
-            );
-        }
-    }
-    await Promise.all(tilePromises);
-    // Build SVG overlay with route, markers, labels
-    const depX = toX(dep.lng);
-    const depY = toY(dep.lat);
-    const destX = toX(dest.lng);
-    const destY = toY(dest.lat);
-    let polylineSvg = '';
-    if (routePath && routePath.length >= 4) {
-        const points = [];
-        for (let i = 0; i < routePath.length; i += 2) {
-            points.push(`${toX(routePath[i]).toFixed(1)},${toY(routePath[i + 1]).toFixed(1)}`);
-        }
-        const d = points.join(' ');
-        polylineSvg = `
-        <polyline points="${d}" fill="none" stroke="white" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
-        <polyline points="${d}" fill="none" stroke="#2563eb" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
-      `;
-    }
-    else {
-        polylineSvg = `
-        <line x1="${depX}" y1="${depY}" x2="${destX}" y2="${destY}" stroke="white" stroke-width="6" stroke-linecap="round"/>
-        <line x1="${depX}" y1="${depY}" x2="${destX}" y2="${destY}" stroke="#2563eb" stroke-width="3" stroke-dasharray="8,4" stroke-linecap="round"/>
-      `;
-    }
-    // Escape XML special chars in labels
-    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const distBadge = distanceKm != null
-        ? (() => {
-            const mx = (depX + destX) / 2;
-            const my = (depY + destY) / 2 - 16;
-            const label = `${distanceKm} km`;
-            const bw = label.length * 9 + 20;
-            return `
-            <rect x="${mx - bw / 2}" y="${my - 14}" width="${bw}" height="28" rx="6" fill="#1e40af" stroke="white" stroke-width="2"/>
-            <text x="${mx}" y="${my + 1}" fill="white" font-size="14" font-weight="bold" text-anchor="middle" dominant-baseline="middle">${label}</text>
-          `;
-        })()
-        : '';
-    const svgOverlay = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${MAP_WIDTH}" height="${MAP_HEIGHT}">
-        ${polylineSvg}
-        <!-- Departure marker -->
-        <circle cx="${depX}" cy="${depY}" r="12" fill="#2563eb" stroke="white" stroke-width="3"/>
-        <text x="${depX}" y="${depY + 1}" fill="white" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">A</text>
-        <!-- Destination marker -->
-        <circle cx="${destX}" cy="${destY}" r="12" fill="#dc2626" stroke="white" stroke-width="3"/>
-        <text x="${destX}" y="${destY + 1}" fill="white" font-size="12" font-weight="bold" text-anchor="middle" dominant-baseline="middle">B</text>
-        <!-- Labels -->
-        <rect x="${depX + 16}" y="${depY - 12}" width="${esc(depName).length * 8 + 10}" height="22" rx="3" fill="rgba(255,255,255,0.9)" stroke="rgba(0,0,0,0.15)"/>
-        <text x="${depX + 21}" y="${depY + 1}" fill="#1e293b" font-size="12" font-weight="bold" dominant-baseline="middle">${esc(depName)}</text>
-        <rect x="${destX + 16}" y="${destY - 12}" width="${esc(destName).length * 8 + 10}" height="22" rx="3" fill="rgba(255,255,255,0.9)" stroke="rgba(0,0,0,0.15)"/>
-        <text x="${destX + 21}" y="${destY + 1}" fill="#1e293b" font-size="12" font-weight="bold" dominant-baseline="middle">${esc(destName)}</text>
-        ${distBadge}
-      </svg>
-    `;
-    // Compose: base (gray) + tiles + SVG overlay
-    const image = (0, sharp_1.default)({
-        create: {
-            width: MAP_WIDTH,
-            height: MAP_HEIGHT,
-            channels: 3,
-            background: { r: 232, g: 232, b: 232 }
-        }
-    })
-        .composite([
-        ...tileComposites,
-        { input: Buffer.from(svgOverlay), top: 0, left: 0 }
-    ])
-        .png();
-    const pngBuffer = await image.toBuffer();
-    const base64 = `data:image/png;base64,${pngBuffer.toString('base64')}`;
-    const storagePath = `routemaps/${projectId || 'default'}/${committee}/${Date.now()}_route.png`;
-    const result = await uploadFileToStorage({ name: 'route.png', data: base64 }, storagePath);
-    return result;
 });
 // --- Email Notification Functions ---
 const COMMITTEE_LABELS = {
