@@ -282,9 +282,13 @@ export default function ResubmitPage() {
         settlementId: null,
         originalRequestId: original.id,
         comments,
-        isVendorRequest: isVendorRequest || undefined,
-        vendorBankBookPath: vendorBankBookPath || undefined,
-        vendorBankBookUrl: vendorBankBookUrl || undefined
+        ...(isVendorRequest
+          ? {
+              isVendorRequest: true,
+              vendorBankBookPath: vendorBankBookPath ?? null,
+              vendorBankBookUrl: vendorBankBookUrl ?? null
+            }
+          : {})
       })
 
       navigate('/my-requests')
@@ -482,10 +486,31 @@ export default function ResubmitPage() {
               className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {vendorBankBookError && <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>}
-            {vendorBankBookFile && (
-              <p className="text-xs text-green-600 mt-1">
-                {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
-              </p>
+            {vendorBankBookFile ? (
+              <>
+                <p className="text-xs text-green-600 mt-1">
+                  {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
+                </p>
+                {vendorBankBookFile.type.startsWith('image/') && (
+                  <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                    <img
+                      src={URL.createObjectURL(vendorBankBookFile)}
+                      alt={t('form.vendorBankBook')}
+                      className="max-h-48 object-contain bg-gray-50"
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              original?.vendorBankBookUrl && (
+                <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                  <img
+                    src={original.vendorBankBookUrl}
+                    alt={t('form.vendorBankBook')}
+                    className="max-h-48 object-contain bg-gray-50"
+                  />
+                </div>
+              )
             )}
             <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
           </div>

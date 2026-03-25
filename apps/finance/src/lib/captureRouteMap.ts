@@ -60,7 +60,17 @@ export async function captureAndUploadRouteMaps(
       const canvas = await html2canvas(el, {
         useCORS: true,
         scale: 2,
-        logging: false
+        logging: false,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc, clonedEl) => {
+          // html2canvas parses raw CSS and cannot handle Tailwind CSS v4's oklch() colors.
+          // Remove external/inline stylesheets; Kakao Maps SDK uses inline styles for rendering.
+          clonedDoc
+            .querySelectorAll('style, link[rel="stylesheet"]')
+            .forEach((s) => s.remove())
+          // Preserve container dimensions via inline style
+          clonedEl.style.cssText = `width:${el.offsetWidth}px;height:${el.offsetHeight}px;overflow:hidden;`
+        }
       })
 
       // Validate capture: check if canvas is mostly blank

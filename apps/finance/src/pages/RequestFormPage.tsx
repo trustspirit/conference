@@ -386,9 +386,13 @@ export default function RequestFormPage() {
         settlementId: null,
         originalRequestId: null,
         comments,
-        isVendorRequest: isVendorRequest || undefined,
-        vendorBankBookPath: vendorBankBookPath || undefined,
-        vendorBankBookUrl: vendorBankBookUrl || undefined,
+        ...(isVendorRequest
+          ? {
+              isVendorRequest: true,
+              vendorBankBookPath: vendorBankBookPath ?? null,
+              vendorBankBookUrl: vendorBankBookUrl ?? null
+            }
+          : {})
       })
 
       setSubmitted(true)
@@ -573,9 +577,20 @@ export default function RequestFormPage() {
                 <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
               )}
               {vendorBankBookFile && (
-                <p className="text-xs text-green-600 mt-1">
-                  {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
-                </p>
+                <>
+                  <p className="text-xs text-green-600 mt-1">
+                    {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
+                  </p>
+                  {vendorBankBookFile.type.startsWith('image/') && (
+                    <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                      <img
+                        src={URL.createObjectURL(vendorBankBookFile)}
+                        alt={t('form.vendorBankBook')}
+                        className="max-h-48 object-contain bg-gray-50"
+                      />
+                    </div>
+                  )}
+                </>
               )}
               <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
             </div>
