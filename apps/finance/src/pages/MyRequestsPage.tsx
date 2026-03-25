@@ -48,7 +48,12 @@ export default function MyRequestsPage() {
   }>({ open: false, onConfirm: () => {}, message: '' })
   const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
-  const requests = data?.pages.flatMap((p) => p.items) ?? []
+  const allRequests = data?.pages.flatMap((p) => p.items) ?? []
+  // Hide original requests that have been resubmitted (replaced by newer version)
+  const resubmittedIds = new Set(
+    allRequests.filter((r) => r.originalRequestId).map((r) => r.originalRequestId!)
+  )
+  const requests = allRequests.filter((r) => !resubmittedIds.has(r.id))
   const filterTabs: MyFilter[] = ['all', 'pending', 'reviewed', 'approved', 'settled', 'rejected']
 
   const handleCancel = (e: React.MouseEvent, requestId: string) => {
@@ -155,15 +160,16 @@ export default function MyRequestsPage() {
                         )}
                         {(req.status === 'cancelled' ||
                           req.status === 'rejected' ||
-                          req.status === 'force_rejected') && (
-                          <Link
-                            to={`/request/resubmit/${req.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-block px-3 py-1 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
-                          >
-                            {t('approval.resubmit')}
-                          </Link>
-                        )}
+                          req.status === 'force_rejected') &&
+                          !resubmittedIds.has(req.id) && (
+                            <Link
+                              to={`/request/resubmit/${req.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-block px-3 py-1 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
+                            >
+                              {t('approval.resubmit')}
+                            </Link>
+                          )}
                       </td>
                     </tr>
                   ))}

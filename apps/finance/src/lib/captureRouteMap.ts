@@ -20,49 +20,62 @@ const uploadRouteMapFn = httpsCallable<
 
 const WIDTH = 600
 const HEIGHT = 400
-const PADDING = 50
+const PADDING = 60
 
 /**
- * Draw a route map on a canvas using departure/destination coordinates.
- * Extracts the Kakao Maps internal canvas if available, otherwise renders
- * a simple diagram with the route line and markers.
+ * Draw a route map on a canvas using coordinates and route path.
  */
 function drawRouteMap(
-  mapEl: HTMLDivElement,
   dep: PlaceCoord,
   dest: PlaceCoord,
   depName: string,
   destName: string,
-  distanceKm?: number
+  distanceKm?: number,
+  routePath?: number[]
 ): string {
-  // Try to grab the Kakao Maps internal canvas directly (no CORS issues)
-  const mapCanvas = mapEl.querySelector('canvas')
-  if (mapCanvas && mapCanvas.width > 0 && mapCanvas.height > 0) {
-    try {
-      const combined = document.createElement('canvas')
-      combined.width = mapCanvas.width
-      combined.height = mapCanvas.height
-      const cctx = combined.getContext('2d')!
-      cctx.drawImage(mapCanvas, 0, 0)
-      const dataUrl = combined.toDataURL('image/png')
-      // Verify it's not blank
-      if (dataUrl.length > 1000) return dataUrl
-    } catch {
-      // Canvas may be tainted — fall through to manual drawing
-    }
-  }
-
-  // Fallback: draw a clean route diagram using Canvas 2D
   const canvas = document.createElement('canvas')
   canvas.width = WIDTH
   canvas.height = HEIGHT
   const ctx = canvas.getContext('2d')!
 
+  // Collect all points for bounding box
+  const lats: number[] = [dep.lat, dest.lat]
+  const lngs: number[] = [dep.lng, dest.lng]
+  if (routePath && routePath.length >= 4) {
+    for (let i = 0; i < routePath.length; i += 2) {
+      lngs.push(routePath[i])
+      lats.push(routePath[i + 1])
+    }
+  }
+
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const minLng = Math.min(...lngs)
+  const maxLng = Math.max(...lngs)
+  const latSpan = maxLat - minLat || 0.01
+  const lngSpan = maxLng - minLng || 0.01
+
+  // Add 15% margin around the bounding box
+  const marginLat = latSpan * 0.15
+  const marginLng = lngSpan * 0.15
+  const adjMinLat = minLat - marginLat
+  const adjMaxLat = maxLat + marginLat
+  const adjMinLng = minLng - marginLng
+  const adjMaxLng = maxLng + marginLng
+  const adjLatSpan = adjMaxLat - adjMinLat
+  const adjLngSpan = adjMaxLng - adjMinLng
+
+  const drawW = WIDTH - PADDING * 2
+  const drawH = HEIGHT - PADDING * 2
+
+  const toX = (lng: number) => PADDING + ((lng - adjMinLng) / adjLngSpan) * drawW
+  const toY = (lat: number) => HEIGHT - PADDING - ((lat - adjMinLat) / adjLatSpan) * drawH
+
   // Background
   ctx.fillStyle = '#f8fafc'
   ctx.fillRect(0, 0, WIDTH, HEIGHT)
 
-  // Grid lines for context
+  // Grid
   ctx.strokeStyle = '#e2e8f0'
   ctx.lineWidth = 0.5
   for (let x = PADDING; x <= WIDTH - PADDING; x += 40) {
@@ -78,89 +91,112 @@ function drawRouteMap(
     ctx.stroke()
   }
 
-  // Project coordinates to canvas pixels
-  const allLats = [dep.lat, dest.lat]
-  const allLngs = [dep.lng, dest.lng]
-  const minLat = Math.min(...allLats)
-  const maxLat = Math.max(...allLats)
-  const minLng = Math.min(...allLngs)
-  const maxLng = Math.max(...allLngs)
-  const latSpan = maxLat - minLat || 0.01
-  const lngSpan = maxLng - minLng || 0.01
-
-  const drawW = WIDTH - PADDING * 2
-  const drawH = HEIGHT - PADDING * 2
-
-  const toX = (lng: number) => PADDING + ((lng - minLng) / lngSpan) * drawW
-  const toY = (lat: number) => HEIGHT - PADDING - ((lat - minLat) / latSpan) * drawH
+  // Draw route
+  if (routePath && routePath.length >= 4) {
+    // Actual route polyline from Kakao Directions API
+    ctx.strokeStyle = '#3b82f6'
+    ctx.lineWidth = 3
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.beginPath()
+    ctx.moveTo(toX(routePath[0]), toY(routePath[1]))
+    for (let i = 2; i < routePath.length; i += 2) {
+      ctx.lineTo(toX(routePath[i]), toY(routePath[i + 1]))
+    }
+    ctx.stroke()
+  } else {
+    // Fallback: dashed straight line
+    ctx.strokeStyle = '#3b82f6'
+    ctx.lineWidth = 3
+    ctx.setLineDash([8, 4])
+    ctx.beginPath()
+    ctx.moveTo(toX(dep.lng), toY(dep.lat))
+    ctx.lineTo(toX(dest.lng), toY(dest.lat))
+    ctx.stroke()
+    ctx.setLineDash([])
+  }
 
   const depX = toX(dep.lng)
   const depY = toY(dep.lat)
   const destX = toX(dest.lng)
   const destY = toY(dest.lat)
 
-  // Route line
-  ctx.strokeStyle = '#3b82f6'
-  ctx.lineWidth = 3
-  ctx.setLineDash([8, 4])
-  ctx.beginPath()
-  ctx.moveTo(depX, depY)
-  ctx.lineTo(destX, destY)
-  ctx.stroke()
-  ctx.setLineDash([])
-
-  // Departure marker (blue circle)
+  // Departure marker (blue)
   ctx.fillStyle = '#2563eb'
   ctx.beginPath()
-  ctx.arc(depX, depY, 8, 0, Math.PI * 2)
+  ctx.arc(depX, depY, 10, 0, Math.PI * 2)
   ctx.fill()
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
+  ctx.stroke()
   ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 10px sans-serif'
+  ctx.font = 'bold 11px sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('A', depX, depY)
 
-  // Destination marker (red circle)
+  // Destination marker (red)
   ctx.fillStyle = '#dc2626'
   ctx.beginPath()
-  ctx.arc(destX, destY, 8, 0, Math.PI * 2)
+  ctx.arc(destX, destY, 10, 0, Math.PI * 2)
   ctx.fill()
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
+  ctx.stroke()
   ctx.fillStyle = '#ffffff'
   ctx.fillText('B', destX, destY)
 
-  // Labels
-  ctx.font = '12px sans-serif'
-  ctx.textAlign = 'left'
-  ctx.fillStyle = '#1e293b'
-  ctx.fillText(`A: ${depName}`, depX + 14, depY + 4)
-  ctx.fillText(`B: ${destName}`, destX + 14, destY + 4)
+  // Labels with background
+  const drawLabel = (text: string, x: number, y: number) => {
+    ctx.font = '12px sans-serif'
+    const metrics = ctx.measureText(text)
+    const lx = x + 16
+    const ly = y - 6
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.fillRect(lx - 3, ly - 11, metrics.width + 6, 16)
+    ctx.fillStyle = '#1e293b'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, lx, ly)
+  }
+  drawLabel(depName, depX, depY)
+  drawLabel(destName, destX, destY)
 
-  // Distance label at midpoint
+  // Distance badge at midpoint
   if (distanceKm) {
     const midX = (depX + destX) / 2
     const midY = (depY + destY) / 2
-    ctx.font = 'bold 13px sans-serif'
-    ctx.textAlign = 'center'
+    const label = `${distanceKm} km`
+    ctx.font = 'bold 14px sans-serif'
+    const m = ctx.measureText(label)
+    const bw = m.width + 16
+    const bh = 24
     ctx.fillStyle = '#1e40af'
-    ctx.fillText(`${distanceKm} km`, midX, midY - 12)
+    ctx.beginPath()
+    ctx.roundRect(midX - bw / 2, midY - bh / 2 - 14, bw, bh, 4)
+    ctx.fill()
+    ctx.fillStyle = '#ffffff'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(label, midX, midY - 14)
   }
 
   // Border
   ctx.strokeStyle = '#cbd5e1'
   ctx.lineWidth = 1
+  ctx.setLineDash([])
   ctx.strokeRect(0, 0, WIDTH, HEIGHT)
 
   return canvas.toDataURL('image/png')
 }
 
 /**
- * Capture route maps and upload to Firebase Storage.
- * Returns a new items array with routeMapImage populated for captured items.
- * Capture failures are non-blocking — items without captures proceed without routeMapImage.
+ * Generate route map images and upload to Firebase Storage.
+ * Uses Canvas 2D to draw the actual route path (from Kakao Directions API).
  */
 export async function captureAndUploadRouteMaps(
   items: RequestItem[],
-  miniMapRefs: Map<number, HTMLDivElement>,
+  routePaths: Map<number, number[]>,
   committee: string,
   projectId: string
 ): Promise<{ items: RequestItem[]; failedCount: number }> {
@@ -180,14 +216,13 @@ export async function captureAndUploadRouteMaps(
     }
 
     try {
-      const el = miniMapRefs.get(i)
       const dataUrl = drawRouteMap(
-        el || document.createElement('div'),
         detail.departureCoord,
         detail.destinationCoord,
         detail.departure,
         detail.destination,
-        detail.distanceKm
+        detail.distanceKm,
+        routePaths.get(i)
       )
 
       const result = await uploadRouteMapFn({

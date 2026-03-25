@@ -17,6 +17,7 @@ interface Props {
   canRemove: boolean
   perKmRate?: number
   miniMapRef?: (el: HTMLDivElement | null) => void
+  onRoutePathChange?: (path: number[] | undefined) => void
 }
 
 export const TRANSPORT_BUDGET_CODE = 5110
@@ -43,7 +44,8 @@ export default function ItemRow({
   onRemove,
   canRemove,
   perKmRate = DEFAULT_PER_KM_RATE,
-  miniMapRef
+  miniMapRef,
+  onRoutePathChange
 }: Props) {
   const { t } = useTranslation()
   const [showDistanceHint, setShowDistanceHint] = useState(false)
@@ -108,7 +110,8 @@ export default function ItemRow({
 
     abortRef.current = false
     setIsCalculating(true)
-    setRoutePath(undefined) // Reset route while recalculating
+    setRoutePath(undefined)
+    onRoutePathChange?.(undefined)
 
     const calcDistance = httpsCallable<
       { origin: { lat: number; lng: number }; destination: { lat: number; lng: number } },
@@ -124,6 +127,7 @@ export default function ItemRow({
         const km = Math.round(result.data.distanceMeters / 1000)
         updateTransportDetail({ distanceKm: km })
         setRoutePath(result.data.routePath)
+        onRoutePathChange?.(result.data.routePath)
       })
       .catch((err) => {
         if (abortRef.current) return

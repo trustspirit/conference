@@ -107,6 +107,7 @@ export default function RequestFormPage() {
   const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
   const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
+  const routePathsRef = useRef(new Map<number, number[]>())
 
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
@@ -320,7 +321,7 @@ export default function RequestFormPage() {
       if (hasCarTransport) {
         const { items: capturedItems, failedCount } = await captureAndUploadRouteMaps(
           validItems,
-          miniMapRefs.current,
+          routePathsRef.current,
           committee,
           currentProject!.id
         )
@@ -536,6 +537,10 @@ export default function RequestFormPage() {
                   miniMapRef={(el) => {
                     if (el) miniMapRefs.current.set(i, el)
                     else miniMapRefs.current.delete(i)
+                  }}
+                  onRoutePathChange={(path) => {
+                    if (path) routePathsRef.current.set(i, path)
+                    else routePathsRef.current.delete(i)
                   }}
                 />
               ))}

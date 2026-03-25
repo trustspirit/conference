@@ -56,6 +56,7 @@ export default function ResubmitPage() {
   const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
   const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
   const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
+  const routePathsRef = useRef(new Map<number, number[]>())
 
   useEffect(() => {
     if (!original) return
@@ -217,7 +218,7 @@ export default function ResubmitPage() {
       if (hasCarTransport) {
         const { items: capturedItems, failedCount } = await captureAndUploadRouteMaps(
           validItems,
-          miniMapRefs.current,
+          routePathsRef.current,
           committee,
           currentProject!.id
         )
@@ -438,6 +439,10 @@ export default function ResubmitPage() {
                 miniMapRef={(el) => {
                   if (el) miniMapRefs.current.set(i, el)
                   else miniMapRefs.current.delete(i)
+                }}
+                onRoutePathChange={(path) => {
+                  if (path) routePathsRef.current.set(i, path)
+                  else routePathsRef.current.delete(i)
                 }}
               />
             ))}
