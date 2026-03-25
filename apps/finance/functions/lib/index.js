@@ -394,7 +394,7 @@ function fitZoom(minLat, maxLat, minLng, maxLng, width, height) {
     }
     return 2;
 }
-exports.generateRouteMap = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] }, async (request) => {
+exports.generateRouteMap = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
     }
@@ -448,10 +448,10 @@ exports.generateRouteMap = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] }, 
             const wrappedTx = ((tx % n) + n) % n;
             if (ty < 0 || ty >= n)
                 continue;
-            const tileUrl = `https://map.daumcdn.net/map_k3f_prod/bakery/image_map_png/PNGSD01/v21_axjht/0/${zoom}/${ty}/${wrappedTx}.png`;
+            const tileUrl = `https://tile.openstreetmap.org/${zoom}/${wrappedTx}/${ty}.png`;
             const dx = Math.round(tx * TILE - originWX);
             const dy = Math.round(ty * TILE - originWY);
-            tilePromises.push(fetch(tileUrl)
+            tilePromises.push(fetch(tileUrl, { headers: { 'User-Agent': 'ConferenceFinanceApp/1.0' } })
                 .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
                 .then((buf) => {
                 tileComposites.push({ input: Buffer.from(buf), left: dx, top: dy });
@@ -728,6 +728,29 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
             catch (error) {
                 console.error(`Failed to send approval notification to ${email}:`, error);
             }
+        }
+        return;
+    }
+    // Clean up Storage files when request is cancelled
+    if (newStatus === 'cancelled') {
+        const items = (after.items || []);
+        const receipts = (after.receipts || []);
+        const vendorBankBookPath = after.vendorBankBookPath;
+        const pathsToDelete = [];
+        for (const item of items) {
+            const mapPath = item.transportDetail?.routeMapImage?.storagePath;
+            if (mapPath)
+                pathsToDelete.push(mapPath);
+        }
+        for (const receipt of receipts) {
+            if (receipt.storagePath)
+                pathsToDelete.push(receipt.storagePath);
+        }
+        if (vendorBankBookPath)
+            pathsToDelete.push(vendorBankBookPath);
+        if (pathsToDelete.length > 0) {
+            await Promise.all(pathsToDelete.map((p) => bucket.file(p).delete().catch(() => { })));
+            console.log(`Cancelled request ${event.params?.requestId}: deleted ${pathsToDelete.length} files`);
         }
         return;
     }
