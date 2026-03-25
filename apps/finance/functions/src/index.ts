@@ -373,7 +373,8 @@ export const calculateDistance = onCall({ secrets: [kakaoMobilityKey] }, async (
   }
 
   // Kakao Mobility uses longitude,latitude order
-  const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}`
+  // priority=DISTANCE: 환급 지침 기준 "거리우선" 경로 사용
+  const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}&priority=DISTANCE`
 
   const response = await fetch(url, {
     headers: {
