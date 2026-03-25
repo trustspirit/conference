@@ -9,7 +9,7 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp,
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { getDisplayName, type RecommendationComment } from '../../types'
@@ -23,7 +23,7 @@ function mapComment(id: string, data: Record<string, unknown>): RecommendationCo
     ...data,
     id,
     createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
+    updatedAt: toDate(data.updatedAt)
   } as RecommendationComment
 }
 
@@ -34,12 +34,12 @@ export function useRecommendationComments(recommendationId: string) {
       const q = query(
         collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION),
         where('recommendationId', '==', recommendationId),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapComment(d.id, d.data()))
     },
-    enabled: !!recommendationId,
+    enabled: !!recommendationId
   })
 }
 
@@ -50,12 +50,12 @@ export function useApplicationComments(applicationId: string) {
       const q = query(
         collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION),
         where('applicationId', '==', applicationId),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapComment(d.id, d.data()))
     },
-    enabled: !!applicationId,
+    enabled: !!applicationId
   })
 }
 
@@ -64,29 +64,33 @@ export function useCreateComment() {
   const { appUser } = useAuth()
 
   return useMutation({
-    mutationFn: async (data: { recommendationId?: string; applicationId?: string; content: string }) => {
+    mutationFn: async (data: {
+      recommendationId?: string
+      applicationId?: string
+      content: string
+    }) => {
       const docRef = await addDoc(collection(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION), {
         ...data,
         authorId: appUser!.uid,
         authorName: getDisplayName(appUser),
         authorRole: appUser!.role,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: (_data, variables) => {
       if (variables.recommendationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId),
+          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId)
         })
       }
       if (variables.applicationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byApplication(variables.applicationId),
+          queryKey: queryKeys.comments.byApplication(variables.applicationId)
         })
       }
-    },
+    }
   })
 }
 
@@ -98,7 +102,7 @@ export function useUpdateComment() {
       id,
       content,
       recommendationId,
-      applicationId,
+      applicationId
     }: {
       id: string
       content: string
@@ -107,22 +111,22 @@ export function useUpdateComment() {
     }) => {
       await updateDoc(doc(db, APPLY_RECOMMENDATION_COMMENTS_COLLECTION, id), {
         content,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return { recommendationId, applicationId }
     },
     onSuccess: (_data, variables) => {
       if (variables.recommendationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId),
+          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId)
         })
       }
       if (variables.applicationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byApplication(variables.applicationId),
+          queryKey: queryKeys.comments.byApplication(variables.applicationId)
         })
       }
-    },
+    }
   })
 }
 
@@ -133,7 +137,7 @@ export function useDeleteComment() {
     mutationFn: async ({
       id,
       recommendationId,
-      applicationId,
+      applicationId
     }: {
       id: string
       recommendationId?: string
@@ -145,14 +149,14 @@ export function useDeleteComment() {
     onSuccess: (_data, variables) => {
       if (variables.recommendationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId),
+          queryKey: queryKeys.comments.byRecommendation(variables.recommendationId)
         })
       }
       if (variables.applicationId) {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.comments.byApplication(variables.applicationId),
+          queryKey: queryKeys.comments.byApplication(variables.applicationId)
         })
       }
-    },
+    }
   })
 }

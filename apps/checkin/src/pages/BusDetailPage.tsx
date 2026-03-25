@@ -296,7 +296,9 @@ function BusDetailPage(): React.ReactElement {
         onClose={() => setRemoveConfirm({ open: false, participant: null })}
         onConfirm={confirmRemoveParticipant}
         title={t('common.remove')}
-        description={t('bus.confirmRemoveParticipant', { name: removeConfirm.participant?.name ?? '' })}
+        description={t('bus.confirmRemoveParticipant', {
+          name: removeConfirm.participant?.name ?? ''
+        })}
         variant="danger"
       />
     </div>

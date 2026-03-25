@@ -8,7 +8,11 @@ interface CreateSurveyModalProps {
   onCreate: (title: string, description: string) => Promise<void>
 }
 
-function CreateSurveyModal({ isOpen, onClose, onCreate }: CreateSurveyModalProps): React.ReactElement | null {
+function CreateSurveyModal({
+  isOpen,
+  onClose,
+  onCreate
+}: CreateSurveyModalProps): React.ReactElement | null {
   const { t } = useTranslation()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -54,8 +58,15 @@ function CreateSurveyModal({ isOpen, onClose, onCreate }: CreateSurveyModalProps
         </form>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-        <Button type="submit" form="create-survey-form" disabled={isCreating || !title.trim()} loading={isCreating}>
+        <Button variant="ghost" onClick={onClose}>
+          {t('common.cancel')}
+        </Button>
+        <Button
+          type="submit"
+          form="create-survey-form"
+          disabled={isCreating || !title.trim()}
+          loading={isCreating}
+        >
           {isCreating ? t('survey.create.creating') : t('survey.create.create')}
         </Button>
       </Dialog.Actions>

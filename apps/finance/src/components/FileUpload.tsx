@@ -12,8 +12,12 @@ interface Props {
 }
 
 export default function FileUpload({
-  files, onFilesChange, label, required = true,
-  existingCount, existingLabel,
+  files,
+  onFilesChange,
+  label,
+  required = true,
+  existingCount,
+  existingLabel
 }: Props) {
   const { t } = useTranslation()
   const [errors, setErrors] = useState<string[]>([])
@@ -27,14 +31,19 @@ export default function FileUpload({
   }
 
   // Generate preview URLs synchronously for render, clean up on files change / unmount
-  const previews = useMemo(() =>
-    files.map((f) => ({
-      url: URL.createObjectURL(f),
-      isImage: f.type.startsWith('image/'),
-    })), [files])
+  const previews = useMemo(
+    () =>
+      files.map((f) => ({
+        url: URL.createObjectURL(f),
+        isImage: f.type.startsWith('image/')
+      })),
+    [files]
+  )
 
   useEffect(() => {
-    return () => { previews.forEach(p => URL.revokeObjectURL(p.url)) }
+    return () => {
+      previews.forEach((p) => URL.revokeObjectURL(p.url))
+    }
   }, [previews])
 
   return (
@@ -57,7 +66,9 @@ export default function FileUpload({
       <p className="text-xs text-gray-400 mt-1">{t('form.receiptHint')}</p>
       {errors.length > 0 && (
         <ul className="mt-2 text-sm text-red-600 space-y-1">
-          {errors.map((err, i) => <li key={i}>{err}</li>)}
+          {errors.map((err, i) => (
+            <li key={i}>{err}</li>
+          ))}
         </ul>
       )}
       {files.length > 0 && (
@@ -65,18 +76,29 @@ export default function FileUpload({
           {files.map((f, i) => (
             <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
               {previews[i].isImage ? (
-                <img src={previews[i].url} alt={f.name}
-                  className="w-full h-32 object-contain bg-white" />
+                <img
+                  src={previews[i].url}
+                  alt={f.name}
+                  className="w-full h-32 object-contain bg-white"
+                />
               ) : (
-                <object data={previews[i].url} type="application/pdf"
-                  className="w-full h-32 bg-white pointer-events-none">
+                <object
+                  data={previews[i].url}
+                  type="application/pdf"
+                  className="w-full h-32 bg-white pointer-events-none"
+                >
                   <p className="text-xs text-gray-400 p-2">{f.name}</p>
                 </object>
               )}
               <div className="px-2 py-1.5 border-t flex items-center justify-between gap-1">
                 <span className="text-xs text-gray-600 truncate">{f.name}</span>
-                <button type="button" onClick={() => onFilesChange(files.filter((_, j) => j !== i))}
-                  className="text-xs text-red-500 hover:text-red-700 shrink-0">✕</button>
+                <button
+                  type="button"
+                  onClick={() => onFilesChange(files.filter((_, j) => j !== i))}
+                  className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                >
+                  ✕
+                </button>
               </div>
             </div>
           ))}

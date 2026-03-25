@@ -51,7 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const defaultPid = globalSnap.data().defaultProjectId
                 if (defaultPid) defaultProjectIds = [defaultPid]
               }
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
 
             const newUser: AppUser = {
               uid: firebaseUser.uid,
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               bankBookPath: '',
               bankBookUrl: '',
               role: 'user',
-              projectIds: defaultProjectIds,
+              projectIds: defaultProjectIds
             }
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser)
 
@@ -75,9 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (defaultProjectIds[0]) {
               try {
                 await updateDoc(doc(db, 'projects', defaultProjectIds[0]), {
-                  memberUids: arrayUnion(firebaseUser.uid),
+                  memberUids: arrayUnion(firebaseUser.uid)
                 })
-              } catch { /* project may not exist yet */ }
+              } catch {
+                /* project may not exist yet */
+              }
             }
             setAppUser(newUser)
             setNeedsDisplayName(true)
@@ -106,7 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
       const firebaseError = error as { code?: string; message?: string }
-      toastRef.current({ variant: 'danger', message: `${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}` })
+      toastRef.current({
+        variant: 'danger',
+        message: `${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}`
+      })
     }
   }
 
@@ -121,11 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateData[key] = value
     }
     await updateDoc(doc(db, 'users', user.uid), updateData)
-    setAppUser((prev) => prev ? { ...prev, ...fields } : prev)
+    setAppUser((prev) => (prev ? { ...prev, ...fields } : prev))
   }
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, needsDisplayName, needsConsent, signInWithGoogle, logout, updateAppUser, setNeedsDisplayName, setNeedsConsent }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        appUser,
+        loading,
+        needsDisplayName,
+        needsConsent,
+        signInWithGoogle,
+        logout,
+        updateAppUser,
+        setNeedsDisplayName,
+        setNeedsConsent
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

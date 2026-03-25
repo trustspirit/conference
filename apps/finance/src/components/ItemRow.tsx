@@ -27,7 +27,7 @@ const emptyTransportDetail = (): TransportDetail => ({
   tripType: 'round',
   departure: '',
   destination: '',
-  distanceKm: undefined,
+  distanceKm: undefined
 })
 
 export function calcCarTransportAmount(detail: TransportDetail, perKmRate: number): number {
@@ -36,7 +36,15 @@ export function calcCarTransportAmount(detail: TransportDetail, perKmRate: numbe
   return detail.distanceKm * perKmRate * multiplier
 }
 
-export default function ItemRow({ index, item, onChange, onRemove, canRemove, perKmRate = DEFAULT_PER_KM_RATE, miniMapRef }: Props) {
+export default function ItemRow({
+  index,
+  item,
+  onChange,
+  onRemove,
+  canRemove,
+  perKmRate = DEFAULT_PER_KM_RATE,
+  miniMapRef
+}: Props) {
   const { t } = useTranslation()
   const [showDistanceHint, setShowDistanceHint] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
@@ -48,17 +56,20 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
     { value: '', label: t('budgetCode.select') },
     ...BUDGET_CODES.map((bc, i) => ({
       value: String(i),
-      label: `${bc.code} - ${t(`budgetCode.items.${bc.descKey}`)}`,
-    })),
+      label: `${bc.code} - ${t(`budgetCode.items.${bc.descKey}`)}`
+    }))
   ]
 
   const currentIndex = item.budgetDescKey
-    ? BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode && bc.descKey === item.budgetDescKey)
+    ? BUDGET_CODES.findIndex(
+        (bc) => bc.code === item.budgetCode && bc.descKey === item.budgetDescKey
+      )
     : BUDGET_CODES.findIndex((bc) => bc.code === item.budgetCode)
   const currentValue = currentIndex >= 0 ? String(currentIndex) : ''
 
   const matchedBudget = currentIndex >= 0 ? BUDGET_CODES[currentIndex] : undefined
-  const isTransport = item.budgetCode === TRANSPORT_BUDGET_CODE && matchedBudget?.category === 'Transportation'
+  const isTransport =
+    item.budgetCode === TRANSPORT_BUDGET_CODE && matchedBudget?.category === 'Transportation'
   const detail = item.transportDetail || emptyTransportDetail()
 
   const isAmountDisabled = isTransport && detail.transportType === 'car'
@@ -83,7 +94,9 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
   // Load Kakao SDK when car transport is selected
   useEffect(() => {
     if (isTransport && detail.transportType === 'car') {
-      loadKakaoSDK().then(() => setSdkLoaded(true)).catch(() => {})
+      loadKakaoSDK()
+        .then(() => setSdkLoaded(true))
+        .catch(() => {})
     }
   }, [isTransport, detail.transportType])
 
@@ -104,7 +117,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
 
     calcDistance({
       origin: { lat: depCoord.lat, lng: depCoord.lng },
-      destination: { lat: destCoord.lat, lng: destCoord.lng },
+      destination: { lat: destCoord.lat, lng: destCoord.lng }
     })
       .then((result) => {
         if (abortRef.current) return
@@ -120,8 +133,16 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
         if (!abortRef.current) setIsCalculating(false)
       })
 
-    return () => { abortRef.current = true }
-  }, [detail.departureCoord?.lat, detail.departureCoord?.lng, detail.destinationCoord?.lat, detail.destinationCoord?.lng, detail.transportType])
+    return () => {
+      abortRef.current = true
+    }
+  }, [
+    detail.departureCoord?.lat,
+    detail.departureCoord?.lng,
+    detail.destinationCoord?.lat,
+    detail.destinationCoord?.lng,
+    detail.transportType
+  ])
 
   return (
     <div className="space-y-2">
@@ -144,8 +165,13 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                 const idx = parseInt(v as string)
                 const bc = isNaN(idx) ? undefined : BUDGET_CODES[idx]
                 const code = bc?.code ?? 0
-                const updated: RequestItem = { ...item, budgetCode: code, budgetDescKey: bc?.descKey }
-                const isTransportItem = code === TRANSPORT_BUDGET_CODE && bc?.category === 'Transportation'
+                const updated: RequestItem = {
+                  ...item,
+                  budgetCode: code,
+                  budgetDescKey: bc?.descKey
+                }
+                const isTransportItem =
+                  code === TRANSPORT_BUDGET_CODE && bc?.category === 'Transportation'
                 if (isTransportItem && !item.transportDetail) {
                   updated.transportDetail = emptyTransportDetail()
                   updated.amount = 0
@@ -188,7 +214,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
               <Select
                 options={[
                   { value: 'car', label: t('field.transportCar') },
-                  { value: 'public', label: t('field.transportPublic') },
+                  { value: 'public', label: t('field.transportPublic') }
                 ]}
                 value={detail.transportType}
                 onChange={(v) => updateTransportDetail({ transportType: v as TransportType })}
@@ -202,7 +228,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
               <Select
                 options={[
                   { value: 'round', label: t('field.tripRound') },
-                  { value: 'one_way', label: t('field.tripOneWay') },
+                  { value: 'one_way', label: t('field.tripOneWay') }
                 ]}
                 value={detail.tripType}
                 onChange={(v) => updateTransportDetail({ tripType: v as TripType })}
@@ -221,7 +247,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                     updateTransportDetail({
                       departure: text,
                       departureCoord: coord,
-                      ...(coord ? {} : { distanceKm: undefined }),
+                      ...(coord ? {} : { distanceKm: undefined })
                     })
                   }
                   placeholder={t('field.placeSearchPlaceholder')}
@@ -234,7 +260,7 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                     updateTransportDetail({
                       destination: text,
                       destinationCoord: coord,
-                      ...(coord ? {} : { distanceKm: undefined }),
+                      ...(coord ? {} : { distanceKm: undefined })
                     })
                   }
                   placeholder={t('field.placeSearchPlaceholder')}
@@ -259,15 +285,16 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
               </>
             )}
           </div>
-          {detail.transportType === 'car' && sdkLoaded &&
+          {detail.transportType === 'car' &&
+            sdkLoaded &&
             (detail.departureCoord || detail.destinationCoord) && (
-            <MiniMap
-              departure={detail.departureCoord}
-              destination={detail.destinationCoord}
-              routePath={routePath}
-              ref={miniMapRef}
-            />
-          )}
+              <MiniMap
+                departure={detail.departureCoord}
+                destination={detail.destinationCoord}
+                routePath={routePath}
+                ref={miniMapRef}
+              />
+            )}
           {detail.transportType === 'car' && (
             <>
               <div className="space-y-2">
@@ -283,7 +310,9 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                         onClick={() => setShowDistanceHint((v) => !v)}
                         onMouseEnter={() => setShowDistanceHint(true)}
                         onMouseLeave={() => setShowDistanceHint(false)}
-                      >?</button>
+                      >
+                        ?
+                      </button>
                       {showDistanceHint && (
                         <span className="absolute z-10 left-0 top-5 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
                           {t('field.distanceKmHint')}
@@ -295,14 +324,20 @@ export default function ItemRow({ index, item, onChange, onRemove, canRemove, pe
                     type="number"
                     placeholder={isCalculating ? t('field.calculatingDistance') : 'km'}
                     value={detail.distanceKm || ''}
-                    onChange={(e) => updateTransportDetail({ distanceKm: parseInt(e.target.value) || undefined })}
+                    onChange={(e) =>
+                      updateTransportDetail({ distanceKm: parseInt(e.target.value) || undefined })
+                    }
                     disabled={isCalculating || !!(detail.departureCoord && detail.destinationCoord)}
                     fullWidth
                   />
                 </div>
                 {detail.distanceKm && (
                   <p className="text-xs text-gray-500">
-                    = {detail.distanceKm}km × ₩{perKmRate} × {detail.tripType === 'round' ? '2' : '1'} = <span className="font-medium">₩{calcCarTransportAmount(detail, perKmRate).toLocaleString()}</span>
+                    = {detail.distanceKm}km × ₩{perKmRate} ×{' '}
+                    {detail.tripType === 'round' ? '2' : '1'} ={' '}
+                    <span className="font-medium">
+                      ₩{calcCarTransportAmount(detail, perKmRate).toLocaleString()}
+                    </span>
                   </p>
                 )}
               </div>

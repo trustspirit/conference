@@ -2,12 +2,25 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
-import { useRequest, useRequests, useCancelRequest, useReviewRequest, useApproveRequest, useRejectRequest } from '../hooks/queries/useRequests'
+import {
+  useRequest,
+  useRequests,
+  useCancelRequest,
+  useReviewRequest,
+  useApproveRequest,
+  useRejectRequest
+} from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { useTranslation } from 'react-i18next'
-import { canReviewCommittee, canFinalApproveCommittee, canFinalApproveRequest, canApproveDirectorRequest, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
+import {
+  canReviewCommittee,
+  canFinalApproveCommittee,
+  canFinalApproveRequest,
+  canApproveDirectorRequest,
+  DEFAULT_APPROVAL_THRESHOLD
+} from '../lib/roles'
 import Layout from '../components/Layout'
 import StatusBadge from '../components/StatusBadge'
 import Spinner from '../components/Spinner'
@@ -46,8 +59,12 @@ export default function RequestDetailPage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [showReviewConfirm, setShowReviewConfirm] = useState(false)
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
-  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    onConfirm: () => void
+    message: string
+  }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
   const [slideState, setSlideState] = useState<'idle' | 'out' | 'in'>('idle')
   const isFirstMount = useRef(true)
 
@@ -56,7 +73,7 @@ export default function RequestDetailPage() {
 
   const actionableRequests = useMemo(() => {
     if (!allRequests.length || !user) return []
-    return allRequests.filter(r => {
+    return allRequests.filter((r) => {
       if (r.requestedBy.uid === user.uid) return false
       if (r.status === 'pending' && canReviewCommittee(role, r.committee)) return true
       if (r.status === 'reviewed' && canFinalApproveCommittee(role, r.committee)) return true
@@ -64,16 +81,17 @@ export default function RequestDetailPage() {
     })
   }, [allRequests, user, role])
 
-  const currentIndex = actionableRequests.findIndex(r => r.id === id)
-  const nextId = currentIndex >= 0 && currentIndex < actionableRequests.length - 1
-    ? actionableRequests[currentIndex + 1].id
-    : null
-  const remainingCount = currentIndex >= 0
-    ? actionableRequests.length - currentIndex - 1
-    : 0
+  const currentIndex = actionableRequests.findIndex((r) => r.id === id)
+  const nextId =
+    currentIndex >= 0 && currentIndex < actionableRequests.length - 1
+      ? actionableRequests[currentIndex + 1].id
+      : null
+  const remainingCount = currentIndex >= 0 ? actionableRequests.length - currentIndex - 1 : 0
 
   const nextIdRef = useRef(nextId)
-  useEffect(() => { nextIdRef.current = nextId }, [nextId])
+  useEffect(() => {
+    nextIdRef.current = nextId
+  }, [nextId])
 
   const navigateToNext = useCallback(() => {
     setSlideState('out')
@@ -108,28 +126,37 @@ export default function RequestDetailPage() {
   const bankBookUrl = requester?.bankBookUrl || requester?.bankBookDriveUrl
 
   // Director-filed request: only executive/admin can approve
-  const isDirectorRequest = requester?.role === 'session_director' || requester?.role === 'logistic_admin'
+  const isDirectorRequest =
+    requester?.role === 'session_director' || requester?.role === 'logistic_admin'
 
   // Review action (pending → reviewed)
-  const canDoReview = request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)
+  const canDoReview =
+    request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)
 
   // Approve action (reviewed → approved)
-  const canDoApprove = request?.status === 'reviewed' && !isSelf
-    && canFinalApproveRequest(role, request.committee, request.totalAmount, threshold)
-    && (!isDirectorRequest || canApproveDirectorRequest(role))
+  const canDoApprove =
+    request?.status === 'reviewed' &&
+    !isSelf &&
+    canFinalApproveRequest(role, request.committee, request.totalAmount, threshold) &&
+    (!isDirectorRequest || canApproveDirectorRequest(role))
 
   // Reject action (pending or reviewed) — rejection doesn't require amount threshold
   const canDoReject =
     (request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)) ||
-    (request?.status === 'reviewed' && !isSelf && canFinalApproveCommittee(role, request.committee)
-      && (!isDirectorRequest || canApproveDirectorRequest(role)))
+    (request?.status === 'reviewed' &&
+      !isSelf &&
+      canFinalApproveCommittee(role, request.committee) &&
+      (!isDirectorRequest || canApproveDirectorRequest(role)))
 
   const showChecklist = canDoReview || canDoApprove
   const checklistItems = canDoReview ? REVIEW_CHECKLIST : APPROVAL_CHECKLIST
 
   const handleReview = () => {
     if (!user || !appUser || !request) return
-    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfReviewError') }); return }
+    if (isSelf) {
+      toast({ variant: 'danger', message: t('approval.selfReviewError') })
+      return
+    }
     setShowReviewConfirm(true)
   }
 
@@ -138,17 +165,28 @@ export default function RequestDetailPage() {
     setShowReviewConfirm(false)
     const name = appUser.displayName || appUser.name
     reviewMutation.mutate(
-      { requestId: request.id, projectId: currentProject!.id, reviewer: { uid: user.uid, name, email: appUser.email } },
-      { onSuccess: navigateToNext },
+      {
+        requestId: request.id,
+        projectId: currentProject!.id,
+        reviewer: { uid: user.uid, name, email: appUser.email }
+      },
+      { onSuccess: navigateToNext }
     )
   }
 
   const handleApproveOpen = () => {
     if (!request) return
-    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfApproveError') }); return }
-    if (!appUser?.signature) { toast({ variant: 'danger', message: t('validation.signatureRequired') }); return }
+    if (isSelf) {
+      toast({ variant: 'danger', message: t('approval.selfApproveError') })
+      return
+    }
+    if (!appUser?.signature) {
+      toast({ variant: 'danger', message: t('validation.signatureRequired') })
+      return
+    }
     if (!canFinalApproveRequest(role, request.committee, request.totalAmount, threshold)) {
-      if (request.totalAmount > threshold) toast({ variant: 'info', message: t('approval.directorRequired') })
+      if (request.totalAmount > threshold)
+        toast({ variant: 'info', message: t('approval.directorRequired') })
       return
     }
     setShowApprovalModal(true)
@@ -158,14 +196,27 @@ export default function RequestDetailPage() {
     if (!user || !appUser || !request) return
     const name = appUser.displayName || appUser.name
     approveMutation.mutate(
-      { requestId: request.id, projectId: currentProject!.id, approver: { uid: user.uid, name, email: appUser.email }, signature },
-      { onSuccess: () => { setShowApprovalModal(false); navigateToNext() } },
+      {
+        requestId: request.id,
+        projectId: currentProject!.id,
+        approver: { uid: user.uid, name, email: appUser.email },
+        signature
+      },
+      {
+        onSuccess: () => {
+          setShowApprovalModal(false)
+          navigateToNext()
+        }
+      }
     )
   }
 
   const handleRejectOpen = () => {
     if (!request) return
-    if (isSelf) { toast({ variant: 'danger', message: t('approval.selfRejectError') }); return }
+    if (isSelf) {
+      toast({ variant: 'danger', message: t('approval.selfRejectError') })
+      return
+    }
     setShowRejectionModal(true)
   }
 
@@ -173,13 +224,33 @@ export default function RequestDetailPage() {
     if (!user || !appUser || !request) return
     const name = appUser.displayName || appUser.name
     rejectMutation.mutate(
-      { requestId: request.id, projectId: currentProject!.id, approver: { uid: user.uid, name, email: appUser.email }, rejectionReason: reason },
-      { onSuccess: () => { setShowRejectionModal(false); navigateToNext() } },
+      {
+        requestId: request.id,
+        projectId: currentProject!.id,
+        approver: { uid: user.uid, name, email: appUser.email },
+        rejectionReason: reason
+      },
+      {
+        onSuccess: () => {
+          setShowRejectionModal(false)
+          navigateToNext()
+        }
+      }
     )
   }
 
-  if (loading) return <Layout><Spinner /></Layout>
-  if (!request) return <Layout><div className="text-center py-16 text-gray-500">{t('detail.notFound')}</div></Layout>
+  if (loading)
+    return (
+      <Layout>
+        <Spinner />
+      </Layout>
+    )
+  if (!request)
+    return (
+      <Layout>
+        <div className="text-center py-16 text-gray-500">{t('detail.notFound')}</div>
+      </Layout>
+    )
 
   return (
     <Layout>
@@ -191,207 +262,274 @@ export default function RequestDetailPage() {
       )}
 
       <div className="flex gap-6 justify-center">
-      <div className="flex-1 min-w-0 overflow-hidden max-w-4xl">
-      <div className={`bg-white rounded-lg shadow p-4 sm:p-6 ${
-        slideState === 'idle'
-          ? 'transition-all duration-300 ease-in-out translate-x-0 opacity-100'
-          : slideState === 'out'
-          ? 'transition-all duration-300 ease-in-out -translate-x-full opacity-0'
-          : 'translate-x-full opacity-0'
-      }`}>
-        <Link to={backPath} className="inline-block text-sm text-blue-600 hover:underline mb-4">{t('common.backToList')}</Link>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold">{t('detail.title')}</h2>
-            <p className="text-sm text-gray-500">{t('detail.subtitle')}</p>
-          </div>
-          <StatusBadge status={request.status} />
-        </div>
-
-        <StatusProgress status={request.status} hasReview={!!request.reviewedBy} />
-
-        {/* Requester actions: resubmit / cancel — shown prominently at top */}
-        {(request.status === 'rejected' || request.status === 'cancelled' || request.status === 'force_rejected') && user?.uid === request.requestedBy.uid && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-blue-800">{t('approval.resubmitDescription').split('.')[0]}.</span>
-            <Button variant="primary" onClick={() => navigate(`/request/resubmit/${request.id}`)}>
-              {t('approval.resubmit')}
-            </Button>
-          </div>
-        )}
-
-        {request.status === 'pending' && user?.uid === request.requestedBy.uid && (
-          <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-gray-600">{t('approval.cancelConfirm')}</span>
-            <Button variant="danger" onClick={() => {
-              setConfirmDialog({
-                open: true,
-                message: t('approval.cancelConfirm'),
-                onConfirm: () => {
-                  closeConfirm()
-                  cancelMutation.mutate(
-                    { requestId: request.id, projectId: currentProject!.id },
-                    { onSuccess: () => navigate('/my-requests') }
-                  )
-                },
-              })
-            }}
-              disabled={cancelMutation.isPending}
-              loading={cancelMutation.isPending}>
-              {cancelMutation.isPending ? t('common.saving') : t('approval.cancelRequest')}
-            </Button>
-          </div>
-        )}
-
-        {request.originalRequestId && originalRequest && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-                {t('approval.resubmitted')}
-              </span>
-              <Link to={`/request/${request.originalRequestId}`} className="text-xs text-blue-600 hover:underline">
-                {t('approval.originalRequest')}
-              </Link>
-            </div>
-            {originalRequest.rejectionReason && (
-              <p className="text-sm text-amber-800">
-                <span className="font-medium">{t('approval.originalRejectionReason')}: </span>
-                {originalRequest.rejectionReason}
-              </p>
-            )}
-          </div>
-        )}
-
-        <InfoGrid className="mb-6" items={[
-          { label: t('field.payee'), value: request.payee },
-          { label: t('field.date'), value: request.date },
-          { label: t('field.phone'), value: request.phone },
-          { label: t('field.session'), value: request.session },
-          { label: t('field.bankAndAccount'), value: `${request.bankName} ${request.bankAccount}` },
-          { label: t('committee.label'), value: t(`committee.${request.committee}`) },
-        ]} />
-
-        <ItemsTable items={request.items} totalAmount={request.totalAmount} />
-
-        <ReceiptGallery receipts={request.receipts} />
-
-        {/* Bank Book */}
-        {(requester?.bankBookUrl || requester?.bankBookDriveUrl) && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
-            <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
-              <a href={requester.bankBookUrl || requester.bankBookDriveUrl} target="_blank" rel="noopener noreferrer">
-                <img src={requester.bankBookUrl || requester.bankBookDriveUrl || ''}
-                  alt={t('field.bankBook')} className="max-h-48 object-contain bg-gray-50" />
-              </a>
-              <div className="px-3 py-2 bg-gray-50 border-t">
-                <a href={requester.bankBookUrl || requester.bankBookDriveUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline">{t('settings.bankBookViewDrive')}</a>
+        <div className="flex-1 min-w-0 overflow-hidden max-w-4xl">
+          <div
+            className={`bg-white rounded-lg shadow p-4 sm:p-6 ${
+              slideState === 'idle'
+                ? 'transition-all duration-300 ease-in-out translate-x-0 opacity-100'
+                : slideState === 'out'
+                  ? 'transition-all duration-300 ease-in-out -translate-x-full opacity-0'
+                  : 'translate-x-full opacity-0'
+            }`}
+          >
+            <Link to={backPath} className="inline-block text-sm text-blue-600 hover:underline mb-4">
+              {t('common.backToList')}
+            </Link>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold">{t('detail.title')}</h2>
+                <p className="text-sm text-gray-500">{t('detail.subtitle')}</p>
               </div>
+              <StatusBadge status={request.status} />
             </div>
-          </div>
-        )}
 
-        {request.comments && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-1">{t('field.comments')}</h3>
-            <p className="text-sm text-gray-600">{request.comments}</p>
-          </div>
-        )}
+            <StatusProgress status={request.status} hasReview={!!request.reviewedBy} />
 
-        {request.status === 'rejected' && request.rejectionReason && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-red-800 mb-1">{t('approval.rejectionReason')}</h3>
-            <p className="text-sm text-red-700">{request.rejectionReason}</p>
-          </div>
-        )}
+            {/* Requester actions: resubmit / cancel — shown prominently at top */}
+            {(request.status === 'rejected' ||
+              request.status === 'cancelled' ||
+              request.status === 'force_rejected') &&
+              user?.uid === request.requestedBy.uid && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-800">
+                    {t('approval.resubmitDescription').split('.')[0]}.
+                  </span>
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate(`/request/resubmit/${request.id}`)}
+                  >
+                    {t('approval.resubmit')}
+                  </Button>
+                </div>
+              )}
 
-        {request.status === 'force_rejected' && request.rejectionReason && (
-          <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-orange-800 mb-1">{t('approval.rejectionReason')}</h3>
-            <p className="text-sm text-orange-700">{request.rejectionReason}</p>
-          </div>
-        )}
-
-        {/* Action buttons: review / approve / reject */}
-        {(canDoReview || canDoApprove || canDoReject) && (
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            {canDoReview && (
-              <Button
-                variant="primary"
-                onClick={handleReview}
-                disabled={reviewMutation.isPending}
-                loading={reviewMutation.isPending}
-              >
-                {reviewMutation.isPending ? t('common.submitting') : t('approval.review')}
-              </Button>
+            {request.status === 'pending' && user?.uid === request.requestedBy.uid && (
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('approval.cancelConfirm')}</span>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setConfirmDialog({
+                      open: true,
+                      message: t('approval.cancelConfirm'),
+                      onConfirm: () => {
+                        closeConfirm()
+                        cancelMutation.mutate(
+                          { requestId: request.id, projectId: currentProject!.id },
+                          { onSuccess: () => navigate('/my-requests') }
+                        )
+                      }
+                    })
+                  }}
+                  disabled={cancelMutation.isPending}
+                  loading={cancelMutation.isPending}
+                >
+                  {cancelMutation.isPending ? t('common.saving') : t('approval.cancelRequest')}
+                </Button>
+              </div>
             )}
-            {canDoApprove && (
-              <Button
-                variant="primary"
-                onClick={handleApproveOpen}
-              >
-                {t('approval.approve')}
-              </Button>
+
+            {request.originalRequestId && originalRequest && (
+              <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-block px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">
+                    {t('approval.resubmitted')}
+                  </span>
+                  <Link
+                    to={`/request/${request.originalRequestId}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    {t('approval.originalRequest')}
+                  </Link>
+                </div>
+                {originalRequest.rejectionReason && (
+                  <p className="text-sm text-amber-800">
+                    <span className="font-medium">{t('approval.originalRejectionReason')}: </span>
+                    {originalRequest.rejectionReason}
+                  </p>
+                )}
+              </div>
             )}
-            {canDoReject && (
-              <Button
-                variant="danger"
-                onClick={handleRejectOpen}
-              >
-                {t('approval.reject')}
-              </Button>
+
+            <InfoGrid
+              className="mb-6"
+              items={[
+                { label: t('field.payee'), value: request.payee },
+                { label: t('field.date'), value: request.date },
+                { label: t('field.phone'), value: request.phone },
+                { label: t('field.session'), value: request.session },
+                {
+                  label: t('field.bankAndAccount'),
+                  value: `${request.bankName} ${request.bankAccount}`
+                },
+                { label: t('committee.label'), value: t(`committee.${request.committee}`) }
+              ]}
+            />
+
+            <ItemsTable items={request.items} totalAmount={request.totalAmount} />
+
+            <ReceiptGallery receipts={request.receipts} />
+
+            {/* Bank Book */}
+            {(requester?.bankBookUrl || requester?.bankBookDriveUrl) && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
+                <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
+                  <a
+                    href={requester.bankBookUrl || requester.bankBookDriveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={requester.bankBookUrl || requester.bankBookDriveUrl || ''}
+                      alt={t('field.bankBook')}
+                      className="max-h-48 object-contain bg-gray-50"
+                    />
+                  </a>
+                  <div className="px-3 py-2 bg-gray-50 border-t">
+                    <a
+                      href={requester.bankBookUrl || requester.bankBookDriveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      {t('settings.bankBookViewDrive')}
+                    </a>
+                  </div>
+                </div>
+              </div>
             )}
-            {remainingCount > 0 && (
-              <span className="ml-auto px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                {t('approval.remainingCount', { count: remainingCount })}
-              </span>
+
+            {request.comments && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-1">{t('field.comments')}</h3>
+                <p className="text-sm text-gray-600">{request.comments}</p>
+              </div>
+            )}
+
+            {request.status === 'rejected' && request.rejectionReason && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-red-800 mb-1">
+                  {t('approval.rejectionReason')}
+                </h3>
+                <p className="text-sm text-red-700">{request.rejectionReason}</p>
+              </div>
+            )}
+
+            {request.status === 'force_rejected' && request.rejectionReason && (
+              <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-orange-800 mb-1">
+                  {t('approval.rejectionReason')}
+                </h3>
+                <p className="text-sm text-orange-700">{request.rejectionReason}</p>
+              </div>
+            )}
+
+            {/* Action buttons: review / approve / reject */}
+            {(canDoReview || canDoApprove || canDoReject) && (
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                {canDoReview && (
+                  <Button
+                    variant="primary"
+                    onClick={handleReview}
+                    disabled={reviewMutation.isPending}
+                    loading={reviewMutation.isPending}
+                  >
+                    {reviewMutation.isPending ? t('common.submitting') : t('approval.review')}
+                  </Button>
+                )}
+                {canDoApprove && (
+                  <Button variant="primary" onClick={handleApproveOpen}>
+                    {t('approval.approve')}
+                  </Button>
+                )}
+                {canDoReject && (
+                  <Button variant="danger" onClick={handleRejectOpen}>
+                    {t('approval.reject')}
+                  </Button>
+                )}
+                {remainingCount > 0 && (
+                  <span className="ml-auto px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    {t('approval.remainingCount', { count: remainingCount })}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Director required hint */}
+            {request.status === 'reviewed' &&
+              !canDoApprove &&
+              request.totalAmount > threshold &&
+              !isSelf && (
+                <p className="text-xs text-orange-600 mb-6">{t('approval.directorRequired')}</p>
+              )}
+
+            <InfoGrid
+              className="border-t pt-4"
+              items={[
+                {
+                  label: t('field.requestedBy'),
+                  value: `${request.requestedBy.name} (${request.requestedBy.email})`
+                },
+                ...(request.reviewedBy
+                  ? [
+                      {
+                        label: t('approval.reviewedBy'),
+                        value: `${request.reviewedBy.name} (${request.reviewedBy.email})`
+                      }
+                    ]
+                  : []),
+                {
+                  label: t('field.approvedBy'),
+                  value: request.approvedBy
+                    ? `${request.approvedBy.name} (${request.approvedBy.email})`
+                    : '-'
+                }
+              ]}
+            />
+
+            {request.approvalSignature && (
+              <div className="mt-4 pt-4 border-t">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  {t('approval.approvalSignature')}
+                </h3>
+                <div className="border border-gray-200 rounded p-2 bg-gray-50 inline-block">
+                  <img
+                    src={request.approvalSignature}
+                    alt={t('approval.approvalSignature')}
+                    className="max-h-20"
+                  />
+                </div>
+              </div>
+            )}
+
+            {request.status === 'settled' && request.settlementId && (
+              <div className="mt-4 pt-4 border-t">
+                <span className="text-sm text-gray-500">{t('detail.settlementReport')}: </span>
+                <Link
+                  to={`/admin/settlement/${request.settlementId}`}
+                  className="text-sm text-purple-600 hover:underline"
+                >
+                  {t('detail.viewReport')}
+                </Link>
+              </div>
             )}
           </div>
-        )}
-
-        {/* Director required hint */}
-        {request.status === 'reviewed' && !canDoApprove && request.totalAmount > threshold && !isSelf && (
-          <p className="text-xs text-orange-600 mb-6">{t('approval.directorRequired')}</p>
-        )}
-
-        <InfoGrid className="border-t pt-4" items={[
-          { label: t('field.requestedBy'), value: `${request.requestedBy.name} (${request.requestedBy.email})` },
-          ...(request.reviewedBy ? [{ label: t('approval.reviewedBy'), value: `${request.reviewedBy.name} (${request.reviewedBy.email})` }] : []),
-          { label: t('field.approvedBy'), value: request.approvedBy ? `${request.approvedBy.name} (${request.approvedBy.email})` : '-' },
-        ]} />
-
-        {request.approvalSignature && (
-          <div className="mt-4 pt-4 border-t">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">{t('approval.approvalSignature')}</h3>
-            <div className="border border-gray-200 rounded p-2 bg-gray-50 inline-block">
-              <img src={request.approvalSignature} alt={t('approval.approvalSignature')} className="max-h-20" />
-            </div>
-          </div>
-        )}
-
-        {request.status === 'settled' && request.settlementId && (
-          <div className="mt-4 pt-4 border-t">
-            <span className="text-sm text-gray-500">{t('detail.settlementReport')}: </span>
-            <Link to={`/admin/settlement/${request.settlementId}`}
-              className="text-sm text-purple-600 hover:underline">{t('detail.viewReport')}</Link>
-          </div>
-        )}
-
-      </div>
-      </div>
-
-      {/* Desktop: sticky sidebar checklist */}
-      {showChecklist && (
-        <div className="hidden sm:block shrink-0">
-          <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} />
         </div>
-      )}
+
+        {/* Desktop: sticky sidebar checklist */}
+        {showChecklist && (
+          <div className="hidden sm:block shrink-0">
+            <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} />
+          </div>
+        )}
       </div>
 
       {/* Review confirm modal */}
       <Dialog open={showReviewConfirm} onClose={() => setShowReviewConfirm(false)} size="md">
-        <Dialog.Title onClose={() => setShowReviewConfirm(false)} showClose>{t('checklist.confirmReview')}</Dialog.Title>
+        <Dialog.Title onClose={() => setShowReviewConfirm(false)} showClose>
+          {t('checklist.confirmReview')}
+        </Dialog.Title>
         <Dialog.Content>
           <p className="text-sm text-gray-600">{t('checklist.confirmReview')}</p>
         </Dialog.Content>
@@ -427,10 +565,16 @@ export default function RequestDetailPage() {
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
         <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
-        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Content>
+          <p>{confirmDialog.message}</p>
+        </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={closeConfirm}>취소</Button>
-          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+          <Button variant="outline" onClick={closeConfirm}>
+            취소
+          </Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>
+            확인
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Layout>

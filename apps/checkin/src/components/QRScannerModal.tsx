@@ -5,11 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { participantsAtom } from '../stores/dataStore'
-import {
-  checkInParticipant,
-  checkOutParticipant,
-  searchParticipants
-} from '../services/firebase'
+import { checkInParticipant, checkOutParticipant, searchParticipants } from '../services/firebase'
 import type { Participant } from '../types'
 import { CheckInStatus } from '../types'
 import { getCheckInStatusFromParticipant } from './CheckInStatusBadge'

@@ -21,7 +21,9 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
   const { t } = useTranslation()
 
   const isNonMember = value.stake === NON_MEMBER_KEY
-  const isOther = !isNonMember && (value.stake === OTHER_KEY || (value.stake !== '' && !stakeList.includes(value.stake)))
+  const isOther =
+    !isNonMember &&
+    (value.stake === OTHER_KEY || (value.stake !== '' && !stakeList.includes(value.stake)))
   const selectValue = isNonMember ? '' : isOther ? OTHER_KEY : value.stake
   const wards = !isOther && !isNonMember && value.stake ? getWardsByStake(value.stake) : []
 
@@ -41,13 +43,10 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
   const stakeOptions = [
     { value: '', label: '' },
     ...stakeList.map((s) => ({ value: s, label: s })),
-    { value: OTHER_KEY, label: t('builder.churchInfoOther') },
+    { value: OTHER_KEY, label: t('builder.churchInfoOther') }
   ]
 
-  const wardOptions = [
-    { value: '', label: '' },
-    ...wards.map((w) => ({ value: w, label: w })),
-  ]
+  const wardOptions = [{ value: '', label: '' }, ...wards.map((w) => ({ value: w, label: w }))]
 
   return (
     <div className="space-y-3">
@@ -64,7 +63,9 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
       <div className="flex flex-wrap gap-4">
         {/* Stake */}
         <div className="flex-1 basis-[180px] min-w-0">
-          <label className="block text-[12px] text-gray-500 mb-1">{t('builder.participantFields.stake')}</label>
+          <label className="block text-[12px] text-gray-500 mb-1">
+            {t('builder.participantFields.stake')}
+          </label>
           <Select
             options={stakeOptions}
             value={selectValue}
@@ -86,7 +87,9 @@ function ChurchInfoInput({ value, onChange, required }: ChurchInfoInputProps): R
 
         {/* Ward */}
         <div className="flex-1 basis-[180px] min-w-0">
-          <label className="block text-[12px] text-gray-500 mb-1">{t('builder.participantFields.ward')}</label>
+          <label className="block text-[12px] text-gray-500 mb-1">
+            {t('builder.participantFields.ward')}
+          </label>
           {isOther ? (
             <TextField
               value={value.ward}

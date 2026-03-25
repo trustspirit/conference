@@ -12,14 +12,18 @@ export function RoomsTab() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const { displayedItems: rooms, isLoading, hasMore, loadMore } =
-    useBatchedInfiniteScrollWithRealtime<Room>({
-      fetchBatchSize: 1000,
-      displayBatchSize: 100,
-      fetchFunction: getRoomsPaginated,
-      getItemId: (room) => room.id,
-      subscribeFunction: (callback) => subscribeToRooms(callback)
-    })
+  const {
+    displayedItems: rooms,
+    isLoading,
+    hasMore,
+    loadMore
+  } = useBatchedInfiniteScrollWithRealtime<Room>({
+    fetchBatchSize: 1000,
+    displayBatchSize: 100,
+    fetchFunction: getRoomsPaginated,
+    getItemId: (room) => room.id,
+    subscribeFunction: (callback) => subscribeToRooms(callback)
+  })
 
   const {
     expandedRoomId,
@@ -42,7 +46,9 @@ export function RoomsTab() {
   useEffect(() => {
     if (!loadMoreRef.current || !hasMore || isLoading) return
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore()
+      },
       { threshold: 0.1 }
     )
     observer.observe(loadMoreRef.current)
@@ -98,10 +104,14 @@ export function RoomsTab() {
                               <div>
                                 <div className="font-semibold mb-1">{t('common.occupants')}:</div>
                                 {members.slice(0, 5).map((m) => (
-                                  <div key={m.id} className="truncate">{m.name}</div>
+                                  <div key={m.id} className="truncate">
+                                    {m.name}
+                                  </div>
                                 ))}
                                 {members.length > 5 && (
-                                  <div className="text-gray-400 mt-1">+{members.length - 5} {t('common.more')}</div>
+                                  <div className="text-gray-400 mt-1">
+                                    +{members.length - 5} {t('common.more')}
+                                  </div>
                                 )}
                               </div>
                             }

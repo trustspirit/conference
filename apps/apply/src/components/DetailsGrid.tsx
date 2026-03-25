@@ -17,7 +17,14 @@ export default function DetailsGrid({ items, columns = 2 }: DetailsGridProps) {
     >
       {items.map((item, i) => (
         <div key={i}>
-          <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.25rem' }}>
+          <p
+            style={{
+              fontSize: '0.75rem',
+              color: '#6b7280',
+              fontWeight: 500,
+              marginBottom: '0.25rem'
+            }}
+          >
             {item.label}
           </p>
           <div style={{ fontSize: '0.875rem', color: '#111827' }}>

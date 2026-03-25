@@ -13,14 +13,21 @@ function LoadingScreen() {
   )
 }
 
-export function ProtectedRoute({ children, requiredRoles }: { children: React.ReactNode; requiredRoles?: UserRole[] }) {
+export function ProtectedRoute({
+  children,
+  requiredRoles
+}: {
+  children: React.ReactNode
+  requiredRoles?: UserRole[]
+}) {
   const { user, appUser, loading } = useAuth()
 
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />
   if (requiredRoles) {
     if (!appUser) return <LoadingScreen />
-    if (!requiredRoles.includes(appUser.role!)) return <Navigate to={getDefaultRoute(appUser.role)} replace />
+    if (!requiredRoles.includes(appUser.role!))
+      return <Navigate to={getDefaultRoute(appUser.role)} replace />
   }
 
   return <>{children}</>
@@ -45,7 +52,7 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 export function RequireLeader({
   children,
-  requireApproved = false,
+  requireApproved = false
 }: {
   children: React.ReactNode
   requireApproved?: boolean

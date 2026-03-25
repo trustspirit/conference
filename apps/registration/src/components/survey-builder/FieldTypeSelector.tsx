@@ -18,7 +18,7 @@ const FIELD_TYPES: FieldType[] = [
   'grid',
   'date',
   'time',
-  'section',
+  'section'
 ]
 
 function FieldTypeSelector({ value, onChange }: FieldTypeSelectorProps): React.ReactElement {
@@ -26,16 +26,11 @@ function FieldTypeSelector({ value, onChange }: FieldTypeSelectorProps): React.R
 
   const options = FIELD_TYPES.map((type) => ({
     value: type,
-    label: t(`builder.fieldType.${type}`),
+    label: t(`builder.fieldType.${type}`)
   }))
 
   return (
-    <Select
-      options={options}
-      value={value}
-      onChange={(v) => onChange(v as FieldType)}
-      size="sm"
-    />
+    <Select options={options} value={value} onChange={(v) => onChange(v as FieldType)} size="sm" />
   )
 }
 

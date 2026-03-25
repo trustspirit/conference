@@ -5,7 +5,12 @@ import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
-import { useSettlement, useSettlementBatch, useRequestsByIds, useUsersByUids } from '../hooks/queries/useSettlements'
+import {
+  useSettlement,
+  useSettlementBatch,
+  useRequestsByIds,
+  useUsersByUids
+} from '../hooks/queries/useSettlements'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -30,15 +35,20 @@ export default function SettlementReportPage() {
   const [exporting, setExporting] = useState(false)
   const [includeBankBooks, setIncludeBankBooks] = useState(true)
 
-  const settlements = batchSettlements && batchSettlements.length > 0 ? batchSettlements : settlement ? [settlement] : []
+  const settlements =
+    batchSettlements && batchSettlements.length > 0
+      ? batchSettlements
+      : settlement
+        ? [settlement]
+        : []
   const isBatch = settlements.length > 1
 
   // Load original requests for individual forms (preserves per-request approval signatures)
-  const allRequestIds = settlements.flatMap(s => s.requestIds)
+  const allRequestIds = settlements.flatMap((s) => s.requestIds)
   const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
 
   // Load payee user profiles for bank book URLs
-  const requesterUids = [...new Set((originalRequests || []).map(r => r.requestedBy.uid))]
+  const requesterUids = [...new Set((originalRequests || []).map((r) => r.requestedBy.uid))]
   const { data: payeeUsers, isLoading: usersLoading } = useUsersByUids(requesterUids)
 
   const handleExportPdf = async () => {
@@ -46,10 +56,14 @@ export default function SettlementReportPage() {
     setExporting(true)
     try {
       const success = await exportBatchSettlementPdf(
-        settlements, documentNo, projectName, perKmRate,
-        { includeBankBooks, originalRequests: originalRequests || [], payeeUsers },
+        settlements,
+        documentNo,
+        projectName,
+        perKmRate,
+        { includeBankBooks, originalRequests: originalRequests || [], payeeUsers }
       )
-      if (!success) toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
+      if (!success)
+        toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
     } catch (err) {
       console.error('PDF export failed:', err)
       toast({ variant: 'danger', message: 'PDF export failed.' })
@@ -58,24 +72,38 @@ export default function SettlementReportPage() {
     }
   }
 
-  const isDataLoading = isLoading || batchLoading
-    || (allRequestIds.length > 0 && requestsLoading)
-    || (requesterUids.length > 0 && usersLoading)
-  if (isDataLoading) return <Layout><Spinner /></Layout>
+  const isDataLoading =
+    isLoading ||
+    batchLoading ||
+    (allRequestIds.length > 0 && requestsLoading) ||
+    (requesterUids.length > 0 && usersLoading)
+  if (isDataLoading)
+    return (
+      <Layout>
+        <Spinner />
+      </Layout>
+    )
   if (!settlement || (currentProject && settlement.projectId !== currentProject.id)) {
-    return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
+    return (
+      <Layout>
+        <p className="text-gray-500">{t('detail.notFound')}</p>
+      </Layout>
+    )
   }
 
   const dateStr = formatFirestoreDate(settlement.createdAt)
-  const uniquePayees = [...new Set(settlements.map(s => s.payee))]
-  const uniqueApprovers = (originalRequests || []).length > 0
-    ? [...new Set((originalRequests || []).map(r => r.approvedBy?.uid).filter(Boolean))]
-    : [...new Set(settlements.map(s => s.approvedBy?.uid).filter(Boolean))]
+  const uniquePayees = [...new Set(settlements.map((s) => s.payee))]
+  const uniqueApprovers =
+    (originalRequests || []).length > 0
+      ? [...new Set((originalRequests || []).map((r) => r.approvedBy?.uid).filter(Boolean))]
+      : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
   const needsIndividualForms = uniquePayees.length > 1 || uniqueApprovers.length > 1
   const payeeDisplay = needsIndividualForms ? 'Multi' : uniquePayees[0]
-  const bankDisplay = needsIndividualForms ? t('settlement.seeBelow') : `${settlements[0].bankName} ${settlements[0].bankAccount}`
-  const uniqueCommittees = [...new Set(settlements.map(s => s.committee))]
-  const committeeLabel = uniqueCommittees.map(c => t(`committee.${c}`)).join(' / ')
+  const bankDisplay = needsIndividualForms
+    ? t('settlement.seeBelow')
+    : `${settlements[0].bankName} ${settlements[0].bankAccount}`
+  const uniqueCommittees = [...new Set(settlements.map((s) => s.committee))]
+  const committeeLabel = uniqueCommittees.map((c) => t(`committee.${c}`)).join(' / ')
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
   const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
 
@@ -100,13 +128,19 @@ export default function SettlementReportPage() {
           </Link>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer whitespace-nowrap">
-              <input type="checkbox" checked={includeBankBooks}
+              <input
+                type="checkbox"
+                checked={includeBankBooks}
                 onChange={(e) => setIncludeBankBooks(e.target.checked)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
               {t('settlement.includeBankBooks')}
             </label>
-            <button onClick={handleExportPdf} disabled={exporting}
-              className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400 whitespace-nowrap">
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400 whitespace-nowrap"
+            >
               {exporting ? t('settlement.exporting') : t('settlement.exportPdf')}
             </button>
           </div>
@@ -120,24 +154,40 @@ export default function SettlementReportPage() {
         </div>
 
         {/* Overview */}
-        <InfoGrid className="mb-6" items={[
-          { label: t('field.payee'), value: needsIndividualForms ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})` : payeeDisplay },
-          { label: t('field.bankAndAccount'), value: bankDisplay },
-          { label: t('settlement.settlementDate'), value: dateStr },
-          { label: t('committee.label'), value: committeeLabel },
-          { label: t('settlement.requestCount'), value: String(totalRequests) },
-        ]} />
+        <InfoGrid
+          className="mb-6"
+          items={[
+            {
+              label: t('field.payee'),
+              value: needsIndividualForms
+                ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})`
+                : payeeDisplay
+            },
+            { label: t('field.bankAndAccount'), value: bankDisplay },
+            { label: t('settlement.settlementDate'), value: dateStr },
+            { label: t('committee.label'), value: committeeLabel },
+            { label: t('settlement.requestCount'), value: String(totalRequests) }
+          ]}
+        />
 
         {/* Budget Code Summary */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('settlement.budgetSummary')}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            {t('settlement.budgetSummary')}
+          </h3>
           <div className="bg-gray-50 border rounded overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-100 border-b">
                 <tr>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.budgetCode')}</th>
-                  <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.comments')}</th>
-                  <th className="text-right px-3 py-2 font-medium text-gray-600">{t('field.totalAmount')}</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    {t('field.budgetCode')}
+                  </th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-600">
+                    {t('field.comments')}
+                  </th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-600">
+                    {t('field.totalAmount')}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -151,8 +201,12 @@ export default function SettlementReportPage() {
               </tbody>
               <tfoot className="border-t bg-gray-100">
                 <tr>
-                  <td colSpan={2} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
-                  <td className="px-3 py-2 text-right font-bold">₩{totalAmount.toLocaleString()}</td>
+                  <td colSpan={2} className="px-3 py-2 font-semibold text-right">
+                    {t('field.totalAmount')}
+                  </td>
+                  <td className="px-3 py-2 text-right font-bold">
+                    ₩{totalAmount.toLocaleString()}
+                  </td>
                 </tr>
               </tfoot>
             </table>
@@ -162,16 +216,26 @@ export default function SettlementReportPage() {
         {/* Payee summary (only when multiple payees) */}
         {uniquePayees.length > 1 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('settlement.payeeSummary')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              {t('settlement.payeeSummary')}
+            </h3>
             <div className="bg-gray-50 border rounded overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 border-b">
                   <tr>
                     <th className="text-left px-3 py-2 font-medium text-gray-600">#</th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.payee')}</th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.bank')}</th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">{t('field.bankAccount')}</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-600">{t('field.totalAmount')}</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">
+                      {t('field.payee')}
+                    </th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">
+                      {t('field.bank')}
+                    </th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-600">
+                      {t('field.bankAccount')}
+                    </th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-600">
+                      {t('field.totalAmount')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -181,14 +245,20 @@ export default function SettlementReportPage() {
                       <td className="px-3 py-2">{s.payee}</td>
                       <td className="px-3 py-2 text-gray-500">{s.bankName}</td>
                       <td className="px-3 py-2 text-gray-500">{s.bankAccount}</td>
-                      <td className="px-3 py-2 text-right font-medium">₩{s.totalAmount.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-right font-medium">
+                        ₩{s.totalAmount.toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="border-t bg-gray-100">
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 font-semibold text-right">{t('field.totalAmount')}</td>
-                    <td className="px-3 py-2 text-right font-bold">₩{totalAmount.toLocaleString()}</td>
+                    <td colSpan={4} className="px-3 py-2 font-semibold text-right">
+                      {t('field.totalAmount')}
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold">
+                      ₩{totalAmount.toLocaleString()}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -208,30 +278,48 @@ export default function SettlementReportPage() {
                 <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
               </div>
 
-              <InfoGrid className="mb-3" items={[
-                { label: t('field.phone'), value: req.phone },
-                { label: t('field.session'), value: req.session },
-                { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
-                { label: t('committee.label'), value: t(`committee.${req.committee}`) },
-                { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' },
-              ]} />
+              <InfoGrid
+                className="mb-3"
+                items={[
+                  { label: t('field.phone'), value: req.phone },
+                  { label: t('field.session'), value: req.session },
+                  { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
+                  { label: t('committee.label'), value: t(`committee.${req.committee}`) },
+                  { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' }
+                ]}
+              />
 
               <ItemsTable items={req.items} totalAmount={req.totalAmount} />
 
               <div className="flex justify-between items-end mt-4 pt-4 border-t">
                 <div>
                   <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
-                  {settlements.find(s => s.requestIds.includes(req.id))?.requestedBySignature && (
-                    <img src={settlements.find(s => s.requestIds.includes(req.id))!.requestedBySignature!} alt="signature" className="h-10 mb-1" />
+                  {settlements.find((s) => s.requestIds.includes(req.id))?.requestedBySignature && (
+                    <img
+                      src={
+                        settlements.find((s) => s.requestIds.includes(req.id))!
+                          .requestedBySignature!
+                      }
+                      alt="signature"
+                      className="h-10 mb-1"
+                    />
                   )}
-                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">{req.payee}</div>
+                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">
+                    {req.payee}
+                  </div>
                 </div>
                 <div className="text-center">
                   <p className="text-[10px] text-gray-400 mb-1">Approved by</p>
                   {req.approvalSignature && (
-                    <img src={req.approvalSignature} alt="signature" className="h-10 mb-1 mx-auto" />
+                    <img
+                      src={req.approvalSignature}
+                      alt="signature"
+                      className="h-10 mb-1 mx-auto"
+                    />
                   )}
-                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">{req.approvedBy?.name || '\u00A0'}</div>
+                  <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">
+                    {req.approvedBy?.name || '\u00A0'}
+                  </div>
                 </div>
               </div>
 
@@ -245,77 +333,108 @@ export default function SettlementReportPage() {
               <div>
                 <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
                 {settlements[0]?.requestedBySignature && (
-                  <img src={settlements[0].requestedBySignature} alt="signature" className="h-10 mb-1" />
+                  <img
+                    src={settlements[0].requestedBySignature}
+                    alt="signature"
+                    className="h-10 mb-1"
+                  />
                 )}
-                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">{settlements[0]?.payee}</div>
+                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">
+                  {settlements[0]?.payee}
+                </div>
               </div>
               <div className="text-center">
                 <p className="text-[10px] text-gray-400 mb-1">Approved by</p>
                 {settlements[0]?.approvalSignature && (
-                  <img src={settlements[0].approvalSignature} alt="signature" className="h-10 mb-1 mx-auto" />
+                  <img
+                    src={settlements[0].approvalSignature}
+                    alt="signature"
+                    className="h-10 mb-1 mx-auto"
+                  />
                 )}
-                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">{settlements[0]?.approvedBy?.name || '\u00A0'}</div>
+                <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600 mx-auto">
+                  {settlements[0]?.approvedBy?.name || '\u00A0'}
+                </div>
               </div>
             </div>
 
             {/* Route map images for transport items */}
-            {settlements.flatMap(s => s.items).some(item => item.transportDetail?.routeMapImage?.url) && (
+            {settlements
+              .flatMap((s) => s.items)
+              .some((item) => item.transportDetail?.routeMapImage?.url) && (
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('field.routeMap')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {settlements.flatMap(s => s.items).filter(item => item.transportDetail?.routeMapImage?.url).map((item, idx) => (
-                    <div key={idx} className="border rounded-lg overflow-hidden">
-                      <a href={item.transportDetail!.routeMapImage!.url} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={item.transportDetail!.routeMapImage!.url}
-                          alt={`${item.transportDetail!.departure} → ${item.transportDetail!.destination}`}
-                          className="w-full max-h-[160px] object-contain bg-gray-50"
-                        />
-                      </a>
-                      <div className="px-3 py-1.5 bg-gray-50 border-t text-xs text-gray-600">
-                        {item.transportDetail!.departure} → {item.transportDetail!.destination}
-                        {item.transportDetail!.distanceKm && ` · ${item.transportDetail!.distanceKm}km`}
+                  {settlements
+                    .flatMap((s) => s.items)
+                    .filter((item) => item.transportDetail?.routeMapImage?.url)
+                    .map((item, idx) => (
+                      <div key={idx} className="border rounded-lg overflow-hidden">
+                        <a
+                          href={item.transportDetail!.routeMapImage!.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={item.transportDetail!.routeMapImage!.url}
+                            alt={`${item.transportDetail!.departure} → ${item.transportDetail!.destination}`}
+                            className="w-full max-h-[160px] object-contain bg-gray-50"
+                          />
+                        </a>
+                        <div className="px-3 py-1.5 bg-gray-50 border-t text-xs text-gray-600">
+                          {item.transportDetail!.departure} → {item.transportDetail!.destination}
+                          {item.transportDetail!.distanceKm &&
+                            ` · ${item.transportDetail!.distanceKm}km`}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
 
-            <ReceiptGallery receipts={settlements.flatMap(s => s.receipts)} />
+            <ReceiptGallery receipts={settlements.flatMap((s) => s.receipts)} />
           </>
         )}
 
         {/* Bank Book Copies */}
-        {includeBankBooks && (() => {
-          const bankBooks: { payee: string; url: string }[] = []
-          const seenUids = new Set<string>()
-          for (const s of settlements) {
-            // Find the requester UID for this settlement via original requests or requestIds
-            const req = (originalRequests || []).find(r => s.requestIds.includes(r.id))
-            const uid = req?.requestedBy.uid
-            if (uid && seenUids.has(uid)) continue
-            if (uid) seenUids.add(uid)
-            // Try user profile first, fall back to settlement snapshot
-            const userBankBook = uid ? (payeeUsers?.get(uid)?.bankBookUrl || payeeUsers?.get(uid)?.bankBookDriveUrl) : undefined
-            const url = userBankBook || s.bankBookUrl
-            if (url) bankBooks.push({ payee: s.payee, url })
-          }
-          if (bankBooks.length === 0) return null
-          return (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('field.bankBook')}</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {bankBooks.map(bb => (
-                  <div key={bb.payee} className="border rounded overflow-hidden">
-                    <img src={bb.url} alt={bb.payee} className="w-full max-h-60 object-contain bg-gray-50" />
-                    <p className="text-xs text-gray-600 px-2 py-1 bg-gray-50 border-t">{bb.payee}</p>
-                  </div>
-                ))}
+        {includeBankBooks &&
+          (() => {
+            const bankBooks: { payee: string; url: string }[] = []
+            const seenUids = new Set<string>()
+            for (const s of settlements) {
+              // Find the requester UID for this settlement via original requests or requestIds
+              const req = (originalRequests || []).find((r) => s.requestIds.includes(r.id))
+              const uid = req?.requestedBy.uid
+              if (uid && seenUids.has(uid)) continue
+              if (uid) seenUids.add(uid)
+              // Try user profile first, fall back to settlement snapshot
+              const userBankBook = uid
+                ? payeeUsers?.get(uid)?.bankBookUrl || payeeUsers?.get(uid)?.bankBookDriveUrl
+                : undefined
+              const url = userBankBook || s.bankBookUrl
+              if (url) bankBooks.push({ payee: s.payee, url })
+            }
+            if (bankBooks.length === 0) return null
+            return (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">{t('field.bankBook')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {bankBooks.map((bb) => (
+                    <div key={bb.payee} className="border rounded overflow-hidden">
+                      <img
+                        src={bb.url}
+                        alt={bb.payee}
+                        className="w-full max-h-60 object-contain bg-gray-50"
+                      />
+                      <p className="text-xs text-gray-600 px-2 py-1 bg-gray-50 border-t">
+                        {bb.payee}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )
-        })()}
+            )
+          })()}
       </div>
     </Layout>
   )

@@ -31,18 +31,27 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
   const bankBookImg = user.bankBookUrl || user.bankBookDriveUrl
 
   return (
-    <div ref={ref}
+    <div
+      ref={ref}
       className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-72"
-      style={{ transform: 'translateY(4px)' }}>
+      style={{ transform: 'translateY(4px)' }}
+    >
       <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
       <p className="text-sm text-gray-900 mb-2">
         {user.bankName ? `${user.bankName} ${user.bankAccount}` : '-'}
       </p>
       <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankBook')}</p>
       {bankBookImg ? (
-        <a href={user.bankBookUrl || user.bankBookDriveUrl} target="_blank" rel="noopener noreferrer">
-          <img src={bankBookImg} alt={t('field.bankBook')}
-            className="max-h-40 w-full object-contain bg-gray-50 rounded border border-gray-200" />
+        <a
+          href={user.bankBookUrl || user.bankBookDriveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src={bankBookImg}
+            alt={t('field.bankBook')}
+            className="max-h-40 w-full object-contain bg-gray-50 rounded border border-gray-200"
+          />
         </a>
       ) : (
         <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>
@@ -51,7 +60,12 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
   )
 }
 
-function UserNameWithTooltip({ user, currentUser, isAdmin, roleLabel }: {
+function UserNameWithTooltip({
+  user,
+  currentUser,
+  isAdmin,
+  roleLabel
+}: {
   user: AppUser
   currentUser: AppUser | null
   isAdmin: boolean
@@ -67,7 +81,7 @@ function UserNameWithTooltip({ user, currentUser, isAdmin, roleLabel }: {
       const rect = anchorRef.current.getBoundingClientRect()
       setTooltipPos({
         top: rect.bottom + window.scrollY,
-        left: Math.min(rect.left, window.innerWidth - 300),
+        left: Math.min(rect.left, window.innerWidth - 300)
       })
     }
     setShowTooltip(true)
@@ -90,11 +104,11 @@ function UserNameWithTooltip({ user, currentUser, isAdmin, roleLabel }: {
       {user.uid === currentUser?.uid && (
         <span className="ml-2 text-xs text-blue-600">{t('users.me')}</span>
       )}
-      {!isAdmin && (
-        <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>
-      )}
+      {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
       {showTooltip && (
-        <div style={{ position: 'absolute', top: tooltipPos.top, left: tooltipPos.left, zIndex: 9999 }}>
+        <div
+          style={{ position: 'absolute', top: tooltipPos.top, left: tooltipPos.left, zIndex: 9999 }}
+        >
           <BankInfoTooltip user={user} onClose={() => setShowTooltip(false)} />
         </div>
       )}
@@ -112,13 +126,17 @@ export default function AdminUsersPage() {
     error,
     hasNextPage,
     isFetchingNextPage,
-    fetchNextPage,
+    fetchNextPage
   } = useInfiniteUsers()
   const updateRole = useUpdateUserRole()
   const deleteUser = useDeleteUser()
   const [successUid, setSuccessUid] = useState<string | null>(null)
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
-  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    onConfirm: () => void
+    message: string
+  }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
   const ROLE_PRIORITY: Record<UserRole, number> = {
     super_admin: -1,
@@ -130,10 +148,10 @@ export default function AdminUsersPage() {
     approver_ops: 5,
     approver_prep: 6,
     finance_ops: 7,
-    user: 8,
+    user: 8
   }
 
-  const users = (data?.pages.flatMap(p => p.items) ?? []).slice().sort((a, b) => {
+  const users = (data?.pages.flatMap((p) => p.items) ?? []).slice().sort((a, b) => {
     const roleDiff = (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99)
     if (roleDiff !== 0) return roleDiff
     return (a.displayName || a.name || '').localeCompare(b.displayName || b.name || '', 'ko')
@@ -151,7 +169,7 @@ export default function AdminUsersPage() {
     logistic_admin: t('role.logistic_admin'),
     executive: t('role.executive'),
     admin: t('role.admin'),
-    super_admin: t('role.super_admin'),
+    super_admin: t('role.super_admin')
   }
 
   const handleRoleChange = (uid: string, newRole: UserRole) => {
@@ -173,10 +191,10 @@ export default function AdminUsersPage() {
             },
             onError: () => {
               toast({ variant: 'danger', message: t('users.roleChangeFailed') })
-            },
-          },
+            }
+          }
         )
-      },
+      }
     })
   }
 
@@ -188,7 +206,7 @@ export default function AdminUsersPage() {
       onConfirm: () => {
         closeConfirm()
         deleteUser.mutate(uid)
-      },
+      }
     })
   }
 
@@ -210,11 +228,19 @@ export default function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.displayName')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.email')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.phone')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.displayName')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.email')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.phone')}
+                    </th>
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-gray-600 min-w-[180px]">{t('role.label')}</th>
+                      <th className="text-center px-4 py-3 font-medium text-gray-600 min-w-[180px]">
+                        {t('role.label')}
+                      </th>
                     )}
                     {isAdmin && (
                       <th className="text-center px-4 py-3 font-medium text-gray-600 w-16"></th>
@@ -250,7 +276,7 @@ export default function AdminUsersPage() {
                                   { value: 'session_director', label: t('role.session_director') },
                                   { value: 'logistic_admin', label: t('role.logistic_admin') },
                                   { value: 'executive', label: t('role.executive') },
-                                  { value: 'admin', label: t('role.admin') },
+                                  { value: 'admin', label: t('role.admin') }
                                 ]}
                                 value={u.role}
                                 disabled={u.uid === currentUser?.uid}
@@ -258,7 +284,9 @@ export default function AdminUsersPage() {
                                 fullWidth
                               />
                               {successUid === u.uid && (
-                                <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
+                                <p className="text-xs text-green-600 mt-1">
+                                  {t('users.roleChanged')}
+                                </p>
                               )}
                             </>
                           )}
@@ -315,7 +343,7 @@ export default function AdminUsersPage() {
                             { value: 'session_director', label: t('role.session_director') },
                             { value: 'logistic_admin', label: t('role.logistic_admin') },
                             { value: 'executive', label: t('role.executive') },
-                            { value: 'admin', label: t('role.admin') },
+                            { value: 'admin', label: t('role.admin') }
                           ]}
                           value={u.role}
                           disabled={u.uid === currentUser?.uid}
@@ -328,11 +356,7 @@ export default function AdminUsersPage() {
                       </>
                     )}
                     {u.uid !== currentUser?.uid && u.role !== 'super_admin' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(u.uid)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.uid)}>
                         <TrashIcon className="w-4 h-4" />
                       </Button>
                     )}
@@ -354,10 +378,16 @@ export default function AdminUsersPage() {
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
         <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
-        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Content>
+          <p>{confirmDialog.message}</p>
+        </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={closeConfirm}>취소</Button>
-          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+          <Button variant="outline" onClick={closeConfirm}>
+            취소
+          </Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>
+            확인
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Layout>

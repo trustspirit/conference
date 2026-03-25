@@ -20,7 +20,9 @@ function FormHeader({ title, description, theme }: FormHeaderProps): React.React
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-8 pb-6">
           <h1 className="text-2xl font-bold text-white leading-tight">{title}</h1>
-          {description && <p className="text-white/80 text-sm mt-1.5 leading-relaxed">{description}</p>}
+          {description && (
+            <p className="text-white/80 text-sm mt-1.5 leading-relaxed">{description}</p>
+          )}
         </div>
       </div>
     )
@@ -31,7 +33,9 @@ function FormHeader({ title, description, theme }: FormHeaderProps): React.React
       <div className="h-3 bg-primary" />
       <div className="px-8 py-7">
         <h1 className="text-2xl font-bold text-gray-900 leading-tight">{title}</h1>
-        {description && <p className="text-gray-500 text-[15px] mt-2 leading-relaxed">{description}</p>}
+        {description && (
+          <p className="text-gray-500 text-[15px] mt-2 leading-relaxed">{description}</p>
+        )}
       </div>
     </div>
   )

@@ -17,12 +17,12 @@ const ProjectContext = createContext<ProjectContextType | null>(null)
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const { appUser } = useAuth()
   const { data: projects = [], isLoading } = useProjects(appUser)
-  const [selectedId, setSelectedId] = useState<string | null>(
-    () => localStorage.getItem(STORAGE_KEY)
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    localStorage.getItem(STORAGE_KEY)
   )
 
   const currentProject = useMemo(
-    () => projects.find(p => p.id === selectedId) ?? projects[0] ?? null,
+    () => projects.find((p) => p.id === selectedId) ?? projects[0] ?? null,
     [projects, selectedId]
   )
 
@@ -32,7 +32,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ProjectContext.Provider value={{ currentProject, projects, loading: isLoading, setCurrentProject }}>
+    <ProjectContext.Provider
+      value={{ currentProject, projects, loading: isLoading, setCurrentProject }}
+    >
       {children}
     </ProjectContext.Provider>
   )

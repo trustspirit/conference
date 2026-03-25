@@ -12,7 +12,14 @@ interface PhoneInputProps extends Omit<
   error?: string
 }
 
-function PhoneInput({ value, onChange, label, error, className, ...props }: PhoneInputProps): React.ReactElement {
+function PhoneInput({
+  value,
+  onChange,
+  label,
+  error,
+  className,
+  ...props
+}: PhoneInputProps): React.ReactElement {
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const formatted = formatPhoneNumber(e.target.value)

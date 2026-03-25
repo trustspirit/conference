@@ -8,7 +8,7 @@ import {
   deleteDoc,
   query,
   where,
-  serverTimestamp,
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { Position } from '../../types'
@@ -21,7 +21,7 @@ function mapPosition(id: string, data: Record<string, unknown>): Position {
     ...data,
     id,
     createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
+    updatedAt: toDate(data.updatedAt)
   } as Position
 }
 
@@ -31,14 +31,14 @@ export function usePositions(conferenceId: string | undefined) {
     queryFn: async () => {
       const q = query(
         collection(db, APPLY_POSITIONS_COLLECTION),
-        where('conferenceId', '==', conferenceId),
+        where('conferenceId', '==', conferenceId)
       )
       const snap = await getDocs(q)
       return snap.docs
         .map((d) => mapPosition(d.id, d.data()))
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
     },
-    enabled: !!conferenceId,
+    enabled: !!conferenceId
   })
 }
 
@@ -46,20 +46,27 @@ export function useCreatePosition() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: { conferenceId: string; name: string; description: string; eligibilityRequirements?: string[] }) => {
+    mutationFn: async (data: {
+      conferenceId: string
+      name: string
+      description: string
+      eligibilityRequirements?: string[]
+    }) => {
       const docRef = await addDoc(collection(db, APPLY_POSITIONS_COLLECTION), {
         conferenceId: data.conferenceId,
         name: data.name,
         description: data.description,
         eligibilityRequirements: data.eligibilityRequirements ?? [],
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: (_id, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.positions.byConference(variables.conferenceId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.positions.byConference(variables.conferenceId)
+      })
+    }
   })
 }
 
@@ -67,16 +74,22 @@ export function useUpdatePosition() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: { id: string; conferenceId: string } & Partial<Omit<Position, 'id' | 'conferenceId' | 'createdAt'>>) => {
+    mutationFn: async (
+      data: { id: string; conferenceId: string } & Partial<
+        Omit<Position, 'id' | 'conferenceId' | 'createdAt'>
+      >
+    ) => {
       const { id, conferenceId: _, ...updates } = data
       await updateDoc(doc(db, APPLY_POSITIONS_COLLECTION, id), {
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.positions.byConference(variables.conferenceId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.positions.byConference(variables.conferenceId)
+      })
+    }
   })
 }
 
@@ -88,7 +101,9 @@ export function useDeletePosition() {
       await deleteDoc(doc(db, APPLY_POSITIONS_COLLECTION, data.id))
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.positions.byConference(variables.conferenceId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.positions.byConference(variables.conferenceId)
+      })
+    }
   })
 }

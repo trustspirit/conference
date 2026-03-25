@@ -11,7 +11,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  type QueryConstraint,
+  type QueryConstraint
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { Application, ApplicationStatus } from '../../types'
@@ -26,7 +26,7 @@ function mapApplication(id: string, data: Record<string, unknown>): Application 
     ...data,
     id,
     createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
+    updatedAt: toDate(data.updatedAt)
   } as Application
 }
 
@@ -36,11 +36,14 @@ export function useApplications() {
   const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: [...(appUser?.role === 'bishop'
-      ? queryKeys.applications.byWard(appUser.ward)
-      : appUser?.role === 'stake_president'
-        ? queryKeys.applications.byStake(appUser.stake)
-        : queryKeys.applications.all()), conferenceId],
+    queryKey: [
+      ...(appUser?.role === 'bishop'
+        ? queryKeys.applications.byWard(appUser.ward)
+        : appUser?.role === 'stake_president'
+          ? queryKeys.applications.byStake(appUser.stake)
+          : queryKeys.applications.all()),
+      conferenceId
+    ],
     queryFn: async () => {
       const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
       if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
@@ -53,7 +56,7 @@ export function useApplications() {
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapApplication(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId
   })
 }
 
@@ -73,7 +76,7 @@ export function useMyApplication() {
       const d = snap.docs[0]
       return mapApplication(d.id, d.data())
     },
-    enabled: !!appUser && !!conferenceId,
+    enabled: !!appUser && !!conferenceId
   })
 }
 
@@ -87,13 +90,13 @@ export function useMyApplicationByConference(conferenceId: string) {
       const q = query(
         collection(db, APPLY_APPLICATIONS_COLLECTION),
         where('userId', '==', appUser!.uid),
-        where('conferenceId', '==', conferenceId),
+        where('conferenceId', '==', conferenceId)
       )
       const snap = await getDocs(q)
       if (snap.empty) return null
       return mapApplication(snap.docs[0].id, snap.docs[0].data())
     },
-    enabled: !!appUser && !!conferenceId,
+    enabled: !!appUser && !!conferenceId
   })
 }
 
@@ -103,7 +106,12 @@ export function useCreateApplicationForConference() {
   const { appUser } = useAuth()
 
   return useMutation({
-    mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & { status?: ApplicationStatus; conferenceId: string }) => {
+    mutationFn: async (
+      data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & {
+        status?: ApplicationStatus
+        conferenceId: string
+      }
+    ) => {
       const { status, conferenceId, ...rest } = data
       const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
         ...rest,
@@ -111,13 +119,13 @@ export function useCreateApplicationForConference() {
         conferenceId,
         status: status || ('awaiting' as ApplicationStatus),
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
-    },
+    }
   })
 }
 
@@ -129,7 +137,7 @@ export function useApplicationDetail(id: string) {
       if (!snap.exists()) return null
       return mapApplication(snap.id, snap.data())
     },
-    enabled: !!id,
+    enabled: !!id
   })
 }
 
@@ -139,7 +147,11 @@ export function useCreateApplication() {
   const { currentConference } = useConference()
 
   return useMutation({
-    mutationFn: async (data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & { status?: ApplicationStatus }) => {
+    mutationFn: async (
+      data: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'userId' | 'status' | 'memos'> & {
+        status?: ApplicationStatus
+      }
+    ) => {
       const { status, ...rest } = data
       const docRef = await addDoc(collection(db, APPLY_APPLICATIONS_COLLECTION), {
         ...rest,
@@ -147,13 +159,13 @@ export function useCreateApplication() {
         conferenceId: currentConference?.id || '',
         status: status || ('awaiting' as ApplicationStatus),
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
-    },
+    }
   })
 }
 
@@ -164,12 +176,12 @@ export function useUpdateApplication() {
     mutationFn: async ({ id, ...data }: Partial<Application> & { id: string }) => {
       await updateDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id), {
         ...data,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
-    },
+    }
   })
 }
 
@@ -180,12 +192,12 @@ export function useUpdateApplicationStatus() {
     mutationFn: async ({ id, status }: { id: string; status: ApplicationStatus }) => {
       await updateDoc(doc(db, APPLY_APPLICATIONS_COLLECTION, id), {
         status,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
-    },
+    }
   })
 }
 
@@ -198,6 +210,6 @@ export function useDeleteApplication() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications'] })
-    },
+    }
   })
 }

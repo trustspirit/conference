@@ -11,7 +11,7 @@ export function useGlobalSettings() {
       const snap = await getDoc(doc(db, 'settings', 'global'))
       if (!snap.exists()) return null
       return snap.data() as GlobalSettings
-    },
+    }
   })
 }
 
@@ -24,6 +24,6 @@ export function useUpdateGlobalSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.settings.global() })
-    },
+    }
   })
 }

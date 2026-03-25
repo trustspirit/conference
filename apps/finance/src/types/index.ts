@@ -1,4 +1,14 @@
-export type UserRole = 'user' | 'finance_ops' | 'approver_ops' | 'finance_prep' | 'approver_prep' | 'session_director' | 'logistic_admin' | 'executive' | 'admin' | 'super_admin'
+export type UserRole =
+  | 'user'
+  | 'finance_ops'
+  | 'approver_ops'
+  | 'finance_prep'
+  | 'approver_prep'
+  | 'session_director'
+  | 'logistic_admin'
+  | 'executive'
+  | 'admin'
+  | 'super_admin'
 
 export interface ProjectBudgetConfig {
   totalBudget: number
@@ -49,7 +59,14 @@ export interface AppUser {
 
 export type Committee = 'operations' | 'preparation'
 
-export type RequestStatus = 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled' | 'cancelled' | 'force_rejected'
+export type RequestStatus =
+  | 'pending'
+  | 'reviewed'
+  | 'approved'
+  | 'rejected'
+  | 'settled'
+  | 'cancelled'
+  | 'force_rejected'
 
 export type TransportType = 'car' | 'public'
 export type TripType = 'round' | 'one_way'

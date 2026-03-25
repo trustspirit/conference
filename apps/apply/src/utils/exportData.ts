@@ -3,7 +3,18 @@ import type { ReviewItem } from '../types'
 export function exportReviewItemsToCSV(items: ReviewItem[], filename = 'export.csv') {
   if (!items.length) return
 
-  const headers = ['Name', 'Email', 'Phone', 'Age', 'Gender', 'Stake', 'Ward', 'Status', 'Type', 'Created At']
+  const headers = [
+    'Name',
+    'Email',
+    'Phone',
+    'Age',
+    'Gender',
+    'Stake',
+    'Ward',
+    'Status',
+    'Type',
+    'Created At'
+  ]
   const rows = items.map((item) => [
     item.name,
     item.email,
@@ -14,7 +25,7 @@ export function exportReviewItemsToCSV(items: ReviewItem[], filename = 'export.c
     item.ward,
     item.rawStatus,
     item.type,
-    item.createdAt instanceof Date ? item.createdAt.toISOString().split('T')[0] : '',
+    item.createdAt instanceof Date ? item.createdAt.toISOString().split('T')[0] : ''
   ])
 
   const csvContent = [headers, ...rows]

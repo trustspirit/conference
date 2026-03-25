@@ -41,16 +41,24 @@ function hslToHex(h: number, s: number, l: number): string {
   }
 
   if (s === 0) {
-    const val = Math.round(l * 255).toString(16).padStart(2, '0')
+    const val = Math.round(l * 255)
+      .toString(16)
+      .padStart(2, '0')
     return `#${val}${val}${val}`
   }
 
   const q = l < 0.5 ? l * (1 + s) : l + s - l * s
   const p = 2 * l - q
   const hNorm = h / 360
-  const r = Math.round(hue2rgb(p, q, hNorm + 1 / 3) * 255).toString(16).padStart(2, '0')
-  const g = Math.round(hue2rgb(p, q, hNorm) * 255).toString(16).padStart(2, '0')
-  const b = Math.round(hue2rgb(p, q, hNorm - 1 / 3) * 255).toString(16).padStart(2, '0')
+  const r = Math.round(hue2rgb(p, q, hNorm + 1 / 3) * 255)
+    .toString(16)
+    .padStart(2, '0')
+  const g = Math.round(hue2rgb(p, q, hNorm) * 255)
+    .toString(16)
+    .padStart(2, '0')
+  const b = Math.round(hue2rgb(p, q, hNorm - 1 / 3) * 255)
+    .toString(16)
+    .padStart(2, '0')
   return `#${r}${g}${b}`
 }
 
@@ -62,7 +70,7 @@ function generateThemeColors(hex: string) {
     primary: hex,
     hover: hslToHex(hsl.h, hsl.s, Math.max(0, hsl.l - 0.07)),
     light: hslToHex(hsl.h, Math.min(1, hsl.s * 0.8), 0.95),
-    text: hslToHex(hsl.h, hsl.s, Math.max(0, hsl.l - 0.15)),
+    text: hslToHex(hsl.h, hsl.s, Math.max(0, hsl.l - 0.15))
   }
 }
 
@@ -75,7 +83,7 @@ function SurveyThemeProvider({ theme, children }: SurveyThemeProviderProps): Rea
       '--survey-primary': colors.primary,
       '--survey-primary-hover': colors.hover,
       '--survey-primary-light': colors.light,
-      '--survey-primary-text': colors.text,
+      '--survey-primary-text': colors.text
     } as React.CSSProperties
   }, [theme?.primaryColor])
 

@@ -28,7 +28,7 @@ export async function captureAndUploadRouteMaps(
   items: RequestItem[],
   miniMapRefs: Map<number, HTMLDivElement>,
   committee: string,
-  projectId: string,
+  projectId: string
 ): Promise<{ items: RequestItem[]; failedCount: number }> {
   const updatedItems = [...items]
   let failedCount = 0
@@ -36,7 +36,12 @@ export async function captureAndUploadRouteMaps(
   for (let i = 0; i < updatedItems.length; i++) {
     const item = updatedItems[i]
     const detail = item.transportDetail
-    if (!detail || detail.transportType !== 'car' || !detail.departureCoord || !detail.destinationCoord) {
+    if (
+      !detail ||
+      detail.transportType !== 'car' ||
+      !detail.departureCoord ||
+      !detail.destinationCoord
+    ) {
       continue
     }
 
@@ -55,13 +60,18 @@ export async function captureAndUploadRouteMaps(
       const canvas = await html2canvas(el, {
         useCORS: true,
         scale: 2,
-        logging: false,
+        logging: false
       })
 
       // Validate capture: check if canvas is mostly blank
       const ctx = canvas.getContext('2d')
       if (ctx) {
-        const imageData = ctx.getImageData(0, 0, Math.min(canvas.width, 50), Math.min(canvas.height, 50))
+        const imageData = ctx.getImageData(
+          0,
+          0,
+          Math.min(canvas.width, 50),
+          Math.min(canvas.height, 50)
+        )
         const pixels = imageData.data
         let nonWhiteCount = 0
         for (let p = 0; p < pixels.length; p += 4) {
@@ -81,7 +91,7 @@ export async function captureAndUploadRouteMaps(
       const result = await uploadRouteMapFn({
         file: { name: `route_${Date.now()}.png`, data: dataUrl },
         committee,
-        projectId,
+        projectId
       })
 
       updatedItems[i] = {
@@ -90,9 +100,9 @@ export async function captureAndUploadRouteMaps(
           ...detail,
           routeMapImage: {
             storagePath: result.data.storagePath,
-            url: result.data.url,
-          },
-        },
+            url: result.data.url
+          }
+        }
       }
     } catch (err) {
       console.error(`Route map capture/upload failed for item ${i}:`, err)

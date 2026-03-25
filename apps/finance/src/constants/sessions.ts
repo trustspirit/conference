@@ -6,5 +6,5 @@ export const SESSIONS = [
   { id: 'Монгол', label: 'Монгол' },
   { id: 'Guam', label: 'Guam' },
   { id: 'English', label: 'English' },
-  { id: 'Executive', label: 'Executive' },
+  { id: 'Executive', label: 'Executive' }
 ] as const

@@ -17,9 +17,10 @@ interface Props {
 
 export default function PageHeader({ title, description, backTo, backLabel, action }: Props) {
   const { t } = useTranslation()
-  const btnClass = action?.variant === 'purple'
-    ? 'bg-purple-600 hover:bg-purple-700'
-    : 'bg-blue-600 hover:bg-blue-700'
+  const btnClass =
+    action?.variant === 'purple'
+      ? 'bg-purple-600 hover:bg-purple-700'
+      : 'bg-blue-600 hover:bg-blue-700'
 
   return (
     <div className="mb-6">
@@ -33,19 +34,23 @@ export default function PageHeader({ title, description, backTo, backLabel, acti
           <h2 className="text-xl font-bold">{title}</h2>
           {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
         </div>
-        {action && (
-          action.to ? (
-            <Link to={action.to}
-              className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium text-center whitespace-nowrap`}>
+        {action &&
+          (action.to ? (
+            <Link
+              to={action.to}
+              className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium text-center whitespace-nowrap`}
+            >
               {action.label}
             </Link>
           ) : (
-            <button onClick={action.onClick} disabled={action.disabled}
-              className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium whitespace-nowrap disabled:bg-gray-400`}>
+            <button
+              onClick={action.onClick}
+              disabled={action.disabled}
+              className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium whitespace-nowrap disabled:bg-gray-400`}
+            >
               {action.label}
             </button>
-          )
-        )}
+          ))}
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ export default function ConsentDialog() {
     setSaving(true)
     try {
       await updateAppUser({
-        consentAgreedAt: new Date().toISOString(),
+        consentAgreedAt: new Date().toISOString()
       })
       setNeedsConsent(false)
     } catch {
@@ -28,9 +28,7 @@ export default function ConsentDialog() {
       <Dialog.Title>{t('consent.title', '개인정보 처리 동의')}</Dialog.Title>
       <Dialog.Content>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-4">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {t('consent.agreement')}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">{t('consent.agreement')}</p>
         </div>
 
         <Checkbox

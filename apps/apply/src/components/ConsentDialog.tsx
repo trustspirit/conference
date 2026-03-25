@@ -15,7 +15,7 @@ export default function ConsentDialog() {
     setError('')
     try {
       await updateAppUser({
-        consentAgreedAt: new Date().toISOString(),
+        consentAgreedAt: new Date().toISOString()
       })
       setNeedsConsent(false)
     } catch {
@@ -32,9 +32,7 @@ export default function ConsentDialog() {
         </h2>
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {t('consent.agreement')}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">{t('consent.agreement')}</p>
         </div>
 
         <Checkbox
@@ -46,19 +44,10 @@ export default function ConsentDialog() {
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={logout}
-          >
+          <Button variant="outline" fullWidth onClick={logout}>
             {t('auth.logout', '로그아웃')}
           </Button>
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={!agreed || saving}
-            onClick={handleAgree}
-          >
+          <Button variant="primary" fullWidth disabled={!agreed || saving} onClick={handleAgree}>
             {saving ? t('common.saving', '저장 중...') : t('consent.confirm', '동의하고 계속하기')}
           </Button>
         </div>

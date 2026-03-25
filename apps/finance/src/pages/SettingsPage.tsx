@@ -12,15 +12,19 @@ import { useSoftDeleteProject } from '../hooks/queries/useProjects'
 function ProjectManagement() {
   const { t } = useTranslation()
   const { currentProject, projects, setCurrentProject } = useProject()
-  const activeProjects = projects.filter(p => p.isActive)
+  const activeProjects = projects.filter((p) => p.isActive)
   const { data: globalSettings, isLoading: settingsLoading } = useGlobalSettings()
   const updateSettings = useUpdateGlobalSettings()
   const softDelete = useSoftDeleteProject()
   const defaultProjectId = globalSettings?.defaultProjectId || ''
 
   const [subTab, setSubTab] = useState<'general' | 'members'>('general')
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
-  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    onConfirm: () => void
+    message: string
+  }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
   const selectedProject = currentProject || activeProjects[0]
   const effectiveId = selectedProject?.id || ''
@@ -34,9 +38,9 @@ function ProjectManagement() {
       onConfirm: async () => {
         closeConfirm()
         await softDelete.mutateAsync(effectiveId)
-        const remaining = activeProjects.filter(p => p.id !== effectiveId)
+        const remaining = activeProjects.filter((p) => p.id !== effectiveId)
         if (remaining.length > 0) setCurrentProject(remaining[0])
-      },
+      }
     })
   }
 
@@ -58,36 +62,42 @@ function ProjectManagement() {
       {selectedProject ? (
         <>
           {/* Project actions */}
-          {!settingsLoading && <div className="flex items-center justify-between">
-            <div>
+          {!settingsLoading && (
+            <div className="flex items-center justify-between">
+              <div>
+                {!isDefault && (
+                  <button
+                    onClick={() => updateSettings.mutateAsync({ defaultProjectId: effectiveId })}
+                    className="inline-flex items-center gap-1 text-xs border border-gray-300 text-gray-600 px-2.5 py-1 rounded-full hover:bg-gray-50 transition-colors"
+                  >
+                    <StarIcon className="w-3 h-3" />
+                    {t('project.setDefault')}
+                  </button>
+                )}
+              </div>
               {!isDefault && (
                 <button
-                  onClick={() => updateSettings.mutateAsync({ defaultProjectId: effectiveId })}
-                  className="inline-flex items-center gap-1 text-xs border border-gray-300 text-gray-600 px-2.5 py-1 rounded-full hover:bg-gray-50 transition-colors"
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
                 >
-                  <StarIcon className="w-3 h-3" />
-                  {t('project.setDefault')}
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  {t('common.delete')}
                 </button>
               )}
             </div>
-            {!isDefault && (
-              <button onClick={handleDelete}
-                className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
-              >
-                <TrashIcon className="w-3.5 h-3.5" />
-                {t('common.delete')}
-              </button>
-            )}
-          </div>}
+          )}
 
           {/* Sub-tabs */}
           <div className="flex gap-1">
-            {([
+            {[
               { key: 'general' as const, label: t('project.general') },
-              { key: 'members' as const, label: t('project.members') },
-            ]).map(item => (
-              <button key={item.key} onClick={() => setSubTab(item.key)}
-                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${subTab === item.key ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-100'}`}>
+              { key: 'members' as const, label: t('project.members') }
+            ].map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setSubTab(item.key)}
+                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${subTab === item.key ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-100'}`}
+              >
                 {item.label}
               </button>
             ))}
@@ -103,10 +113,16 @@ function ProjectManagement() {
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
         <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
-        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Content>
+          <p>{confirmDialog.message}</p>
+        </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={closeConfirm}>취소</Button>
-          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+          <Button variant="outline" onClick={closeConfirm}>
+            취소
+          </Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>
+            확인
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </div>

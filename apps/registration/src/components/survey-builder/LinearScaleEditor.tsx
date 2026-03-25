@@ -17,19 +17,21 @@ function LinearScaleEditor({ config, onChange }: LinearScaleEditorProps): React.
 
   const minOptions = [
     { value: '0', label: '0' },
-    { value: '1', label: '1' },
+    { value: '1', label: '1' }
   ]
 
   const maxOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
     value: String(n),
-    label: String(n),
+    label: String(n)
   }))
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.min')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.linearScale.min')}
+          </label>
           <Select
             options={minOptions}
             value={String(config.min)}
@@ -39,7 +41,9 @@ function LinearScaleEditor({ config, onChange }: LinearScaleEditorProps): React.
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.max')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.linearScale.max')}
+          </label>
           <Select
             options={maxOptions}
             value={String(config.max)}
@@ -51,7 +55,9 @@ function LinearScaleEditor({ config, onChange }: LinearScaleEditorProps): React.
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.minLabel')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.linearScale.minLabel')}
+          </label>
           <input
             value={config.minLabel || ''}
             onChange={(e) => update({ minLabel: e.target.value })}
@@ -60,7 +66,9 @@ function LinearScaleEditor({ config, onChange }: LinearScaleEditorProps): React.
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.linearScale.maxLabel')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.linearScale.maxLabel')}
+          </label>
           <input
             value={config.maxLabel || ''}
             onChange={(e) => update({ maxLabel: e.target.value })}

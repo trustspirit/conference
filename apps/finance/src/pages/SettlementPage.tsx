@@ -32,8 +32,12 @@ export default function SettlementPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [processing, setProcessing] = useState(false)
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null)
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
-  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    onConfirm: () => void
+    message: string
+  }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
   // Review mode state
   const [reviewPhase, setReviewPhase] = useState<ReviewPhase>('select')
@@ -49,7 +53,7 @@ export default function SettlementPage() {
   const budgetUsage = useBudgetUsage()
 
   const requests = useMemo(
-    () => allRequests.filter(r => canSeeCommitteeRequests(role, r.committee)),
+    () => allRequests.filter((r) => canSeeCommitteeRequests(role, r.committee)),
     [allRequests, role]
   )
 
@@ -64,27 +68,30 @@ export default function SettlementPage() {
     reviewPhase === 'review' ? currentReviewRequest?.requestedBy.uid : undefined
   )
 
-  const handleRowClick = useCallback((id: string, index: number, e: React.MouseEvent) => {
-    if (e.shiftKey && lastClickedIndex !== null) {
-      const start = Math.min(lastClickedIndex, index)
-      const end = Math.max(lastClickedIndex, index)
-      setSelected((prev) => {
-        const next = new Set(prev)
-        for (let i = start; i <= end; i++) {
-          next.add(requests[i].id)
-        }
-        return next
-      })
-    } else {
-      setSelected((prev) => {
-        const next = new Set(prev)
-        if (next.has(id)) next.delete(id)
-        else next.add(id)
-        return next
-      })
-    }
-    setLastClickedIndex(index)
-  }, [lastClickedIndex, requests])
+  const handleRowClick = useCallback(
+    (id: string, index: number, e: React.MouseEvent) => {
+      if (e.shiftKey && lastClickedIndex !== null) {
+        const start = Math.min(lastClickedIndex, index)
+        const end = Math.max(lastClickedIndex, index)
+        setSelected((prev) => {
+          const next = new Set(prev)
+          for (let i = start; i <= end; i++) {
+            next.add(requests[i].id)
+          }
+          return next
+        })
+      } else {
+        setSelected((prev) => {
+          const next = new Set(prev)
+          if (next.has(id)) next.delete(id)
+          else next.add(id)
+          return next
+        })
+      }
+      setLastClickedIndex(index)
+    },
+    [lastClickedIndex, requests]
+  )
 
   const toggleAll = () => {
     if (selected.size === requests.length) {
@@ -104,7 +111,7 @@ export default function SettlementPage() {
   }
 
   const advanceReview = useCallback(() => {
-    setReviewIndex(prev => {
+    setReviewIndex((prev) => {
       if (prev < reviewSnapshot.length - 1) {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return prev + 1
@@ -116,7 +123,7 @@ export default function SettlementPage() {
 
   const handleConfirmInclude = () => {
     if (!currentReviewRequest) return
-    setReviewedIds(prev => new Set(prev).add(currentReviewRequest.id))
+    setReviewedIds((prev) => new Set(prev).add(currentReviewRequest.id))
     advanceReview()
   }
 
@@ -128,18 +135,18 @@ export default function SettlementPage() {
         requestId: rejectingRequestId,
         projectId: currentProject!.id,
         approver: { uid: user.uid, name: approverName, email: appUser.email },
-        rejectionReason: reason,
+        rejectionReason: reason
       },
       {
         onSuccess: () => {
-          setRejectedIds(prev => new Set(prev).add(rejectingRequestId))
+          setRejectedIds((prev) => new Set(prev).add(rejectingRequestId))
           setRejectingRequestId(null)
           advanceReview()
         },
         onError: () => {
           toast({ variant: 'danger', message: t('settlement.settleFailed') })
-        },
-      },
+        }
+      }
     )
   }
 
@@ -156,7 +163,10 @@ export default function SettlementPage() {
       setConfirmDialog({
         open: true,
         message: t('settlement.backToSelectConfirm'),
-        onConfirm: () => { closeConfirm(); doBackToSelect() },
+        onConfirm: () => {
+          closeConfirm()
+          doBackToSelect()
+        }
       })
       return
     }
@@ -164,7 +174,7 @@ export default function SettlementPage() {
   }
 
   // For final settlement, only use reviewed (included) requests
-  const includedRequests = reviewSnapshot.filter(r => reviewedIds.has(r.id))
+  const includedRequests = reviewSnapshot.filter((r) => reviewedIds.has(r.id))
 
   const groupedByPayee = includedRequests.reduce<Record<string, PaymentRequest[]>>((acc, req) => {
     const key = payeeKey(req)
@@ -183,19 +193,32 @@ export default function SettlementPage() {
 
       const missingApproval = includedRequests.find((r) => !r.approvalSignature || !r.approvedBy)
       if (missingApproval) {
-        toast({ variant: 'danger', message: t('settlement.settleFailed') + ': ' + missingApproval.payee + ' - missing approval signature' })
+        toast({
+          variant: 'danger',
+          message:
+            t('settlement.settleFailed') +
+            ': ' +
+            missingApproval.payee +
+            ' - missing approval signature'
+        })
         setProcessing(false)
         return
       }
 
       const totalOps = Object.values(groupedByPayee).reduce((sum, reqs) => sum + 1 + reqs.length, 0)
       if (totalOps >= 500) {
-        toast({ variant: 'danger', message: t('settlement.settleFailed') + ': Too many operations. Please select fewer requests.' })
+        toast({
+          variant: 'danger',
+          message:
+            t('settlement.settleFailed') + ': Too many operations. Please select fewer requests.'
+        })
         setProcessing(false)
         return
       }
 
-      const requesterUids = [...new Set(Object.values(groupedByPayee).map(reqs => reqs[0].requestedBy.uid))]
+      const requesterUids = [
+        ...new Set(Object.values(groupedByPayee).map((reqs) => reqs[0].requestedBy.uid))
+      ]
       const userDataMap = new Map<string, AppUser | null>()
       await Promise.all(
         requesterUids.map(async (uid) => {
@@ -234,13 +257,13 @@ export default function SettlementPage() {
           requestIds: reqs.map((r) => r.id),
           requestedBySignature: userData?.signature || null,
           approvedBy: first.approvedBy,
-          approvalSignature: first.approvalSignature || null,
+          approvalSignature: first.approvalSignature || null
         }
       })
 
       await createSettlementMutation.mutateAsync({
         projectId: currentProject.id,
-        settlements: settlementData,
+        settlements: settlementData
       })
       setSelected(new Set())
       navigate('/admin/settlements')
@@ -256,26 +279,41 @@ export default function SettlementPage() {
     if (!user || !appUser || !currentProject || reviewedIds.size === 0) return
     setConfirmDialog({
       open: true,
-      message: t('settlement.settleConfirm', { count: reviewedIds.size, payeeCount: Object.keys(groupedByPayee).length }),
-      onConfirm: () => { closeConfirm(); doFinalSettle.current?.() },
+      message: t('settlement.settleConfirm', {
+        count: reviewedIds.size,
+        payeeCount: Object.keys(groupedByPayee).length
+      }),
+      onConfirm: () => {
+        closeConfirm()
+        doFinalSettle.current?.()
+      }
     })
   }
 
-  const selectedSummary = selected.size > 0 ? {
-    count: selected.size,
-    payeeCount: new Set(selectedRequests.map(payeeKey)).size,
-    amount: selectedRequests.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString(),
-  } : null
+  const selectedSummary =
+    selected.size > 0
+      ? {
+          count: selected.size,
+          payeeCount: new Set(selectedRequests.map(payeeKey)).size,
+          amount: selectedRequests.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()
+        }
+      : null
 
   const includedTotal = includedRequests.reduce((sum, r) => sum + r.totalAmount, 0)
 
   const confirmDialogJsx = (
     <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
       <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
-      <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+      <Dialog.Content>
+        <p>{confirmDialog.message}</p>
+      </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="outline" onClick={closeConfirm}>취소</Button>
-        <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+        <Button variant="outline" onClick={closeConfirm}>
+          취소
+        </Button>
+        <Button variant="danger" onClick={confirmDialog.onConfirm}>
+          확인
+        </Button>
       </Dialog.Actions>
     </Dialog>
   )

@@ -20,8 +20,8 @@ function createTransporter() {
     service: 'gmail',
     auth: {
       user: gmailUser.value(),
-      pass: gmailAppPassword.value(),
-    },
+      pass: gmailAppPassword.value()
+    }
   })
 }
 
@@ -54,9 +54,9 @@ async function uploadFileToStorage(file: FileInput, storagePath: string): Promis
     metadata: {
       contentType: mimeType,
       metadata: {
-        firebaseStorageDownloadTokens: downloadToken,
-      },
-    },
+        firebaseStorageDownloadTokens: downloadToken
+      }
+    }
   })
 
   const encodedPath = encodeURIComponent(storagePath)
@@ -65,7 +65,7 @@ async function uploadFileToStorage(file: FileInput, storagePath: string): Promis
   return {
     fileName: file.name,
     storagePath,
-    url,
+    url
   }
 }
 
@@ -162,7 +162,7 @@ export const downloadFileV2 = onCall(async (request) => {
   return {
     data: buffer.toString('base64'),
     contentType: metadata.contentType || 'application/octet-stream',
-    fileName: storagePath.split('/').pop() || 'file',
+    fileName: storagePath.split('/').pop() || 'file'
   }
 })
 
@@ -194,7 +194,7 @@ export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
     }
     for (let i = 0; i < requests.docs.length; i += 500) {
       const batch = db.batch()
-      requests.docs.slice(i, i + 500).forEach(d => batch.delete(d.ref))
+      requests.docs.slice(i, i + 500).forEach((d) => batch.delete(d.ref))
       await batch.commit()
     }
 
@@ -207,30 +207,47 @@ export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
     }
     for (let i = 0; i < settlements.docs.length; i += 500) {
       const batch = db.batch()
-      settlements.docs.slice(i, i + 500).forEach(d => batch.delete(d.ref))
+      settlements.docs.slice(i, i + 500).forEach((d) => batch.delete(d.ref))
       await batch.commit()
     }
 
     // Delete all collected storage files
-    await Promise.all(storagePaths.map(p =>
-      bucket.file(p).delete().catch(() => { /* ignore missing */ })
-    ))
+    await Promise.all(
+      storagePaths.map((p) =>
+        bucket
+          .file(p)
+          .delete()
+          .catch(() => {
+            /* ignore missing */
+          })
+      )
+    )
 
     // Delete entire receipts folder for this project (catch any orphaned files)
     const [orphanedFiles] = await bucket.getFiles({ prefix: `receipts/${projectId}/` })
-    await Promise.all(orphanedFiles.map(f =>
-      f.delete().catch(() => { /* ignore */ })
-    ))
+    await Promise.all(
+      orphanedFiles.map((f) =>
+        f.delete().catch(() => {
+          /* ignore */
+        })
+      )
+    )
 
     // Delete orphaned route map files
     const [orphanedRouteMaps] = await bucket.getFiles({ prefix: `routemaps/${projectId}/` })
-    await Promise.all(orphanedRouteMaps.map(f =>
-      f.delete().catch(() => { /* ignore */ })
-    ))
+    await Promise.all(
+      orphanedRouteMaps.map((f) =>
+        f.delete().catch(() => {
+          /* ignore */
+        })
+      )
+    )
 
     // Delete the project document
     await projectDoc.ref.delete()
-    console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`)
+    console.log(
+      `Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`
+    )
   }
 })
 
@@ -274,8 +291,11 @@ export const deleteUserAccount = onCall(async (request) => {
   }
 
   // 프로젝트 memberUids에서 제거
-  const projectsSnap = await admin.firestore().collection('projects')
-    .where('memberUids', 'array-contains', uid).get()
+  const projectsSnap = await admin
+    .firestore()
+    .collection('projects')
+    .where('memberUids', 'array-contains', uid)
+    .get()
   for (const projectDoc of projectsSnap.docs) {
     const memberUids = (projectDoc.data().memberUids || []).filter((id: string) => id !== uid)
     await projectDoc.ref.update({ memberUids })
@@ -295,7 +315,11 @@ function simplifyPath(coords: number[], tolerance = 0.0001): number[] {
   }
   if (points.length <= 2) return coords
 
-  function perpendicularDistance(pt: [number, number], lineStart: [number, number], lineEnd: [number, number]): number {
+  function perpendicularDistance(
+    pt: [number, number],
+    lineStart: [number, number],
+    lineEnd: [number, number]
+  ): number {
     const dx = lineEnd[0] - lineStart[0]
     const dy = lineEnd[1] - lineStart[1]
     const mag = Math.sqrt(dx * dx + dy * dy)
@@ -312,7 +336,10 @@ function simplifyPath(coords: number[], tolerance = 0.0001): number[] {
     let maxIdx = 0
     for (let i = 1; i < pts.length - 1; i++) {
       const d = perpendicularDistance(pts[i], pts[0], pts[pts.length - 1])
-      if (d > maxDist) { maxDist = d; maxIdx = i }
+      if (d > maxDist) {
+        maxDist = d
+        maxIdx = i
+      }
     }
     if (maxDist > tol) {
       const left = simplify(pts.slice(0, maxIdx + 1), tol)
@@ -331,71 +358,72 @@ function simplifyPath(coords: number[], tolerance = 0.0001): number[] {
 }
 
 // --- Kakao Mobility distance calculation ---
-export const calculateDistance = onCall(
-  { secrets: [kakaoMobilityKey] },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Must be logged in')
-    }
-
-    const { origin, destination } = request.data as {
-      origin: { lat: number; lng: number }
-      destination: { lat: number; lng: number }
-    }
-
-    if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
-      throw new HttpsError('invalid-argument', 'Origin and destination coordinates are required')
-    }
-
-    // Kakao Mobility uses longitude,latitude order
-    const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}`
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `KakaoAK ${kakaoMobilityKey.value()}`,
-      },
-    })
-
-    if (!response.ok) {
-      console.error('Kakao Mobility API error:', response.status, await response.text())
-      throw new HttpsError('internal', 'Failed to calculate distance')
-    }
-
-    const data = await response.json() as {
-      routes: {
-        result_code: number
-        summary: { distance: number }
-        sections: { roads: { vertexes: number[] }[] }[]
-      }[]
-    }
-    const routes = data.routes
-    if (!routes || routes.length === 0 || routes[0].result_code !== 0) {
-      throw new HttpsError('not-found', 'No route found')
-    }
-
-    const distanceMeters = routes[0].summary.distance
-
-    // Extract route path coordinates [lng, lat, lng, lat, ...]
-    const routePath: number[] = []
-    for (const section of routes[0].sections) {
-      for (const road of section.roads) {
-        routePath.push(...road.vertexes)
-      }
-    }
-
-    return { distanceMeters, routePath: simplifyPath(routePath) }
+export const calculateDistance = onCall({ secrets: [kakaoMobilityKey] }, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
   }
-)
+
+  const { origin, destination } = request.data as {
+    origin: { lat: number; lng: number }
+    destination: { lat: number; lng: number }
+  }
+
+  if (!origin?.lat || !origin?.lng || !destination?.lat || !destination?.lng) {
+    throw new HttpsError('invalid-argument', 'Origin and destination coordinates are required')
+  }
+
+  // Kakao Mobility uses longitude,latitude order
+  const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${origin.lng},${origin.lat}&destination=${destination.lng},${destination.lat}`
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `KakaoAK ${kakaoMobilityKey.value()}`
+    }
+  })
+
+  if (!response.ok) {
+    console.error('Kakao Mobility API error:', response.status, await response.text())
+    throw new HttpsError('internal', 'Failed to calculate distance')
+  }
+
+  const data = (await response.json()) as {
+    routes: {
+      result_code: number
+      summary: { distance: number }
+      sections: { roads: { vertexes: number[] }[] }[]
+    }[]
+  }
+  const routes = data.routes
+  if (!routes || routes.length === 0 || routes[0].result_code !== 0) {
+    throw new HttpsError('not-found', 'No route found')
+  }
+
+  const distanceMeters = routes[0].summary.distance
+
+  // Extract route path coordinates [lng, lat, lng, lat, ...]
+  const routePath: number[] = []
+  for (const section of routes[0].sections) {
+    for (const road of section.roads) {
+      routePath.push(...road.vertexes)
+    }
+  }
+
+  return { distanceMeters, routePath: simplifyPath(routePath) }
+})
 
 // --- Email Notification Functions ---
 
 const COMMITTEE_LABELS: Record<string, string> = {
   operations: '운영위원회',
-  preparation: '준비위원회',
+  preparation: '준비위원회'
 }
 
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 function formatCurrency(amount: number): string {
@@ -405,14 +433,20 @@ function formatCurrency(amount: number): string {
 function formatDate(date: Date | admin.firestore.Timestamp | null): string {
   if (!date) return '-'
   const d = date instanceof Date ? date : date.toDate()
-  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 // 신청서 생성 시 → 해당 위원회 재정 담당자에게 검토 요청 알림
 export const onRequestCreated = onDocumentCreated(
   {
     document: 'requests/{requestId}',
-    secrets: [gmailUser, gmailAppPassword],
+    secrets: [gmailUser, gmailAppPassword]
   },
   async (event) => {
     const data = event.data?.data()
@@ -425,13 +459,10 @@ export const onRequestCreated = onDocumentCreated(
 
     // Find finance reviewers for this committee
     const db = admin.firestore()
-    const reviewerRoles = committee === 'operations'
-      ? ['finance_ops', 'finance_prep']
-      : ['finance_prep']
+    const reviewerRoles =
+      committee === 'operations' ? ['finance_ops', 'finance_prep'] : ['finance_prep']
 
-    const usersSnapshot = await db.collection('users')
-      .where('role', 'in', reviewerRoles)
-      .get()
+    const usersSnapshot = await db.collection('users').where('role', 'in', reviewerRoles).get()
 
     if (usersSnapshot.empty) {
       console.log('No finance reviewers found for committee:', committee)
@@ -461,7 +492,7 @@ export const onRequestCreated = onDocumentCreated(
               </table>
               <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 검토하기</a></p>
             </div>
-          `,
+          `
         })
         console.log(`New request notification sent to ${email}`)
       } catch (error) {
@@ -471,7 +502,11 @@ export const onRequestCreated = onDocumentCreated(
   }
 )
 
-function buildStatusChangeEmail(data: Record<string, unknown>, newStatus: string, requestId?: string): { subject: string; html: string } {
+function buildStatusChangeEmail(
+  data: Record<string, unknown>,
+  newStatus: string,
+  requestId?: string
+): { subject: string; html: string } {
   const totalAmount = data.totalAmount as number
   const approvedBy = data.approvedBy as { name: string } | null
   const rejectionReason = data.rejectionReason as string | null
@@ -490,7 +525,7 @@ function buildStatusChangeEmail(data: Record<string, unknown>, newStatus: string
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
         </div>
-      `,
+      `
     }
   }
 
@@ -506,7 +541,7 @@ function buildStatusChangeEmail(data: Record<string, unknown>, newStatus: string
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
         </div>
-      `,
+      `
     }
   }
 
@@ -522,7 +557,7 @@ function buildStatusChangeEmail(data: Record<string, unknown>, newStatus: string
         </table>
         <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #ea580c; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
       </div>
-    `,
+    `
   }
 }
 
@@ -530,7 +565,7 @@ function buildStatusChangeEmail(data: Record<string, unknown>, newStatus: string
 export const onRequestStatusChange = onDocumentUpdated(
   {
     document: 'requests/{requestId}',
-    secrets: [gmailUser, gmailAppPassword],
+    secrets: [gmailUser, gmailAppPassword]
   },
   async (event) => {
     const before = event.data?.before.data()
@@ -554,22 +589,22 @@ export const onRequestStatusChange = onDocumentUpdated(
 
       // 신청자의 역할 확인 (위원장이 신청한 건은 executive만 승인 가능)
       const requesterSnap = await db.doc(`users/${requestedByUid}`).get()
-      const requesterRole = requesterSnap.exists ? requesterSnap.data()?.role as string : 'user'
-      const isDirectorRequest = requesterRole === 'session_director' || requesterRole === 'logistic_admin'
+      const requesterRole = requesterSnap.exists ? (requesterSnap.data()?.role as string) : 'user'
+      const isDirectorRequest =
+        requesterRole === 'session_director' || requesterRole === 'logistic_admin'
 
       let approverRoles: string[]
       if (isDirectorRequest) {
         // 위원장이 신청한 건 → executive만 승인 가능
         approverRoles = ['executive']
       } else {
-        approverRoles = committee === 'operations'
-          ? ['approver_ops', 'session_director', 'executive']
-          : ['approver_prep', 'logistic_admin', 'executive']
+        approverRoles =
+          committee === 'operations'
+            ? ['approver_ops', 'session_director', 'executive']
+            : ['approver_prep', 'logistic_admin', 'executive']
       }
 
-      const usersSnapshot = await db.collection('users')
-        .where('role', 'in', approverRoles)
-        .get()
+      const usersSnapshot = await db.collection('users').where('role', 'in', approverRoles).get()
 
       for (const userDoc of usersSnapshot.docs) {
         const user = userDoc.data()
@@ -591,7 +626,7 @@ export const onRequestStatusChange = onDocumentUpdated(
                 </table>
                 <p style="margin-top: 20px;"><a href="${APP_URL}/request/${reqId}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 승인하기</a></p>
               </div>
-            `,
+            `
           })
           console.log(`Approval request notification sent to ${email}`)
         } catch (error) {
@@ -623,7 +658,7 @@ export const onRequestStatusChange = onDocumentUpdated(
         from: `지불/환불 시스템 <${gmailUser.value()}>`,
         to: requestedBy.email,
         subject,
-        html,
+        html
       })
       console.log(`Status change email sent to ${requestedBy.email} (${oldStatus}→${newStatus})`)
     } catch (error) {
@@ -632,11 +667,14 @@ export const onRequestStatusChange = onDocumentUpdated(
   }
 )
 
-function buildWeeklyDigestEmail(userName: string, sections: { label: string; count: number }[]): { subject: string; html: string } {
+function buildWeeklyDigestEmail(
+  userName: string,
+  sections: { label: string; count: number }[]
+): { subject: string; html: string } {
   const totalCount = sections.reduce((sum, s) => sum + s.count, 0)
   const sectionHtml = sections
-    .filter(s => s.count > 0)
-    .map(s => `<li>${s.label}: <strong>${s.count}건</strong></li>`)
+    .filter((s) => s.count > 0)
+    .map((s) => `<li>${s.label}: <strong>${s.count}건</strong></li>`)
     .join('')
 
   return {
@@ -648,7 +686,7 @@ function buildWeeklyDigestEmail(userName: string, sections: { label: string; cou
         <ul style="margin-bottom: 20px; padding-left: 20px;">${sectionHtml}</ul>
         <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">확인하기</a></p>
       </div>
-    `,
+    `
   }
 }
 
@@ -657,16 +695,22 @@ export const weeklyApproverDigest = onSchedule(
   {
     schedule: 'every sunday 00:00',
     timeZone: 'UTC',
-    secrets: [gmailUser, gmailAppPassword],
+    secrets: [gmailUser, gmailAppPassword]
   },
   async () => {
     const db = admin.firestore()
 
     // 관련 역할 사용자 조회
-    const relevantRoles = ['finance_ops', 'finance_prep', 'approver_ops', 'approver_prep', 'session_director', 'logistic_admin', 'executive']
-    const usersSnapshot = await db.collection('users')
-      .where('role', 'in', relevantRoles)
-      .get()
+    const relevantRoles = [
+      'finance_ops',
+      'finance_prep',
+      'approver_ops',
+      'approver_prep',
+      'session_director',
+      'logistic_admin',
+      'executive'
+    ]
+    const usersSnapshot = await db.collection('users').where('role', 'in', relevantRoles).get()
 
     if (usersSnapshot.empty) {
       console.log('No relevant users found')
@@ -674,9 +718,7 @@ export const weeklyApproverDigest = onSchedule(
     }
 
     // pending 신청서 (검토 대상) - 위원회별 집계
-    const pendingSnapshot = await db.collection('requests')
-      .where('status', '==', 'pending')
-      .get()
+    const pendingSnapshot = await db.collection('requests').where('status', '==', 'pending').get()
 
     let opsPendingCount = 0
     let prepPendingCount = 0
@@ -687,9 +729,7 @@ export const weeklyApproverDigest = onSchedule(
     }
 
     // reviewed 신청서 (승인 대상) - 위원회별 집계
-    const reviewedSnapshot = await db.collection('requests')
-      .where('status', '==', 'reviewed')
-      .get()
+    const reviewedSnapshot = await db.collection('requests').where('status', '==', 'reviewed').get()
 
     let opsReviewedCount = 0
     let prepReviewedCount = 0
@@ -701,9 +741,7 @@ export const weeklyApproverDigest = onSchedule(
     const totalReviewedCount = reviewedSnapshot.size
 
     // approved 미정산 건수
-    const approvedSnapshot = await db.collection('requests')
-      .where('status', '==', 'approved')
-      .get()
+    const approvedSnapshot = await db.collection('requests').where('status', '==', 'approved').get()
 
     const totalApprovedUnsettledCount = approvedSnapshot.size
 
@@ -754,7 +792,7 @@ export const weeklyApproverDigest = onSchedule(
           from: `지불/환불 시스템 <${gmailUser.value()}>`,
           to: email,
           subject,
-          html,
+          html
         })
         console.log(`Weekly digest sent to ${email}: ${totalCount} items`)
       } catch (error) {
@@ -771,11 +809,11 @@ export const aiChat = onCall(
   {
     timeoutSeconds: 120,
     memory: '512MiB',
-    secrets: [openaiApiKey, anthropicApiKey],
+    secrets: [openaiApiKey, anthropicApiKey]
   },
   (request) =>
     handleChat(request, {
       openaiApiKey: openaiApiKey.value(),
-      anthropicApiKey: anthropicApiKey.value(),
-    }),
+      anthropicApiKey: anthropicApiKey.value()
+    })
 )

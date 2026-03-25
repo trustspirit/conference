@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react'
 import {
   AreaChart,
   Area,
@@ -6,89 +6,89 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { useTranslation } from "react-i18next";
+  ResponsiveContainer
+} from 'recharts'
+import { useTranslation } from 'react-i18next'
 
-type TrendMode = "monthly" | "daily";
+type TrendMode = 'monthly' | 'daily'
 
 interface Props {
-  requests: { date: string; totalAmount: number }[];
+  requests: { date: string; totalAmount: number }[]
 }
 
 export default function MonthlyTrendChart({ requests }: Props) {
-  const { t, i18n } = useTranslation();
-  const [mode, setMode] = useState<TrendMode>("daily");
+  const { t, i18n } = useTranslation()
+  const [mode, setMode] = useState<TrendMode>('daily')
 
   const monthlyData = useMemo(() => {
-    const now = new Date();
+    const now = new Date()
     const months: {
-      key: string;
-      label: string;
-      count: number;
-      amount: number;
-    }[] = [];
+      key: string
+      label: string
+      count: number
+      amount: number
+    }[] = []
 
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const label = d.toLocaleDateString(i18n.language, { month: "short" });
-      months.push({ key, label, count: 0, amount: 0 });
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const label = d.toLocaleDateString(i18n.language, { month: 'short' })
+      months.push({ key, label, count: 0, amount: 0 })
     }
 
     requests.forEach((r) => {
-      if (!r.date) return;
-      const key = r.date.substring(0, 7);
-      const entry = months.find((m) => m.key === key);
+      if (!r.date) return
+      const key = r.date.substring(0, 7)
+      const entry = months.find((m) => m.key === key)
       if (entry) {
-        entry.count++;
-        entry.amount += r.totalAmount;
+        entry.count++
+        entry.amount += r.totalAmount
       }
-    });
+    })
 
-    return months;
-  }, [requests, i18n.language]);
+    return months
+  }, [requests, i18n.language])
 
   const dailyData = useMemo(() => {
     const days: {
-      key: string;
-      label: string;
-      count: number;
-      amount: number;
-    }[] = [];
+      key: string
+      label: string
+      count: number
+      amount: number
+    }[] = []
 
-    const now = new Date();
+    const now = new Date()
     for (let i = 13; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const label = `${d.getMonth() + 1}/${d.getDate()}`;
-      days.push({ key, label, count: 0, amount: 0 });
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const label = `${d.getMonth() + 1}/${d.getDate()}`
+      days.push({ key, label, count: 0, amount: 0 })
     }
 
     requests.forEach((r) => {
-      if (!r.date) return;
-      const entry = days.find((d) => d.key === r.date);
+      if (!r.date) return
+      const entry = days.find((d) => d.key === r.date)
       if (entry) {
-        entry.count++;
-        entry.amount += r.totalAmount;
+        entry.count++
+        entry.amount += r.totalAmount
       }
-    });
+    })
 
-    return days;
-  }, [requests]);
+    return days
+  }, [requests])
 
-  const data = mode === "monthly" ? monthlyData : dailyData;
-  const hasData = data.some((d) => d.count > 0);
+  const data = mode === 'monthly' ? monthlyData : dailyData
+  const hasData = data.some((d) => d.count > 0)
 
   if (!hasData) {
     return (
       <>
         <ModeToggle mode={mode} setMode={setMode} t={t} />
         <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
-          {t("common.noData")}
+          {t('common.noData')}
         </div>
       </>
-    );
+    )
   }
 
   return (
@@ -111,39 +111,30 @@ export default function MonthlyTrendChart({ requests }: Props) {
             <XAxis
               dataKey="label"
               tick={{ fontSize: 11 }}
-              interval={mode === "daily" ? 1 : 0}
-              angle={mode === "daily" ? -45 : 0}
-              textAnchor={mode === "daily" ? "end" : "middle"}
-              height={mode === "daily" ? 45 : 30}
+              interval={mode === 'daily' ? 1 : 0}
+              angle={mode === 'daily' ? -45 : 0}
+              textAnchor={mode === 'daily' ? 'end' : 'middle'}
+              height={mode === 'daily' ? 45 : 30}
             />
-            <YAxis
-              yAxisId="left"
-              tick={{ fontSize: 12 }}
-              allowDecimals={false}
-            />
+            <YAxis yAxisId="left" tick={{ fontSize: 12 }} allowDecimals={false} />
             <YAxis
               yAxisId="right"
               orientation="right"
               tick={{ fontSize: 12 }}
               tickFormatter={(v: number) => {
-                const isKo = i18n.language === "ko";
-                if (v >= 100000000) return `${(v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1)}${isKo ? "억" : "B"}`;
-                if (v >= 10000) return `${(v / 10000).toFixed(0)}${isKo ? "만" : "k"}`;
-                return v.toLocaleString();
+                const isKo = i18n.language === 'ko'
+                if (v >= 100000000)
+                  return `${(v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1)}${isKo ? '억' : 'B'}`
+                if (v >= 10000) return `${(v / 10000).toFixed(0)}${isKo ? '만' : 'k'}`
+                return v.toLocaleString()
               }}
             />
             <Tooltip
               formatter={(value, name) => {
-                const v = Number(value) || 0;
-                if (name === "count")
-                  return [
-                    t("form.itemCount", { count: v }),
-                    t("dashboard.requestCount"),
-                  ];
-                return [
-                  `\u20A9${v.toLocaleString()}`,
-                  t("dashboard.requestAmount"),
-                ];
+                const v = Number(value) || 0
+                if (name === 'count')
+                  return [t('form.itemCount', { count: v }), t('dashboard.requestCount')]
+                return [`\u20A9${v.toLocaleString()}`, t('dashboard.requestAmount')]
               }}
             />
             <Area
@@ -170,50 +161,50 @@ export default function MonthlyTrendChart({ requests }: Props) {
       <div className="flex justify-center gap-4 mt-2">
         <div className="flex items-center gap-1.5 text-xs">
           <span className="w-3 h-0.5 bg-blue-500 rounded" />
-          <span className="text-gray-600">{t("dashboard.requestCount")}</span>
+          <span className="text-gray-600">{t('dashboard.requestCount')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
           <span className="w-3 h-0.5 bg-emerald-500 rounded" />
-          <span className="text-gray-600">{t("dashboard.requestAmount")}</span>
+          <span className="text-gray-600">{t('dashboard.requestAmount')}</span>
         </div>
       </div>
     </>
-  );
+  )
 }
 
 function ModeToggle({
   mode,
   setMode,
-  t,
+  t
 }: {
-  mode: TrendMode;
-  setMode: (m: TrendMode) => void;
-  t: (key: string) => string;
+  mode: TrendMode
+  setMode: (m: TrendMode) => void
+  t: (key: string) => string
 }) {
   return (
     <div className="flex justify-end mb-2">
       <div className="inline-flex rounded-md bg-gray-100 p-0.5">
         <button
-          onClick={() => setMode("daily")}
+          onClick={() => setMode('daily')}
           className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-            mode === "daily"
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+            mode === 'daily'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          {t("dashboard.dailyTrend")}
+          {t('dashboard.dailyTrend')}
         </button>
         <button
-          onClick={() => setMode("monthly")}
+          onClick={() => setMode('monthly')}
           className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-            mode === "monthly"
-              ? "bg-white text-blue-600 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+            mode === 'monthly'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          {t("dashboard.monthlyTrend")}
+          {t('dashboard.monthlyTrend')}
         </button>
       </div>
     </div>
-  );
+  )
 }

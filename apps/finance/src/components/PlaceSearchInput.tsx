@@ -79,7 +79,7 @@ export default function PlaceSearchInput({ label, value, coord, onChange, placeh
               placeName: item.place_name,
               addressName: item.road_address_name || item.address_name,
               lat: parseFloat(item.y),
-              lng: parseFloat(item.x),
+              lng: parseFloat(item.x)
             }))
           )
           setShowDropdown(true)
@@ -113,7 +113,7 @@ export default function PlaceSearchInput({ label, value, coord, onChange, placeh
       lat: result.lat,
       lng: result.lng,
       placeName: result.placeName,
-      addressName: result.addressName,
+      addressName: result.addressName
     }
     setQuery(result.placeName)
     setShowDropdown(false)
@@ -162,12 +162,12 @@ export default function PlaceSearchInput({ label, value, coord, onChange, placeh
         placeholder={placeholder || t('field.placeSearchPlaceholder')}
         value={query}
         onChange={handleInputChange}
-        onFocus={() => { if (results.length > 0) setShowDropdown(true) }}
+        onFocus={() => {
+          if (results.length > 0) setShowDropdown(true)
+        }}
         fullWidth
       />
-      {coord && (
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{coord.addressName}</p>
-      )}
+      {coord && <p className="text-xs text-gray-400 mt-0.5 truncate">{coord.addressName}</p>}
       {showDropdown && (
         <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {results.map((r, i) => (

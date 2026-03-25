@@ -14,7 +14,7 @@ function AdminNavbar(): React.ReactElement {
 
   const links = [
     { path: '/admin', label: t('survey.title') },
-    { path: '/admin/admins', label: t('admin.manageAdmins') },
+    { path: '/admin/admins', label: t('admin.manageAdmins') }
   ]
 
   return (
@@ -49,7 +49,9 @@ function AdminNavbar(): React.ReactElement {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400 hidden sm:inline">{user?.email}</span>
-          <Button variant="ghost" size="sm" onClick={() => signOut()}>{t('common.signOut')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => signOut()}>
+            {t('common.signOut')}
+          </Button>
         </div>
       </div>
     </nav>

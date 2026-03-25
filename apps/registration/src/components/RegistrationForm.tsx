@@ -10,7 +10,12 @@ interface RegistrationFormProps {
   submitLabel: string
 }
 
-function RegistrationForm({ initialData, onSubmit, isLoading, submitLabel }: RegistrationFormProps): React.ReactElement {
+function RegistrationForm({
+  initialData,
+  onSubmit,
+  isLoading,
+  submitLabel
+}: RegistrationFormProps): React.ReactElement {
   const { t } = useTranslation()
   const [form, setForm] = useState<RegistrationData>({
     name: initialData?.name || '',
@@ -34,7 +39,7 @@ function RegistrationForm({ initialData, onSubmit, isLoading, submitLabel }: Reg
   const genderOptions = [
     { value: '', label: t('register.form.genderSelect') },
     { value: 'male', label: t('register.form.genderMale') },
-    { value: 'female', label: t('register.form.genderFemale') },
+    { value: 'female', label: t('register.form.genderFemale') }
   ]
 
   return (
@@ -65,7 +70,9 @@ function RegistrationForm({ initialData, onSubmit, isLoading, submitLabel }: Reg
       />
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('register.form.gender')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('register.form.gender')}
+          </label>
           <Select
             options={genderOptions}
             value={form.gender}
@@ -99,7 +106,12 @@ function RegistrationForm({ initialData, onSubmit, isLoading, submitLabel }: Reg
           fullWidth
         />
       </div>
-      <Button type="submit" fullWidth disabled={isLoading || !form.name || !form.email} loading={isLoading}>
+      <Button
+        type="submit"
+        fullWidth
+        disabled={isLoading || !form.name || !form.email}
+        loading={isLoading}
+      >
         {isLoading ? t('register.submitting') : submitLabel}
       </Button>
     </form>

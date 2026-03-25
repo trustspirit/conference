@@ -12,14 +12,18 @@ export function GroupsTab() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const { displayedItems: groups, isLoading, hasMore, loadMore } =
-    useBatchedInfiniteScrollWithRealtime<Group>({
-      fetchBatchSize: 1000,
-      displayBatchSize: 100,
-      fetchFunction: getGroupsPaginated,
-      getItemId: (group) => group.id,
-      subscribeFunction: (callback) => subscribeToGroups(callback)
-    })
+  const {
+    displayedItems: groups,
+    isLoading,
+    hasMore,
+    loadMore
+  } = useBatchedInfiniteScrollWithRealtime<Group>({
+    fetchBatchSize: 1000,
+    displayBatchSize: 100,
+    fetchFunction: getGroupsPaginated,
+    getItemId: (group) => group.id,
+    subscribeFunction: (callback) => subscribeToGroups(callback)
+  })
 
   const {
     expandedGroupId,
@@ -42,7 +46,9 @@ export function GroupsTab() {
   useEffect(() => {
     if (!loadMoreRef.current || !hasMore || isLoading) return
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore()
+      },
       { threshold: 0.1 }
     )
     observer.observe(loadMoreRef.current)
@@ -92,12 +98,18 @@ export function GroupsTab() {
                           <Tooltip
                             content={
                               <div>
-                                <div className="font-semibold mb-1">{t('common.membersTitle')}:</div>
+                                <div className="font-semibold mb-1">
+                                  {t('common.membersTitle')}:
+                                </div>
                                 {members.slice(0, 5).map((m) => (
-                                  <div key={m.id} className="truncate">{m.name}</div>
+                                  <div key={m.id} className="truncate">
+                                    {m.name}
+                                  </div>
                                 ))}
                                 {members.length > 5 && (
-                                  <div className="text-gray-400 mt-1">+{members.length - 5} {t('common.more')}</div>
+                                  <div className="text-gray-400 mt-1">
+                                    +{members.length - 5} {t('common.more')}
+                                  </div>
                                 )}
                               </div>
                             }

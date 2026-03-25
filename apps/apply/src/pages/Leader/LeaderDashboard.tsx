@@ -1,7 +1,16 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts'
 import { useApplications } from '../../hooks/queries/useApplications'
 import { useMyRecommendations } from '../../hooks/queries/useRecommendations'
 import PageLoader from '../../components/PageLoader'
@@ -9,11 +18,24 @@ import SummaryCard from '../../components/SummaryCard'
 import { Button } from 'trust-ui-react'
 import { ROUTES } from '../../utils/constants'
 
-const POSITION_COLORS = ['#6366f1', '#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b']
+const POSITION_COLORS = [
+  '#6366f1',
+  '#0ea5e9',
+  '#14b8a6',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#ec4899',
+  '#64748b'
+]
 
 function isToday(date: Date): boolean {
   const now = new Date()
-  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  )
 }
 
 export default function LeaderDashboard() {
@@ -34,11 +56,14 @@ export default function LeaderDashboard() {
       rejected: recs.filter((r) => r.status === 'rejected').length,
       applicationsInStake: apps.length,
       newRecsToday: recs.filter((r) => r.createdAt && isToday(r.createdAt)).length,
-      newAppsToday: apps.filter((a) => a.createdAt && isToday(a.createdAt)).length,
+      newAppsToday: apps.filter((a) => a.createdAt && isToday(a.createdAt)).length
     }
   }, [recommendations, applications])
 
-  const allItems = useMemo(() => [...(applications || []), ...(recommendations || [])], [applications, recommendations])
+  const allItems = useMemo(
+    () => [...(applications || []), ...(recommendations || [])],
+    [applications, recommendations]
+  )
   const positionNames = useMemo(() => {
     const set = new Set<string>()
     allItems.forEach((it) => set.add(it.positionName || unspecified))
@@ -57,8 +82,14 @@ export default function LeaderDashboard() {
     return Object.entries(map)
       .map(([ward, positions]) => ({ name: ward, ...positions }))
       .sort((a, b) => {
-        const totalA = Object.values(a).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
-        const totalB = Object.values(b).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        const totalA = Object.values(a).reduce<number>(
+          (s, v) => s + (typeof v === 'number' ? v : 0),
+          0
+        )
+        const totalB = Object.values(b).reduce<number>(
+          (s, v) => s + (typeof v === 'number' ? v : 0),
+          0
+        )
         return totalB - totalA
       })
       .slice(0, 10)
@@ -78,8 +109,14 @@ export default function LeaderDashboard() {
     return Object.entries(map)
       .map(([pos, genders]) => ({ name: pos, ...genders }))
       .sort((a, b) => {
-        const totalA = Object.values(a).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
-        const totalB = Object.values(b).reduce<number>((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+        const totalA = Object.values(a).reduce<number>(
+          (s, v) => s + (typeof v === 'number' ? v : 0),
+          0
+        )
+        const totalB = Object.values(b).reduce<number>(
+          (s, v) => s + (typeof v === 'number' ? v : 0),
+          0
+        )
         return totalB - totalA
       })
   }, [allItems, unspecified, t])
@@ -106,8 +143,15 @@ export default function LeaderDashboard() {
     <div className="mx-auto max-w-7xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('leader.dashboard.title', '리더 대시보드')}</h1>
-          <p className="text-sm text-gray-500">{t('leader.dashboard.subtitle', '추천서를 모니터링하고 지원자가 어디서 오는지 확인하세요.')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('leader.dashboard.title', '리더 대시보드')}
+          </h1>
+          <p className="text-sm text-gray-500">
+            {t(
+              'leader.dashboard.subtitle',
+              '추천서를 모니터링하고 지원자가 어디서 오는지 확인하세요.'
+            )}
+          </p>
         </div>
         <Button variant="primary" onClick={() => navigate(ROUTES.LEADER_RECOMMENDATIONS)}>
           {t('leader.dashboard.createRecommendation', '추천서 작성')}
@@ -116,20 +160,49 @@ export default function LeaderDashboard() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 mb-8">
-        <SummaryCard label={t('leader.dashboard.stats.draftRecommendations', '초안 추천서')} value={stats.draft} />
-        <SummaryCard label={t('leader.dashboard.stats.awaitingReview', '검토 대기 중')} value={stats.awaiting} color="yellow" />
-        <SummaryCard label={t('leader.dashboard.stats.approved', '승인됨')} value={stats.approved} color="green" />
-        <SummaryCard label={t('leader.dashboard.stats.rejected', '다음 기회에')} value={stats.rejected} color="red" />
-        <SummaryCard label={t('leader.dashboard.stats.applicationsInStake', '스테이크 내 신청서')} value={stats.applicationsInStake} color="blue" />
-        <SummaryCard label={t('leader.dashboard.stats.newRecommendationsToday', '오늘 새 추천서')} value={stats.newRecsToday} color="purple" />
-        <SummaryCard label={t('leader.dashboard.stats.newApplicationsToday', '오늘 새 신청서')} value={stats.newAppsToday} color="purple" />
+        <SummaryCard
+          label={t('leader.dashboard.stats.draftRecommendations', '초안 추천서')}
+          value={stats.draft}
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.awaitingReview', '검토 대기 중')}
+          value={stats.awaiting}
+          color="yellow"
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.approved', '승인됨')}
+          value={stats.approved}
+          color="green"
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.rejected', '다음 기회에')}
+          value={stats.rejected}
+          color="red"
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.applicationsInStake', '스테이크 내 신청서')}
+          value={stats.applicationsInStake}
+          color="blue"
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.newRecommendationsToday', '오늘 새 추천서')}
+          value={stats.newRecsToday}
+          color="purple"
+        />
+        <SummaryCard
+          label={t('leader.dashboard.stats.newApplicationsToday', '오늘 새 신청서')}
+          value={stats.newAppsToday}
+          color="purple"
+        />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Position Total */}
         <div className="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.positionDistribution', '포지션별 추천 현황')}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            {t('leader.dashboard.charts.positionDistribution', '포지션별 추천 현황')}
+          </h3>
           {positionData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={positionData}>
@@ -137,17 +210,26 @@ export default function LeaderDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" name={t('leader.dashboard.charts.recommendations', '추천 수')} radius={[4, 4, 0, 0]} fill="#6366f1" />
+                <Bar
+                  dataKey="value"
+                  name={t('leader.dashboard.charts.recommendations', '추천 수')}
+                  radius={[4, 4, 0, 0]}
+                  fill="#6366f1"
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+            <p className="text-sm text-gray-400 text-center py-10">
+              {t('leader.dashboard.charts.noData', 'No data')}
+            </p>
           )}
         </div>
 
         {/* Gender by Position (stacked) */}
         <div className="rounded-xl bg-white border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.genderByPosition', '포지션별 성별 분포')}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            {t('leader.dashboard.charts.genderByPosition', '포지션별 성별 분포')}
+          </h3>
           {genderByPosition.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={genderByPosition}>
@@ -161,18 +243,29 @@ export default function LeaderDashboard() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+            <p className="text-sm text-gray-400 text-center py-10">
+              {t('leader.dashboard.charts.noData', 'No data')}
+            </p>
           )}
         </div>
 
         {/* Ward/Stake by Position (stacked) */}
         <div className="rounded-xl bg-white border border-gray-200 p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t('leader.dashboard.charts.stakeByPosition', '와드별 포지션 분포')}</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            {t('leader.dashboard.charts.stakeByPosition', '와드별 포지션 분포')}
+          </h3>
           {stakeByPosition.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={stakeByPosition}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={60} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10 }}
+                  interval={0}
+                  angle={-20}
+                  textAnchor="end"
+                  height={60}
+                />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
@@ -188,7 +281,9 @@ export default function LeaderDashboard() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-10">{t('leader.dashboard.charts.noData', 'No data')}</p>
+            <p className="text-sm text-gray-400 text-center py-10">
+              {t('leader.dashboard.charts.noData', 'No data')}
+            </p>
           )}
         </div>
       </div>

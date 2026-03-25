@@ -37,5 +37,5 @@ export const BUDGET_CODES: BudgetCodeOption[] = [
   { code: 5110, category: 'Administration', descKey: 'meetingLodging' },
   { code: 5400, category: 'Administration', descKey: 'otherPreparation' },
   { code: 5400, category: 'Administration', descKey: 'otherAdmin' },
-  { code: 4500, category: 'Other', descKey: 'participationFee' },
+  { code: 4500, category: 'Other', descKey: 'participationFee' }
 ]

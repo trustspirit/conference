@@ -10,10 +10,23 @@ interface ParticipantFieldPickerProps {
 }
 
 const ALL_PARTICIPANT_FIELDS: ParticipantFieldKey[] = [
-  'name', 'email', 'phoneNumber', 'gender', 'age', 'birthDate', 'stake', 'ward', 'isPaid', 'memo'
+  'name',
+  'email',
+  'phoneNumber',
+  'gender',
+  'age',
+  'birthDate',
+  'stake',
+  'ward',
+  'isPaid',
+  'memo'
 ]
 
-function ParticipantFieldPicker({ value, onChange, usedFields }: ParticipantFieldPickerProps): React.ReactElement {
+function ParticipantFieldPicker({
+  value,
+  onChange,
+  usedFields
+}: ParticipantFieldPickerProps): React.ReactElement {
   const { t } = useTranslation()
 
   const options = [
@@ -21,13 +34,15 @@ function ParticipantFieldPicker({ value, onChange, usedFields }: ParticipantFiel
     ...ALL_PARTICIPANT_FIELDS.map((field) => ({
       value: field,
       label: t(`builder.participantFields.${field}`),
-      disabled: usedFields.includes(field) && field !== value,
-    })),
+      disabled: usedFields.includes(field) && field !== value
+    }))
   ]
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.participantField')}</label>
+      <label className="block text-xs font-medium text-gray-600 mb-1">
+        {t('builder.participantField')}
+      </label>
       <Select
         options={options}
         value={value || ''}

@@ -53,11 +53,11 @@ export interface SurveyField {
   description?: string
   required: boolean
   width?: FieldWidth
-  group?: string                            // same group → same row
+  group?: string // same group → same row
   inputType?: 'text' | 'number' | 'email' | 'tel'
   participantField?: ParticipantFieldKey
   options?: string[]
-  dependsOn?: string                          // field id this field depends on
+  dependsOn?: string // field id this field depends on
   conditionalOptions?: Record<string, string[]> // parent value → options
   linearScale?: LinearScaleConfig
   grid?: GridConfig
@@ -67,8 +67,8 @@ export interface SurveyField {
 // --- Survey Theme ---
 
 export interface SurveyTheme {
-  primaryColor?: string    // hex, e.g. "#2563eb"
-  headerImageUrl?: string  // URL
+  primaryColor?: string // hex, e.g. "#2563eb"
+  headerImageUrl?: string // URL
 }
 
 // --- Survey ---

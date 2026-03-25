@@ -5,10 +5,14 @@ import {
   useCreateRecommendation,
   useUpdateRecommendation,
   useDeleteRecommendation,
-  useUpdateRecommendationStatus,
+  useUpdateRecommendationStatus
 } from '../../hooks/queries/useRecommendations'
 import { usePositions } from '../../hooks/queries/usePositions'
-import { useRecommendationComments, useCreateComment, useDeleteComment } from '../../hooks/queries/useRecommendationComments'
+import {
+  useRecommendationComments,
+  useCreateComment,
+  useDeleteComment
+} from '../../hooks/queries/useRecommendationComments'
 import { useToast, TextField, Select, Switch, Tabs, Badge, Button, Dialog } from 'trust-ui-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useConference } from '../../contexts/ConferenceContext'
@@ -22,13 +26,16 @@ import EligibilityNotice from '../../components/EligibilityNotice'
 import { RECOMMENDATION_TABS, STATUS_TONES } from '../../utils/constants'
 import type { Gender, RecommendationStatus, LeaderRecommendation } from '../../types'
 
-const TONE_TO_BADGE: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+const TONE_TO_BADGE: Record<
+  string,
+  'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'
+> = {
   draft: 'secondary',
   awaiting: 'warning',
   approved: 'success',
   rejected: 'danger',
   submitted: 'info',
-  pending: 'warning',
+  pending: 'warning'
 }
 
 export default function LeaderRecommendations() {
@@ -47,7 +54,10 @@ export default function LeaderRecommendations() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [drawerMode, setDrawerMode] = useState<'view' | 'form' | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string }>({ open: false, id: '' })
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string }>({
+    open: false,
+    id: ''
+  })
 
   // Form state
   const [formName, setFormName] = useState('')
@@ -63,12 +73,12 @@ export default function LeaderRecommendations() {
 
   const selectedPosition = useMemo(
     () => positions.find((p) => p.id === formPositionId) ?? null,
-    [positions, formPositionId],
+    [positions, formPositionId]
   )
 
   const positionOptions = useMemo(
     () => positions.map((p) => ({ value: p.id, label: p.name })),
-    [positions],
+    [positions]
   )
 
   const selected = selectedId ? recommendations?.find((r) => r.id === selectedId) || null : null
@@ -86,7 +96,7 @@ export default function LeaderRecommendations() {
       draft: recs.filter((r) => r.status === 'draft').length,
       submitted: recs.filter((r) => r.status === 'submitted').length,
       approved: recs.filter((r) => r.status === 'approved').length,
-      rejected: recs.filter((r) => r.status === 'rejected').length,
+      rejected: recs.filter((r) => r.status === 'rejected').length
     }
   }, [recommendations])
 
@@ -149,7 +159,7 @@ export default function LeaderRecommendations() {
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
       positionId: formPositionId || undefined,
-      positionName: selectedPosition?.name || undefined,
+      positionName: selectedPosition?.name || undefined
     }
     try {
       if (editingId) {
@@ -176,18 +186,25 @@ export default function LeaderRecommendations() {
       moreInfo: formMoreInfo,
       servedMission: formServedMission,
       positionId: formPositionId || undefined,
-      positionName: selectedPosition?.name || undefined,
+      positionName: selectedPosition?.name || undefined
     }
     try {
       if (editingId) {
-        await updateRec.mutateAsync({ id: editingId, ...data, status: 'submitted' as RecommendationStatus })
+        await updateRec.mutateAsync({
+          id: editingId,
+          ...data,
+          status: 'submitted' as RecommendationStatus
+        })
       } else {
         await createRec.mutateAsync({ ...data, status: 'submitted' as RecommendationStatus })
       }
       toast({ variant: 'success', message: t('leader.recommendations.form.messages.submitted') })
       closeDrawer()
     } catch {
-      toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToSubmit') })
+      toast({
+        variant: 'danger',
+        message: t('leader.recommendations.form.messages.failedToSubmit')
+      })
     }
   }
 
@@ -204,7 +221,8 @@ export default function LeaderRecommendations() {
         if (selectedId === id) setSelectedId(null)
         closeDrawer()
       },
-      onError: () => toast({ variant: 'danger', message: t('leader.recommendations.messages.failedToDelete') }),
+      onError: () =>
+        toast({ variant: 'danger', message: t('leader.recommendations.messages.failedToDelete') })
     })
   }
 
@@ -216,11 +234,12 @@ export default function LeaderRecommendations() {
     return !!rec.linkedApplicationId
   }
 
-  const isLocked = (rec: LeaderRecommendation) => rec.status === 'approved' || rec.status === 'rejected'
+  const isLocked = (rec: LeaderRecommendation) =>
+    rec.status === 'approved' || rec.status === 'rejected'
 
   const genderOptions = [
     { value: 'male', label: t('leader.recommendations.form.genderMale', '형제') },
-    { value: 'female', label: t('leader.recommendations.form.genderFemale', '자매') },
+    { value: 'female', label: t('leader.recommendations.form.genderFemale', '자매') }
   ]
 
   if (isLoading) {
@@ -234,7 +253,9 @@ export default function LeaderRecommendations() {
   if (!currentConference) {
     return (
       <div className="mx-auto max-w-7xl p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('leader.recommendations.title', '추천서')}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {t('leader.recommendations.title', '추천서')}
+        </h1>
         <Alert variant="warning">
           {t('conference.noConference', '선택된 대회가 없습니다. 상단에서 대회를 선택해주세요.')}
         </Alert>
@@ -246,27 +267,51 @@ export default function LeaderRecommendations() {
     <div className="mx-auto max-w-7xl p-6">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('leader.recommendations.title', '추천서')}</h1>
-          <p className="text-sm text-gray-500">{t('leader.recommendations.subtitle', '초안 및 제출된 추천서를 관리하세요.')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('leader.recommendations.title', '추천서')}
+          </h1>
+          <p className="text-sm text-gray-500">
+            {t('leader.recommendations.subtitle', '초안 및 제출된 추천서를 관리하세요.')}
+          </p>
         </div>
-        <Button variant={drawerMode === 'form' ? 'outline' : 'primary'} onClick={() => drawerMode === 'form' ? closeDrawer() : openNewForm()}>
-          {drawerMode === 'form' ? t('common.cancel', '취소') : t('leader.recommendations.createRecommendation', '추천서 작성')}
+        <Button
+          variant={drawerMode === 'form' ? 'outline' : 'primary'}
+          onClick={() => (drawerMode === 'form' ? closeDrawer() : openNewForm())}
+        >
+          {drawerMode === 'form'
+            ? t('common.cancel', '취소')
+            : t('leader.recommendations.createRecommendation', '추천서 작성')}
         </Button>
       </div>
 
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
-          <Tabs.Trigger value={RECOMMENDATION_TABS.ALL}>{t('leader.recommendations.tabs.all', '전체')} ({tabCounts.all})</Tabs.Trigger>
-          <Tabs.Trigger value={RECOMMENDATION_TABS.DRAFT}>{t('leader.recommendations.tabs.draft', '초안')} ({tabCounts.draft})</Tabs.Trigger>
-          <Tabs.Trigger value={RECOMMENDATION_TABS.SUBMITTED}>{t('leader.recommendations.tabs.submitted', '검토 대기 중')} ({tabCounts.submitted})</Tabs.Trigger>
-          <Tabs.Trigger value={RECOMMENDATION_TABS.APPROVED}>{t('leader.recommendations.tabs.approved', '승인됨')} ({tabCounts.approved})</Tabs.Trigger>
-          <Tabs.Trigger value={RECOMMENDATION_TABS.REJECTED}>{t('leader.recommendations.tabs.rejected', '다음 기회에')} ({tabCounts.rejected})</Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.ALL}>
+            {t('leader.recommendations.tabs.all', '전체')} ({tabCounts.all})
+          </Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.DRAFT}>
+            {t('leader.recommendations.tabs.draft', '초안')} ({tabCounts.draft})
+          </Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.SUBMITTED}>
+            {t('leader.recommendations.tabs.submitted', '검토 대기 중')} ({tabCounts.submitted})
+          </Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.APPROVED}>
+            {t('leader.recommendations.tabs.approved', '승인됨')} ({tabCounts.approved})
+          </Tabs.Trigger>
+          <Tabs.Trigger value={RECOMMENDATION_TABS.REJECTED}>
+            {t('leader.recommendations.tabs.rejected', '다음 기회에')} ({tabCounts.rejected})
+          </Tabs.Trigger>
         </Tabs.List>
       </Tabs>
 
-      <div style={{ marginTop: '1rem', maxHeight: '70vh', overflowY: 'auto' }} className="space-y-2">
+      <div
+        style={{ marginTop: '1rem', maxHeight: '70vh', overflowY: 'auto' }}
+        className="space-y-2"
+      >
         {filteredRecs.length === 0 ? (
-          <EmptyState message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')} />
+          <EmptyState
+            message={t('leader.recommendations.empty', '이 보기에 추천서가 아직 없습니다.')}
+          />
         ) : (
           filteredRecs.map((rec) => (
             <button
@@ -281,16 +326,30 @@ export default function LeaderRecommendations() {
                 backgroundColor: selectedId === rec.id ? '#eff6ff' : '#fff',
                 cursor: 'pointer',
                 display: 'block',
-                transition: 'border-color 0.15s',
+                transition: 'border-color 0.15s'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>{rec.name}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.25rem'
+                }}
+              >
+                <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#111827' }}>
+                  {rec.name}
+                </span>
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
                   {hasLinkedApplication(rec) && (
-                    <Badge variant="info" size="sm">{t('leader.recommendations.tags.applied', '신청됨')}</Badge>
+                    <Badge variant="info" size="sm">
+                      {t('leader.recommendations.tags.applied', '신청됨')}
+                    </Badge>
                   )}
-                  <Badge variant={TONE_TO_BADGE[STATUS_TONES[rec.status] || 'draft'] || 'secondary'} size="sm">
+                  <Badge
+                    variant={TONE_TO_BADGE[STATUS_TONES[rec.status] || 'draft'] || 'secondary'}
+                    size="sm"
+                  >
                     {t(`status.${rec.status}`, rec.status)}
                   </Badge>
                 </div>
@@ -309,7 +368,9 @@ export default function LeaderRecommendations() {
           <>
             <Drawer.Header onClose={closeDrawer}>
               <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>
-                {editingId ? t('leader.recommendations.form.editTitle', '추천서 수정') : t('leader.recommendations.createRecommendation', '추천서 작성')}
+                {editingId
+                  ? t('leader.recommendations.form.editTitle', '추천서 수정')
+                  : t('leader.recommendations.createRecommendation', '추천서 작성')}
               </h2>
             </Drawer.Header>
             <Drawer.Content>
@@ -321,7 +382,7 @@ export default function LeaderRecommendations() {
                     padding: '0.625rem 0.75rem',
                     borderRadius: '0.5rem',
                     backgroundColor: '#f9fafb',
-                    border: '1px solid #f3f4f6',
+                    border: '1px solid #f3f4f6'
                   }}
                 >
                   <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.125rem' }}>
@@ -331,8 +392,15 @@ export default function LeaderRecommendations() {
                     {currentConference.name}
                   </p>
                   {currentConference.deadline && (
-                    <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: currentConference.deadline < new Date() ? '#dc2626' : '#6b7280' }}>
-                      {t('application.deadline', '신청 마감일')}: {currentConference.deadline.toLocaleDateString()}
+                    <p
+                      style={{
+                        fontSize: '0.75rem',
+                        marginTop: '0.25rem',
+                        color: currentConference.deadline < new Date() ? '#dc2626' : '#6b7280'
+                      }}
+                    >
+                      {t('application.deadline', '신청 마감일')}:{' '}
+                      {currentConference.deadline.toLocaleDateString()}
                     </p>
                   )}
                 </div>
@@ -347,8 +415,17 @@ export default function LeaderRecommendations() {
               {/* Position Selector */}
               {positions.length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
-                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
-                    {t('position.select', '포지션 선택')} <span style={{ color: '#dc2626' }}>*</span>
+                  <p
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: '#374151',
+                      marginBottom: '0.25rem'
+                    }}
+                  >
+                    {t('position.select', '포지션 선택')}{' '}
+                    <span style={{ color: '#dc2626' }}>*</span>
                   </p>
                   <Select
                     options={positionOptions}
@@ -364,7 +441,10 @@ export default function LeaderRecommendations() {
                   )}
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                style={{ marginBottom: '1rem' }}
+              >
                 <TextField
                   label={`${t('leader.recommendations.form.applicantName', '지원자 이름')} *`}
                   type="text"
@@ -381,7 +461,10 @@ export default function LeaderRecommendations() {
                   fullWidth
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                style={{ marginBottom: '1rem' }}
+              >
                 <TextField
                   label={t('leader.recommendations.form.email', '이메일')}
                   type="email"
@@ -406,9 +489,22 @@ export default function LeaderRecommendations() {
                   onWardChange={setFormWard}
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ marginBottom: '1rem' }}>
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                style={{ marginBottom: '1rem' }}
+              >
                 <div>
-                  <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('leader.recommendations.form.gender', '성별')}</p>
+                  <p
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: '#374151',
+                      marginBottom: '0.25rem'
+                    }}
+                  >
+                    {t('leader.recommendations.form.gender', '성별')}
+                  </p>
                   <Select
                     options={genderOptions}
                     value={formGender}
@@ -441,7 +537,13 @@ export default function LeaderRecommendations() {
                 <Button
                   variant="primary"
                   onClick={handleSubmitRec}
-                  disabled={!formName || !formPhone || (positions.length > 0 && !formPositionId) || createRec.isPending || updateRec.isPending}
+                  disabled={
+                    !formName ||
+                    !formPhone ||
+                    (positions.length > 0 && !formPositionId) ||
+                    createRec.isPending ||
+                    updateRec.isPending
+                  }
                 >
                   {t('leader.recommendations.form.submitRecommendation', '추천서 제출')}
                 </Button>
@@ -458,8 +560,12 @@ export default function LeaderRecommendations() {
         ) : drawerMode === 'view' && selected ? (
           <>
             <Drawer.Header onClose={closeDrawer}>
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>{selected.name}</h2>
-              <Badge variant={TONE_TO_BADGE[STATUS_TONES[selected.status] || 'draft'] || 'secondary'}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', margin: 0 }}>
+                {selected.name}
+              </h2>
+              <Badge
+                variant={TONE_TO_BADGE[STATUS_TONES[selected.status] || 'draft'] || 'secondary'}
+              >
                 {t(`status.${selected.status}`, selected.status)}
               </Badge>
             </Drawer.Header>
@@ -471,7 +577,8 @@ export default function LeaderRecommendations() {
               )}
 
               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '1rem' }}>
-                {t('leader.recommendations.details.updated', '업데이트됨')}: {selected.updatedAt instanceof Date ? selected.updatedAt.toLocaleDateString() : ''}
+                {t('leader.recommendations.details.updated', '업데이트됨')}:{' '}
+                {selected.updatedAt instanceof Date ? selected.updatedAt.toLocaleDateString() : ''}
               </p>
 
               <DetailsGrid
@@ -480,15 +587,28 @@ export default function LeaderRecommendations() {
                   { label: t('common.phone', 'Phone'), value: selected.phone },
                   { label: t('admin.review.age', 'Age'), value: String(selected.age) },
                   { label: t('position.label', '포지션'), value: selected.positionName || '-' },
-                  { label: t('admin.review.gender', 'Gender'), value: t(`gender.${selected.gender}`, selected.gender) },
+                  {
+                    label: t('admin.review.gender', 'Gender'),
+                    value: t(`gender.${selected.gender}`, selected.gender)
+                  },
                   { label: t('common.stake', 'Stake'), value: selected.stake },
                   { label: t('common.ward', 'Ward'), value: selected.ward },
-                  { label: t('leader.recommendations.form.servedMission', 'Mission'), value: selected.servedMission ? t('common.yes') : t('common.no') },
+                  {
+                    label: t('leader.recommendations.form.servedMission', 'Mission'),
+                    value: selected.servedMission ? t('common.yes') : t('common.no')
+                  }
                 ]}
               />
 
               <div style={{ marginTop: '1rem' }}>
-                <p style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 500, marginBottom: '0.25rem' }}>
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#6b7280',
+                    fontWeight: 500,
+                    marginBottom: '0.25rem'
+                  }}
+                >
                   {t('leader.recommendations.details.additionalInfo', '추가 정보')}
                 </p>
                 <p style={{ fontSize: '0.875rem', color: '#111827' }}>
@@ -507,7 +627,13 @@ export default function LeaderRecommendations() {
                       <Button variant="outline" size="sm" onClick={() => openEditForm(selected)}>
                         {t('leader.recommendations.actions.modify', '수정')}
                       </Button>
-                      <Button variant="primary" size="sm" onClick={() => handleStatusChange(selected.id, 'submitted' as RecommendationStatus)}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() =>
+                          handleStatusChange(selected.id, 'submitted' as RecommendationStatus)
+                        }
+                      >
                         {t('leader.recommendations.actions.submit', '제출')}
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => handleDelete(selected.id)}>
@@ -516,7 +642,13 @@ export default function LeaderRecommendations() {
                     </>
                   )}
                   {selected.status === 'submitted' && (
-                    <Button variant="outline" size="sm" onClick={() => handleStatusChange(selected.id, 'draft' as RecommendationStatus)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleStatusChange(selected.id, 'draft' as RecommendationStatus)
+                      }
+                    >
                       {t('leader.recommendations.actions.cancelSubmission', '제출 취소')}
                     </Button>
                   )}
@@ -528,14 +660,24 @@ export default function LeaderRecommendations() {
       </Drawer>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={confirmDelete.open} onClose={() => setConfirmDelete({ open: false, id: '' })} size="sm">
-        <Dialog.Title onClose={() => setConfirmDelete({ open: false, id: '' })}>{t('common.confirm')}</Dialog.Title>
+      <Dialog
+        open={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, id: '' })}
+        size="sm"
+      >
+        <Dialog.Title onClose={() => setConfirmDelete({ open: false, id: '' })}>
+          {t('common.confirm')}
+        </Dialog.Title>
         <Dialog.Content>
           <p style={{ fontSize: '0.875rem', color: '#374151' }}>{t('common.confirmDelete')}</p>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={() => setConfirmDelete({ open: false, id: '' })}>{t('common.cancel', '취소')}</Button>
-          <Button variant="danger" onClick={executeDelete}>{t('common.delete', '삭제')}</Button>
+          <Button variant="outline" onClick={() => setConfirmDelete({ open: false, id: '' })}>
+            {t('common.cancel', '취소')}
+          </Button>
+          <Button variant="danger" onClick={executeDelete}>
+            {t('common.delete', '삭제')}
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </div>
@@ -550,7 +692,10 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
   const createComment = useCreateComment()
   const deleteComment = useDeleteComment()
   const [newComment, setNewComment] = useState('')
-  const [confirmDeleteComment, setConfirmDeleteComment] = useState<{ open: boolean; id: string }>({ open: false, id: '' })
+  const [confirmDeleteComment, setConfirmDeleteComment] = useState<{ open: boolean; id: string }>({
+    open: false,
+    id: ''
+  })
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return
@@ -558,7 +703,10 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
       await createComment.mutateAsync({ recommendationId, content: newComment.trim() })
       setNewComment('')
     } catch {
-      toast({ variant: 'danger', message: t('leader.recommendations.form.messages.failedToAddComment') })
+      toast({
+        variant: 'danger',
+        message: t('leader.recommendations.form.messages.failedToAddComment')
+      })
     }
   }
 
@@ -573,7 +721,9 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
 
   return (
     <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-      <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}>
+      <h3
+        style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.75rem' }}
+      >
         {t('leader.recommendations.actions.viewComments', '지도자 코멘트')}
       </h3>
 
@@ -584,7 +734,9 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={t('leader.recommendations.form.leaderCommentPlaceholder')}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment() }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAddComment()
+          }}
           fullWidth
         />
         <Button
@@ -608,18 +760,29 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
                 padding: '0.5rem 0.75rem',
                 borderRadius: '0.5rem',
                 backgroundColor: '#f9fafb',
-                border: '1px solid #f3f4f6',
+                border: '1px solid #f3f4f6'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#374151' }}>{c.authorName}</span>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.25rem'
+                }}
+              >
+                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#374151' }}>
+                  {c.authorName}
+                </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
                     {c.createdAt instanceof Date ? c.createdAt.toLocaleDateString() : ''}
                   </span>
                   {c.authorId === appUser?.uid && (
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(c.id)}>
-                      <span className="text-red-600" style={{ fontSize: '0.75rem' }}>{t('common.delete', '삭제')}</span>
+                      <span className="text-red-600" style={{ fontSize: '0.75rem' }}>
+                        {t('common.delete', '삭제')}
+                      </span>
                     </Button>
                   )}
                 </div>
@@ -633,14 +796,29 @@ function CommentsSection({ recommendationId }: { recommendationId: string }) {
       )}
 
       {/* Delete Comment Confirmation Dialog */}
-      <Dialog open={confirmDeleteComment.open} onClose={() => setConfirmDeleteComment({ open: false, id: '' })} size="sm">
-        <Dialog.Title onClose={() => setConfirmDeleteComment({ open: false, id: '' })}>{t('common.confirm')}</Dialog.Title>
+      <Dialog
+        open={confirmDeleteComment.open}
+        onClose={() => setConfirmDeleteComment({ open: false, id: '' })}
+        size="sm"
+      >
+        <Dialog.Title onClose={() => setConfirmDeleteComment({ open: false, id: '' })}>
+          {t('common.confirm')}
+        </Dialog.Title>
         <Dialog.Content>
-          <p style={{ fontSize: '0.875rem', color: '#374151' }}>{t('leader.recommendations.form.messages.confirmDeleteComment')}</p>
+          <p style={{ fontSize: '0.875rem', color: '#374151' }}>
+            {t('leader.recommendations.form.messages.confirmDeleteComment')}
+          </p>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={() => setConfirmDeleteComment({ open: false, id: '' })}>{t('common.cancel', '취소')}</Button>
-          <Button variant="danger" onClick={executeDeleteComment}>{t('common.delete', '삭제')}</Button>
+          <Button
+            variant="outline"
+            onClick={() => setConfirmDeleteComment({ open: false, id: '' })}
+          >
+            {t('common.cancel', '취소')}
+          </Button>
+          <Button variant="danger" onClick={executeDeleteComment}>
+            {t('common.delete', '삭제')}
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </div>

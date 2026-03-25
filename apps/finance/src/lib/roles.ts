@@ -22,7 +22,15 @@ export function canReviewCommittee(role: UserRole, committee: Committee): boolea
 
 /** Can final-approve requests (reviewed->approved) */
 export function canFinalApprove(role: UserRole): boolean {
-  return ['approver_ops', 'approver_prep', 'session_director', 'logistic_admin', 'executive', 'admin', 'super_admin'].includes(role)
+  return [
+    'approver_ops',
+    'approver_prep',
+    'session_director',
+    'logistic_admin',
+    'executive',
+    'admin',
+    'super_admin'
+  ].includes(role)
 }
 
 /** Can final-approve a specific committee's requests (ignoring amount) */
@@ -36,10 +44,20 @@ export function canFinalApproveCommittee(role: UserRole, committee: Committee): 
 }
 
 /** Can final-approve a specific request considering both committee and amount */
-export function canFinalApproveRequest(role: UserRole, committee: Committee, amount: number, threshold = DEFAULT_APPROVAL_THRESHOLD): boolean {
+export function canFinalApproveRequest(
+  role: UserRole,
+  committee: Committee,
+  amount: number,
+  threshold = DEFAULT_APPROVAL_THRESHOLD
+): boolean {
   if (!canFinalApproveCommittee(role, committee)) return false
   if (threshold > 0 && amount > threshold) {
-    return isAdmin(role) || role === 'executive' || role === 'session_director' || role === 'logistic_admin'
+    return (
+      isAdmin(role) ||
+      role === 'executive' ||
+      role === 'session_director' ||
+      role === 'logistic_admin'
+    )
   }
   return true
 }
@@ -61,7 +79,13 @@ export function canSeeCommitteeRequests(role: UserRole, committee: Committee): b
 
 /** Can access dashboard and budget settings */
 export function canAccessDashboard(role: UserRole): boolean {
-  return isAdmin(role) || role === 'finance_prep' || role === 'executive' || role === 'session_director' || role === 'logistic_admin'
+  return (
+    isAdmin(role) ||
+    role === 'finance_prep' ||
+    role === 'executive' ||
+    role === 'session_director' ||
+    role === 'logistic_admin'
+  )
 }
 
 /** Can access receipts management */
@@ -81,7 +105,16 @@ export function canAccessSettlement(role: UserRole): boolean {
 
 /** Can view settlement list and reports (read-only) */
 export function canAccessSettlementRead(role: UserRole): boolean {
-  return ['admin', 'super_admin', 'finance_prep', 'executive', 'session_director', 'logistic_admin', 'approver_ops', 'approver_prep'].includes(role)
+  return [
+    'admin',
+    'super_admin',
+    'finance_prep',
+    'executive',
+    'session_director',
+    'logistic_admin',
+    'approver_ops',
+    'approver_prep'
+  ].includes(role)
 }
 
 /** Can access admin menu (any non-user role) */
@@ -90,4 +123,14 @@ export function isStaff(role: UserRole): boolean {
 }
 
 /** All roles for dropdown (super_admin is NOT included — only settable via Firestore) */
-export const ALL_ROLES: UserRole[] = ['user', 'finance_ops', 'approver_ops', 'finance_prep', 'approver_prep', 'session_director', 'logistic_admin', 'executive', 'admin']
+export const ALL_ROLES: UserRole[] = [
+  'user',
+  'finance_ops',
+  'approver_ops',
+  'finance_prep',
+  'approver_prep',
+  'session_director',
+  'logistic_admin',
+  'executive',
+  'admin'
+]

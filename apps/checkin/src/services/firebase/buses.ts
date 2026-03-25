@@ -30,14 +30,15 @@ const convertToBusRoute = (id: string, data: Record<string, unknown>): BusRoute 
   contactPhone: data.contactPhone as string | undefined,
   notes: data.notes as string | undefined,
   participantCount: (data.participantCount as number) || 0,
-  arrivedAt: data.arrivedAt ? convertTimestamp(data.arrivedAt as Timestamp | Date | undefined) : undefined,
+  arrivedAt: data.arrivedAt
+    ? convertTimestamp(data.arrivedAt as Timestamp | Date | undefined)
+    : undefined,
   createdAt: convertTimestamp(data.createdAt as Timestamp | Date | undefined),
   updatedAt: convertTimestamp(data.updatedAt as Timestamp | Date | undefined)
 })
 
 // Get all bus routes
 export async function getAllBusRoutes(): Promise<BusRoute[]> {
-
   const busesRef = collection(db, BUSES_COLLECTION)
   // Use simple query to avoid composite index requirement
   const q = query(busesRef, orderBy('createdAt', 'desc'))
@@ -53,7 +54,6 @@ export async function getAllBusRoutes(): Promise<BusRoute[]> {
 
 // Get bus routes by region
 export async function getBusRoutesByRegion(region: string): Promise<BusRoute[]> {
-
   const busesRef = collection(db, BUSES_COLLECTION)
   // Simple query without composite index
   const q = query(busesRef, where('region', '==', region))
@@ -65,7 +65,6 @@ export async function getBusRoutesByRegion(region: string): Promise<BusRoute[]> 
 
 // Get bus route by ID
 export async function getBusRouteById(id: string): Promise<BusRoute | null> {
-
   const busRef = doc(db, BUSES_COLLECTION, id)
   const snapshot = await getDoc(busRef)
   if (!snapshot.exists()) return null
@@ -85,7 +84,6 @@ export interface CreateBusRouteOptions {
 
 // Create or get bus route
 export async function createOrGetBusRoute(options: CreateBusRouteOptions): Promise<BusRoute> {
-
   const busesRef = collection(db, BUSES_COLLECTION)
 
   // Check if bus with same name exists
@@ -137,7 +135,6 @@ export interface UpdateBusRouteData {
 }
 
 export async function updateBusRoute(id: string, data: UpdateBusRouteData): Promise<void> {
-
   const busRef = doc(db, BUSES_COLLECTION, id)
 
   const updateData: Record<string, unknown> = {
@@ -160,7 +157,6 @@ export async function updateBusRoute(id: string, data: UpdateBusRouteData): Prom
 
 // Mark bus as arrived
 export async function markBusAsArrived(id: string): Promise<void> {
-
   const busRef = doc(db, BUSES_COLLECTION, id)
   await updateDoc(busRef, {
     arrivedAt: new Date(),
@@ -170,7 +166,6 @@ export async function markBusAsArrived(id: string): Promise<void> {
 
 // Cancel bus arrival
 export async function cancelBusArrival(id: string): Promise<void> {
-
   const busRef = doc(db, BUSES_COLLECTION, id)
   await updateDoc(busRef, {
     arrivedAt: null,
@@ -180,7 +175,6 @@ export async function cancelBusArrival(id: string): Promise<void> {
 
 // Delete bus route
 export async function deleteBusRoute(id: string): Promise<void> {
-
   const busRef = doc(db, BUSES_COLLECTION, id)
 
   // First, unassign all participants from this bus
@@ -208,7 +202,6 @@ export async function assignParticipantToBus(
   busId: string,
   busName: string
 ): Promise<void> {
-
   const participantRef = doc(db, 'participants', participantId)
   const participantSnap = await getDoc(participantRef)
 
@@ -250,7 +243,6 @@ export async function assignParticipantToBus(
 
 // Remove participant from bus
 export async function removeParticipantFromBus(participantId: string): Promise<void> {
-
   const participantRef = doc(db, 'participants', participantId)
   const participantSnap = await getDoc(participantRef)
 
@@ -294,7 +286,6 @@ export async function moveParticipantsToBus(
   busId: string,
   busName: string
 ): Promise<void> {
-
   const batch = writeBatch(db)
 
   // Track bus count changes
@@ -356,7 +347,12 @@ export const getBusesPaginated = async (
     const lastDocSnap = await getDoc(lastDocRef)
 
     if (lastDocSnap.exists()) {
-      q = query(busesRef, orderBy('createdAt', 'desc'), startAfter(lastDocSnap), limit(batchSize + 1))
+      q = query(
+        busesRef,
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDocSnap),
+        limit(batchSize + 1)
+      )
     }
   }
 
@@ -378,9 +374,7 @@ export const subscribeToBuses = (onData: (data: BusRoute[]) => void): (() => voi
   const q = query(busesRef, orderBy('createdAt', 'desc'))
 
   return onSnapshot(q, (snapshot) => {
-    const buses = snapshot.docs.map((docSnap) =>
-      convertToBusRoute(docSnap.id, docSnap.data())
-    )
+    const buses = snapshot.docs.map((docSnap) => convertToBusRoute(docSnap.id, docSnap.data()))
     onData(buses)
   })
 }

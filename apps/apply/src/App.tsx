@@ -12,7 +12,7 @@ import {
   RequireStakeLeader,
   RequireApplicant,
   PublicOnly,
-  RequireIncompleteProfile,
+  RequireIncompleteProfile
 } from './components/RouteGuards'
 import AppNav from './components/AppNav'
 import { ThemeProvider, ToastProvider } from 'trust-ui-react'
@@ -78,7 +78,7 @@ const router = createBrowserRouter([
           <PublicOnly>
             <LoginPage />
           </PublicOnly>
-        ),
+        )
       },
       {
         path: ROUTES.COMPLETE_PROFILE,
@@ -86,9 +86,9 @@ const router = createBrowserRouter([
           <RequireIncompleteProfile>
             <CompleteProfilePage />
           </RequireIncompleteProfile>
-        ),
-      },
-    ],
+        )
+      }
+    ]
   },
   {
     element: (
@@ -104,7 +104,7 @@ const router = createBrowserRouter([
           <RequireAdmin>
             <Navigate to={ROUTES.ADMIN_DASHBOARD} replace />
           </RequireAdmin>
-        ),
+        )
       },
       {
         path: ROUTES.ADMIN_DASHBOARD,
@@ -112,7 +112,7 @@ const router = createBrowserRouter([
           <RequireAdmin>
             <AdminDashboard />
           </RequireAdmin>
-        ),
+        )
       },
       {
         path: ROUTES.ADMIN_REVIEW,
@@ -120,7 +120,7 @@ const router = createBrowserRouter([
           <RequireAdmin>
             <AdminReview />
           </RequireAdmin>
-        ),
+        )
       },
       {
         path: ROUTES.ADMIN_ROLES,
@@ -128,7 +128,7 @@ const router = createBrowserRouter([
           <RequireAdmin>
             <AdminRoles />
           </RequireAdmin>
-        ),
+        )
       },
       {
         path: ROUTES.ADMIN_SETTINGS,
@@ -136,7 +136,7 @@ const router = createBrowserRouter([
           <RequireAdmin>
             <AdminSettings />
           </RequireAdmin>
-        ),
+        )
       },
       {
         path: ROUTES.APPLICATION,
@@ -144,7 +144,7 @@ const router = createBrowserRouter([
           <RequireApplicant>
             <UserApplication />
           </RequireApplicant>
-        ),
+        )
       },
       { path: ROUTES.ACCOUNT_SETTINGS, element: <AccountSettings /> },
       {
@@ -153,7 +153,7 @@ const router = createBrowserRouter([
           <RequireStakeLeader>
             <LeaderDashboard />
           </RequireStakeLeader>
-        ),
+        )
       },
       {
         path: ROUTES.LEADER_RECOMMENDATIONS,
@@ -161,7 +161,7 @@ const router = createBrowserRouter([
           <RequireLeader>
             <LeaderRecommendations />
           </RequireLeader>
-        ),
+        )
       },
       {
         path: ROUTES.LEADER_PENDING,
@@ -169,11 +169,11 @@ const router = createBrowserRouter([
           <RequireLeader>
             <LeaderPending />
           </RequireLeader>
-        ),
-      },
-    ],
+        )
+      }
+    ]
   },
-  { path: '*', element: <Navigate to={ROUTES.LOGIN} replace /> },
+  { path: '*', element: <Navigate to={ROUTES.LOGIN} replace /> }
 ])
 
 export default function App() {

@@ -56,13 +56,9 @@ async function migrate() {
   const budgetSnap = await db.doc('settings/budget-config').get()
   const docNoSnap = await db.doc('settings/document-no').get()
 
-  const budgetConfig = budgetSnap.exists
-    ? budgetSnap.data()
-    : { totalBudget: 0, byCode: {} }
+  const budgetConfig = budgetSnap.exists ? budgetSnap.data() : { totalBudget: 0, byCode: {} }
 
-  const documentNo = docNoSnap.exists
-    ? (docNoSnap.data()?.value || '')
-    : ''
+  const documentNo = docNoSnap.exists ? docNoSnap.data()?.value || '' : ''
 
   // 2. Create default project (if not exists)
   const projectRef = db.doc(`projects/${DEFAULT_PROJECT_ID}`)
@@ -78,7 +74,7 @@ async function migrate() {
       documentNo,
       driveFolders: { operations: '', preparation: '', bankbook: '' },
       memberUids: [],
-      isActive: true,
+      isActive: true
     })
     console.log('  Created default project')
   } else {
@@ -101,7 +97,7 @@ async function migrate() {
 
   // 5. Add projectIds to all users and collect UIDs
   const userSnap = await db.collection('users').get()
-  const allUids = userSnap.docs.map(d => d.id)
+  const allUids = userSnap.docs.map((d) => d.id)
   const userCount = await batchUpdate(userSnap.docs, (d) =>
     d.data().projectIds ? null : { projectIds: [DEFAULT_PROJECT_ID] }
   )
@@ -111,10 +107,7 @@ async function migrate() {
   await projectRef.update({ memberUids: allUids })
 
   // 6. Create settings/global
-  await db.doc('settings/global').set(
-    { defaultProjectId: DEFAULT_PROJECT_ID },
-    { merge: true }
-  )
+  await db.doc('settings/global').set({ defaultProjectId: DEFAULT_PROJECT_ID }, { merge: true })
   console.log('  Set default project in settings/global')
 
   console.log('Migration complete!')

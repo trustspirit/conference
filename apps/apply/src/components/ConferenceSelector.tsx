@@ -43,8 +43,10 @@ export default function ConferenceSelector() {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node
       if (
-        triggerRef.current && !triggerRef.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
+        triggerRef.current &&
+        !triggerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
       ) {
         setOpen(false)
       }
@@ -70,7 +72,7 @@ export default function ConferenceSelector() {
         name: newName.trim(),
         description: newDesc.trim(),
         deadline: newDeadline || null,
-        createdBy: appUser?.uid || '',
+        createdBy: appUser?.uid || ''
       })
       await queryClient.refetchQueries({ queryKey: queryKeys.conferences.all() })
       setNewName('')
@@ -104,7 +106,7 @@ export default function ConferenceSelector() {
 
   // Determine trigger label
   const triggerLabel = hasConferences
-    ? (currentConference?.name || t('conference.select', '대회 선택'))
+    ? currentConference?.name || t('conference.select', '대회 선택')
     : t('conference.create', '+ 새 대회 생성')
 
   return (
@@ -120,7 +122,9 @@ export default function ConferenceSelector() {
       >
         <span className="truncate">{triggerLabel}</span>
         {hasConferences && (
-          <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon
+            className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
         )}
       </button>
 
@@ -137,18 +141,25 @@ export default function ConferenceSelector() {
               key={conference.id}
               onClick={() => handleSelect(conference)}
               className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                currentConference?.id === conference.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                currentConference?.id === conference.id
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-700'
               }`}
             >
               <div className="flex items-center gap-1">
                 <span>{conference.name}</span>
                 {isConferenceClosed(conference) && (
-                  <span className="text-[0.625rem] text-red-500 font-medium">{t('conference.closed', '마감됨')}</span>
+                  <span className="text-[0.625rem] text-red-500 font-medium">
+                    {t('conference.closed', '마감됨')}
+                  </span>
                 )}
               </div>
               {conference.deadline && (
-                <p className={`text-xs truncate ${isConferenceClosed(conference) ? 'text-red-400' : 'text-gray-400'}`}>
-                  {t('admin.settings.conference.deadlineLabel', '마감')}: {conference.deadline.toLocaleDateString()}
+                <p
+                  className={`text-xs truncate ${isConferenceClosed(conference) ? 'text-red-400' : 'text-gray-400'}`}
+                >
+                  {t('admin.settings.conference.deadlineLabel', '마감')}:{' '}
+                  {conference.deadline.toLocaleDateString()}
                 </p>
               )}
             </button>
@@ -183,7 +194,9 @@ export default function ConferenceSelector() {
             className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">{t('admin.settings.conference.create', '대회 생성')}</h3>
+              <h3 className="text-lg font-bold">
+                {t('admin.settings.conference.create', '대회 생성')}
+              </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-1 rounded-md hover:bg-gray-100 transition-colors"
@@ -207,7 +220,10 @@ export default function ConferenceSelector() {
                 type="text"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                placeholder={t('admin.settings.conference.descPlaceholder', '예: 서울 스테이크 청소년 대회')}
+                placeholder={t(
+                  'admin.settings.conference.descPlaceholder',
+                  '예: 서울 스테이크 청소년 대회'
+                )}
                 fullWidth
               />
               <div>

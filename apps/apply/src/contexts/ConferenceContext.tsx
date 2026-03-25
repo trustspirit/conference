@@ -13,7 +13,7 @@ const ConferenceContext = createContext<ConferenceContextType>({
   currentConference: null,
   conferences: [],
   loading: true,
-  setCurrentConference: () => {},
+  setCurrentConference: () => {}
 })
 
 const STORAGE_KEY = 'apply-selected-conference-id'
@@ -46,7 +46,9 @@ export function ConferenceProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ConferenceContext.Provider value={{ currentConference, conferences, loading: isLoading, setCurrentConference }}>
+    <ConferenceContext.Provider
+      value={{ currentConference, conferences, loading: isLoading, setCurrentConference }}
+    >
       {children}
     </ConferenceContext.Provider>
   )

@@ -13,7 +13,7 @@ export const ROUTES = {
   LEADER_RECOMMENDATIONS: '/leader/recommendations',
   LEADER_PENDING: '/leader/pending',
   APPLICATION: '/application',
-  ACCOUNT_SETTINGS: '/settings',
+  ACCOUNT_SETTINGS: '/settings'
 } as const
 
 // Tab IDs
@@ -21,7 +21,7 @@ export const ADMIN_REVIEW_TABS = {
   ALL: 'all',
   AWAITING: 'awaiting' as ApplicationStatus,
   APPROVED: 'approved' as ApplicationStatus,
-  REJECTED: 'rejected' as ApplicationStatus,
+  REJECTED: 'rejected' as ApplicationStatus
 } as const
 
 export const RECOMMENDATION_TABS = {
@@ -29,19 +29,19 @@ export const RECOMMENDATION_TABS = {
   DRAFT: 'draft' as RecommendationStatus,
   SUBMITTED: 'submitted' as RecommendationStatus,
   APPROVED: 'approved' as RecommendationStatus,
-  REJECTED: 'rejected' as RecommendationStatus,
+  REJECTED: 'rejected' as RecommendationStatus
 } as const
 
 export const ACCOUNT_TABS = {
   SETTINGS: 'settings',
   APPROVALS: 'approvals',
-  DELETE: 'delete',
+  DELETE: 'delete'
 } as const
 
 // Item types
 export const ITEM_TYPES = {
   APPLICATION: 'application',
-  RECOMMENDATION: 'recommendation',
+  RECOMMENDATION: 'recommendation'
 } as const
 
 export type ItemType = (typeof ITEM_TYPES)[keyof typeof ITEM_TYPES]
@@ -54,7 +54,7 @@ const ROLE_TONE_MAP: Record<string, RoleTone> = {
   session_leader: 'sessionLeader',
   stake_president: 'stakePresident',
   bishop: 'bishop',
-  applicant: 'applicant',
+  applicant: 'applicant'
 }
 
 export const getRoleTone = (role: UserRole | string | null | undefined): RoleTone => {
@@ -69,7 +69,7 @@ export const STATUS_TONES: Record<string, string> = {
   approved: 'approved',
   rejected: 'rejected',
   reviewed: 'reviewed',
-  pending: 'awaiting',
+  pending: 'awaiting'
 }
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -79,7 +79,7 @@ export const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
   reviewed: 'Reviewed',
-  pending: 'Pending',
+  pending: 'Pending'
 }
 
 // Valid genders

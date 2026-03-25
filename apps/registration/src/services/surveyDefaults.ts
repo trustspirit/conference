@@ -11,7 +11,7 @@ export const getDefaultFields = (t: (key: string) => string): SurveyField[] => [
     label: t('builder.participantFields.name'),
     required: true,
     group: 'personal',
-    participantField: 'name',
+    participantField: 'name'
   },
   {
     id: 'f_email',
@@ -20,7 +20,7 @@ export const getDefaultFields = (t: (key: string) => string): SurveyField[] => [
     required: true,
     inputType: 'email',
     group: 'personal',
-    participantField: 'email',
+    participantField: 'email'
   },
   {
     id: 'f_phone',
@@ -29,7 +29,7 @@ export const getDefaultFields = (t: (key: string) => string): SurveyField[] => [
     required: false,
     inputType: 'tel',
     group: 'contact',
-    participantField: 'phoneNumber',
+    participantField: 'phoneNumber'
   },
   {
     id: 'f_gender',
@@ -38,7 +38,7 @@ export const getDefaultFields = (t: (key: string) => string): SurveyField[] => [
     required: false,
     group: 'contact',
     participantField: 'gender',
-    options: [t('register.form.genderMale'), t('register.form.genderFemale')],
+    options: [t('register.form.genderMale'), t('register.form.genderFemale')]
   },
   {
     id: 'f_age',
@@ -47,19 +47,19 @@ export const getDefaultFields = (t: (key: string) => string): SurveyField[] => [
     required: false,
     inputType: 'number',
     group: 'contact',
-    participantField: 'age',
+    participantField: 'age'
   },
   {
     id: 'f_church',
     type: 'church_info',
     label: t('builder.fieldType.church_info'),
-    required: false,
-  },
+    required: false
+  }
 ]
 
 export const createEmptyField = (): SurveyField => ({
   id: generateFieldId(),
   type: 'short_text',
   label: '',
-  required: false,
+  required: false
 })

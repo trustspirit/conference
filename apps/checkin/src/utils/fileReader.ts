@@ -12,7 +12,11 @@ export const readFileAsText = (accept: string = '.csv'): Promise<string | null> 
         return
       }
       if (file.size > MAX_FILE_SIZE) {
-        reject(new Error(`파일 크기가 너무 큽니다 (최대 10MB). 현재: ${(file.size / 1024 / 1024).toFixed(1)}MB`))
+        reject(
+          new Error(
+            `파일 크기가 너무 큽니다 (최대 10MB). 현재: ${(file.size / 1024 / 1024).toFixed(1)}MB`
+          )
+        )
         return
       }
       const reader = new FileReader()

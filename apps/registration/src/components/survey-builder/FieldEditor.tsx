@@ -15,7 +15,12 @@ interface FieldEditorProps {
   usedParticipantFields: ParticipantFieldKey[]
 }
 
-function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: FieldEditorProps): React.ReactElement {
+function FieldEditor({
+  field,
+  onChange,
+  onDelete,
+  usedParticipantFields
+}: FieldEditorProps): React.ReactElement {
   const { t } = useTranslation()
   const [showSettings, setShowSettings] = useState(false)
 
@@ -29,13 +34,15 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
       if (!field.options || field.options.length === 0) patch.options = ['']
     }
     if (type === 'linear_scale' && !field.linearScale) patch.linearScale = { min: 1, max: 5 }
-    if (type === 'grid' && !field.grid) patch.grid = { rows: [''], columns: [''], allowMultiple: false }
+    if (type === 'grid' && !field.grid)
+      patch.grid = { rows: [''], columns: [''], allowMultiple: false }
     update(patch)
   }
 
   const isSection = field.type === 'section'
   const isChurchInfo = field.type === 'church_info'
-  const hasOptions = field.type === 'radio' || field.type === 'checkbox' || field.type === 'dropdown'
+  const hasOptions =
+    field.type === 'radio' || field.type === 'checkbox' || field.type === 'dropdown'
 
   // Church info - locked card, only draggable
   if (isChurchInfo) {
@@ -43,13 +50,29 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-primary/40">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-            <span className="text-sm font-semibold text-gray-700">{t('builder.fieldType.church_info')}</span>
+            <svg
+              className="w-4 h-4 text-gray-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+              />
+            </svg>
+            <span className="text-sm font-semibold text-gray-700">
+              {t('builder.fieldType.church_info')}
+            </span>
             <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
               {t('builder.churchInfoLocked')}
             </span>
           </div>
-          <Button variant="danger" size="sm" onClick={onDelete}>{t('common.delete')}</Button>
+          <Button variant="danger" size="sm" onClick={onDelete}>
+            {t('common.delete')}
+          </Button>
         </div>
       </div>
     )
@@ -63,7 +86,9 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
           <TextField
             value={field.label}
             onChange={(e) => update({ label: e.target.value })}
-            placeholder={isSection ? t('builder.sectionTitlePlaceholder') : t('builder.labelPlaceholder')}
+            placeholder={
+              isSection ? t('builder.sectionTitlePlaceholder') : t('builder.labelPlaceholder')
+            }
             className="flex-1 font-medium"
           />
           <FieldTypeSelector value={field.type} onChange={handleTypeChange} />
@@ -78,10 +103,16 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
         />
 
         {hasOptions && (
-          <FieldOptionsEditor options={field.options || ['']} onChange={(options) => update({ options })} />
+          <FieldOptionsEditor
+            options={field.options || ['']}
+            onChange={(options) => update({ options })}
+          />
         )}
         {field.type === 'linear_scale' && field.linearScale && (
-          <LinearScaleEditor config={field.linearScale} onChange={(linearScale) => update({ linearScale })} />
+          <LinearScaleEditor
+            config={field.linearScale}
+            onChange={(linearScale) => update({ linearScale })}
+          />
         )}
         {field.type === 'grid' && field.grid && (
           <GridEditor config={field.grid} onChange={(grid) => update({ grid })} />
@@ -112,7 +143,9 @@ function FieldEditor({ field, onChange, onDelete, usedParticipantFields }: Field
           </>
         )}
         <div className="ml-auto">
-          <Button variant="danger" size="sm" onClick={onDelete}>{t('common.delete')}</Button>
+          <Button variant="danger" size="sm" onClick={onDelete}>
+            {t('common.delete')}
+          </Button>
         </div>
       </div>
 

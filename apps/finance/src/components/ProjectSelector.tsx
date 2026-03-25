@@ -56,24 +56,30 @@ export default function ProjectSelector() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [showCreateModal])
 
-  const handleCreated = useCallback(async (newId: string) => {
-    // Wait for projects to refetch so the new project is in the cache
-    await queryClient.refetchQueries({ queryKey: queryKeys.projects.root() })
-    setCurrentProject({ id: newId } as Project)
-    setShowCreateModal(false)
-  }, [queryClient, setCurrentProject])
-
-  const handleRestore = useCallback(async (projectId: string) => {
-    try {
-      await restoreProject.mutateAsync(projectId)
-      // Wait for projects to refetch so the restored project is in the cache
+  const handleCreated = useCallback(
+    async (newId: string) => {
+      // Wait for projects to refetch so the new project is in the cache
       await queryClient.refetchQueries({ queryKey: queryKeys.projects.root() })
-      setCurrentProject({ id: projectId } as Project)
-      setOpen(false)
-    } catch {
-      toast({ variant: 'danger', message: t('project.restoreFailed') })
-    }
-  }, [restoreProject, queryClient, setCurrentProject, t])
+      setCurrentProject({ id: newId } as Project)
+      setShowCreateModal(false)
+    },
+    [queryClient, setCurrentProject]
+  )
+
+  const handleRestore = useCallback(
+    async (projectId: string) => {
+      try {
+        await restoreProject.mutateAsync(projectId)
+        // Wait for projects to refetch so the restored project is in the cache
+        await queryClient.refetchQueries({ queryKey: queryKeys.projects.root() })
+        setCurrentProject({ id: projectId } as Project)
+        setOpen(false)
+      } catch {
+        toast({ variant: 'danger', message: t('project.restoreFailed') })
+      }
+    },
+    [restoreProject, queryClient, setCurrentProject, t]
+  )
 
   // Hide if only 1 project and not admin
   if (projects.length <= 1 && !isAdmin) return null
@@ -89,7 +95,9 @@ export default function ProjectSelector() {
         >
           <FolderIcon className="w-4 h-4 shrink-0" />
           <span className="truncate">{currentProject?.name || t('project.select')}</span>
-          <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon
+            className={`w-3.5 h-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
         </button>
 
         {open && (
@@ -110,7 +118,9 @@ export default function ProjectSelector() {
                   }
                 }}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  currentProject?.id === p.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  currentProject?.id === p.id
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-700'
                 }`}
               >
                 {p.name}
@@ -138,7 +148,9 @@ export default function ProjectSelector() {
                   <div key={p.id} className="px-4 py-1.5 flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-400 line-through truncate">{p.name}</p>
-                      <p className="text-xs text-gray-300">{t('project.autoDeleteDays', { days: getRemainingDays(p.deletedAt) })}</p>
+                      <p className="text-xs text-gray-300">
+                        {t('project.autoDeleteDays', { days: getRemainingDays(p.deletedAt) })}
+                      </p>
                     </div>
                     <button
                       onClick={() => handleRestore(p.id)}

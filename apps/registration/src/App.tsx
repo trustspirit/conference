@@ -22,11 +22,46 @@ function App(): React.ReactElement {
             <Route path="/" element={<HomePage />} />
             <Route path="/register/:surveyId" element={<RegisterPage />} />
             <Route path="/register/:surveyId/success" element={<RegisterSuccessPage />} />
-            <Route path="/admin" element={<AdminAuthGuard><SurveyListPage /></AdminAuthGuard>} />
-            <Route path="/admin/admins" element={<AdminAuthGuard><AdminManagePage /></AdminAuthGuard>} />
-            <Route path="/admin/survey/:surveyId" element={<AdminAuthGuard><SurveyDetailPage /></AdminAuthGuard>} />
-            <Route path="/admin/survey/:surveyId/edit" element={<AdminAuthGuard><SurveyEditPage /></AdminAuthGuard>} />
-            <Route path="/admin/survey/:surveyId/preview" element={<AdminAuthGuard><SurveyPreviewPage /></AdminAuthGuard>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminAuthGuard>
+                  <SurveyListPage />
+                </AdminAuthGuard>
+              }
+            />
+            <Route
+              path="/admin/admins"
+              element={
+                <AdminAuthGuard>
+                  <AdminManagePage />
+                </AdminAuthGuard>
+              }
+            />
+            <Route
+              path="/admin/survey/:surveyId"
+              element={
+                <AdminAuthGuard>
+                  <SurveyDetailPage />
+                </AdminAuthGuard>
+              }
+            />
+            <Route
+              path="/admin/survey/:surveyId/edit"
+              element={
+                <AdminAuthGuard>
+                  <SurveyEditPage />
+                </AdminAuthGuard>
+              }
+            />
+            <Route
+              path="/admin/survey/:surveyId/preview"
+              element={
+                <AdminAuthGuard>
+                  <SurveyPreviewPage />
+                </AdminAuthGuard>
+              }
+            />
           </Routes>
         </Suspense>
       </ToastProvider>

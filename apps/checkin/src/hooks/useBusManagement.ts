@@ -50,14 +50,19 @@ export function useBusManagement(): UseBusManagementReturn {
   const sync = useSetAtom(syncAtom)
   const { toast } = useToast()
 
-  const { displayedItems: buses, isLoading, hasMore, loadMore, refresh } =
-    useBatchedInfiniteScrollWithRealtime<BusRoute>({
-      fetchBatchSize: 1000,
-      displayBatchSize: 100,
-      fetchFunction: getBusesPaginated,
-      getItemId: (bus) => bus.id,
-      subscribeFunction: (callback) => subscribeToBuses(callback)
-    })
+  const {
+    displayedItems: buses,
+    isLoading,
+    hasMore,
+    loadMore,
+    refresh
+  } = useBatchedInfiniteScrollWithRealtime<BusRoute>({
+    fetchBatchSize: 1000,
+    displayBatchSize: 100,
+    fetchFunction: getBusesPaginated,
+    getItemId: (bus) => bus.id,
+    subscribeFunction: (callback) => subscribeToBuses(callback)
+  })
 
   const [regions, setRegions] = useState<string[]>([])
   const [selectedRegion, setSelectedRegion] = useState<string>('all')

@@ -10,7 +10,13 @@ declare namespace kakao.maps {
   }
   class Map {
     constructor(container: HTMLElement, options: { center: LatLng; level: number })
-    setBounds(bounds: LatLngBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number): void
+    setBounds(
+      bounds: LatLngBounds,
+      paddingTop?: number,
+      paddingRight?: number,
+      paddingBottom?: number,
+      paddingLeft?: number
+    ): void
     setCenter(latlng: LatLng): void
     setLevel(level: number): void
   }

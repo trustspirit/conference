@@ -1,59 +1,58 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "../contexts/AuthContext";
+import { useState, useRef, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../contexts/AuthContext'
 import {
   isAdmin as checkIsAdmin,
   isStaff,
   canAccessDashboard,
   canManageUsers,
   canAccessReceipts,
-  canAccessSettlementRead,
-} from "../lib/roles";
-import ProjectSelector from "./ProjectSelector";
-import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from "./Icons";
-import FloatingChatButton from "./chat/FloatingChatButton";
+  canAccessSettlementRead
+} from '../lib/roles'
+import ProjectSelector from './ProjectSelector'
+import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from './Icons'
+import FloatingChatButton from './chat/FloatingChatButton'
 
 interface NavItem {
-  to: string;
-  label: string;
+  to: string
+  label: string
 }
 
 interface NavGroup {
-  label: string;
-  items: NavItem[];
+  label: string
+  items: NavItem[]
 }
 
 function NavDropdown({
   group,
-  isActive,
+  isActive
 }: {
-  group: NavGroup;
-  isActive: (path: string) => boolean;
+  group: NavGroup
+  isActive: (path: string) => boolean
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const hasActive = group.items.some((item) => isActive(item.to));
+  const hasActive = group.items.some((item) => isActive(item.to))
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleMouseEnter = () => {
-    clearTimeout(timeoutRef.current);
-    setOpen(true);
-  };
+    clearTimeout(timeoutRef.current)
+    setOpen(true)
+  }
 
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setOpen(false), 150);
-  };
+    timeoutRef.current = setTimeout(() => setOpen(false), 150)
+  }
 
   return (
     <div
@@ -65,14 +64,12 @@ function NavDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-0.5 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
-          hasActive
-            ? "bg-blue-50 text-blue-700 font-medium"
-            : "text-gray-600 hover:bg-gray-100"
+          hasActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
         }`}
       >
         {group.label}
         <ChevronDownIcon
-          className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
@@ -84,8 +81,8 @@ function NavDropdown({
               onClick={() => setOpen(false)}
               className={`block px-4 py-2 text-sm transition-colors ${
                 isActive(item.to)
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               {item.label}
@@ -94,31 +91,31 @@ function NavDropdown({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function UserMenu({
   userName,
   role,
   onLogout,
-  isActive,
+  isActive
 }: {
-  userName: string | undefined;
-  role: string;
-  onLogout: () => void;
-  isActive: (path: string) => boolean;
+  userName: string | undefined
+  role: string
+  onLogout: () => void
+  isActive: (path: string) => boolean
 }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div ref={ref} className="relative">
@@ -128,14 +125,14 @@ function UserMenu({
       >
         <span className="text-gray-700">
           {userName}
-          {role !== "user" && (
+          {role !== 'user' && (
             <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
               {t(`role.${role}`)}
             </span>
           )}
         </span>
         <ChevronDownIcon
-          className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
@@ -144,94 +141,82 @@ function UserMenu({
             to="/profile"
             onClick={() => setOpen(false)}
             className={`block px-4 py-2 text-sm transition-colors ${
-              isActive("/profile")
-                ? "bg-blue-50 text-blue-700 font-medium"
-                : "text-gray-700 hover:bg-gray-50"
+              isActive('/profile')
+                ? 'bg-blue-50 text-blue-700 font-medium'
+                : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
-            {t("project.personalSettings")}
+            {t('project.personalSettings')}
           </Link>
           <div className="border-t border-gray-100 my-1" />
           <button
             onClick={() => {
-              setOpen(false);
-              onLogout();
+              setOpen(false)
+              onLogout()
             }}
             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
-            {t("nav.logout")}
+            {t('nav.logout')}
           </button>
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { appUser, logout } = useAuth();
-  const location = useLocation();
-  const { t } = useTranslation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const role = appUser?.role || "user";
-  const userName = appUser?.displayName || appUser?.name || appUser?.email;
+  const { appUser, logout } = useAuth()
+  const location = useLocation()
+  const { t } = useTranslation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const role = appUser?.role || 'user'
+  const userName = appUser?.displayName || appUser?.name || appUser?.email
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path
 
   const userItems: NavItem[] = [
-    { to: "/request/new", label: t("nav.newRequest") },
-    { to: "/my-requests", label: t("nav.myRequests") },
-  ];
+    { to: '/request/new', label: t('nav.newRequest') },
+    { to: '/my-requests', label: t('nav.myRequests') }
+  ]
 
   const adminSingleItems: NavItem[] = [
-    ...(isStaff(role)
-      ? [{ to: "/admin/requests", label: t("nav.adminRequests") }]
-      : []),
+    ...(isStaff(role) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
     ...(canAccessSettlementRead(role)
-      ? [{ to: "/admin/settlements", label: t("nav.settlements") }]
+      ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessDashboard(role)
-      ? [{ to: "/admin/dashboard", label: t("nav.dashboard") }]
-      : []),
-  ];
+    ...(canAccessDashboard(role) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : [])
+  ]
 
   const managementGroup: NavGroup | null =
     canAccessReceipts(role) || canManageUsers(role)
       ? {
-          label: t("nav.management"),
+          label: t('nav.management'),
           items: [
             ...(canAccessReceipts(role)
-              ? [{ to: "/admin/receipts", label: t("nav.receipts") }]
+              ? [{ to: '/admin/receipts', label: t('nav.receipts') }]
               : []),
             ...(canManageUsers(role)
-              ? [{ to: "/admin/users", label: t("nav.userManagement") }]
-              : []),
-          ],
+              ? [{ to: '/admin/users', label: t('nav.userManagement') }]
+              : [])
+          ]
         }
-      : null;
+      : null
 
   // Mobile: flat list
   const mobileUserItems: NavItem[] = [
-    { to: "/request/new", label: t("nav.newRequest") },
-    { to: "/my-requests", label: t("nav.myRequests") },
-  ];
+    { to: '/request/new', label: t('nav.newRequest') },
+    { to: '/my-requests', label: t('nav.myRequests') }
+  ]
 
   const mobileAdminItems: NavItem[] = [
-    ...(isStaff(role)
-      ? [{ to: "/admin/requests", label: t("nav.adminRequests") }]
-      : []),
+    ...(isStaff(role) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
     ...(canAccessSettlementRead(role)
-      ? [{ to: "/admin/settlements", label: t("nav.settlements") }]
+      ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessReceipts(role)
-      ? [{ to: "/admin/receipts", label: t("nav.receipts") }]
-      : []),
-    ...(canAccessDashboard(role)
-      ? [{ to: "/admin/dashboard", label: t("nav.dashboard") }]
-      : []),
-    ...(canManageUsers(role)
-      ? [{ to: "/admin/users", label: t("nav.userManagement") }]
-      : []),
-  ];
+    ...(canAccessReceipts(role) ? [{ to: '/admin/receipts', label: t('nav.receipts') }] : []),
+    ...(canAccessDashboard(role) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : []),
+    ...(canManageUsers(role) ? [{ to: '/admin/users', label: t('nav.userManagement') }] : [])
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -240,7 +225,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3 shrink-0">
               <Link to="/my-requests" className="font-bold text-lg">
-                {t("app.title")}
+                {t('app.title')}
               </Link>
               <ProjectSelector />
             </div>
@@ -253,8 +238,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   to={item.to}
                   className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                     isActive(item.to)
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-100"
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
                   {item.label}
@@ -269,8 +254,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       to={item.to}
                       className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                         isActive(item.to)
-                          ? "bg-blue-50 text-blue-700 font-medium"
-                          : "text-gray-600 hover:bg-gray-100"
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       {item.label}
@@ -278,18 +263,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   ))}
                 </>
               )}
-              {managementGroup && (
-                <NavDropdown group={managementGroup} isActive={isActive} />
-              )}
+              {managementGroup && <NavDropdown group={managementGroup} isActive={isActive} />}
             </div>
 
             {/* Desktop Right */}
             <div className="hidden lg:flex items-center gap-2">
-              {(checkIsAdmin(role)) && (
+              {checkIsAdmin(role) && (
                 <Link
                   to="/settings"
-                  aria-label={t("nav.settings")}
-                  className={`p-2 rounded-md transition-colors ${isActive("/settings") ? "bg-gray-100" : "hover:bg-gray-100"}`}
+                  aria-label={t('nav.settings')}
+                  className={`p-2 rounded-md transition-colors ${isActive('/settings') ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
                 >
                   <GearIcon className="w-4 h-4 text-gray-500" />
                 </Link>
@@ -319,7 +302,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ProjectSelector />
               </div>
               <p className="px-3 py-1 text-xs text-gray-400 uppercase tracking-wider">
-                {t("nav.requests")}
+                {t('nav.requests')}
               </p>
               {mobileUserItems.map((item) => (
                 <Link
@@ -328,8 +311,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-3 py-2.5 rounded-md text-sm ${
                     isActive(item.to)
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {item.label}
@@ -338,7 +321,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {mobileAdminItems.length > 0 && (
                 <>
                   <p className="px-3 py-1 mt-2 text-xs text-gray-400 uppercase tracking-wider">
-                    {t("nav.management")}
+                    {t('nav.management')}
                   </p>
                   {mobileAdminItems.map((item) => (
                     <Link
@@ -347,8 +330,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`block px-3 py-2.5 rounded-md text-sm ${
                         isActive(item.to)
-                          ? "bg-blue-50 text-blue-700 font-medium"
-                          : "text-gray-600 hover:bg-gray-50"
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
                       {item.label}
@@ -357,44 +340,41 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               )}
               <div className="border-t border-gray-100 mt-2 pt-2">
-                {(checkIsAdmin(role)) && (
+                {checkIsAdmin(role) && (
                   <Link
                     to="/settings"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-3 py-2.5 text-sm rounded-md ${
-                      isActive("/settings")
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "text-gray-600 hover:bg-gray-50"
+                      isActive('/settings')
+                        ? 'bg-blue-50 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    {t("project.projectSettings")}
+                    {t('project.projectSettings')}
                   </Link>
                 )}
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-3 py-2.5 text-sm rounded-md ${
-                    isActive("/profile")
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-600 hover:bg-gray-50"
+                    isActive('/profile')
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  {t("project.personalSettings")}
+                  {t('project.personalSettings')}
                 </Link>
                 <div className="px-3 py-2 flex items-center justify-between">
                   <span className="text-sm text-gray-500">
                     {userName}
-                    {role !== "user" && (
+                    {role !== 'user' && (
                       <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
                         {t(`role.${role}`)}
                       </span>
                     )}
                   </span>
-                  <button
-                    onClick={logout}
-                    className="text-sm text-red-600 hover:text-red-700"
-                  >
-                    {t("nav.logout")}
+                  <button onClick={logout} className="text-sm text-red-600 hover:text-red-700">
+                    {t('nav.logout')}
                   </button>
                 </div>
               </div>
@@ -405,5 +385,5 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="max-w-6xl mx-auto px-4 py-6 mt-14">{children}</main>
       <FloatingChatButton />
     </div>
-  );
+  )
 }

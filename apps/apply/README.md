@@ -77,26 +77,26 @@
 
 ## 라우트 테이블
 
-| 경로 | 컴포넌트 | 접근 권한 | 설명 |
-|------|----------|-----------|------|
-| `/login` | LoginPage | 비로그인 사용자만 | 로그인 페면 |
-| `/complete-profile` | CompleteProfilePage | 프로필 미완성 사용자 | 프로필 완성 페이지 |
-| `/admin/dashboard` | AdminDashboard | Admin | 관리자 대시보드 |
-| `/admin/review` | AdminReview | Admin | 신청서/추천서 검토 |
-| `/admin/roles` | AdminRoles | Admin | 사용자 역할 관리 |
-| `/admin/settings` | AdminSettings | Admin | 대회 및 포지션 설정 |
-| `/leader/dashboard` | LeaderDashboard | Stake Leader | 지도자 대시보드 |
-| `/leader/recommendations` | LeaderRecommendations | Leader | 추천서 관리 |
-| `/leader/pending` | LeaderPending | Leader | 승인 대기 안내 |
-| `/application` | UserApplication | Applicant | 신청서 작성/조회 |
-| `/settings` | AccountSettings | 인증된 사용자 | 계정 설정 |
+| 경로                      | 컴포넌트              | 접근 권한            | 설명                |
+| ------------------------- | --------------------- | -------------------- | ------------------- |
+| `/login`                  | LoginPage             | 비로그인 사용자만    | 로그인 페면         |
+| `/complete-profile`       | CompleteProfilePage   | 프로필 미완성 사용자 | 프로필 완성 페이지  |
+| `/admin/dashboard`        | AdminDashboard        | Admin                | 관리자 대시보드     |
+| `/admin/review`           | AdminReview           | Admin                | 신청서/추천서 검토  |
+| `/admin/roles`            | AdminRoles            | Admin                | 사용자 역할 관리    |
+| `/admin/settings`         | AdminSettings         | Admin                | 대회 및 포지션 설정 |
+| `/leader/dashboard`       | LeaderDashboard       | Stake Leader         | 지도자 대시보드     |
+| `/leader/recommendations` | LeaderRecommendations | Leader               | 추천서 관리         |
+| `/leader/pending`         | LeaderPending         | Leader               | 승인 대기 안내      |
+| `/application`            | UserApplication       | Applicant            | 신청서 작성/조회    |
+| `/settings`               | AccountSettings       | 인증된 사용자        | 계정 설정           |
 
 ## 역할 테이블
 
-| 역할 | 코드 | 설명 | 주요 권한 |
-|------|------|------|-----------|
-| 관리자 | `admin` | 시스템 전체 관리자 | 모든 신청서/추천서 조회, 상태 변경, 역할 관리, 대회 설정, 사용자 삭제 |
-| 세션 리더 | `session_leader` | 세션 운영 관리자 | 모든 신청서/추천서 조회, 상태 변경 |
-| 스테이크 회장 | `stake_president` | 스테이크 단위 지도자 | 스테이크 내 신청서 조회, 추천서 작성, 스테이크/와드 변경 승인 |
-| 비숍 | `bishop` | 와드 단위 지도자 | 와드 내 신청서 조회, 추천서 작성, 와드 변경 승인 |
-| 신청자 | `applicant` | 일반 사용자 | 신청서 작성 및 조회 |
+| 역할          | 코드              | 설명                 | 주요 권한                                                             |
+| ------------- | ----------------- | -------------------- | --------------------------------------------------------------------- |
+| 관리자        | `admin`           | 시스템 전체 관리자   | 모든 신청서/추천서 조회, 상태 변경, 역할 관리, 대회 설정, 사용자 삭제 |
+| 세션 리더     | `session_leader`  | 세션 운영 관리자     | 모든 신청서/추천서 조회, 상태 변경                                    |
+| 스테이크 회장 | `stake_president` | 스테이크 단위 지도자 | 스테이크 내 신청서 조회, 추천서 작성, 스테이크/와드 변경 승인         |
+| 비숍          | `bishop`          | 와드 단위 지도자     | 와드 내 신청서 조회, 추천서 작성, 와드 변경 승인                      |
+| 신청자        | `applicant`       | 일반 사용자          | 신청서 작성 및 조회                                                   |

@@ -66,7 +66,10 @@ export default function ResubmitPage() {
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
   useEffect(() => {
-    if (!bankNameMounted.current) { bankNameMounted.current = true; return }
+    if (!bankNameMounted.current) {
+      bankNameMounted.current = true
+      return
+    }
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -87,10 +90,12 @@ export default function ResubmitPage() {
     if (original.items.length !== validItems.length) return true
     const itemsChanged = validItems.some((curr, i) => {
       const orig = original.items[i]
-      return curr.description !== orig.description ||
-             curr.budgetCode !== orig.budgetCode ||
-             curr.amount !== orig.amount ||
-             JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
+      return (
+        curr.description !== orig.description ||
+        curr.budgetCode !== orig.budgetCode ||
+        curr.amount !== orig.amount ||
+        JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
+      )
     })
     if (itemsChanged) return true
     return false
@@ -111,8 +116,6 @@ export default function ResubmitPage() {
     if (items.length < 10) setItems([...items, emptyItem()])
   }
 
-
-
   const validate = (): string[] => {
     const errs: string[] = []
     if (!payee.trim()) errs.push(t('validation.payeeRequired'))
@@ -127,18 +130,34 @@ export default function ResubmitPage() {
     const transportItems = validItems.filter((item) => item.transportDetail)
     for (const ti of transportItems) {
       const d = ti.transportDetail
-      if (!d?.transportType) { errs.push(t('validation.transportTypeRequired')); break }
-      if (!d?.tripType) { errs.push(t('validation.transportTripTypeRequired')); break }
-      if (!d?.departure?.trim()) { errs.push(t('validation.transportDepartureRequired')); break }
-      if (!d?.destination?.trim()) { errs.push(t('validation.transportDestinationRequired')); break }
-      if (d.transportType === 'car' && !d.distanceKm) { errs.push(t('validation.transportDistanceRequired')); break }
+      if (!d?.transportType) {
+        errs.push(t('validation.transportTypeRequired'))
+        break
+      }
+      if (!d?.tripType) {
+        errs.push(t('validation.transportTripTypeRequired'))
+        break
+      }
+      if (!d?.departure?.trim()) {
+        errs.push(t('validation.transportDepartureRequired'))
+        break
+      }
+      if (!d?.destination?.trim()) {
+        errs.push(t('validation.transportDestinationRequired'))
+        break
+      }
+      if (d.transportType === 'car' && !d.distanceKm) {
+        errs.push(t('validation.transportDistanceRequired'))
+        break
+      }
     }
     // receipts: use new files or keep original
     if (files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
       errs.push(t('validation.receiptsRequired'))
     }
     if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
-    if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl) errs.push(t('validation.bankBookRequired'))
+    if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
+      errs.push(t('validation.bankBookRequired'))
     if (!hasChanges()) errs.push(t('validation.noChanges'))
     return errs
   }
@@ -166,14 +185,21 @@ export default function ResubmitPage() {
         const fileData = await Promise.all(
           files.map(async (f) => ({ name: f.name, data: await fileToBase64(f) }))
         )
-        receipts = await uploadReceiptsMutation.mutateAsync({ files: fileData, committee, projectId: currentProject.id })
+        receipts = await uploadReceiptsMutation.mutateAsync({
+          files: fileData,
+          committee,
+          projectId: currentProject.id
+        })
       } else {
         receipts = original.receipts
       }
 
       // Capture and upload route maps
       const hasCarTransport = validItems.some(
-        (item) => item.transportDetail?.transportType === 'car' && item.transportDetail.departureCoord && item.transportDetail.destinationCoord
+        (item) =>
+          item.transportDetail?.transportType === 'car' &&
+          item.transportDetail.departureCoord &&
+          item.transportDetail.destinationCoord
       )
       let finalItems = validItems
       if (hasCarTransport) {
@@ -181,18 +207,22 @@ export default function ResubmitPage() {
           validItems,
           miniMapRefs.current,
           committee,
-          currentProject!.id,
+          currentProject!.id
         )
         finalItems = capturedItems
         if (failedCount > 0) {
-          toast({ variant: 'info', message: t('form.routeMapCaptureFailed', { count: failedCount }) })
+          toast({
+            variant: 'info',
+            message: t('form.routeMapCaptureFailed', { count: failedCount })
+          })
         }
       }
 
       const profileUpdates: Record<string, string> = {}
       if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
       if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
-      if (bankAccount.trim() !== (appUser.bankAccount || '')) profileUpdates.bankAccount = bankAccount.trim()
+      if (bankAccount.trim() !== (appUser.bankAccount || ''))
+        profileUpdates.bankAccount = bankAccount.trim()
       if (Object.keys(profileUpdates).length > 0) {
         await updateAppUser(profileUpdates)
         queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
@@ -211,7 +241,11 @@ export default function ResubmitPage() {
         items: finalItems,
         totalAmount: finalItems.reduce((sum, item) => sum + item.amount, 0),
         receipts,
-        requestedBy: { uid: user.uid, name: appUser.displayName || appUser.name, email: appUser.email },
+        requestedBy: {
+          uid: user.uid,
+          name: appUser.displayName || appUser.name,
+          email: appUser.email
+        },
         reviewedBy: null,
         reviewedAt: null,
         approvedBy: null,
@@ -220,7 +254,7 @@ export default function ResubmitPage() {
         rejectionReason: null,
         settlementId: null,
         originalRequestId: original.id,
-        comments,
+        comments
       })
 
       navigate('/my-requests')
@@ -232,10 +266,34 @@ export default function ResubmitPage() {
     }
   }
 
-  if (loading) return <Layout><Spinner /></Layout>
-  if (!original) return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
-  if (original.status !== 'rejected' && original.status !== 'cancelled' && original.status !== 'force_rejected') return <Layout><p className="text-gray-500">{t('approval.rejectedOnly')}</p></Layout>
-  if (original.requestedBy.uid !== user?.uid) return <Layout><p className="text-gray-500">{t('detail.notFound')}</p></Layout>
+  if (loading)
+    return (
+      <Layout>
+        <Spinner />
+      </Layout>
+    )
+  if (!original)
+    return (
+      <Layout>
+        <p className="text-gray-500">{t('detail.notFound')}</p>
+      </Layout>
+    )
+  if (
+    original.status !== 'rejected' &&
+    original.status !== 'cancelled' &&
+    original.status !== 'force_rejected'
+  )
+    return (
+      <Layout>
+        <p className="text-gray-500">{t('approval.rejectedOnly')}</p>
+      </Layout>
+    )
+  if (original.requestedBy.uid !== user?.uid)
+    return (
+      <Layout>
+        <p className="text-gray-500">{t('detail.notFound')}</p>
+      </Layout>
+    )
 
   return (
     <Layout>
@@ -254,20 +312,44 @@ export default function ResubmitPage() {
         <ErrorAlert errors={errors} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <TextField label={t('field.payee')} required value={payee} onChange={(e) => setPayee(e.target.value)} fullWidth />
+          <TextField
+            label={t('field.payee')}
+            required
+            value={payee}
+            onChange={(e) => setPayee(e.target.value)}
+            fullWidth
+          />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.date')} <span className="text-red-500">*</span></label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('field.date')} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
           </div>
-          <TextField label={t('field.phone')} required type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} fullWidth />
+          <TextField
+            label={t('field.phone')}
+            required
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+            fullWidth
+          />
           <TextField label={t('field.session')} value={session} disabled fullWidth />
           <div>
             <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
           </div>
-          <TextField label={t('field.bankAccount')} required value={bankAccount}
+          <TextField
+            label={t('field.bankAccount')}
+            required
+            value={bankAccount}
             onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-            placeholder={t('field.bankAccount')} fullWidth />
+            placeholder={t('field.bankAccount')}
+            fullWidth
+          />
           <div className="sm:col-span-2">
             <CommitteeSelect value={committee} onChange={setCommittee} />
           </div>
@@ -275,39 +357,65 @@ export default function ResubmitPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-700">{t('field.items')} <span className="text-red-500">*</span></h3>
-            <Button type="button" variant="ghost" size="sm" onClick={addItem} disabled={items.length >= 10}>{t('form.addItem')}</Button>
+            <h3 className="text-sm font-medium text-gray-700">
+              {t('field.items')} <span className="text-red-500">*</span>
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={addItem}
+              disabled={items.length >= 10}
+            >
+              {t('form.addItem')}
+            </Button>
           </div>
           <div className="space-y-2">
             {items.map((item, i) => (
-              <ItemRow key={i} index={i} item={item} onChange={updateItem} onRemove={removeItem}
-                canRemove={items.length > 1} perKmRate={currentProject?.perKmRate}
+              <ItemRow
+                key={i}
+                index={i}
+                item={item}
+                onChange={updateItem}
+                onRemove={removeItem}
+                canRemove={items.length > 1}
+                perKmRate={currentProject?.perKmRate}
                 miniMapRef={(el) => {
                   if (el) miniMapRefs.current.set(i, el)
                   else miniMapRefs.current.delete(i)
-                }} />
+                }}
+              />
             ))}
           </div>
           <div className="flex justify-end mt-3 pt-3 border-t">
-            <span className="text-sm font-medium">{t('field.totalAmount')}: ₩{totalAmount.toLocaleString()}</span>
+            <span className="text-sm font-medium">
+              {t('field.totalAmount')}: ₩{totalAmount.toLocaleString()}
+            </span>
           </div>
         </div>
 
         <FileUpload
           files={files}
           onFilesChange={setFiles}
-
           existingCount={original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
         />
 
         <div className="mb-6">
-          <TextField label={t('field.comments')} value={comments} onChange={(e) => setComments(e.target.value)}
-            multiline rows={3} fullWidth />
+          <TextField
+            label={t('field.comments')}
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+          />
         </div>
 
         <div className="flex items-center justify-between">
-          <Link to={`/request/${original.id}`} className="text-sm text-gray-500 hover:underline">{t('approval.originalRequest')}</Link>
+          <Link to={`/request/${original.id}`} className="text-sm text-gray-500 hover:underline">
+            {t('approval.originalRequest')}
+          </Link>
           <Button type="submit" variant="primary" disabled={submitting} loading={submitting}>
             {submitting ? t('common.submitting') : t('approval.resubmit')}
           </Button>
@@ -321,9 +429,7 @@ export default function ResubmitPage() {
         onClose={() => setShowConfirm(false)}
         onConfirm={handleSubmit}
         title={t('approval.resubmitTitle')}
-        items={[
-          { label: t('field.payee'), value: payee },
-        ]}
+        items={[{ label: t('field.payee'), value: payee }]}
         totalAmount={validItems.reduce((sum, item) => sum + item.amount, 0)}
         confirmLabel={t('approval.resubmitConfirm')}
         requestItems={validItems}

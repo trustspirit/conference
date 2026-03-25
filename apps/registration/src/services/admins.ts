@@ -12,7 +12,7 @@ export const getAdmins = async (): Promise<AdminEntry[]> => {
   const snapshot = await getDocs(collection(db, ADMINS_COLLECTION))
   return snapshot.docs.map((d) => ({
     email: d.id,
-    addedAt: d.data().addedAt?.toDate?.() || new Date(),
+    addedAt: d.data().addedAt?.toDate?.() || new Date()
   }))
 }
 
@@ -24,7 +24,7 @@ export const isAdmin = async (email: string): Promise<boolean> => {
 export const addAdmin = async (email: string): Promise<void> => {
   const normalized = email.toLowerCase().trim()
   await setDoc(doc(db, ADMINS_COLLECTION, normalized), {
-    addedAt: new Date(),
+    addedAt: new Date()
   })
 }
 

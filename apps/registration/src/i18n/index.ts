@@ -5,9 +5,7 @@ import resourcesToBackend from 'i18next-resources-to-backend'
 const savedLanguage = localStorage.getItem('language') || 'ko'
 
 i18n
-  .use(resourcesToBackend((language: string) =>
-    import(`./locales/${language}.json`)
-  ))
+  .use(resourcesToBackend((language: string) => import(`./locales/${language}.json`)))
   .use(initReactI18next)
   .init({
     lng: savedLanguage,

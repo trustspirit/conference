@@ -30,7 +30,7 @@ const mapSurveyDoc = (docSnap: { id: string; data: () => Record<string, unknown>
     createdAt: convertTimestamp(data.createdAt as Timestamp | Date | undefined),
     createdBy: (data.createdBy as string) || '',
     fields: (data.fields as SurveyField[] | undefined) || undefined,
-    theme: (data.theme as SurveyTheme | undefined) || undefined,
+    theme: (data.theme as SurveyTheme | undefined) || undefined
   }
 }
 
@@ -46,7 +46,12 @@ export const getSurveyById = async (id: string): Promise<Survey | null> => {
   return mapSurveyDoc(docSnap)
 }
 
-export const createSurvey = async (title: string, description: string, createdBy: string, fields?: SurveyField[]): Promise<Survey> => {
+export const createSurvey = async (
+  title: string,
+  description: string,
+  createdBy: string,
+  fields?: SurveyField[]
+): Promise<Survey> => {
   const surveysRef = collection(db, SURVEYS_COLLECTION)
   const newRef = doc(surveysRef)
   const now = Timestamp.now()
@@ -71,11 +76,14 @@ export const createSurvey = async (title: string, description: string, createdBy
     shareToken,
     createdAt: now.toDate(),
     createdBy,
-    fields,
+    fields
   }
 }
 
-export const updateSurvey = async (id: string, data: Partial<Pick<Survey, 'title' | 'description' | 'isActive' | 'fields' | 'theme'>>): Promise<void> => {
+export const updateSurvey = async (
+  id: string,
+  data: Partial<Pick<Survey, 'title' | 'description' | 'isActive' | 'fields' | 'theme'>>
+): Promise<void> => {
   await updateDoc(doc(db, SURVEYS_COLLECTION, id), data)
 }
 

@@ -1,30 +1,30 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { useToast } from "trust-ui-react";
-import { httpsCallable } from "firebase/functions";
-import { functions } from '@conference/firebase';
-import { useProject } from "../contexts/ProjectContext";
-import { useInfiniteRequests } from "../hooks/queries/useRequests";
-import { Committee, Receipt } from "../types";
-import Layout from "../components/Layout";
-import { DownloadIcon } from "../components/Icons";
-import Spinner from "../components/Spinner";
-import PageHeader from "../components/PageHeader";
-import EmptyState from "../components/EmptyState";
-import InfiniteScrollSentinel from "../components/InfiniteScrollSentinel";
-import JSZip from "jszip";
+import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useToast } from 'trust-ui-react'
+import { httpsCallable } from 'firebase/functions'
+import { functions } from '@conference/firebase'
+import { useProject } from '../contexts/ProjectContext'
+import { useInfiniteRequests } from '../hooks/queries/useRequests'
+import { Committee, Receipt } from '../types'
+import Layout from '../components/Layout'
+import { DownloadIcon } from '../components/Icons'
+import Spinner from '../components/Spinner'
+import PageHeader from '../components/PageHeader'
+import EmptyState from '../components/EmptyState'
+import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
+import JSZip from 'jszip'
 
 interface ReceiptRow {
-  receipt: Receipt;
-  requestDate: string;
-  payee: string;
-  committee: Committee;
-  requestId: string;
+  receipt: Receipt
+  requestDate: string
+  payee: string
+  committee: Committee
+  requestId: string
 }
 
 function isPdf(fileName: string) {
-  return fileName.toLowerCase().endsWith(".pdf");
+  return fileName.toLowerCase().endsWith('.pdf')
 }
 
 function PdfIcon({ className }: { className?: string }) {
@@ -32,12 +32,7 @@ function PdfIcon({ className }: { className?: string }) {
     <div
       className={`flex flex-col items-center justify-center bg-gray-50 text-gray-400 ${className}`}
     >
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -47,199 +42,187 @@ function PdfIcon({ className }: { className?: string }) {
       </svg>
       <span className="text-[9px] font-medium">PDF</span>
     </div>
-  );
+  )
 }
 
 export default function ReceiptsPage() {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const { currentProject } = useProject();
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const { currentProject } = useProject()
   const {
     data,
     isLoading: loading,
     hasNextPage,
     isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteRequests(currentProject?.id);
-  const [committeeFilter, setCommitteeFilter] = useState<Committee | "all">(
-    "all",
-  );
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [downloading, setDownloading] = useState(false);
+    fetchNextPage
+  } = useInfiniteRequests(currentProject?.id)
+  const [committeeFilter, setCommitteeFilter] = useState<Committee | 'all'>('all')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [downloading, setDownloading] = useState(false)
 
   const rows: ReceiptRow[] = useMemo(() => {
-    const requests = data?.pages.flatMap((p) => p.items) ?? [];
-    const result: ReceiptRow[] = [];
-    for (const req of requests.filter((r) => r.status !== "cancelled")) {
+    const requests = data?.pages.flatMap((p) => p.items) ?? []
+    const result: ReceiptRow[] = []
+    for (const req of requests.filter((r) => r.status !== 'cancelled')) {
       for (const receipt of req.receipts) {
         result.push({
           receipt,
           requestDate: req.date,
           payee: req.payee,
           committee: req.committee,
-          requestId: req.id,
-        });
+          requestId: req.id
+        })
       }
     }
-    return result;
-  }, [data]);
+    return result
+  }, [data])
 
   const filtered =
-    committeeFilter === "all"
-      ? rows
-      : rows.filter((r) => r.committee === committeeFilter);
+    committeeFilter === 'all' ? rows : rows.filter((r) => r.committee === committeeFilter)
 
   const getRowKey = (row: ReceiptRow) =>
-    `${row.requestId}:${row.receipt.storagePath || row.receipt.url || row.receipt.fileName}`;
+    `${row.requestId}:${row.receipt.storagePath || row.receipt.url || row.receipt.fileName}`
 
-  const allSelected =
-    filtered.length > 0 &&
-    filtered.every((row) => selected.has(getRowKey(row)));
-  const someSelected = selected.size > 0;
+  const allSelected = filtered.length > 0 && filtered.every((row) => selected.has(getRowKey(row)))
+  const someSelected = selected.size > 0
 
   const toggleAll = () => {
     if (allSelected) {
-      setSelected(new Set());
+      setSelected(new Set())
     } else {
-      setSelected(new Set(filtered.map(getRowKey)));
+      setSelected(new Set(filtered.map(getRowKey)))
     }
-  };
+  }
 
   const toggleOne = (key: string) => {
     setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   // Reset selection when filter changes
-  const handleFilterChange = (f: Committee | "all") => {
-    setCommitteeFilter(f);
-    setSelected(new Set());
-  };
+  const handleFilterChange = (f: Committee | 'all') => {
+    setCommitteeFilter(f)
+    setSelected(new Set())
+  }
 
   const downloadFn = httpsCallable<
     { storagePath: string },
     { data: string; contentType: string; fileName: string }
-  >(functions, "downloadFileV2");
+  >(functions, 'downloadFileV2')
 
   const downloadOneFile = async (
-    row: ReceiptRow,
+    row: ReceiptRow
   ): Promise<{ bytes: Uint8Array; ext: string } | null> => {
     try {
       if (row.receipt.storagePath) {
         const result = await downloadFn({
-          storagePath: row.receipt.storagePath,
-        });
-        const binary = atob(result.data.data);
-        const bytes = new Uint8Array(binary.length);
-        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j);
-        return { bytes, ext: row.receipt.fileName.split(".").pop() || "jpg" };
+          storagePath: row.receipt.storagePath
+        })
+        const binary = atob(result.data.data)
+        const bytes = new Uint8Array(binary.length)
+        for (let j = 0; j < binary.length; j++) bytes[j] = binary.charCodeAt(j)
+        return { bytes, ext: row.receipt.fileName.split('.').pop() || 'jpg' }
       } else {
-        const url = row.receipt.url || row.receipt.driveUrl;
-        if (!url) return null;
-        const response = await fetch(url, { mode: "cors" });
-        if (!response.ok) return null;
-        const blob = await response.blob();
-        if (blob.size === 0) return null;
-        const reader = new FileReader();
+        const url = row.receipt.url || row.receipt.driveUrl
+        if (!url) return null
+        const response = await fetch(url, { mode: 'cors' })
+        if (!response.ok) return null
+        const blob = await response.blob()
+        if (blob.size === 0) return null
+        const reader = new FileReader()
         const bytes = await new Promise<Uint8Array>((resolve) => {
-          reader.onload = () =>
-            resolve(new Uint8Array(reader.result as ArrayBuffer));
-          reader.readAsArrayBuffer(blob);
-        });
-        return { bytes, ext: row.receipt.fileName.split(".").pop() || "jpg" };
+          reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer))
+          reader.readAsArrayBuffer(blob)
+        })
+        return { bytes, ext: row.receipt.fileName.split('.').pop() || 'jpg' }
       }
     } catch (err) {
-      console.warn("Download error:", row.receipt.fileName, err);
-      return null;
+      console.warn('Download error:', row.receipt.fileName, err)
+      return null
     }
-  };
+  }
 
   const handleDownload = async () => {
-    if (selected.size === 0) return;
-    setDownloading(true);
+    if (selected.size === 0) return
+    setDownloading(true)
 
     try {
-      const selectedRows = filtered.filter((row) =>
-        selected.has(getRowKey(row)),
-      );
+      const selectedRows = filtered.filter((row) => selected.has(getRowKey(row)))
 
       // Single file: download directly
       if (selectedRows.length === 1) {
-        const row = selectedRows[0];
-        const file = await downloadOneFile(row);
+        const row = selectedRows[0]
+        const file = await downloadOneFile(row)
         if (!file) {
-          toast({ variant: "danger", message: t("receipts.downloadFailed") });
-          return;
+          toast({ variant: 'danger', message: t('receipts.downloadFailed') })
+          return
         }
-        const blob = new Blob([file.bytes as unknown as BlobPart]);
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${row.requestDate}_${row.payee}.${file.ext}`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-        return;
+        const blob = new Blob([file.bytes as unknown as BlobPart])
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${row.requestDate}_${row.payee}.${file.ext}`
+        link.click()
+        URL.revokeObjectURL(link.href)
+        return
       }
 
       // Multiple files: ZIP
-      const zip = new JSZip();
-      let failCount = 0;
+      const zip = new JSZip()
+      let failCount = 0
       await Promise.all(
         selectedRows.map(async (row, i) => {
-          const file = await downloadOneFile(row);
+          const file = await downloadOneFile(row)
           if (!file) {
-            failCount++;
-            return;
+            failCount++
+            return
           }
-          const name = `${row.requestDate}_${row.payee}_${i + 1}.${file.ext}`;
-          zip.file(name, file.bytes);
-        }),
-      );
+          const name = `${row.requestDate}_${row.payee}_${i + 1}.${file.ext}`
+          zip.file(name, file.bytes)
+        })
+      )
 
       if (failCount > 0) {
         toast({
-          variant: "danger",
-          message: t("receipts.partialDownload", {
+          variant: 'danger',
+          message: t('receipts.partialDownload', {
             failed: failCount,
-            total: selectedRows.length,
-          }),
-        });
+            total: selectedRows.length
+          })
+        })
       }
-      if (Object.keys(zip.files).length === 0) return;
+      if (Object.keys(zip.files).length === 0) return
 
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(content);
-      const label =
-        committeeFilter === "all"
-          ? "all"
-          : t(`committee.${committeeFilter}Short`);
-      link.download = `receipts_${label}_${new Date().toISOString().slice(0, 10)}.zip`;
-      link.click();
-      URL.revokeObjectURL(link.href);
+      const content = await zip.generateAsync({ type: 'blob' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(content)
+      const label = committeeFilter === 'all' ? 'all' : t(`committee.${committeeFilter}Short`)
+      link.download = `receipts_${label}_${new Date().toISOString().slice(0, 10)}.zip`
+      link.click()
+      URL.revokeObjectURL(link.href)
     } catch (err) {
-      console.error("Download failed:", err);
-      toast({ variant: "danger", message: t("receipts.downloadFailed") });
+      console.error('Download failed:', err)
+      toast({ variant: 'danger', message: t('receipts.downloadFailed') })
     } finally {
-      setDownloading(false);
+      setDownloading(false)
     }
-  };
+  }
 
   return (
     <Layout>
-      <PageHeader title={t("receipts.title")} />
+      <PageHeader title={t('receipts.title')} />
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        {(["all", "operations", "preparation"] as const).map((f) => (
+        {(['all', 'operations', 'preparation'] as const).map((f) => (
           <button
             key={f}
             onClick={() => handleFilterChange(f)}
-            className={`px-3 py-1 rounded text-sm ${committeeFilter === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}
+            className={`px-3 py-1 rounded text-sm ${committeeFilter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
-            {f === "all" ? t("status.all") : t(`committee.${f}Short`)}
+            {f === 'all' ? t('status.all') : t(`committee.${f}Short`)}
           </button>
         ))}
 
@@ -251,22 +234,22 @@ export default function ReceiptsPage() {
           >
             <DownloadIcon className="w-4 h-4" />
             {downloading
-              ? t("receipts.downloading")
+              ? t('receipts.downloading')
               : selected.size === 1
-                ? t("receipts.download")
-                : t("receipts.downloadZip", { count: selected.size })}
+                ? t('receipts.download')
+                : t('receipts.downloadZip', { count: selected.size })}
           </button>
         )}
       </div>
 
       <p className="text-xs text-gray-400 mb-4">
-        {t("receipts.totalCount", { count: filtered.length })}
+        {t('receipts.totalCount', { count: filtered.length })}
       </p>
 
       {loading ? (
         <Spinner />
       ) : filtered.length === 0 ? (
-        <EmptyState title={t("receipts.noReceipts")} />
+        <EmptyState title={t('receipts.noReceipts')} />
       ) : (
         <>
           {/* Desktop table view */}
@@ -284,28 +267,28 @@ export default function ReceiptsPage() {
                       />
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
-                      {t("field.receipts")}
+                      {t('field.receipts')}
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
-                      {t("field.payee")}
+                      {t('field.payee')}
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
-                      {t("field.date")}
+                      {t('field.date')}
                     </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
-                      {t("field.committee")}
+                      {t('field.committee')}
                     </th>
                     <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {filtered.map((row) => {
-                    const key = getRowKey(row);
-                    const imgUrl = row.receipt.url || row.receipt.driveUrl;
+                    const key = getRowKey(row)
+                    const imgUrl = row.receipt.url || row.receipt.driveUrl
                     return (
                       <tr
                         key={key}
-                        className={`hover:bg-gray-50 ${selected.has(key) ? "bg-blue-50" : ""}`}
+                        className={`hover:bg-gray-50 ${selected.has(key) ? 'bg-blue-50' : ''}`}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -318,11 +301,7 @@ export default function ReceiptsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {imgUrl && (
-                              <a
-                                href={imgUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
+                              <a href={imgUrl} target="_blank" rel="noopener noreferrer">
                                 {isPdf(row.receipt.fileName) ? (
                                   <object
                                     data={imgUrl}
@@ -351,9 +330,7 @@ export default function ReceiptsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-gray-700">{row.payee}</td>
-                        <td className="px-4 py-3 text-gray-500">
-                          {row.requestDate}
-                        </td>
+                        <td className="px-4 py-3 text-gray-500">{row.requestDate}</td>
                         <td className="px-4 py-3 text-gray-500">
                           {t(`committee.${row.committee}Short`)}
                         </td>
@@ -362,11 +339,11 @@ export default function ReceiptsPage() {
                             to={`/request/${row.requestId}`}
                             className="text-xs text-blue-600 hover:underline"
                           >
-                            {t("receipts.viewRequest")}
+                            {t('receipts.viewRequest')}
                           </Link>
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
@@ -376,12 +353,12 @@ export default function ReceiptsPage() {
           {/* Mobile card view */}
           <div className="sm:hidden space-y-2">
             {filtered.map((row) => {
-              const key = getRowKey(row);
-              const imgUrl = row.receipt.url || row.receipt.driveUrl;
+              const key = getRowKey(row)
+              const imgUrl = row.receipt.url || row.receipt.driveUrl
               return (
                 <div
                   key={key}
-                  className={`bg-white rounded-lg shadow p-3 flex items-center gap-3 ${selected.has(key) ? "ring-2 ring-blue-400" : ""}`}
+                  className={`bg-white rounded-lg shadow p-3 flex items-center gap-3 ${selected.has(key) ? 'ring-2 ring-blue-400' : ''}`}
                   onClick={() => toggleOne(key)}
                 >
                   <input
@@ -416,18 +393,18 @@ export default function ReceiptsPage() {
                     </p>
                     <p className="text-xs text-gray-400">
                       {t(`committee.${row.committee}Short`)}
-                      {" · "}
+                      {' · '}
                       <Link
                         to={`/request/${row.requestId}`}
                         onClick={(e) => e.stopPropagation()}
                         className="text-blue-600 hover:underline"
                       >
-                        {t("receipts.viewRequest")}
+                        {t('receipts.viewRequest')}
                       </Link>
                     </p>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
 
@@ -439,5 +416,5 @@ export default function ReceiptsPage() {
         </>
       )}
     </Layout>
-  );
+  )
 }

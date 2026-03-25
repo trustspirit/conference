@@ -29,7 +29,12 @@ function formatPhone(raw: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
 }
 
-function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicFieldRendererProps): React.ReactElement {
+function DynamicFieldRenderer({
+  field,
+  value,
+  onChange,
+  formData
+}: DynamicFieldRendererProps): React.ReactElement {
   const inputType = field.inputType || 'text'
 
   switch (field.type) {
@@ -105,7 +110,10 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       return (
         <div className="space-y-1.5">
           {resolveOptions(field, formData).map((opt, idx) => (
-            <label key={`${field.id}_${idx}`} className="flex items-center gap-3 py-1.5 cursor-pointer group">
+            <label
+              key={`${field.id}_${idx}`}
+              className="flex items-center gap-3 py-1.5 cursor-pointer group"
+            >
               <input
                 type="radio"
                 name={field.id}
@@ -126,7 +134,10 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
           {resolveOptions(field, formData).map((opt, idx) => {
             const checked = Array.isArray(value) && value.includes(opt)
             return (
-              <label key={`${field.id}_${idx}`} className="flex items-center gap-3 py-1.5 cursor-pointer group">
+              <label
+                key={`${field.id}_${idx}`}
+                className="flex items-center gap-3 py-1.5 cursor-pointer group"
+              >
                 <input
                   type="checkbox"
                   checked={checked}
@@ -149,7 +160,7 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       const disabled = field.dependsOn && opts.length === 0
       const selectOptions = [
         { value: '', label: '' },
-        ...opts.map((opt) => ({ value: opt, label: opt })),
+        ...opts.map((opt) => ({ value: opt, label: opt }))
       ]
       return (
         <Select
@@ -172,12 +183,25 @@ function DynamicFieldRenderer({ field, value, onChange, formData }: DynamicField
       )
 
     case 'linear_scale':
-      if (!field.linearScale) return <p className="text-sm text-red-500">Linear scale configuration is missing.</p>
-      return <LinearScaleInput config={field.linearScale} value={value as number | undefined} onChange={onChange} />
+      if (!field.linearScale)
+        return <p className="text-sm text-red-500">Linear scale configuration is missing.</p>
+      return (
+        <LinearScaleInput
+          config={field.linearScale}
+          value={value as number | undefined}
+          onChange={onChange}
+        />
+      )
 
     case 'grid':
       if (!field.grid) return <p className="text-sm text-red-500">Grid configuration is missing.</p>
-      return <GridInput config={field.grid} value={(value as Record<string, string | string[]>) || {}} onChange={onChange} />
+      return (
+        <GridInput
+          config={field.grid}
+          value={(value as Record<string, string | string[]>) || {}}
+          onChange={onChange}
+        />
+      )
 
     case 'date':
       return (

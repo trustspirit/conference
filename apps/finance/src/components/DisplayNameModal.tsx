@@ -28,7 +28,10 @@ export default function DisplayNameModal() {
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
   useEffect(() => {
-    if (!bankNameMounted.current) { bankNameMounted.current = true; return }
+    if (!bankNameMounted.current) {
+      bankNameMounted.current = true
+      return
+    }
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -71,7 +74,7 @@ export default function DisplayNameModal() {
           bankBookImage: '',
           bankBookPath: storagePath,
           bankBookUrl: url,
-          consentAgreedAt: new Date().toISOString(),
+          consentAgreedAt: new Date().toISOString()
         })
       } else {
         await updateAppUser({
@@ -80,7 +83,7 @@ export default function DisplayNameModal() {
           bankName: bankName.trim(),
           bankAccount: bankAccount.trim(),
           defaultCommittee: committee as Committee,
-          consentAgreedAt: new Date().toISOString(),
+          consentAgreedAt: new Date().toISOString()
         })
       }
       setNeedsDisplayName(false)
@@ -134,32 +137,46 @@ export default function DisplayNameModal() {
 
           {/* Bank Book Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('field.bankBook')}</label>
-            <input type="file" accept=".png,.jpg,.jpeg,.pdf"
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('field.bankBook')}
+            </label>
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg,.pdf"
               onChange={(e) => {
                 const f = e.target.files?.[0] || null
                 if (f) {
                   const err = validateBankBookFile(f)
-                  if (err) { setBankBookError(err); setBankBookFile(null); e.target.value = ''; return }
+                  if (err) {
+                    setBankBookError(err)
+                    setBankBookFile(null)
+                    e.target.value = ''
+                    return
+                  }
                 }
                 setBankBookError(null)
                 setBankBookFile(f)
               }}
-              className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+              className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
             {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
             {bankBookFile && (
-              <p className="text-xs text-green-600 mt-1">{bankBookFile.name} ({(bankBookFile.size / 1024).toFixed(0)}KB)</p>
+              <p className="text-xs text-green-600 mt-1">
+                {bankBookFile.name} ({(bankBookFile.size / 1024).toFixed(0)}KB)
+              </p>
             )}
             <p className="text-xs text-gray-400 mt-1">{t('settings.bankBookRequiredHint')}</p>
           </div>
 
-          <CommitteeSelect value={committee} onChange={setCommittee}
-            name="init-committee" label={t('field.defaultCommittee')} />
+          <CommitteeSelect
+            value={committee}
+            onChange={setCommittee}
+            name="init-committee"
+            label={t('field.defaultCommittee')}
+          />
 
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {t('consent.agreement')}
-            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">{t('consent.agreement')}</p>
             <Checkbox
               checked={consentAgreed}
               onChange={(e) => setConsentAgreed(e.target.checked)}

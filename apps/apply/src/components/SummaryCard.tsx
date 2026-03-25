@@ -6,7 +6,7 @@ const COLOR_MAP: Record<Color, { bg: string; border: string; accent: string }> =
   green: { bg: '#f0fdf4', border: '#bbf7d0', accent: '#16a34a' },
   red: { bg: '#fef2f2', border: '#fecaca', accent: '#dc2626' },
   blue: { bg: '#eff6ff', border: '#bfdbfe', accent: '#2563eb' },
-  purple: { bg: '#faf5ff', border: '#e9d5ff', accent: '#7c3aed' },
+  purple: { bg: '#faf5ff', border: '#e9d5ff', accent: '#7c3aed' }
 }
 
 interface SummaryCardProps {
@@ -25,14 +25,20 @@ export default function SummaryCard({ label, value, color = 'gray', onClick }: S
       onClick={onClick}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
-      onKeyDown={isClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') onClick?.()
+            }
+          : undefined
+      }
       style={{
         borderRadius: '0.75rem',
         border: `1px solid ${c.border}`,
         backgroundColor: c.bg,
         padding: '1.25rem 1.5rem',
         cursor: isClickable ? 'pointer' : 'default',
-        transition: 'box-shadow 0.15s, transform 0.15s',
+        transition: 'box-shadow 0.15s, transform 0.15s'
       }}
       onMouseEnter={(e) => {
         if (isClickable) {

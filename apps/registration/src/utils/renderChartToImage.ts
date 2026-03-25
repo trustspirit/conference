@@ -5,10 +5,21 @@ import {
   getOptionDistribution,
   getCheckboxDistribution,
   getScaleDistribution,
-  getStakeDistribution,
+  getStakeDistribution
 } from './statsUtils'
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1']
+const COLORS = [
+  '#3B82F6',
+  '#10B981',
+  '#F59E0B',
+  '#EF4444',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#84CC16',
+  '#F97316',
+  '#6366F1'
+]
 
 export interface ChartImage {
   fieldId: string
@@ -20,7 +31,7 @@ export interface ChartImage {
 export function renderChartToImage(
   config: ChartConfiguration,
   width: number = 600,
-  height: number = 400,
+  height: number = 400
 ): string {
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -29,12 +40,12 @@ export function renderChartToImage(
   const mergedOptions = {
     ...config.options,
     responsive: false,
-    animation: false as const,
+    animation: false as const
   }
 
   const chart = new Chart(canvas, {
     ...config,
-    options: mergedOptions,
+    options: mergedOptions
   })
 
   const base64 = chart.toBase64Image('image/png')
@@ -46,7 +57,7 @@ export function renderChartToImage(
 export function buildDailyTrendImage(
   responses: SurveyResponse[],
   width?: number,
-  height?: number,
+  height?: number
 ): string {
   const dailyData = getDailyRegistrationCounts(responses, 14)
 
@@ -60,14 +71,14 @@ export function buildDailyTrendImage(
           borderColor: '#3B82F6',
           backgroundColor: 'rgba(59,130,246,0.1)',
           fill: true,
-          tension: 0.3,
-        },
-      ],
+          tension: 0.3
+        }
+      ]
     },
     options: {
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-    },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
   }
 
   return renderChartToImage(config, width, height)
@@ -77,29 +88,30 @@ export function buildChartImagesForFields(
   selectedFields: SurveyField[],
   responses: SurveyResponse[],
   width?: number,
-  height?: number,
+  height?: number
 ): ChartImage[] {
   const results: ChartImage[] = []
 
   for (const field of selectedFields) {
     // Gender field — always Pie
     if (field.participantField === 'gender') {
-      const options = field.options && field.options.length > 0 ? field.options : ['male', 'female', 'other']
+      const options =
+        field.options && field.options.length > 0 ? field.options : ['male', 'female', 'other']
       const dist = getOptionDistribution(responses, field.id, options)
       const config: ChartConfiguration<'pie'> = {
         type: 'pie',
         data: {
           labels: dist.labels,
-          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }]
         },
         options: {
-          plugins: { legend: { position: 'bottom' } },
-        },
+          plugins: { legend: { position: 'bottom' } }
+        }
       }
       results.push({
         fieldId: field.id,
         label: field.label,
-        imageDataUrl: renderChartToImage(config, width, height),
+        imageDataUrl: renderChartToImage(config, width, height)
       })
       continue
     }
@@ -112,16 +124,16 @@ export function buildChartImagesForFields(
         type: chartType,
         data: {
           labels: dist.labels,
-          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }]
         },
         options: {
-          plugins: { legend: { position: 'bottom' } },
-        },
+          plugins: { legend: { position: 'bottom' } }
+        }
       }
       results.push({
         fieldId: field.id,
         label: field.label,
-        imageDataUrl: renderChartToImage(config, width, height),
+        imageDataUrl: renderChartToImage(config, width, height)
       })
       continue
     }
@@ -133,18 +145,18 @@ export function buildChartImagesForFields(
         type: 'bar',
         data: {
           labels: dist.labels,
-          datasets: [{ data: dist.data, backgroundColor: COLORS[0] }],
+          datasets: [{ data: dist.data, backgroundColor: COLORS[0] }]
         },
         options: {
           indexAxis: 'y',
           plugins: { legend: { display: false } },
-          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
-        },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
       }
       results.push({
         fieldId: field.id,
         label: field.label,
-        imageDataUrl: renderChartToImage(config, width, height),
+        imageDataUrl: renderChartToImage(config, width, height)
       })
       continue
     }
@@ -157,18 +169,18 @@ export function buildChartImagesForFields(
         type: 'bar',
         data: {
           labels: dist.labels,
-          datasets: [{ data: dist.data, backgroundColor: COLORS[0] }],
+          datasets: [{ data: dist.data, backgroundColor: COLORS[0] }]
         },
         options: {
           plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-        },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
       }
       results.push({
         fieldId: field.id,
         label: field.label,
         imageDataUrl: renderChartToImage(config, width, height),
-        subtitle: `Average: ${dist.average.toFixed(2)}`,
+        subtitle: `Average: ${dist.average.toFixed(2)}`
       })
       continue
     }
@@ -179,16 +191,16 @@ export function buildChartImagesForFields(
         type: 'doughnut',
         data: {
           labels: dist.labels,
-          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+          datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }]
         },
         options: {
-          plugins: { legend: { position: 'bottom' } },
-        },
+          plugins: { legend: { position: 'bottom' } }
+        }
       }
       results.push({
         fieldId: field.id,
         label: field.label,
-        imageDataUrl: renderChartToImage(config, width, height),
+        imageDataUrl: renderChartToImage(config, width, height)
       })
       continue
     }

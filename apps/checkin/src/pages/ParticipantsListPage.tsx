@@ -2,12 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Tabs } from 'trust-ui-react'
 import { useParticipantsListPage } from '../hooks'
-import {
-  ParticipantsListSkeleton,
-  ParticipantsTab,
-  GroupsTab,
-  RoomsTab
-} from '../components'
+import { ParticipantsListSkeleton, ParticipantsTab, GroupsTab, RoomsTab } from '../components'
 
 function ParticipantsListPage(): React.ReactElement {
   const { t } = useTranslation()
@@ -28,7 +23,8 @@ function ParticipantsListPage(): React.ReactElement {
         <Tabs.List>
           {tabs.map((tab) => (
             <Tabs.Trigger key={tab.id} value={tab.id}>
-              {tab.label}{tab.count !== undefined ? ` (${tab.count})` : ''}
+              {tab.label}
+              {tab.count !== undefined ? ` (${tab.count})` : ''}
             </Tabs.Trigger>
           ))}
         </Tabs.List>

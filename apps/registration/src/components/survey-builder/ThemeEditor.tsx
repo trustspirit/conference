@@ -81,7 +81,9 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.theme.primaryColor')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.theme.primaryColor')}
+          </label>
           <div className="flex items-center gap-3">
             <input
               type="color"
@@ -98,7 +100,9 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('builder.theme.headerImage')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            {t('builder.theme.headerImage')}
+          </label>
 
           {/* Hidden file input */}
           <input
@@ -136,7 +140,12 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
                   <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
                 ) : (
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16"
+                    />
                   </svg>
                 )}
                 <span className="text-xs font-medium">
@@ -157,9 +166,7 @@ function ThemeEditor({ surveyId, theme, onChange }: ThemeEditorProps): React.Rea
             </div>
           )}
 
-          {imageError && (
-            <p className="mt-1 text-xs text-red-500">{imageError}</p>
-          )}
+          {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
         </div>
       </div>
     </div>

@@ -536,21 +536,21 @@
       "title": "Already Recommended",
       "message": "You have already been recommended by your leader. Please contact your bishop or stake president if you have questions."
     },
-      "overview": {
-        "title": "Submission Overview",
-        "draftWarning": "This application is saved as a draft. Submit it when the required fields are complete.",
-        "status": "Status",
-        "name": "Name",
-        "email": "Email",
-        "phone": "Phone",
-        "age": "Age",
-        "stake": "Stake/District",
-        "ward": "Ward/Branch",
-        "servedMission": "Served a Mission",
-        "additionalInfo": "Additional Information",
-        "noAdditionalInfo": "No additional details provided.",
-        "leaderComment": "Leader Comments"
-      },
+    "overview": {
+      "title": "Submission Overview",
+      "draftWarning": "This application is saved as a draft. Submit it when the required fields are complete.",
+      "status": "Status",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "age": "Age",
+      "stake": "Stake/District",
+      "ward": "Ward/Branch",
+      "servedMission": "Served a Mission",
+      "additionalInfo": "Additional Information",
+      "noAdditionalInfo": "No additional details provided.",
+      "leaderComment": "Leader Comments"
+    },
     "form": {
       "name": "Name",
       "age": "Age",
@@ -600,4 +600,3 @@
     "notFound": "The requested resource was not found."
   }
 }
-

@@ -10,13 +10,22 @@ import {
   PointElement,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 } from 'chart.js'
 import StatCard from './StatCard'
 import { getDailyRegistrationCounts, getTodayCount } from '../../utils/statsUtils'
 import type { Survey, SurveyResponse } from '../../types'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend, Filler)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 interface DashboardOverviewProps {
   surveys: Survey[]
@@ -55,9 +64,9 @@ function DashboardOverview({ surveys, allResponses }: DashboardOverviewProps): R
         borderColor: '#3B82F6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
-        tension: 0.3,
-      },
-    ],
+        tension: 0.3
+      }
+    ]
   }
 
   const barChartData = {
@@ -65,16 +74,16 @@ function DashboardOverview({ surveys, allResponses }: DashboardOverviewProps): R
     datasets: [
       {
         data: surveyComparison.data,
-        backgroundColor: '#3B82F6',
-      },
-    ],
+        backgroundColor: '#3B82F6'
+      }
+    ]
   }
 
   const lineChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
   } as const
 
   const barChartOptions = {
@@ -82,7 +91,7 @@ function DashboardOverview({ surveys, allResponses }: DashboardOverviewProps): R
     maintainAspectRatio: false,
     indexAxis: 'y' as const,
     plugins: { legend: { display: false } },
-    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
   }
 
   return (
@@ -97,14 +106,18 @@ function DashboardOverview({ surveys, allResponses }: DashboardOverviewProps): R
       {allResponses.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.dailyTrend')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              {t('dashboard.dailyTrend')}
+            </h3>
             <div className="h-64">
               <Line data={lineChartData} options={lineChartOptions} />
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('dashboard.surveyComparison')}</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              {t('dashboard.surveyComparison')}
+            </h3>
             <div className="h-64">
               <Bar data={barChartData} options={barChartOptions} />
             </div>

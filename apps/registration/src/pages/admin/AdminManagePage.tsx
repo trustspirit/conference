@@ -25,7 +25,9 @@ function AdminManagePage(): React.ReactElement {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,15 +106,21 @@ function AdminManagePage(): React.ReactElement {
       </main>
 
       <Dialog open={!!confirmRemoveEmail} onClose={() => setConfirmRemoveEmail(null)} size="sm">
-        <Dialog.Title onClose={() => setConfirmRemoveEmail(null)}>{t('common.confirm')}</Dialog.Title>
+        <Dialog.Title onClose={() => setConfirmRemoveEmail(null)}>
+          {t('common.confirm')}
+        </Dialog.Title>
         <Dialog.Content>
           <p className="text-sm text-gray-700">
             {t('adminManage.removeConfirm', { email: confirmRemoveEmail ?? '' })}
           </p>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="ghost" onClick={() => setConfirmRemoveEmail(null)}>{t('common.cancel')}</Button>
-          <Button variant="danger" onClick={handleConfirmRemove}>{t('common.delete')}</Button>
+          <Button variant="ghost" onClick={() => setConfirmRemoveEmail(null)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="danger" onClick={handleConfirmRemove}>
+            {t('common.delete')}
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </div>

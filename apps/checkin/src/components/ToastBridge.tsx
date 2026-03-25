@@ -8,7 +8,7 @@ const typeToVariant: Record<ToastType, 'success' | 'danger' | 'warning' | 'info'
   success: 'success',
   error: 'danger',
   info: 'info',
-  warning: 'warning',
+  warning: 'warning'
 }
 
 /**

@@ -47,7 +47,7 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
         totalAmount: s.totalAmount,
         totalRequests: s.requestIds.length,
         date: formatFirestoreDate(s.createdAt),
-        settlementCount: 1,
+        settlementCount: 1
       })
     }
   }
@@ -65,16 +65,19 @@ export default function SettlementListPage() {
     isLoading: loading,
     hasNextPage,
     isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteSettlements(currentProject?.id, committeeFilter === 'all' ? undefined : committeeFilter)
+    fetchNextPage
+  } = useInfiniteSettlements(
+    currentProject?.id,
+    committeeFilter === 'all' ? undefined : committeeFilter
+  )
 
-  const settlements = data?.pages.flatMap(p => p.items) ?? []
+  const settlements = data?.pages.flatMap((p) => p.items) ?? []
   const batches = useMemo(() => groupByBatch(settlements), [settlements])
 
   const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
     { value: 'all', label: t('status.all') },
     { value: 'operations', label: t('committee.operationsShort') },
-    { value: 'preparation', label: t('committee.preparationShort') },
+    { value: 'preparation', label: t('committee.preparationShort') }
   ]
 
   const payeeLabel = (b: BatchGroup) =>
@@ -82,14 +85,24 @@ export default function SettlementListPage() {
 
   const committeeLabel = (b: BatchGroup) =>
     b.committees.length === 1
-      ? (b.committees[0] === 'operations' ? t('committee.operationsShort') : t('committee.preparationShort'))
+      ? b.committees[0] === 'operations'
+        ? t('committee.operationsShort')
+        : t('committee.preparationShort')
       : '-'
 
   return (
     <Layout>
       <PageHeader
         title={t('settlement.listTitle')}
-        action={canProcess ? { label: t('settlement.newSettlement'), to: '/admin/settlement/new', variant: 'purple' } : undefined}
+        action={
+          canProcess
+            ? {
+                label: t('settlement.newSettlement'),
+                to: '/admin/settlement/new',
+                variant: 'purple'
+              }
+            : undefined
+        }
       />
 
       <div className="flex gap-2 mb-4">
@@ -115,7 +128,7 @@ export default function SettlementListPage() {
           title={t('settlement.noSettlements')}
           description={t('settlement.description')}
           actionLabel={canProcess ? t('settlement.newSettlement') : undefined}
-          actionTo={canProcess ? "/admin/settlement/new" : undefined}
+          actionTo={canProcess ? '/admin/settlement/new' : undefined}
         />
       ) : (
         <>
@@ -125,11 +138,21 @@ export default function SettlementListPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('settlement.settlementDate')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.payee')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.committee')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('field.totalAmount')}</th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600">{t('settlement.requestCount')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('settlement.settlementDate')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.payee')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.committee')}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">
+                      {t('field.totalAmount')}
+                    </th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">
+                      {t('settlement.requestCount')}
+                    </th>
                     <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
                   </tr>
                 </thead>
@@ -139,11 +162,19 @@ export default function SettlementListPage() {
                       <td className="px-4 py-3">{b.date}</td>
                       <td className="px-4 py-3">{payeeLabel(b)}</td>
                       <td className="px-4 py-3">{committeeLabel(b)}</td>
-                      <td className="px-4 py-3 text-right font-medium">₩{b.totalAmount.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-center">{t('form.itemCount', { count: b.totalRequests })}</td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        ₩{b.totalAmount.toLocaleString()}
+                      </td>
                       <td className="px-4 py-3 text-center">
-                        <Link to={`/admin/settlement/${b.firstId}`}
-                          className="text-purple-600 hover:underline text-sm">{t('settlement.report')}</Link>
+                        {t('form.itemCount', { count: b.totalRequests })}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Link
+                          to={`/admin/settlement/${b.firstId}`}
+                          className="text-purple-600 hover:underline text-sm"
+                        >
+                          {t('settlement.report')}
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -155,8 +186,11 @@ export default function SettlementListPage() {
           {/* Mobile */}
           <div className="sm:hidden space-y-3">
             {batches.map((b) => (
-              <Link key={b.batchId} to={`/admin/settlement/${b.firstId}`}
-                className="block bg-white rounded-lg shadow p-4">
+              <Link
+                key={b.batchId}
+                to={`/admin/settlement/${b.firstId}`}
+                className="block bg-white rounded-lg shadow p-4"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">{payeeLabel(b)}</span>
                   <span className="text-xs text-gray-400">{b.date}</span>
@@ -165,7 +199,9 @@ export default function SettlementListPage() {
                   <span className="text-gray-500">
                     {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
                   </span>
-                  <span className="font-medium text-purple-700">₩{b.totalAmount.toLocaleString()}</span>
+                  <span className="font-medium text-purple-700">
+                    ₩{b.totalAmount.toLocaleString()}
+                  </span>
                 </div>
               </Link>
             ))}

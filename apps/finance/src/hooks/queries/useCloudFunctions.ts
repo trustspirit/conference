@@ -25,16 +25,19 @@ export function useUploadReceipts() {
       const uploadFn = httpsCallable<UploadReceiptsInput, Receipt[]>(functions, 'uploadReceiptsV2')
       const result = await uploadFn(input)
       return result.data
-    },
+    }
   })
 }
 
 export function useUploadBankBook() {
   return useMutation({
     mutationFn: async (input: UploadBankBookInput) => {
-      const uploadFn = httpsCallable<UploadBankBookInput, UploadBankBookResult>(functions, 'uploadBankBookV2')
+      const uploadFn = httpsCallable<UploadBankBookInput, UploadBankBookResult>(
+        functions,
+        'uploadBankBookV2'
+      )
       const result = await uploadFn(input)
       return result.data
-    },
+    }
   })
 }

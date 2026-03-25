@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               ward: '',
               stake: '',
               phone: '',
-              picture: firebaseUser.photoURL || '',
+              picture: firebaseUser.photoURL || ''
             }
             await setDoc(doc(db, APPLY_USERS_COLLECTION, firebaseUser.uid), newUser)
             setAppUser(newUser)
@@ -95,7 +95,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, appUser, loading, needsProfile, needsConsent, signInWithGoogle, logout, updateAppUser, setNeedsProfile, setNeedsConsent }}
+      value={{
+        user,
+        appUser,
+        loading,
+        needsProfile,
+        needsConsent,
+        signInWithGoogle,
+        logout,
+        updateAppUser,
+        setNeedsProfile,
+        setNeedsConsent
+      }}
     >
       {children}
     </AuthContext.Provider>

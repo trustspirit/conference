@@ -22,7 +22,10 @@ function QRCodeDisplay({
   if (!participantKey) {
     return (
       <div className="flex flex-col items-center">
-        <div className="bg-[#F0F2F5] p-4 rounded-lg border border-[#DADDE1] text-center" style={{ width: size, height: size }}>
+        <div
+          className="bg-[#F0F2F5] p-4 rounded-lg border border-[#DADDE1] text-center"
+          style={{ width: size, height: size }}
+        >
           <p className="text-sm text-[#65676B] mt-8">{t('participant.noBirthDateForKey')}</p>
         </div>
       </div>

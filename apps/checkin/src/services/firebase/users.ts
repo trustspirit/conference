@@ -6,7 +6,7 @@ import {
   updateDoc,
   deleteField,
   query,
-  where,
+  where
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { USERS_COLLECTION } from './collections'
@@ -32,7 +32,7 @@ export async function getUsers(): Promise<AppUser[]> {
       name: data.name || '',
       photoURL: data.photoURL || '',
       role: data.role as UserRole | undefined,
-      createdAt: data.createdAt?.toDate?.() || undefined,
+      createdAt: data.createdAt?.toDate?.() || undefined
     }
   })
 }
@@ -52,7 +52,7 @@ export async function getUserByEmail(email: string): Promise<AppUser | null> {
     name: data.name || '',
     photoURL: data.photoURL || '',
     role: data.role as UserRole | undefined,
-    createdAt: data.createdAt?.toDate?.() || undefined,
+    createdAt: data.createdAt?.toDate?.() || undefined
   }
 }
 

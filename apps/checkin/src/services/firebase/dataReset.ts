@@ -15,7 +15,6 @@ const BATCH_SIZE = 500 // Firestore batch limit
  * Delete all documents in a collection using batched writes
  */
 async function deleteCollection(collectionName: string): Promise<number> {
-
   const collectionRef = collection(db, collectionName)
   let totalDeleted = 0
 

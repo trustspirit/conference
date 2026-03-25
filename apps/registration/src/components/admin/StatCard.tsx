@@ -7,7 +7,12 @@ interface StatCardProps {
   color?: string
 }
 
-function StatCard({ label, value, icon, color = 'text-gray-900' }: StatCardProps): React.ReactElement {
+function StatCard({
+  label,
+  value,
+  icon,
+  color = 'text-gray-900'
+}: StatCardProps): React.ReactElement {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
       {icon && (

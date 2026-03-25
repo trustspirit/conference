@@ -1,7 +1,12 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast, Button, Dialog } from 'trust-ui-react'
-import { getChartableFields, getTextFields, getTodayCount, getTextResponses } from '../../utils/statsUtils'
+import {
+  getChartableFields,
+  getTextFields,
+  getTodayCount,
+  getTextResponses
+} from '../../utils/statsUtils'
 import { buildChartImagesForFields, buildDailyTrendImage } from '../../utils/renderChartToImage'
 import { generateSurveyReport } from '../../utils/generateSurveyReport'
 import type { Survey, SurveyResponse, SurveyField } from '../../types'
@@ -39,11 +44,11 @@ function ReportFieldSelector({ survey, responses, isOpen, onClose }: ReportField
 
   const availableFields = useMemo(
     () => [...getChartableFields(survey.fields || []), ...getTextFields(survey.fields || [])],
-    [survey.fields],
+    [survey.fields]
   )
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(availableFields.map((f) => f.id)),
+    () => new Set(availableFields.map((f) => f.id))
   )
   const [exporting, setExporting] = useState(false)
 
@@ -93,7 +98,7 @@ function ReportFieldSelector({ survey, responses, isOpen, onClose }: ReportField
         const textFieldsData = textSelected.map((field) => ({
           fieldId: field.id,
           label: field.label,
-          responses: getTextResponses(responses, field.id),
+          responses: getTextResponses(responses, field.id)
         }))
 
         generateSurveyReport({
@@ -105,7 +110,7 @@ function ReportFieldSelector({ survey, responses, isOpen, onClose }: ReportField
           dailyTrendImage,
           chartImages,
           textFields: textFieldsData,
-          generatedAt: new Date(),
+          generatedAt: new Date()
         })
 
         setExporting(false)
@@ -140,7 +145,10 @@ function ReportFieldSelector({ survey, responses, isOpen, onClose }: ReportField
         {/* Field list */}
         <div className="max-h-80 overflow-y-auto mt-1">
           {availableFields.map((field) => (
-            <label key={field.id} className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded px-1">
+            <label
+              key={field.id}
+              className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded px-1"
+            >
               <input
                 type="checkbox"
                 checked={selectedIds.has(field.id)}
@@ -156,7 +164,9 @@ function ReportFieldSelector({ survey, responses, isOpen, onClose }: ReportField
         </div>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+        <Button variant="ghost" onClick={onClose}>
+          {t('common.cancel')}
+        </Button>
         <Button
           onClick={handleExport}
           disabled={exporting || selectedIds.size === 0}

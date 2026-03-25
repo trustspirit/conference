@@ -64,11 +64,7 @@ export default function ChatPanel({ onClose, chat }: Props) {
           </div>
         )}
 
-        {error && (
-          <div className="text-center text-xs text-red-500">
-            {t('chat.error')}
-          </div>
-        )}
+        {error && <div className="text-center text-xs text-red-500">{t('chat.error')}</div>}
 
         <div ref={messagesEndRef} />
       </div>

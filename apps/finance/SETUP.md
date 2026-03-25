@@ -66,6 +66,7 @@ VITE_FIREBASE_APP_ID=your-app-id
 영수증과 통장사본은 Firebase Storage에 자동 저장됩니다. Cloud Functions가 파일 업로드를 처리하며, 별도의 설정이 필요하지 않습니다.
 
 Storage 경로 구조:
+
 - 영수증: `receipts/{projectId}/{committee}/{timestamp}_{fileName}`
 - 통장사본: `bankbook/{userUid}/{timestamp}_{fileName}`
 
@@ -98,11 +99,11 @@ npm run emulator
 
 에뮬레이터 포트 구성 (`firebase.json`):
 
-| 서비스 | 포트 |
-|--------|------|
-| Auth | 9099 |
-| Firestore | 8080 |
-| Functions | 5001 |
+| 서비스      | 포트 |
+| ----------- | ---- |
+| Auth        | 9099 |
+| Firestore   | 8080 |
+| Functions   | 5001 |
 | Emulator UI | 4000 |
 
 에뮬레이터 모드에서는 `.env.emulator` 파일이 사용됩니다:
@@ -131,19 +132,19 @@ npm run seed:clear
 
 ### npm scripts 전체 목록
 
-| 스크립트 | 설명 |
-|----------|------|
-| `npm run dev` | Vite 개발 서버 (프로덕션 Firebase) |
-| `npm run dev:emulator` | Vite 개발 서버 (에뮬레이터 모드) |
-| `npm run emulator` | Firebase 에뮬레이터 시작 |
-| `npm run build` | TypeScript 컴파일 + Vite 프로덕션 빌드 |
-| `npm run lint` | ESLint 실행 |
-| `npm run preview` | 프로덕션 빌드 미리보기 |
-| `npm run seed` | Mock 데이터 생성 |
-| `npm run seed:clear` | Mock 데이터 삭제 |
-| `npm run migrate:projects` | 프로젝트 마이그레이션 (프로덕션) |
-| `npm run migrate:projects:emulator` | 프로젝트 마이그레이션 (에뮬레이터) |
-| `npm run migrate:three-step` | 3단계 워크플로우 마이그레이션 (프로덕션) |
+| 스크립트                              | 설명                                       |
+| ------------------------------------- | ------------------------------------------ |
+| `npm run dev`                         | Vite 개발 서버 (프로덕션 Firebase)         |
+| `npm run dev:emulator`                | Vite 개발 서버 (에뮬레이터 모드)           |
+| `npm run emulator`                    | Firebase 에뮬레이터 시작                   |
+| `npm run build`                       | TypeScript 컴파일 + Vite 프로덕션 빌드     |
+| `npm run lint`                        | ESLint 실행                                |
+| `npm run preview`                     | 프로덕션 빌드 미리보기                     |
+| `npm run seed`                        | Mock 데이터 생성                           |
+| `npm run seed:clear`                  | Mock 데이터 삭제                           |
+| `npm run migrate:projects`            | 프로젝트 마이그레이션 (프로덕션)           |
+| `npm run migrate:projects:emulator`   | 프로젝트 마이그레이션 (에뮬레이터)         |
+| `npm run migrate:three-step`          | 3단계 워크플로우 마이그레이션 (프로덕션)   |
 | `npm run migrate:three-step:emulator` | 3단계 워크플로우 마이그레이션 (에뮬레이터) |
 
 ## 7. 배포
@@ -195,17 +196,17 @@ firebase deploy --only functions
 
 3단계 승인 워크플로우: **신청 → 재정 검토 → 최종 승인 → 정산**
 
-| 역할 | 설명 | 권한 |
-|------|------|------|
-| `user` | 일반 사용자 | 신청서 작성/조회 |
-| `finance_ops` | 운영위 재정 | 운영위 신청서 검토/반려 |
-| `approver_ops` | 운영위 승인자 | 운영위 검토완료 건 최종 승인/반려 (≤한도), 정산 열람 |
-| `finance_prep` | 준비위 재정(총괄) | 모든 위원회 검토/반려, 정산 처리, 승인건 반려, 영수증 관리, 대시보드/예산 설정, 사용자 관리 |
-| `approver_prep` | 준비위 승인자 | 준비위 검토완료 건 최종 승인/반려 (≤한도), 정산 열람 |
-| `session_director` | 운영 위원장 | 운영위 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람 |
-| `logistic_admin` | 준비 위원장 | 준비위 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람 |
-| `executive` | 대회장 | 모든 위원회 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람 |
-| `admin` | 관리자 | 모든 권한 + 사용자 관리/삭제 + 프로젝트 관리 |
+| 역할               | 설명              | 권한                                                                                        |
+| ------------------ | ----------------- | ------------------------------------------------------------------------------------------- |
+| `user`             | 일반 사용자       | 신청서 작성/조회                                                                            |
+| `finance_ops`      | 운영위 재정       | 운영위 신청서 검토/반려                                                                     |
+| `approver_ops`     | 운영위 승인자     | 운영위 검토완료 건 최종 승인/반려 (≤한도), 정산 열람                                        |
+| `finance_prep`     | 준비위 재정(총괄) | 모든 위원회 검토/반려, 정산 처리, 승인건 반려, 영수증 관리, 대시보드/예산 설정, 사용자 관리 |
+| `approver_prep`    | 준비위 승인자     | 준비위 검토완료 건 최종 승인/반려 (≤한도), 정산 열람                                        |
+| `session_director` | 운영 위원장       | 운영위 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람                                    |
+| `logistic_admin`   | 준비 위원장       | 준비위 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람                                    |
+| `executive`        | 대회장            | 모든 위원회 최종 승인/반려 (금액 무제한), 대시보드, 정산 열람                               |
+| `admin`            | 관리자            | 모든 권한 + 사용자 관리/삭제 + 프로젝트 관리                                                |
 
 역할별 권한 로직은 `src/lib/roles.ts`에서 관리합니다.
 
@@ -230,6 +231,7 @@ npm run migrate:three-step:emulator
 ```
 
 마이그레이션 내용:
+
 - 기존 `finance` 역할 사용자 → `finance_prep`으로 변경
 - 기존 신청서에 `reviewedBy`/`reviewedAt` 필드 추가 (null 초기화)
 - 이미 승인/정산된 건: `approvedBy` 정보를 `reviewedBy`로 복사
@@ -344,22 +346,22 @@ finance/
 
 ## Firestore 컬렉션 구조
 
-| 컬렉션 | 용도 |
-|--------|------|
-| `users` | 사용자 정보 (이름, 연락처, 은행, 통장사본, 서명, 권한, 할당된 프로젝트) |
-| `requests` | 신청서 데이터 (프로젝트ID, 항목, 영수증, 승인/정산 정보) |
-| `settlements` | 정산 리포트 (프로젝트ID, 신청자별 통합 항목/영수증) |
-| `projects` | 프로젝트(대회) 설정 (예산, Document No., 승인 기준, 멤버) |
-| `settings` | 글로벌 설정 (기본 프로젝트 ID) |
+| 컬렉션        | 용도                                                                    |
+| ------------- | ----------------------------------------------------------------------- |
+| `users`       | 사용자 정보 (이름, 연락처, 은행, 통장사본, 서명, 권한, 할당된 프로젝트) |
+| `requests`    | 신청서 데이터 (프로젝트ID, 항목, 영수증, 승인/정산 정보)                |
+| `settlements` | 정산 리포트 (프로젝트ID, 신청자별 통합 항목/영수증)                     |
+| `projects`    | 프로젝트(대회) 설정 (예산, Document No., 승인 기준, 멤버)               |
+| `settings`    | 글로벌 설정 (기본 프로젝트 ID)                                          |
 
 ## Firebase Storage 구조
 
 파일은 Firebase Storage 버킷에 자동 저장됩니다.
 
-| 경로 패턴 | 용도 |
-|-----------|------|
+| 경로 패턴                                                 | 용도        |
+| --------------------------------------------------------- | ----------- |
 | `receipts/{projectId}/{committee}/{timestamp}_{fileName}` | 영수증 파일 |
-| `bankbook/{userUid}/{timestamp}_{fileName}` | 통장사본 |
+| `bankbook/{userUid}/{timestamp}_{fileName}`               | 통장사본    |
 
 프로젝트 삭제 시 해당 프로젝트의 Storage 파일도 자동으로 정리됩니다.
 
@@ -367,13 +369,13 @@ finance/
 
 Vite의 `manualChunks`와 React `lazy()`를 사용하여 청크를 분리합니다:
 
-| 청크 | 내용 |
-|------|------|
-| `vendor-react` | React, React DOM, React Router |
-| `vendor-firebase` | Firebase SDK |
-| `vendor-recharts` | Recharts 차트 라이브러리 |
-| `vendor-i18n` | i18next |
-| `index` | 앱 코어 (AuthContext, Layout 등) |
-| 각 페이지 | Lazy-loaded 페이지별 청크 |
+| 청크              | 내용                             |
+| ----------------- | -------------------------------- |
+| `vendor-react`    | React, React DOM, React Router   |
+| `vendor-firebase` | Firebase SDK                     |
+| `vendor-recharts` | Recharts 차트 라이브러리         |
+| `vendor-i18n`     | i18next                          |
+| `index`           | 앱 코어 (AuthContext, Layout 등) |
+| 각 페이지         | Lazy-loaded 페이지별 청크        |
 
 모든 청크가 500KB 미만으로 Rollup 경고 없이 빌드됩니다.

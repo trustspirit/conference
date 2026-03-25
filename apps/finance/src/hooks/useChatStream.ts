@@ -29,7 +29,7 @@ export function useChat(): UseChatReturn {
       const userMessage: ChatMessage = {
         id: nextId(),
         role: 'user',
-        content: content.trim(),
+        content: content.trim()
       }
 
       setMessages((prev) => [...prev, userMessage])
@@ -38,7 +38,7 @@ export function useChat(): UseChatReturn {
 
       const apiMessages = [...messagesRef.current, userMessage].map((m) => ({
         role: m.role,
-        content: m.content,
+        content: m.content
       }))
 
       try {
@@ -46,18 +46,17 @@ export function useChat(): UseChatReturn {
         const assistantMessage: ChatMessage = {
           id: nextId(),
           role: 'assistant',
-          content: reply,
+          content: reply
         }
         setMessages((prev) => [...prev, assistantMessage])
       } catch (err) {
-        const errorMsg =
-          err instanceof Error ? err.message : 'An error occurred'
+        const errorMsg = err instanceof Error ? err.message : 'An error occurred'
         setError(errorMsg)
       } finally {
         setIsLoading(false)
       }
     },
-    [isLoading],
+    [isLoading]
   )
 
   const clearMessages = useCallback(() => {

@@ -43,7 +43,9 @@ function DrawerRoot({ open, onClose, children, className }: DrawerProps) {
     if (!open) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    return () => {
+      document.body.style.overflow = prev
+    }
   }, [open])
 
   // 열릴 때 패널에 포커스
@@ -65,7 +67,7 @@ function DrawerRoot({ open, onClose, children, className }: DrawerProps) {
           position: 'absolute',
           inset: 0,
           backgroundColor: 'rgba(0,0,0,0.3)',
-          transition: 'opacity 150ms ease-out',
+          transition: 'opacity 150ms ease-out'
         }}
       />
       {/* Panel */}
@@ -86,7 +88,7 @@ function DrawerRoot({ open, onClose, children, className }: DrawerProps) {
           display: 'flex',
           flexDirection: 'column',
           outline: 'none',
-          animation: 'drawer-slide-in 150ms ease-out',
+          animation: 'drawer-slide-in 150ms ease-out'
         }}
       >
         {children}
@@ -116,7 +118,7 @@ function DrawerHeader({ children, onClose, extra, className, style }: DrawerHead
         padding: '1rem 1.5rem',
         borderBottom: '1px solid #e5e7eb',
         flexShrink: 0,
-        ...style,
+        ...style
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0, flex: 1 }}>
@@ -134,7 +136,7 @@ function DrawerHeader({ children, onClose, extra, className, style }: DrawerHead
               padding: '0.25rem',
               fontSize: '1.25rem',
               color: '#6b7280',
-              lineHeight: 1,
+              lineHeight: 1
             }}
             aria-label="Close"
           >
@@ -161,7 +163,7 @@ function DrawerContent({ children, className, style }: DrawerContentProps) {
         flex: 1,
         overflowY: 'auto',
         padding: '1.5rem',
-        ...style,
+        ...style
       }}
     >
       {children}
@@ -184,7 +186,7 @@ function DrawerFooter({ children, className, style }: DrawerFooterProps) {
         padding: '1rem 1.5rem',
         borderTop: '1px solid #e5e7eb',
         flexShrink: 0,
-        ...style,
+        ...style
       }}
     >
       {children}
@@ -196,7 +198,7 @@ function DrawerFooter({ children, className, style }: DrawerFooterProps) {
 const Drawer = Object.assign(DrawerRoot, {
   Header: DrawerHeader,
   Content: DrawerContent,
-  Footer: DrawerFooter,
+  Footer: DrawerFooter
 })
 
 export default Drawer

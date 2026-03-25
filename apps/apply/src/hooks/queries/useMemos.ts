@@ -9,7 +9,7 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp,
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { getDisplayName, type ApplicationMemo } from '../../types'
@@ -23,7 +23,7 @@ function mapMemo(id: string, data: Record<string, unknown>): ApplicationMemo {
     ...data,
     id,
     createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
+    updatedAt: toDate(data.updatedAt)
   } as ApplicationMemo
 }
 
@@ -34,12 +34,12 @@ export function useMemos(applicationId: string) {
       const q = query(
         collection(db, APPLY_MEMOS_COLLECTION),
         where('applicationId', '==', applicationId),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapMemo(d.id, d.data()))
     },
-    enabled: !!applicationId,
+    enabled: !!applicationId
   })
 }
 
@@ -56,13 +56,15 @@ export function useCreateMemo() {
         authorRole: appUser!.role,
         content,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memos.byApplication(variables.applicationId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memos.byApplication(variables.applicationId)
+      })
+    }
   })
 }
 
@@ -70,16 +72,26 @@ export function useUpdateMemo() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, content, applicationId }: { id: string; content: string; applicationId: string }) => {
+    mutationFn: async ({
+      id,
+      content,
+      applicationId
+    }: {
+      id: string
+      content: string
+      applicationId: string
+    }) => {
       await updateDoc(doc(db, APPLY_MEMOS_COLLECTION, id), {
         content,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return applicationId
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memos.byApplication(variables.applicationId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memos.byApplication(variables.applicationId)
+      })
+    }
   })
 }
 
@@ -92,7 +104,9 @@ export function useDeleteMemo() {
       return applicationId
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memos.byApplication(variables.applicationId) })
-    },
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.memos.byApplication(variables.applicationId)
+      })
+    }
   })
 }

@@ -20,4 +20,3 @@ export enum CapacityStatus {
   Full = 'full',
   NoLimit = 'no-limit'
 }
-

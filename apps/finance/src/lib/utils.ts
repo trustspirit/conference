@@ -10,7 +10,7 @@ export function formatPhone(value: string): string {
 
 /** 계좌번호 자동 포맷 (은행별 패턴) */
 export function formatBankAccount(value: string, bankName: string): string {
-  const bank = BANKS.find(b => b.name === bankName)
+  const bank = BANKS.find((b) => b.name === bankName)
   const digits = value.replace(/\D/g, '').slice(0, bank?.maxDigits ?? 16)
   if (!bank) return digits
 
@@ -53,7 +53,10 @@ export function formatFirestoreTime(date: unknown): string {
 }
 
 /** 파일 유효성 검증 (허용 형식 + 용량) */
-export function validateFiles(files: File[], t?: (key: string, opts?: Record<string, unknown>) => string): { valid: File[]; errors: string[] } {
+export function validateFiles(
+  files: File[],
+  t?: (key: string, opts?: Record<string, unknown>) => string
+): { valid: File[]; errors: string[] } {
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'application/pdf']
   const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf']
   const MAX_FILE_SIZE = 750 * 1024 // 750KB
@@ -64,13 +67,17 @@ export function validateFiles(files: File[], t?: (key: string, opts?: Record<str
   for (const f of files) {
     const ext = '.' + f.name.split('.').pop()?.toLowerCase()
     if (!ALLOWED_TYPES.includes(f.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
-      errors.push(t
-        ? t('validation.invalidFileType', { name: f.name })
-        : `"${f.name}" - Invalid format (PNG, JPG, PDF only)`)
+      errors.push(
+        t
+          ? t('validation.invalidFileType', { name: f.name })
+          : `"${f.name}" - Invalid format (PNG, JPG, PDF only)`
+      )
     } else if (f.size > MAX_FILE_SIZE) {
-      errors.push(t
-        ? t('validation.fileTooLarge', { name: f.name, size: (f.size / 1024).toFixed(0) })
-        : `"${f.name}" - Exceeds 750KB (${(f.size / 1024).toFixed(0)}KB)`)
+      errors.push(
+        t
+          ? t('validation.fileTooLarge', { name: f.name, size: (f.size / 1024).toFixed(0) })
+          : `"${f.name}" - Exceeds 750KB (${(f.size / 1024).toFixed(0)}KB)`
+      )
     } else {
       valid.push(f)
     }

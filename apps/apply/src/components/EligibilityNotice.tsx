@@ -16,10 +16,12 @@ export default function EligibilityNotice({ requirements = [] }: EligibilityNoti
         padding: '1rem 1.25rem',
         borderRadius: '0.75rem',
         backgroundColor: '#eff6ff',
-        border: '1px solid #bfdbfe',
+        border: '1px solid #bfdbfe'
       }}
     >
-      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e40af', marginBottom: '0.5rem' }}>
+      <p
+        style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e40af', marginBottom: '0.5rem' }}
+      >
         {t('eligibility.title', '자격 요건')}
       </p>
       <p style={{ fontSize: '0.75rem', color: '#1e40af', marginBottom: '0.5rem' }}>

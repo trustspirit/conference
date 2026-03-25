@@ -36,7 +36,9 @@ function SurveyDetailPage(): React.ReactElement {
 
   const copyLink = () => {
     if (!survey) return
-    navigator.clipboard.writeText(`${window.location.origin}/register/${surveyId}?token=${survey.shareToken}`)
+    navigator.clipboard.writeText(
+      `${window.location.origin}/register/${surveyId}?token=${survey.shareToken}`
+    )
     toast({ message: t('toast.linkCopied'), variant: 'success' })
   }
 
@@ -62,9 +64,12 @@ function SurveyDetailPage(): React.ReactElement {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900">{survey.title}</h2>
-            <p className="text-sm text-gray-500 mt-1">{survey.description || t('survey.noDescription')}</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {survey.description || t('survey.noDescription')}
+            </p>
             <p className="text-xs text-gray-400 mt-1">
-              {survey.isActive ? t('common.active') : t('common.inactive')} · {responses.length} {t('survey.responses')}
+              {survey.isActive ? t('common.active') : t('common.inactive')} · {responses.length}{' '}
+              {t('survey.responses')}
             </p>
           </div>
           <div className="flex items-center gap-2">

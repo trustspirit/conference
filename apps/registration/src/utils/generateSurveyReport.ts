@@ -75,7 +75,7 @@ export function generateSurveyReport(input: ReportInput): void {
   const kpiItems = [
     { value: String(input.totalResponses), label: 'Total' },
     { value: String(input.todayCount), label: 'Today' },
-    { value: input.avgPerDay, label: 'Avg/Day' },
+    { value: input.avgPerDay, label: 'Avg/Day' }
   ]
   const kpiColW = CONTENT_W / 3
 
@@ -215,12 +215,12 @@ export function generateSurveyReport(input: ReportInput): void {
 
     // Center: page number
     doc.text(`Page ${i} / ${totalPages}`, PAGE_W / 2, PAGE_H - 10, {
-      align: 'center',
+      align: 'center'
     })
 
     // Right: generated date
     doc.text(generatedDateStr, PAGE_W - MARGIN, PAGE_H - 10, {
-      align: 'right',
+      align: 'right'
     })
   }
 

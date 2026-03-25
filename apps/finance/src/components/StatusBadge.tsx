@@ -11,14 +11,10 @@ const statusVariant: Record<RequestStatus, BadgeVariant> = {
   rejected: 'danger',
   settled: 'primary',
   cancelled: 'secondary',
-  force_rejected: 'danger',
+  force_rejected: 'danger'
 }
 
 export default function StatusBadge({ status }: { status: RequestStatus }) {
   const { t } = useTranslation()
-  return (
-    <Badge variant={statusVariant[status]}>
-      {t(`status.${status}`)}
-    </Badge>
-  )
+  return <Badge variant={statusVariant[status]}>{t(`status.${status}`)}</Badge>
 }

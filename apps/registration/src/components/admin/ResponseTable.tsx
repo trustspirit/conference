@@ -39,23 +39,40 @@ function ResponseTable({ responses, fields }: ResponseTableProps): React.ReactEl
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.number')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                {t('survey.table.number')}
+              </th>
               {useDynamic ? (
                 displayFields!.map((field) => (
-                  <th key={field.id} className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                  <th
+                    key={field.id}
+                    className="px-4 py-3 text-left text-sm font-semibold text-gray-600"
+                  >
                     {field.label}
                   </th>
                 ))
               ) : (
                 <>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.name')}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.email')}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.phone')}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.ward')}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    {t('survey.table.name')}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    {t('survey.table.email')}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    {t('survey.table.phone')}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                    {t('survey.table.ward')}
+                  </th>
                 </>
               )}
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.code')}</th>
-              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">{t('survey.table.date')}</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                {t('survey.table.code')}
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                {t('survey.table.date')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -70,14 +87,24 @@ function ResponseTable({ responses, fields }: ResponseTableProps): React.ReactEl
                   ))
                 ) : (
                   <>
-                    <td className="px-4 py-3 font-medium text-gray-900">{(resp.data as Record<string, unknown>).name as string}</td>
-                    <td className="px-4 py-3 text-gray-600">{(resp.data as Record<string, unknown>).email as string}</td>
-                    <td className="px-4 py-3 text-gray-600">{((resp.data as Record<string, unknown>).phoneNumber as string) || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600">{((resp.data as Record<string, unknown>).ward as string) || '-'}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {(resp.data as Record<string, unknown>).name as string}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {(resp.data as Record<string, unknown>).email as string}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {((resp.data as Record<string, unknown>).phoneNumber as string) || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {((resp.data as Record<string, unknown>).ward as string) || '-'}
+                    </td>
                   </>
                 )}
                 <td className="px-4 py-3 font-mono text-sm text-gray-500">{resp.personalCode}</td>
-                <td className="px-4 py-3 text-sm text-gray-500">{resp.createdAt.toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-sm text-gray-500">
+                  {resp.createdAt.toLocaleDateString()}
+                </td>
               </tr>
             ))}
           </tbody>

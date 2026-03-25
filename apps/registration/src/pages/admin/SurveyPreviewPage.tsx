@@ -44,7 +44,7 @@ function SurveyPreviewPage(): React.ReactElement {
             title: s.title,
             description: s.description,
             fields: s.fields || [],
-            theme: s.theme,
+            theme: s.theme
           })
         }
       } finally {

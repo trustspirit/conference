@@ -21,7 +21,7 @@ function SurveyBuilder({
   fields,
   onTitleChange,
   onDescriptionChange,
-  onFieldsChange,
+  onFieldsChange
 }: SurveyBuilderProps): React.ReactElement {
   const { t } = useTranslation()
   const [dragIndex, setDragIndex] = useState<number | null>(null)
@@ -54,10 +54,7 @@ function SurveyBuilder({
   }
 
   const addSection = () => {
-    onFieldsChange([
-      ...fields,
-      { ...createEmptyField(), type: 'section', label: '' },
-    ])
+    onFieldsChange([...fields, { ...createEmptyField(), type: 'section', label: '' }])
   }
 
   const addChurchInfo = () => {
@@ -67,8 +64,8 @@ function SurveyBuilder({
         id: generateFieldId(),
         type: 'church_info',
         label: t('builder.fieldType.church_info'),
-        required: false,
-      },
+        required: false
+      }
     ])
   }
 

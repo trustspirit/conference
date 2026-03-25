@@ -24,7 +24,10 @@ function validate(data: ChatRequestData): void {
       throw new HttpsError('invalid-argument', 'each message must have role and content')
     }
     if (msg.content.length > MAX_CHARS_PER_MESSAGE) {
-      throw new HttpsError('invalid-argument', `message content exceeds maximum of ${MAX_CHARS_PER_MESSAGE} characters`)
+      throw new HttpsError(
+        'invalid-argument',
+        `message content exceeds maximum of ${MAX_CHARS_PER_MESSAGE} characters`
+      )
     }
     if (!['user', 'assistant'].includes(msg.role)) {
       throw new HttpsError('invalid-argument', 'message role must be user or assistant')
@@ -34,7 +37,7 @@ function validate(data: ChatRequestData): void {
 
 export async function handleChat(
   request: CallableRequest<ChatRequestData>,
-  secrets: { openaiApiKey: string; anthropicApiKey: string },
+  secrets: { openaiApiKey: string; anthropicApiKey: string }
 ): Promise<{ reply: string }> {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Must be logged in')
@@ -56,8 +59,17 @@ export async function handleChat(
 
   console.log('User role:', userRole)
   console.log('System prompt length:', systemPrompt.length)
-  console.log('System prompt context preview:', systemPrompt.includes('<context>') ? 'has context' : 'NO CONTEXT')
-  console.log('Context snippet:', systemPrompt.substring(systemPrompt.indexOf('<context>'), systemPrompt.indexOf('<context>') + 200))
+  console.log(
+    'System prompt context preview:',
+    systemPrompt.includes('<context>') ? 'has context' : 'NO CONTEXT'
+  )
+  console.log(
+    'Context snippet:',
+    systemPrompt.substring(
+      systemPrompt.indexOf('<context>'),
+      systemPrompt.indexOf('<context>') + 200
+    )
+  )
 
   const provider =
     settings.provider === 'claude'
@@ -70,7 +82,7 @@ export async function handleChat(
     model: settings.model,
     temperature: settings.temperature,
     topP: settings.topP,
-    maxTokens: settings.maxTokens,
+    maxTokens: settings.maxTokens
   })
 
   return { reply: raw.trim() }

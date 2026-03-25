@@ -6,7 +6,7 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp,
+  serverTimestamp
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '@conference/firebase'
@@ -21,7 +21,7 @@ function mapRequest(id: string, data: Record<string, unknown>): StakeWardChangeR
     ...data,
     id,
     requestedAt: toDate(data.requestedAt),
-    approvedAt: data.approvedAt ? toDate(data.approvedAt) : undefined,
+    approvedAt: data.approvedAt ? toDate(data.approvedAt) : undefined
   } as StakeWardChangeRequest
 }
 
@@ -32,11 +32,11 @@ export function useStakeWardChangeRequests() {
       const q = query(
         collection(db, APPLY_STAKE_WARD_CHANGE_REQUESTS_COLLECTION),
         where('status', '==', 'pending'),
-        orderBy('requestedAt', 'desc'),
+        orderBy('requestedAt', 'desc')
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRequest(d.id, d.data()))
-    },
+    }
   })
 }
 
@@ -56,13 +56,13 @@ export function useCreateStakeWardChangeRequest() {
         requestedStake: stake,
         requestedWard: ward,
         status: 'pending',
-        requestedAt: serverTimestamp(),
+        requestedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.stakeWardChanges.all() })
-    },
+    }
   })
 }
 
@@ -77,6 +77,6 @@ export function useApproveStakeWardChange() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.stakeWardChanges.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-    },
+    }
   })
 }

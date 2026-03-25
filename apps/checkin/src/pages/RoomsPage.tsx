@@ -133,7 +133,10 @@ function RoomsPage(): React.ReactElement {
     if (!deleteConfirm.room) return
     try {
       await deleteRoom(deleteConfirm.room.id)
-      toast({ variant: 'success', message: t('room.roomDeleted', { number: deleteConfirm.room.roomNumber }) })
+      toast({
+        variant: 'success',
+        message: t('room.roomDeleted', { number: deleteConfirm.room.roomNumber })
+      })
       refresh()
       sync()
     } catch {

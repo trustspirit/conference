@@ -25,10 +25,17 @@ interface Props {
 }
 
 export default function ConfirmModal({
-  open, onClose, onConfirm, title,
-  items, totalAmount, totalLabel,
-  confirmLabel, cancelLabel,
-  requestItems, receiptFiles,
+  open,
+  onClose,
+  onConfirm,
+  title,
+  items,
+  totalAmount,
+  totalLabel,
+  confirmLabel,
+  cancelLabel,
+  requestItems,
+  receiptFiles
 }: Props) {
   const { t } = useTranslation()
   const resolvedTitle = title ?? t('form.confirmTitle')
@@ -36,17 +43,22 @@ export default function ConfirmModal({
   const resolvedConfirm = confirmLabel ?? t('form.confirmSubmit')
   const resolvedCancel = cancelLabel ?? t('common.cancel')
 
-  const previews = useMemo(() =>
-    (receiptFiles || []).map((f) => ({
-      url: URL.createObjectURL(f),
-      isImage: f.type.startsWith('image/'),
-    })), [receiptFiles])
+  const previews = useMemo(
+    () =>
+      (receiptFiles || []).map((f) => ({
+        url: URL.createObjectURL(f),
+        isImage: f.type.startsWith('image/')
+      })),
+    [receiptFiles]
+  )
 
   const hasReceiptPreview = receiptFiles && receiptFiles.length > 0
 
   return (
     <Dialog open={open} onClose={onClose} size={hasReceiptPreview ? 'lg' : 'md'}>
-      <Dialog.Title onClose={onClose} showClose>{resolvedTitle}</Dialog.Title>
+      <Dialog.Title onClose={onClose} showClose>
+        {resolvedTitle}
+      </Dialog.Title>
       <Dialog.Content>
         <div className="text-sm space-y-2 mb-4">
           {items.map((item, i) => (
@@ -61,7 +73,10 @@ export default function ConfirmModal({
           <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
             <div className="flex justify-between text-sm font-medium">
               <span>{resolvedTotalLabel}</span>
-              <span>{'\u20A9'}{totalAmount.toLocaleString()}</span>
+              <span>
+                {'\u20A9'}
+                {totalAmount.toLocaleString()}
+              </span>
             </div>
             <p className="text-xs text-blue-600 mt-2">
               {t('form.totalAmountCheck', { amount: totalAmount.toLocaleString() })}
@@ -85,14 +100,25 @@ export default function ConfirmModal({
                           {item.description}
                           {item.transportDetail && (
                             <div className="text-[10px] text-gray-400 mt-0.5">
-                              {item.transportDetail.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')}
-                              {' · '}{item.transportDetail.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')}
-                              {' · '}{item.transportDetail.departure} → {item.transportDetail.destination}
-                              {item.transportDetail.transportType === 'car' && item.transportDetail.distanceKm && ` · ${item.transportDetail.distanceKm}km`}
+                              {item.transportDetail.transportType === 'car'
+                                ? t('field.transportCar')
+                                : t('field.transportPublic')}
+                              {' · '}
+                              {item.transportDetail.tripType === 'round'
+                                ? t('field.tripRound')
+                                : t('field.tripOneWay')}
+                              {' · '}
+                              {item.transportDetail.departure} → {item.transportDetail.destination}
+                              {item.transportDetail.transportType === 'car' &&
+                                item.transportDetail.distanceKm &&
+                                ` · ${item.transportDetail.distanceKm}km`}
                             </div>
                           )}
                         </td>
-                        <td className="py-0.5 text-right text-gray-900 font-medium">{'\u20A9'}{item.amount.toLocaleString()}</td>
+                        <td className="py-0.5 text-right text-gray-900 font-medium">
+                          {'\u20A9'}
+                          {item.amount.toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -105,15 +131,23 @@ export default function ConfirmModal({
               {receiptFiles!.map((f, i) => (
                 <div key={i} className="border border-gray-200 rounded overflow-hidden bg-gray-50">
                   {previews[i].isImage ? (
-                    <img src={previews[i].url} alt={f.name}
-                      className="w-full h-48 object-contain bg-white" />
+                    <img
+                      src={previews[i].url}
+                      alt={f.name}
+                      className="w-full h-48 object-contain bg-white"
+                    />
                   ) : (
-                    <object data={previews[i].url} type="application/pdf"
-                      className="w-full h-48 bg-white">
+                    <object
+                      data={previews[i].url}
+                      type="application/pdf"
+                      className="w-full h-48 bg-white"
+                    >
                       <p className="text-xs text-gray-400 p-2">{f.name}</p>
                     </object>
                   )}
-                  <p className="text-[10px] text-gray-500 px-1.5 py-1 truncate border-t">{f.name}</p>
+                  <p className="text-[10px] text-gray-500 px-1.5 py-1 truncate border-t">
+                    {f.name}
+                  </p>
                 </div>
               ))}
             </div>

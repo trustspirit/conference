@@ -10,7 +10,14 @@ import {
   QueryDocumentSnapshot
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
-import { db, functions, SURVEY_RESPONSES_COLLECTION, PARTICIPANTS_COLLECTION, convertTimestamp, Timestamp } from './firebase'
+import {
+  db,
+  functions,
+  SURVEY_RESPONSES_COLLECTION,
+  PARTICIPANTS_COLLECTION,
+  convertTimestamp,
+  Timestamp
+} from './firebase'
 import type { SurveyResponse, RegistrationData, SurveyField } from '../types'
 
 const generateSearchKeys = (name: string, email: string): string[] => {
@@ -37,7 +44,8 @@ const extractParticipantFromFields = (
     // church_info → stake + ward
     if (field.type === 'church_info' && data[field.id]) {
       const info = data[field.id] as { stake?: string; ward?: string }
-      const stake = (info.stake === '__other__' || info.stake === '__non_member__') ? '' : (info.stake || '')
+      const stake =
+        info.stake === '__other__' || info.stake === '__non_member__' ? '' : info.stake || ''
       if (stake) participant.stake = stake
       if (info.ward) participant.ward = info.ward
       continue
@@ -89,7 +97,7 @@ export const submitRegistration = async (
       gender: data.gender || '',
       age: data.age || '',
       stake: data.stake || '',
-      ward: data.ward || '',
+      ward: data.ward || ''
     }
   })
   return result.data
@@ -111,7 +119,15 @@ export const submitDynamicRegistration = async (
 
 // ─── Update (still client-side — guarded by Firestore rules) ──────
 
-const KNOWN_PARTICIPANT_FIELDS = ['name', 'email', 'phoneNumber', 'gender', 'age', 'stake', 'ward'] as const
+const KNOWN_PARTICIPANT_FIELDS = [
+  'name',
+  'email',
+  'phoneNumber',
+  'gender',
+  'age',
+  'stake',
+  'ward'
+] as const
 
 export const updateRegistration = async (
   responseId: string,
@@ -198,10 +214,7 @@ const mapResponseDoc = (docSnap: QueryDocumentSnapshot): SurveyResponse => {
 // ─── Read operations (still client-side for edit flow) ────────────
 
 export const getAllResponses = async (): Promise<SurveyResponse[]> => {
-  const q = query(
-    collection(db, SURVEY_RESPONSES_COLLECTION),
-    orderBy('createdAt', 'desc')
-  )
+  const q = query(collection(db, SURVEY_RESPONSES_COLLECTION), orderBy('createdAt', 'desc'))
   const snapshot = await getDocs(q)
   return snapshot.docs.map(mapResponseDoc)
 }

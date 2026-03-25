@@ -12,10 +12,7 @@ interface ScaleChartData extends ChartData {
 /**
  * Count responses per day for the last N days, filling missing days with 0.
  */
-export function getDailyRegistrationCounts(
-  responses: SurveyResponse[],
-  days: number,
-): ChartData {
+export function getDailyRegistrationCounts(responses: SurveyResponse[], days: number): ChartData {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -48,7 +45,7 @@ export function getDailyRegistrationCounts(
 export function getOptionDistribution(
   responses: SurveyResponse[],
   fieldId: string,
-  options: string[],
+  options: string[]
 ): ChartData {
   const counts = new Map<string, number>(options.map((o) => [o, 0]))
 
@@ -61,7 +58,7 @@ export function getOptionDistribution(
 
   return {
     labels: options,
-    data: options.map((o) => counts.get(o)!),
+    data: options.map((o) => counts.get(o)!)
   }
 }
 
@@ -71,7 +68,7 @@ export function getOptionDistribution(
 export function getCheckboxDistribution(
   responses: SurveyResponse[],
   fieldId: string,
-  options: string[],
+  options: string[]
 ): ChartData {
   const counts = new Map<string, number>(options.map((o) => [o, 0]))
 
@@ -88,7 +85,7 @@ export function getCheckboxDistribution(
 
   return {
     labels: options,
-    data: options.map((o) => counts.get(o)!),
+    data: options.map((o) => counts.get(o)!)
   }
 }
 
@@ -99,7 +96,7 @@ export function getScaleDistribution(
   responses: SurveyResponse[],
   fieldId: string,
   min: number,
-  max: number,
+  max: number
 ): ScaleChartData {
   const labels: string[] = []
   const counts = new Map<number, number>()
@@ -125,17 +122,14 @@ export function getScaleDistribution(
   return {
     labels,
     data: labels.map((l) => counts.get(Number(l))!),
-    average: total > 0 ? sum / total : 0,
+    average: total > 0 ? sum / total : 0
   }
 }
 
 /**
  * Extract stake from { stake, ward } objects and count occurrences.
  */
-export function getStakeDistribution(
-  responses: SurveyResponse[],
-  fieldId: string,
-): ChartData {
+export function getStakeDistribution(responses: SurveyResponse[], fieldId: string): ChartData {
   const counts = new Map<string, number>()
 
   for (const r of responses) {
@@ -151,19 +145,16 @@ export function getStakeDistribution(
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1])
   return {
     labels: sorted.map(([label]) => label),
-    data: sorted.map(([, count]) => count),
+    data: sorted.map(([, count]) => count)
   }
 }
 
 /**
  * Collect non-empty text values, most recent first.
  */
-export function getTextResponses(
-  responses: SurveyResponse[],
-  fieldId: string,
-): string[] {
+export function getTextResponses(responses: SurveyResponse[], fieldId: string): string[] {
   const sorted = [...responses].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   )
 
   const result: string[] = []
@@ -198,9 +189,7 @@ const CHARTABLE_TYPES = new Set(['radio', 'checkbox', 'dropdown', 'linear_scale'
  * Return fields suitable for chart visualization.
  */
 export function getChartableFields(fields: SurveyField[]): SurveyField[] {
-  return fields.filter(
-    (f) => CHARTABLE_TYPES.has(f.type) || f.participantField === 'gender',
-  )
+  return fields.filter((f) => CHARTABLE_TYPES.has(f.type) || f.participantField === 'gender')
 }
 
 /**

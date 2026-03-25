@@ -10,7 +10,10 @@ interface BadgeProps {
   className?: string
 }
 
-const variantMap: Record<BadgeVariant, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+const variantMap: Record<
+  BadgeVariant,
+  'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'
+> = {
   primary: 'primary',
   secondary: 'secondary',
   success: 'success',
@@ -26,11 +29,7 @@ function Badge({
   className
 }: BadgeProps): React.ReactElement {
   return (
-    <TrustBadge
-      variant={variantMap[variant]}
-      size={size}
-      className={className}
-    >
+    <TrustBadge variant={variantMap[variant]} size={size} className={className}>
       {children}
     </TrustBadge>
   )

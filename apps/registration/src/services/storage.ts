@@ -3,10 +3,7 @@ import { app } from './firebase'
 
 const storage = getStorage(app)
 
-export const uploadHeaderImage = async (
-  surveyId: string,
-  file: File
-): Promise<string> => {
+export const uploadHeaderImage = async (surveyId: string, file: File): Promise<string> => {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
   const path = `surveys/${surveyId}/header.${ext}`
   const storageRef = ref(storage, path)

@@ -26,7 +26,9 @@ function AdminLoginPage(): React.ReactElement {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('auth.admin')}</h1>
         <p className="text-gray-600 mb-6">{t('auth.signInDesc')}</p>
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            {error}
+          </div>
         )}
         <Button size="lg" fullWidth disabled={isLoading} loading={isLoading} onClick={handleLogin}>
           {isLoading ? t('auth.signingIn') : t('auth.signInWithGoogle')}

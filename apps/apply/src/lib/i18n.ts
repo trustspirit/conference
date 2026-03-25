@@ -10,18 +10,18 @@ i18n
   .init({
     resources: {
       en: { translation: enTranslations },
-      ko: { translation: koTranslations },
+      ko: { translation: koTranslations }
     },
     fallbackLng: 'ko',
     defaultNS: 'translation',
     interpolation: {
-      escapeValue: false,
+      escapeValue: false
     },
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
-      lookupLocalStorage: 'apply-language',
-    },
+      lookupLocalStorage: 'apply-language'
+    }
   })
 
 export default i18n

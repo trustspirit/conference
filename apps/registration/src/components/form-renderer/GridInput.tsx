@@ -14,9 +14,7 @@ function GridInput({ config, value, onChange }: GridInputProps): React.ReactElem
 
   const handleCheckboxChange = (row: string, col: string) => {
     const current = (value[row] as string[]) || []
-    const next = current.includes(col)
-      ? current.filter((c) => c !== col)
-      : [...current, col]
+    const next = current.includes(col) ? current.filter((c) => c !== col) : [...current, col]
     onChange({ ...value, [row]: next })
   }
 

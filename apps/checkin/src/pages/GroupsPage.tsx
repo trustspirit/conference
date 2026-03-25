@@ -143,7 +143,10 @@ function GroupsPage(): React.ReactElement {
     if (!deleteConfirm.group) return
     try {
       await deleteGroup(deleteConfirm.group.id)
-      toast({ variant: 'success', message: t('group.groupDeleted', { name: deleteConfirm.group.name }) })
+      toast({
+        variant: 'success',
+        message: t('group.groupDeleted', { name: deleteConfirm.group.name })
+      })
       refresh()
       sync()
     } catch {

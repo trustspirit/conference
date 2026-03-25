@@ -41,7 +41,9 @@ function AdminAuthGuard({ children }: { children: React.ReactNode }): React.Reac
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-sm text-center">
           <p className="text-red-500 font-medium mb-2">{t('auth.notAuthorized')}</p>
           <p className="text-sm text-gray-500 mb-4">{user.email}</p>
-          <Button variant="ghost" onClick={() => signOut()}>{t('common.signOut')}</Button>
+          <Button variant="ghost" onClick={() => signOut()}>
+            {t('common.signOut')}
+          </Button>
         </div>
       </div>
     )

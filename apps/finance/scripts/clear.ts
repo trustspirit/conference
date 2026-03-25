@@ -23,4 +23,7 @@ async function clear() {
   console.log('\n✅ Cleared!')
   process.exit(0)
 }
-clear().catch((e) => { console.error('❌', e); process.exit(1) })
+clear().catch((e) => {
+  console.error('❌', e)
+  process.exit(1)
+})

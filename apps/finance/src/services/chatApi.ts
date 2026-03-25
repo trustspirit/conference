@@ -12,7 +12,7 @@ const aiChatFn = httpsCallable<
 >(functions, 'aiChat')
 
 export async function sendChatMessage(
-  messages: { role: ChatMessage['role']; content: string }[],
+  messages: { role: ChatMessage['role']; content: string }[]
 ): Promise<string> {
   const result = await aiChatFn({ messages })
   return result.data.reply

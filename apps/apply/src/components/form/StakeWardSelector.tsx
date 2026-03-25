@@ -17,7 +17,7 @@ export default function StakeWardSelector({
   onStakeChange,
   onWardChange,
   disabled = false,
-  readOnly = false,
+  readOnly = false
 }: StakeWardSelectorProps) {
   const { t } = useTranslation()
 
@@ -33,12 +33,36 @@ export default function StakeWardSelector({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.stake', '스테이크/지방부')}</p>
-          <p style={{ fontSize: '0.875rem', color: '#111827', padding: '0.5rem 0' }}>{stake || '-'}</p>
+          <p
+            style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem'
+            }}
+          >
+            {t('auth.stake', '스테이크/지방부')}
+          </p>
+          <p style={{ fontSize: '0.875rem', color: '#111827', padding: '0.5rem 0' }}>
+            {stake || '-'}
+          </p>
         </div>
         <div>
-          <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.ward', '와드/지부')}</p>
-          <p style={{ fontSize: '0.875rem', color: '#111827', padding: '0.5rem 0' }}>{ward || '-'}</p>
+          <p
+            style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem'
+            }}
+          >
+            {t('auth.ward', '와드/지부')}
+          </p>
+          <p style={{ fontSize: '0.875rem', color: '#111827', padding: '0.5rem 0' }}>
+            {ward || '-'}
+          </p>
         </div>
       </div>
     )
@@ -50,7 +74,17 @@ export default function StakeWardSelector({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.stake', '스테이크/지방부')}</p>
+        <p
+          style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: '#374151',
+            marginBottom: '0.25rem'
+          }}
+        >
+          {t('auth.stake', '스테이크/지방부')}
+        </p>
         <Select
           options={stakeOptions}
           value={stake}
@@ -61,7 +95,17 @@ export default function StakeWardSelector({
         />
       </div>
       <div>
-        <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.ward', '와드/지부')}</p>
+        <p
+          style={{
+            display: 'block',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            color: '#374151',
+            marginBottom: '0.25rem'
+          }}
+        >
+          {t('auth.ward', '와드/지부')}
+        </p>
         <Select
           options={wardOptions}
           value={ward}

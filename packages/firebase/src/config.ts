@@ -1,5 +1,12 @@
 import { initializeApp } from 'firebase/app'
-import { initializeAuth, browserLocalPersistence, indexedDBLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth'
+import {
+  initializeAuth,
+  browserLocalPersistence,
+  indexedDBLocalPersistence,
+  browserPopupRedirectResolver,
+  GoogleAuthProvider,
+  connectAuthEmulator
+} from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator, Timestamp } from 'firebase/firestore'
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions'
 
@@ -14,12 +21,13 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig)
 
-const isInAppBrowser = typeof navigator !== 'undefined' &&
+const isInAppBrowser =
+  typeof navigator !== 'undefined' &&
   /KAKAOTALK|Line|FBAN|FBAV|Instagram|NAVER/i.test(navigator.userAgent)
 
 export const auth = initializeAuth(app, {
   persistence: isInAppBrowser ? browserLocalPersistence : indexedDBLocalPersistence,
-  popupRedirectResolver: browserPopupRedirectResolver,
+  popupRedirectResolver: browserPopupRedirectResolver
 })
 export const googleProvider = new GoogleAuthProvider()
 export const db = getFirestore(app)

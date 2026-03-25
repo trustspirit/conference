@@ -11,6 +11,8 @@
     "finance": "재정",
     "financeDesc": "재정 관리 및 회계",
     "apply": "신청",
-    "applyDesc": "컨퍼런스 참가 신청 및 접수"
+    "applyDesc": "컨퍼런스 참가 신청 및 접수",
+    "inventory": "재고 관리",
+    "inventoryDesc": "프로젝트별 물품 및 재고 관리"
   }
 }

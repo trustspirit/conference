@@ -16,9 +16,10 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
 
   // Merge refs: internal + external
   const setRefs = (el: HTMLDivElement | null) => {
-    (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = el
+    ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = el
     if (typeof ref === 'function') ref(el)
-    else if (ref && typeof ref === 'object') (ref as React.MutableRefObject<HTMLDivElement | null>).current = el
+    else if (ref && typeof ref === 'object')
+      (ref as React.MutableRefObject<HTMLDivElement | null>).current = el
   }
 
   // Initialize map
@@ -33,7 +34,7 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
 
     mapRef.current = new kakao.maps.Map(internalRef.current, {
       center,
-      level: 7,
+      level: 7
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -81,7 +82,7 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
         strokeWeight: 4,
         strokeColor: '#3B82F6',
         strokeOpacity: 0.8,
-        strokeStyle: 'solid',
+        strokeStyle: 'solid'
       })
 
       // Use polyline path for bounds

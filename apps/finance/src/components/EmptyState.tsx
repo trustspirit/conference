@@ -17,8 +17,10 @@ export default function EmptyState({ title, description, actionLabel, actionTo }
       <p className="text-gray-700 font-medium mb-1">{title}</p>
       {description && <p className="text-sm text-gray-500 mb-4">{description}</p>}
       {actionLabel && actionTo && (
-        <Link to={actionTo}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
+        <Link
+          to={actionTo}
+          className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700"
+        >
           {actionLabel}
         </Link>
       )}

@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { getUsers, setUserRole, removeUserRole, type AppUser, type UserRole } from '../services/firebase'
+import {
+  getUsers,
+  setUserRole,
+  removeUserRole,
+  type AppUser,
+  type UserRole
+} from '../services/firebase'
 import { userRoleAtom } from '../stores/authStore'
 import { Navigate } from 'react-router-dom'
 import { ConfirmDialog } from '../components/ui'
@@ -85,9 +91,7 @@ function AdminManagePage(): React.ReactElement {
       </div>
 
       {error && (
-        <div className="bg-[#FFEBEE] text-[#FA383E] p-3 rounded-lg mb-4 text-sm">
-          {error}
-        </div>
+        <div className="bg-[#FFEBEE] text-[#FA383E] p-3 rounded-lg mb-4 text-sm">{error}</div>
       )}
 
       {/* Admin List */}
@@ -96,9 +100,7 @@ function AdminManagePage(): React.ReactElement {
           <h2 className="text-lg font-semibold text-[#050505]">
             {t('admin.roleAdmin')}
             {!loading && (
-              <span className="ml-2 text-sm font-normal text-[#65676B]">
-                ({admins.length})
-              </span>
+              <span className="ml-2 text-sm font-normal text-[#65676B]">({admins.length})</span>
             )}
           </h2>
         </div>
@@ -126,9 +128,7 @@ function AdminManagePage(): React.ReactElement {
           <h2 className="text-lg font-semibold text-[#050505]">
             {t('admin.roleStaff')}
             {!loading && (
-              <span className="ml-2 text-sm font-normal text-[#65676B]">
-                ({staff.length})
-              </span>
+              <span className="ml-2 text-sm font-normal text-[#65676B]">({staff.length})</span>
             )}
           </h2>
         </div>
@@ -142,12 +142,7 @@ function AdminManagePage(): React.ReactElement {
             <p className="text-sm mt-1">{t('admin.noStaffDesc')}</p>
           </div>
         ) : (
-          <UserList
-            users={staff}
-            updatingUid={updatingUid}
-            onRemoveRole={handleRemoveRole}
-            t={t}
-          />
+          <UserList users={staff} updatingUid={updatingUid} onRemoveRole={handleRemoveRole} t={t} />
         )}
       </div>
 
@@ -157,9 +152,7 @@ function AdminManagePage(): React.ReactElement {
           <h2 className="text-lg font-semibold text-[#050505]">
             {t('admin.noRoleUsers', '권한 없음')}
             {!loading && (
-              <span className="ml-2 text-sm font-normal text-[#65676B]">
-                ({noRole.length})
-              </span>
+              <span className="ml-2 text-sm font-normal text-[#65676B]">({noRole.length})</span>
             )}
           </h2>
         </div>
@@ -169,12 +162,17 @@ function AdminManagePage(): React.ReactElement {
           </div>
         ) : noRole.length === 0 ? (
           <div className="p-8 text-center text-[#65676B]">
-            <p className="font-medium">{t('admin.allAssigned', '모든 사용자에게 권한이 부여되어 있습니다.')}</p>
+            <p className="font-medium">
+              {t('admin.allAssigned', '모든 사용자에게 권한이 부여되어 있습니다.')}
+            </p>
           </div>
         ) : (
           <ul className="divide-y divide-[#DADDE1]">
             {noRole.map((user) => (
-              <li key={user.uid} className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F8FA] transition-colors">
+              <li
+                key={user.uid}
+                className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F8FA] transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />
@@ -226,7 +224,7 @@ function UserList({
   users,
   updatingUid,
   onRemoveRole,
-  t,
+  t
 }: {
   users: AppUser[]
   updatingUid: string | null
@@ -236,7 +234,10 @@ function UserList({
   return (
     <ul className="divide-y divide-[#DADDE1]">
       {users.map((user) => (
-        <li key={user.uid} className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F8FA] transition-colors">
+        <li
+          key={user.uid}
+          className="px-6 py-4 flex items-center justify-between hover:bg-[#F7F8FA] transition-colors"
+        >
           <div className="flex items-center gap-3">
             {user.photoURL ? (
               <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full" />

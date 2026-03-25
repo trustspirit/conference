@@ -12,16 +12,16 @@ Settings > Environments에서 다음 3개 environment를 생성한다:
 
 각 environment에 **같은 이름, 다른 값**으로 등록한다:
 
-| Secret | 용도 |
-|--------|------|
-| `GCP_SA_KEY` | GCP 서비스 계정 키 (JSON) |
-| `FIREBASE_PROJECT_ID` | `firebase-tools deploy --project` 대상 |
-| `VITE_FIREBASE_API_KEY` | Vite 빌드 환경변수 |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Vite 빌드 환경변수 |
-| `VITE_FIREBASE_PROJECT_ID` | Vite 빌드 환경변수 |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Vite 빌드 환경변수 |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Vite 빌드 환경변수 |
-| `VITE_FIREBASE_APP_ID` | Vite 빌드 환경변수 |
+| Secret                              | 용도                                   |
+| ----------------------------------- | -------------------------------------- |
+| `GCP_SA_KEY`                        | GCP 서비스 계정 키 (JSON)              |
+| `FIREBASE_PROJECT_ID`               | `firebase-tools deploy --project` 대상 |
+| `VITE_FIREBASE_API_KEY`             | Vite 빌드 환경변수                     |
+| `VITE_FIREBASE_AUTH_DOMAIN`         | Vite 빌드 환경변수                     |
+| `VITE_FIREBASE_PROJECT_ID`          | Vite 빌드 환경변수                     |
+| `VITE_FIREBASE_STORAGE_BUCKET`      | Vite 빌드 환경변수                     |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Vite 빌드 환경변수                     |
+| `VITE_FIREBASE_APP_ID`              | Vite 빌드 환경변수                     |
 
 총 8개 x 3 environment = 24개.
 

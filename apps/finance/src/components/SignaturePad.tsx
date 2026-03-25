@@ -12,7 +12,10 @@ interface Props {
   onChange?: (dataUrl: string) => void
 }
 
-const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad({ width = 400, height = 150, initialData, onChange }, ref) {
+const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
+  { width = 400, height = 150, initialData, onChange },
+  ref
+) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -64,12 +67,12 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad({ 
     if ('touches' in e) {
       return {
         x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top) * scaleY,
+        y: (e.touches[0].clientY - rect.top) * scaleY
       }
     }
     return {
       x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      y: (e.clientY - rect.top) * scaleY
     }
   }
 
@@ -125,7 +128,12 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad({ 
           width={width}
           height={height}
           className="cursor-crosshair"
-          style={{ width: '100%', maxWidth: width, height: 'auto', aspectRatio: `${width}/${height}` }}
+          style={{
+            width: '100%',
+            maxWidth: width,
+            height: 'auto',
+            aspectRatio: `${width}/${height}`
+          }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}

@@ -60,19 +60,27 @@ function renderField(
   field: SurveyField,
   formData: Record<string, unknown>,
   onChange: (fieldId: string, value: unknown) => void,
-  colCount: number,
+  colCount: number
 ) {
   return (
     <div
       key={field.id}
-      className={colCount === -1 ? 'flex-1 min-w-0' : colCount > 1 ? 'flex-1 basis-[180px] min-w-0' : 'w-full'}
+      className={
+        colCount === -1
+          ? 'flex-1 min-w-0'
+          : colCount > 1
+            ? 'flex-1 basis-[180px] min-w-0'
+            : 'w-full'
+      }
     >
       <label className="block text-[13px] text-gray-600 font-semibold uppercase tracking-wide mb-2">
         {field.label}
         {field.required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {field.description && (
-        <p className="text-xs text-gray-400 mb-2 normal-case tracking-normal font-normal">{field.description}</p>
+        <p className="text-xs text-gray-400 mb-2 normal-case tracking-normal font-normal">
+          {field.description}
+        </p>
       )}
       <DynamicFieldRenderer
         field={field}
@@ -84,7 +92,13 @@ function renderField(
   )
 }
 
-function DynamicForm({ fields, initialData, onSubmit, isLoading, submitLabel }: DynamicFormProps): React.ReactElement {
+function DynamicForm({
+  fields,
+  initialData,
+  onSubmit,
+  isLoading,
+  submitLabel
+}: DynamicFormProps): React.ReactElement {
   const { t } = useTranslation()
   const [formData, setFormData] = useState<Record<string, unknown>>(() => {
     const data: Record<string, unknown> = {}
@@ -121,22 +135,26 @@ function DynamicForm({ fields, initialData, onSubmit, isLoading, submitLabel }: 
     await onSubmit(formData)
   }
 
-  const isValid = useMemo(() =>
-    fields
-      .filter((f) => f.required && f.type !== 'section')
-      .every((f) => {
-        const val = formData[f.id]
-        if (Array.isArray(val)) return val.length > 0
-        if (typeof val === 'object' && val !== null) return Object.keys(val).length > 0
-        return val !== '' && val !== undefined && val !== null
-      }),
+  const isValid = useMemo(
+    () =>
+      fields
+        .filter((f) => f.required && f.type !== 'section')
+        .every((f) => {
+          const val = formData[f.id]
+          if (Array.isArray(val)) return val.length > 0
+          if (typeof val === 'object' && val !== null) return Object.keys(val).length > 0
+          return val !== '' && val !== undefined && val !== null
+        }),
     [fields, formData]
   )
 
   const sections = useMemo(() => splitBySections(fields), [fields])
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-b-xl sm:rounded-xl border border-gray-200 overflow-hidden">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-b-xl sm:rounded-xl border border-gray-200 overflow-hidden"
+    >
       {sections.map((section, si) => {
         const rows = splitIntoRows(section.fields)
         return (
@@ -146,7 +164,9 @@ function DynamicForm({ fields, initialData, onSubmit, isLoading, submitLabel }: 
             {section.section && (
               <div className="px-8 pt-6 pb-1">
                 {section.section.label && (
-                  <h3 className="text-[15px] font-semibold text-gray-900 uppercase tracking-wide">{section.section.label}</h3>
+                  <h3 className="text-[15px] font-semibold text-gray-900 uppercase tracking-wide">
+                    {section.section.label}
+                  </h3>
                 )}
                 {section.section.description && (
                   <p className="text-sm text-gray-500 mt-1">{section.section.description}</p>
@@ -165,11 +185,15 @@ function DynamicForm({ fields, initialData, onSubmit, isLoading, submitLabel }: 
                       <>
                         {renderField(row[0], formData, handleFieldChange, 2)}
                         <div className="flex-1 basis-[180px] min-w-0 flex gap-4">
-                          {row.slice(1).map((field) => renderField(field, formData, handleFieldChange, -1))}
+                          {row
+                            .slice(1)
+                            .map((field) => renderField(field, formData, handleFieldChange, -1))}
                         </div>
                       </>
                     ) : (
-                      row.map((field) => renderField(field, formData, handleFieldChange, row.length))
+                      row.map((field) =>
+                        renderField(field, formData, handleFieldChange, row.length)
+                      )
                     )}
                   </div>
                 ))}

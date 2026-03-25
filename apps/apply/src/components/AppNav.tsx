@@ -11,7 +11,10 @@ import { ROLE_LABELS } from '../utils/roleConfig'
 import { ChevronDownIcon, MenuIcon, CloseIcon } from './Icons'
 import ConferenceSelector from './ConferenceSelector'
 
-const TONE_TO_BADGE_VARIANT: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'> = {
+const TONE_TO_BADGE_VARIANT: Record<
+  string,
+  'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info'
+> = {
   admin: 'primary',
   sessionLeader: 'info',
   stakePresident: 'success',
@@ -22,7 +25,7 @@ const TONE_TO_BADGE_VARIANT: Record<string, 'primary' | 'secondary' | 'success' 
   rejected: 'danger',
   draft: 'secondary',
   submitted: 'info',
-  awaiting: 'warning',
+  awaiting: 'warning'
 }
 
 interface NavItem {
@@ -51,26 +54,26 @@ export default function AppNav() {
       { to: ROUTES.ADMIN_DASHBOARD, label: t('navigation.dashboard', '대시보드') },
       { to: ROUTES.ADMIN_REVIEW, label: t('navigation.reviewApplications', '신청서 검토') },
       { to: ROUTES.ADMIN_ROLES, label: t('navigation.manageRoles', '역할 관리') },
-      { to: ROUTES.ADMIN_SETTINGS, label: t('navigation.settings', '설정') },
+      { to: ROUTES.ADMIN_SETTINGS, label: t('navigation.settings', '설정') }
     )
   }
 
   if (isLeaderRole(role) || isAdminRole(role)) {
     // Leader dashboard: only stake_president, bishop, admin (not session_leader)
     if (role !== 'session_leader') {
-      navItems.push(
-        { to: ROUTES.LEADER_DASHBOARD, label: t('navigation.leaderDashboard', '리더 대시보드') },
-      )
+      navItems.push({
+        to: ROUTES.LEADER_DASHBOARD,
+        label: t('navigation.leaderDashboard', '리더 대시보드')
+      })
     }
-    navItems.push(
-      { to: ROUTES.LEADER_RECOMMENDATIONS, label: t('navigation.recommendations', '추천서') },
-    )
+    navItems.push({
+      to: ROUTES.LEADER_RECOMMENDATIONS,
+      label: t('navigation.recommendations', '추천서')
+    })
   }
 
   if (role === 'applicant') {
-    navItems.push(
-      { to: ROUTES.APPLICATION, label: t('navigation.application', '신청서') },
-    )
+    navItems.push({ to: ROUTES.APPLICATION, label: t('navigation.application', '신청서') })
   }
 
   const handleLogout = async () => {
@@ -94,9 +97,7 @@ export default function AppNav() {
 
   const mobileLinkStyle = ({ isActive }: { isActive: boolean }) =>
     `block px-4 py-3 text-sm rounded-lg transition-colors ${
-      isActive
-        ? 'bg-blue-50 text-blue-700 font-medium'
-        : 'text-gray-700 hover:bg-gray-50'
+      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
     }`
 
   const roleLabelKey = role ? ROLE_LABELS[role] : ''
@@ -142,14 +143,28 @@ export default function AppNav() {
                 </Menu.Trigger>
                 <Menu.Content align="end">
                   <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid #f3f4f6' }}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>{getDisplayName(appUser)}</p>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '10rem' }}>{appUser?.email}</p>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
+                      {getDisplayName(appUser)}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: '0.75rem',
+                        color: '#6b7280',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '10rem'
+                      }}
+                    >
+                      {appUser?.email}
+                    </p>
                   </div>
                   <Menu.Item onClick={() => navigate(ROUTES.ACCOUNT_SETTINGS)}>
                     {t('navigation.accountSettings', '계정 설정')}
                   </Menu.Item>
                   <Menu.Item onClick={toggleLanguage}>
-                    {t('navigation.language', '언어')} ({i18n.language === 'ko' ? 'English' : '한국어'})
+                    {t('navigation.language', '언어')} (
+                    {i18n.language === 'ko' ? 'English' : '한국어'})
                   </Menu.Item>
                   <Menu.Divider />
                   <Menu.Item danger onClick={handleLogout}>
@@ -165,9 +180,11 @@ export default function AppNav() {
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
-              {mobileOpen
-                ? <CloseIcon className="w-5 h-5 text-gray-600" />
-                : <MenuIcon className="w-5 h-5 text-gray-600" />}
+              {mobileOpen ? (
+                <CloseIcon className="w-5 h-5 text-gray-600" />
+              ) : (
+                <MenuIcon className="w-5 h-5 text-gray-600" />
+              )}
             </button>
           </div>
         </div>
@@ -183,16 +200,18 @@ export default function AppNav() {
           <div className="fixed top-14 left-0 right-0 bottom-0 z-40 bg-white overflow-y-auto md:hidden">
             {/* User info */}
             <div className="px-4 py-4 border-b border-gray-100 flex items-center gap-3">
-              <Avatar
-                src={appUser?.picture}
-                name={getDisplayName(appUser) || '?'}
-                size="md"
-              />
+              <Avatar src={appUser?.picture} name={getDisplayName(appUser) || '?'} size="md" />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{getDisplayName(appUser)}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {getDisplayName(appUser)}
+                </p>
                 <p className="text-xs text-gray-500 truncate">{appUser?.email}</p>
                 {role && (
-                  <Badge variant={TONE_TO_BADGE_VARIANT[roleTone] || 'secondary'} size="sm" style={{ marginTop: '0.25rem' }}>
+                  <Badge
+                    variant={TONE_TO_BADGE_VARIANT[roleTone] || 'secondary'}
+                    size="sm"
+                    style={{ marginTop: '0.25rem' }}
+                  >
                     {t(roleLabelKey)}
                   </Badge>
                 )}
@@ -211,13 +230,19 @@ export default function AppNav() {
             {/* Divider + secondary actions */}
             <div className="border-t border-gray-100 px-2 py-2">
               <button
-                onClick={() => { navigate(ROUTES.ACCOUNT_SETTINGS); setMobileOpen(false) }}
+                onClick={() => {
+                  navigate(ROUTES.ACCOUNT_SETTINGS)
+                  setMobileOpen(false)
+                }}
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 {t('navigation.accountSettings', '계정 설정')}
               </button>
               <button
-                onClick={() => { toggleLanguage(); setMobileOpen(false) }}
+                onClick={() => {
+                  toggleLanguage()
+                  setMobileOpen(false)
+                }}
                 className="w-full text-left px-4 py-3 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 {t('navigation.language', '언어')} ({i18n.language === 'ko' ? 'English' : '한국어'})

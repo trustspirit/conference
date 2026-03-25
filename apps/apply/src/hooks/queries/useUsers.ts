@@ -1,12 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  collection,
-  doc,
-  getDocs,
-  updateDoc,
-  query,
-  orderBy,
-} from 'firebase/firestore'
+import { collection, doc, getDocs, updateDoc, query, orderBy } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '@conference/firebase'
 import type { AppUser, UserRole, LeaderStatus } from '../../types'
@@ -24,7 +17,7 @@ export function useUsers() {
       const q = query(collection(db, APPLY_USERS_COLLECTION), orderBy('name'))
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapUser(d.id, d.data()))
-    },
+    }
   })
 }
 
@@ -37,7 +30,7 @@ export function useUpdateUserRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-    },
+    }
   })
 }
 
@@ -50,7 +43,7 @@ export function useUpdateLeaderStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-    },
+    }
   })
 }
 
@@ -64,6 +57,6 @@ export function useDeleteUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-    },
+    }
   })
 }

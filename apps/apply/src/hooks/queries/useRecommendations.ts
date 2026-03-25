@@ -11,7 +11,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  type QueryConstraint,
+  type QueryConstraint
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import type { LeaderRecommendation, RecommendationStatus } from '../../types'
@@ -26,7 +26,7 @@ function mapRecommendation(id: string, data: Record<string, unknown>): LeaderRec
     ...data,
     id,
     createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
+    updatedAt: toDate(data.updatedAt)
   } as LeaderRecommendation
 }
 
@@ -36,11 +36,14 @@ export function useRecommendations() {
   const conferenceId = currentConference?.id
 
   return useQuery({
-    queryKey: [...(appUser?.role === 'bishop'
-      ? queryKeys.recommendations.byWard(appUser.ward)
-      : appUser?.role === 'stake_president'
-        ? queryKeys.recommendations.byStake(appUser.stake)
-        : queryKeys.recommendations.all()), conferenceId],
+    queryKey: [
+      ...(appUser?.role === 'bishop'
+        ? queryKeys.recommendations.byWard(appUser.ward)
+        : appUser?.role === 'stake_president'
+          ? queryKeys.recommendations.byStake(appUser.stake)
+          : queryKeys.recommendations.all()),
+      conferenceId
+    ],
     queryFn: async () => {
       const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')]
       if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
@@ -53,7 +56,7 @@ export function useRecommendations() {
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
     },
-    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId,
+    enabled: !!appUser && appUser.role !== 'applicant' && !!conferenceId
   })
 }
 
@@ -65,13 +68,16 @@ export function useMyRecommendations() {
   return useQuery({
     queryKey: [...queryKeys.recommendations.byLeader(appUser?.uid || ''), conferenceId],
     queryFn: async () => {
-      const constraints: QueryConstraint[] = [where('leaderId', '==', appUser!.uid), orderBy('createdAt', 'desc')]
+      const constraints: QueryConstraint[] = [
+        where('leaderId', '==', appUser!.uid),
+        orderBy('createdAt', 'desc')
+      ]
       if (conferenceId) constraints.unshift(where('conferenceId', '==', conferenceId))
       const q = query(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), ...constraints)
       const snap = await getDocs(q)
       return snap.docs.map((d) => mapRecommendation(d.id, d.data()))
     },
-    enabled: !!appUser && !!conferenceId,
+    enabled: !!appUser && !!conferenceId
   })
 }
 
@@ -83,7 +89,7 @@ export function useRecommendationDetail(id: string) {
       if (!snap.exists()) return null
       return mapRecommendation(snap.id, snap.data())
     },
-    enabled: !!id,
+    enabled: !!id
   })
 }
 
@@ -94,7 +100,10 @@ export function useCreateRecommendation() {
 
   return useMutation({
     mutationFn: async (
-      data: Omit<LeaderRecommendation, 'id' | 'createdAt' | 'updatedAt' | 'leaderId' | 'status' | 'comments'> & { status?: RecommendationStatus },
+      data: Omit<
+        LeaderRecommendation,
+        'id' | 'createdAt' | 'updatedAt' | 'leaderId' | 'status' | 'comments'
+      > & { status?: RecommendationStatus }
     ) => {
       const { status, ...rest } = data
       const docRef = await addDoc(collection(db, APPLY_RECOMMENDATIONS_COLLECTION), {
@@ -103,13 +112,13 @@ export function useCreateRecommendation() {
         conferenceId: currentConference?.id || '',
         status: status || ('draft' as RecommendationStatus),
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
       return docRef.id
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-    },
+    }
   })
 }
 
@@ -120,12 +129,12 @@ export function useUpdateRecommendation() {
     mutationFn: async ({ id, ...data }: Partial<LeaderRecommendation> & { id: string }) => {
       await updateDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id), {
         ...data,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-    },
+    }
   })
 }
 
@@ -136,12 +145,12 @@ export function useUpdateRecommendationStatus() {
     mutationFn: async ({ id, status }: { id: string; status: RecommendationStatus }) => {
       await updateDoc(doc(db, APPLY_RECOMMENDATIONS_COLLECTION, id), {
         status,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-    },
+    }
   })
 }
 
@@ -154,6 +163,6 @@ export function useDeleteRecommendation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recommendations'] })
-    },
+    }
   })
 }

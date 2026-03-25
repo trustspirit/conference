@@ -12,7 +12,7 @@ import { getDefaultRoute } from '../../lib/roles'
 const ROLE_OPTIONS: { value: UserRole; labelKey: string }[] = [
   { value: 'applicant', labelKey: 'roles.applicant' },
   { value: 'bishop', labelKey: 'roles.bishop' },
-  { value: 'stake_president', labelKey: 'roles.stakePresident' },
+  { value: 'stake_president', labelKey: 'roles.stakePresident' }
 ]
 
 const CONFERENCE_STORAGE_KEY = 'apply-selected-conference-id'
@@ -48,7 +48,7 @@ export default function CompleteProfilePage() {
         stake,
         leaderStatus: role === 'applicant' ? null : 'pending',
         name: trimmedName,
-        consentAgreedAt: new Date().toISOString(),
+        consentAgreedAt: new Date().toISOString()
       }
       // If the entered name differs from the Google account name, save as preferredName too
       if (googleName && trimmedName !== googleName) {
@@ -64,7 +64,11 @@ export default function CompleteProfilePage() {
       setNeedsProfile(false)
       navigate(getDefaultRoute(role as UserRole), { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic', '오류가 발생했습니다. 다시 시도해주세요.'))
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('errors.generic', '오류가 발생했습니다. 다시 시도해주세요.')
+      )
     } finally {
       setSaving(false)
     }
@@ -72,18 +76,23 @@ export default function CompleteProfilePage() {
 
   const roleOptions = ROLE_OPTIONS.map((opt) => ({
     value: opt.value,
-    label: t(opt.labelKey),
+    label: t(opt.labelKey)
   }))
 
   const conferenceOptions = conferences.map((c) => ({
     value: c.id,
-    label: c.name,
+    label: c.name
   }))
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-8 px-4 overflow-y-auto">
-      <form onSubmit={handleSubmit} className="w-full max-w-lg space-y-6 rounded-xl bg-white p-8 shadow-lg">
-        <h1 className="text-2xl font-bold text-gray-900">{t('auth.completeProfile.title', '프로필 완성')}</h1>
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-lg space-y-6 rounded-xl bg-white p-8 shadow-lg"
+      >
+        <h1 className="text-2xl font-bold text-gray-900">
+          {t('auth.completeProfile.title', '프로필 완성')}
+        </h1>
         <p className="text-sm text-gray-500">{t('auth.completeProfile.subtitle')}</p>
 
         {error && <Alert variant="error">{error}</Alert>}
@@ -98,7 +107,17 @@ export default function CompleteProfilePage() {
         />
 
         <div>
-          <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('auth.completeProfile.accountType', '계정 유형')}</p>
+          <p
+            style={{
+              display: 'block',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: '#374151',
+              marginBottom: '0.25rem'
+            }}
+          >
+            {t('auth.completeProfile.accountType', '계정 유형')}
+          </p>
           <Select
             options={roleOptions}
             value={role}
@@ -108,9 +127,7 @@ export default function CompleteProfilePage() {
           />
         </div>
 
-        {isLeader && (
-          <Alert variant="info">{t('auth.completeProfile.approvalHint')}</Alert>
-        )}
+        {isLeader && <Alert variant="info">{t('auth.completeProfile.approvalHint')}</Alert>}
 
         <StakeWardSelector
           stake={stake}
@@ -121,7 +138,17 @@ export default function CompleteProfilePage() {
 
         {conferenceOptions.length > 0 && (
           <div>
-            <p style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>{t('conference.label', '대회')}</p>
+            <p
+              style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#374151',
+                marginBottom: '0.25rem'
+              }}
+            >
+              {t('conference.label', '대회')}
+            </p>
             <Select
               options={conferenceOptions}
               value={selectedConferenceId}
@@ -133,9 +160,7 @@ export default function CompleteProfilePage() {
         )}
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {t('consent.agreement')}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">{t('consent.agreement')}</p>
           <Checkbox
             checked={consentAgreed}
             onChange={(e) => setConsentAgreed(e.target.checked)}
@@ -149,7 +174,9 @@ export default function CompleteProfilePage() {
           fullWidth
           disabled={saving || !role || !stake || !ward || !name.trim() || !consentAgreed}
         >
-          {saving ? t('auth.completeProfile.buttonLoading', '프로필 완성 중...') : t('auth.completeProfile.button', '프로필 완성')}
+          {saving
+            ? t('auth.completeProfile.buttonLoading', '프로필 완성 중...')
+            : t('auth.completeProfile.button', '프로필 완성')}
         </Button>
       </form>
     </div>

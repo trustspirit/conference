@@ -48,13 +48,25 @@ function FindCodeModal({ surveyId, onClose }: FindCodeModalProps): React.ReactEl
         {sent ? (
           <div className="text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <p className="text-sm text-gray-700 mb-1">{t('register.findCode.sent')}</p>
             <p className="text-xs text-gray-400 mb-4">{email}</p>
-            <Button variant="ghost" size="sm" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              {t('common.cancel')}
+            </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,8 +81,15 @@ function FindCodeModal({ surveyId, onClose }: FindCodeModalProps): React.ReactEl
               errorMessage={error || undefined}
             />
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={onClose}>{t('common.cancel')}</Button>
-              <Button type="submit" className="flex-1" disabled={loading || !email.trim()} loading={loading}>
+              <Button variant="ghost" className="flex-1" onClick={onClose}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={loading || !email.trim()}
+                loading={loading}
+              >
                 {loading ? t('common.loading') : t('register.findCode.submit')}
               </Button>
             </div>

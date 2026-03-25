@@ -25,9 +25,11 @@ export default function MyRequestsPage() {
   const [filter, setFilter] = useState<MyFilter>('all')
 
   const firestoreStatus: RequestStatus | RequestStatus[] | undefined =
-    filter === 'all' ? undefined
-    : filter === 'rejected' ? ['rejected', 'force_rejected', 'cancelled']
-    : filter
+    filter === 'all'
+      ? undefined
+      : filter === 'rejected'
+        ? ['rejected', 'force_rejected', 'cancelled']
+        : filter
 
   const {
     data,
@@ -36,13 +38,17 @@ export default function MyRequestsPage() {
     error,
     hasNextPage,
     isFetchingNextPage,
-    fetchNextPage,
+    fetchNextPage
   } = useInfiniteMyRequests(currentProject?.id, user?.uid, firestoreStatus)
   const cancelMutation = useCancelRequest()
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; onConfirm: () => void; message: string }>({ open: false, onConfirm: () => {}, message: '' })
-  const closeConfirm = () => setConfirmDialog(prev => ({ ...prev, open: false }))
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    onConfirm: () => void
+    message: string
+  }>({ open: false, onConfirm: () => {}, message: '' })
+  const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
-  const requests = data?.pages.flatMap(p => p.items) ?? []
+  const requests = data?.pages.flatMap((p) => p.items) ?? []
   const filterTabs: MyFilter[] = ['all', 'pending', 'reviewed', 'approved', 'settled', 'rejected']
 
   const handleCancel = (e: React.MouseEvent, requestId: string) => {
@@ -54,7 +60,7 @@ export default function MyRequestsPage() {
       onConfirm: () => {
         closeConfirm()
         cancelMutation.mutate({ requestId, projectId: currentProject!.id })
-      },
+      }
     })
   }
 
@@ -96,38 +102,65 @@ export default function MyRequestsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.date')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.committee')}</th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.items')}</th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('field.totalAmount')}</th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600">{t('status.label')}</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.date')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.committee')}
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                      {t('field.items')}
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">
+                      {t('field.totalAmount')}
+                    </th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600">
+                      {t('status.label')}
+                    </th>
                     <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}>
+                <tbody
+                  className={`divide-y transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+                >
                   {requests.map((req) => (
                     <tr key={req.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <Link to={`/request/${req.id}`} className="text-blue-600 hover:underline">{req.date}</Link>
+                        <Link to={`/request/${req.id}`} className="text-blue-600 hover:underline">
+                          {req.date}
+                        </Link>
                         {formatFirestoreTime(req.createdAt) && (
-                          <span className="ml-1.5 text-xs text-gray-400">{formatFirestoreTime(req.createdAt)}</span>
+                          <span className="ml-1.5 text-xs text-gray-400">
+                            {formatFirestoreTime(req.createdAt)}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">{t(`committee.${req.committee}Short`)}</td>
-                      <td className="px-4 py-3">{t('form.itemCount', { count: req.items.length })}</td>
+                      <td className="px-4 py-3">
+                        {t('form.itemCount', { count: req.items.length })}
+                      </td>
                       <td className="px-4 py-3 text-right">₩{req.totalAmount.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-center"><StatusBadge status={req.status} /></td>
+                      <td className="px-4 py-3 text-center">
+                        <StatusBadge status={req.status} />
+                      </td>
                       <td className="px-4 py-3 text-center">
                         {req.status === 'pending' && (
-                          <button onClick={(e) => handleCancel(e, req.id)}
+                          <button
+                            onClick={(e) => handleCancel(e, req.id)}
                             disabled={cancelMutation.isPending}
-                            className="px-3 py-1 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors">
+                            className="px-3 py-1 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                          >
                             {t('approval.cancelRequest')}
                           </button>
                         )}
-                        {(req.status === 'cancelled' || req.status === 'rejected' || req.status === 'force_rejected') && (
-                          <Link to={`/request/resubmit/${req.id}`} onClick={(e) => e.stopPropagation()}
-                            className="inline-block px-3 py-1 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors">
+                        {(req.status === 'cancelled' ||
+                          req.status === 'rejected' ||
+                          req.status === 'force_rejected') && (
+                          <Link
+                            to={`/request/resubmit/${req.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-block px-3 py-1 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
+                          >
                             {t('approval.resubmit')}
                           </Link>
                         )}
@@ -140,28 +173,55 @@ export default function MyRequestsPage() {
           </div>
 
           {/* Mobile card list */}
-          <div className={`sm:hidden space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}>
+          <div
+            className={`sm:hidden space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+          >
             {requests.map((req) => (
-              <Link key={req.id} to={`/request/${req.id}`} className="block bg-white rounded-lg shadow p-4">
+              <Link
+                key={req.id}
+                to={`/request/${req.id}`}
+                className="block bg-white rounded-lg shadow p-4"
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-600">{req.date}{formatFirestoreTime(req.createdAt) && <span className="ml-1 text-xs text-gray-400 font-normal">{formatFirestoreTime(req.createdAt)}</span>}</span>
+                  <span className="text-sm font-medium text-blue-600">
+                    {req.date}
+                    {formatFirestoreTime(req.createdAt) && (
+                      <span className="ml-1 text-xs text-gray-400 font-normal">
+                        {formatFirestoreTime(req.createdAt)}
+                      </span>
+                    )}
+                  </span>
                   <StatusBadge status={req.status} />
                 </div>
-                <div className="text-sm text-gray-600 mb-1">{t(`committee.${req.committee}Short`)}</div>
+                <div className="text-sm text-gray-600 mb-1">
+                  {t(`committee.${req.committee}Short`)}
+                </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">{t('form.itemCount', { count: req.items.length })}</span>
+                  <span className="text-gray-500">
+                    {t('form.itemCount', { count: req.items.length })}
+                  </span>
                   <span className="font-medium">₩{req.totalAmount.toLocaleString()}</span>
                 </div>
                 {req.status === 'pending' && (
-                  <button onClick={(e) => handleCancel(e, req.id)}
+                  <button
+                    onClick={(e) => handleCancel(e, req.id)}
                     disabled={cancelMutation.isPending}
-                    className="mt-3 w-full px-3 py-1.5 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors">
+                    className="mt-3 w-full px-3 py-1.5 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                  >
                     {t('approval.cancelRequest')}
                   </button>
                 )}
-                {(req.status === 'cancelled' || req.status === 'rejected' || req.status === 'force_rejected') && (
-                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/request/resubmit/${req.id}`) }}
-                    className="mt-3 w-full text-center px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors">
+                {(req.status === 'cancelled' ||
+                  req.status === 'rejected' ||
+                  req.status === 'force_rejected') && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      navigate(`/request/resubmit/${req.id}`)
+                    }}
+                    className="mt-3 w-full text-center px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
+                  >
                     {t('approval.resubmit')}
                   </button>
                 )}
@@ -178,10 +238,16 @@ export default function MyRequestsPage() {
       )}
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
         <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
-        <Dialog.Content><p>{confirmDialog.message}</p></Dialog.Content>
+        <Dialog.Content>
+          <p>{confirmDialog.message}</p>
+        </Dialog.Content>
         <Dialog.Actions>
-          <Button variant="outline" onClick={closeConfirm}>취소</Button>
-          <Button variant="danger" onClick={confirmDialog.onConfirm}>확인</Button>
+          <Button variant="outline" onClick={closeConfirm}>
+            취소
+          </Button>
+          <Button variant="danger" onClick={confirmDialog.onConfirm}>
+            확인
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Layout>

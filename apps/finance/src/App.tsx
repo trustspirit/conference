@@ -31,7 +31,13 @@ function AppLayout() {
   const { needsDisplayName, needsConsent, user } = useAuth()
   return (
     <ProjectProvider>
-      <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Spinner /></div>}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <Spinner />
+          </div>
+        }
+      >
         {user && needsDisplayName && <DisplayNameModal />}
         {user && !needsDisplayName && needsConsent && <ConsentDialog />}
         <Outlet />
@@ -45,22 +51,156 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
-      { path: '/request/new', element: <ProtectedRoute><RequestFormPage /></ProtectedRoute> },
-      { path: '/request/:id', element: <ProtectedRoute><RequestDetailPage /></ProtectedRoute> },
-      { path: '/my-requests', element: <ProtectedRoute><MyRequestsPage /></ProtectedRoute> },
-      { path: '/request/resubmit/:id', element: <ProtectedRoute><ResubmitPage /></ProtectedRoute> },
-      { path: '/settings', element: <ProtectedRoute requiredRoles={['super_admin', 'admin']}><SettingsPage /></ProtectedRoute> },
-      { path: '/profile', element: <ProtectedRoute><ProfilePage /></ProtectedRoute> },
-      { path: '/admin/requests', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'executive', 'session_director', 'logistic_admin', 'finance_prep', 'finance_ops', 'approver_ops', 'approver_prep']}><AdminRequestsPage /></ProtectedRoute> },
-      { path: '/admin/dashboard', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'executive', 'session_director', 'logistic_admin', 'finance_prep']}><DashboardPage /></ProtectedRoute> },
-      { path: '/admin/users', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}><AdminUsersPage /></ProtectedRoute> },
-      { path: '/admin/receipts', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}><ReceiptsPage /></ProtectedRoute> },
-      { path: '/admin/settlement/new', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}><SettlementPage /></ProtectedRoute> },
-      { path: '/admin/settlements', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep', 'executive', 'session_director', 'logistic_admin', 'approver_ops', 'approver_prep']}><SettlementListPage /></ProtectedRoute> },
-      { path: '/admin/settlement/:id', element: <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep', 'executive', 'session_director', 'logistic_admin', 'approver_ops', 'approver_prep']}><SettlementReportPage /></ProtectedRoute> },
-      { path: '*', element: <Navigate to="/login" replace /> },
-    ],
-  },
+      {
+        path: '/request/new',
+        element: (
+          <ProtectedRoute>
+            <RequestFormPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/request/:id',
+        element: (
+          <ProtectedRoute>
+            <RequestDetailPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/my-requests',
+        element: (
+          <ProtectedRoute>
+            <MyRequestsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/request/resubmit/:id',
+        element: (
+          <ProtectedRoute>
+            <ResubmitPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/settings',
+        element: (
+          <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
+            <SettingsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/profile',
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/requests',
+        element: (
+          <ProtectedRoute
+            requiredRoles={[
+              'super_admin',
+              'admin',
+              'executive',
+              'session_director',
+              'logistic_admin',
+              'finance_prep',
+              'finance_ops',
+              'approver_ops',
+              'approver_prep'
+            ]}
+          >
+            <AdminRequestsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/dashboard',
+        element: (
+          <ProtectedRoute
+            requiredRoles={[
+              'super_admin',
+              'admin',
+              'executive',
+              'session_director',
+              'logistic_admin',
+              'finance_prep'
+            ]}
+          >
+            <DashboardPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/users',
+        element: (
+          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/receipts',
+        element: (
+          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+            <ReceiptsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/settlement/new',
+        element: (
+          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+            <SettlementPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/settlements',
+        element: (
+          <ProtectedRoute
+            requiredRoles={[
+              'super_admin',
+              'admin',
+              'finance_prep',
+              'executive',
+              'session_director',
+              'logistic_admin',
+              'approver_ops',
+              'approver_prep'
+            ]}
+          >
+            <SettlementListPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/settlement/:id',
+        element: (
+          <ProtectedRoute
+            requiredRoles={[
+              'super_admin',
+              'admin',
+              'finance_prep',
+              'executive',
+              'session_director',
+              'logistic_admin',
+              'approver_ops',
+              'approver_prep'
+            ]}
+          >
+            <SettlementReportPage />
+          </ProtectedRoute>
+        )
+      },
+      { path: '*', element: <Navigate to="/login" replace /> }
+    ]
+  }
 ])
 
 export default function App() {

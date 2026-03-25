@@ -156,12 +156,7 @@ function ConfirmDialog({
         </div>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button
-          variant="outline"
-          onClick={handleClose}
-          disabled={loading}
-          fullWidth
-        >
+        <Button variant="outline" onClick={handleClose} disabled={loading} fullWidth>
           {cancelText || t('common.cancel')}
         </Button>
         <Button

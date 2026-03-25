@@ -75,16 +75,16 @@
 
 ## 라우트
 
-| 경로 | 설명 |
-|------|------|
-| `/` | 코드 입력 홈 화면 |
-| `/register/:surveyId` | 참가 등록 폼 |
-| `/register/:surveyId/success` | 등록 완료 페이지 |
-| `/admin` | 설문 목록 및 대시보드 (관리자) |
-| `/admin/admins` | 관리자 관리 (관리자) |
-| `/admin/survey/:surveyId` | 설문 상세 / 통계 / 응답 조회 (관리자) |
-| `/admin/survey/:surveyId/edit` | 설문 편집 (관리자) |
-| `/admin/survey/:surveyId/preview` | 설문 미리보기 (관리자) |
+| 경로                              | 설명                                  |
+| --------------------------------- | ------------------------------------- |
+| `/`                               | 코드 입력 홈 화면                     |
+| `/register/:surveyId`             | 참가 등록 폼                          |
+| `/register/:surveyId/success`     | 등록 완료 페이지                      |
+| `/admin`                          | 설문 목록 및 대시보드 (관리자)        |
+| `/admin/admins`                   | 관리자 관리 (관리자)                  |
+| `/admin/survey/:surveyId`         | 설문 상세 / 통계 / 응답 조회 (관리자) |
+| `/admin/survey/:surveyId/edit`    | 설문 편집 (관리자)                    |
+| `/admin/survey/:surveyId/preview` | 설문 미리보기 (관리자)                |
 
 ## 기술 스택
 

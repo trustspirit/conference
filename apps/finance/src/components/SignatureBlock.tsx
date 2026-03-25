@@ -7,7 +7,12 @@ interface Props {
   approverName?: string | null
 }
 
-export default function SignatureBlock({ payeeName, requesterSignature, signatureData, approverName }: Props) {
+export default function SignatureBlock({
+  payeeName,
+  requesterSignature,
+  signatureData,
+  approverName
+}: Props) {
   const { t } = useTranslation()
 
   return (
@@ -23,7 +28,11 @@ export default function SignatureBlock({ payeeName, requesterSignature, signatur
         <div>
           <p className="text-xs text-gray-500 mb-1">Approved by (budget approver)</p>
           {signatureData && (
-            <img src={signatureData} alt={t('approval.approvalSignature')} className="max-h-16 mb-1" />
+            <img
+              src={signatureData}
+              alt={t('approval.approvalSignature')}
+              className="max-h-16 mb-1"
+            />
           )}
           <div className="border-t border-gray-300 pt-1 text-sm">
             {approverName || <span className="text-gray-400">&nbsp;</span>}

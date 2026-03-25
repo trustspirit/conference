@@ -3,7 +3,13 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Checkbox } from 'trust-ui-react'
 import { getSurveyById } from '../services/surveys'
-import { submitRegistration, getResponseByCode, updateRegistration, submitDynamicRegistration, updateDynamicRegistration } from '../services/responses'
+import {
+  submitRegistration,
+  getResponseByCode,
+  updateRegistration,
+  submitDynamicRegistration,
+  updateDynamicRegistration
+} from '../services/responses'
 import Spinner from '../components/ui/Spinner'
 import RegistrationForm from '../components/RegistrationForm'
 import DynamicForm from '../components/form-renderer/DynamicForm'
@@ -72,7 +78,11 @@ function RegisterPage(): React.ReactElement {
     const dataWithConsent = { ...data, consentAgreedAt: new Date().toISOString() }
     try {
       if (existingResponse) {
-        await updateRegistration(existingResponse.id, existingResponse.participantId, dataWithConsent)
+        await updateRegistration(
+          existingResponse.id,
+          existingResponse.participantId,
+          dataWithConsent
+        )
         sessionStorage.setItem('registrationCode', existingResponse.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
@@ -94,7 +104,12 @@ function RegisterPage(): React.ReactElement {
     const dataWithConsent = { ...data, consentAgreedAt: new Date().toISOString() }
     try {
       if (existingResponse) {
-        await updateDynamicRegistration(existingResponse.id, existingResponse.participantId, dataWithConsent, survey.fields)
+        await updateDynamicRegistration(
+          existingResponse.id,
+          existingResponse.participantId,
+          dataWithConsent,
+          survey.fields
+        )
         sessionStorage.setItem('registrationCode', existingResponse.personalCode)
         navigate(`/register/${surveyId}/success?token=${token}&updated=true`)
       } else {
@@ -134,14 +149,14 @@ function RegisterPage(): React.ReactElement {
           />
 
           {error && (
-            <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>
+            <div className="mx-8 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
           )}
 
           {!consentAgreed && (
             <div className="mx-8 mt-4 p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {t('consent.agreement')}
-              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">{t('consent.agreement')}</p>
               <Checkbox
                 checked={consentAgreed}
                 onChange={(e) => setConsentAgreed(e.target.checked)}
@@ -183,10 +198,7 @@ function RegisterPage(): React.ReactElement {
       </div>
 
       {showFindCode && surveyId && (
-        <FindCodeModal
-          surveyId={surveyId}
-          onClose={() => setShowFindCode(false)}
-        />
+        <FindCodeModal surveyId={surveyId} onClose={() => setShowFindCode(false)} />
       )}
     </SurveyThemeProvider>
   )

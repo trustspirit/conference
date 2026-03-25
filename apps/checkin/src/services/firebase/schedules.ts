@@ -57,7 +57,6 @@ const convertToScheduleEvent = (id: string, data: Record<string, unknown>): Sche
 
 // Get all schedules
 export const getAllSchedules = async (): Promise<ScheduleEvent[]> => {
-
   const q = query(collection(db, SCHEDULES_COLLECTION), orderBy('startTime', 'asc'))
   const snapshot = await getDocs(q)
   return snapshot.docs.map((doc) => convertToScheduleEvent(doc.id, doc.data()))
@@ -68,7 +67,6 @@ export const getSchedulesByDateRange = async (
   startDate: Date,
   endDate: Date
 ): Promise<ScheduleEvent[]> => {
-
   const q = query(
     collection(db, SCHEDULES_COLLECTION),
     where('startTime', '>=', Timestamp.fromDate(startDate)),
@@ -81,7 +79,6 @@ export const getSchedulesByDateRange = async (
 
 // Get schedule by ID
 export const getScheduleById = async (id: string): Promise<ScheduleEvent | null> => {
-
   const docRef = doc(db, SCHEDULES_COLLECTION, id)
   const snapshot = await getDoc(docRef)
 
@@ -91,7 +88,6 @@ export const getScheduleById = async (id: string): Promise<ScheduleEvent | null>
 
 // Create a new schedule
 export const createSchedule = async (data: CreateScheduleData): Promise<ScheduleEvent> => {
-
   const now = new Date()
 
   const docData = {
@@ -125,7 +121,6 @@ export const createSchedule = async (data: CreateScheduleData): Promise<Schedule
 
 // Update a schedule
 export const updateSchedule = async (id: string, data: UpdateScheduleData): Promise<void> => {
-
   const docRef = doc(db, SCHEDULES_COLLECTION, id)
 
   const updateData: Record<string, unknown> = {
@@ -146,7 +141,6 @@ export const updateSchedule = async (id: string, data: UpdateScheduleData): Prom
 
 // Delete a schedule
 export const deleteSchedule = async (id: string): Promise<void> => {
-
   const docRef = doc(db, SCHEDULES_COLLECTION, id)
   await deleteDoc(docRef)
 }
@@ -155,7 +149,6 @@ export const deleteSchedule = async (id: string): Promise<void> => {
 export const subscribeToSchedules = (
   callback: (schedules: ScheduleEvent[]) => void
 ): (() => void) => {
-
   const q = query(collection(db, SCHEDULES_COLLECTION), orderBy('startTime', 'asc'))
 
   return onSnapshot(q, (snapshot) => {

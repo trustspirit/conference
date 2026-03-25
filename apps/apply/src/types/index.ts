@@ -48,7 +48,9 @@ export interface AppUser {
 }
 
 /** Returns the preferred name if set, otherwise the account name */
-export function getDisplayName(user: Pick<AppUser, 'name' | 'preferredName'> | null | undefined): string {
+export function getDisplayName(
+  user: Pick<AppUser, 'name' | 'preferredName'> | null | undefined
+): string {
   if (!user) return ''
   return user.preferredName?.trim() || user.name
 }

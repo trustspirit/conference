@@ -5,7 +5,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   session_leader: 'roles.sessionLeader',
   stake_president: 'roles.stakePresident',
   bishop: 'roles.bishop',
-  applicant: 'roles.applicant',
+  applicant: 'roles.applicant'
 }
 
 // Sort order: higher = more senior
@@ -14,7 +14,7 @@ export const ROLE_SORT_ORDER: Record<UserRole, number> = {
   session_leader: 4,
   stake_president: 3,
   bishop: 2,
-  applicant: 1,
+  applicant: 1
 }
 
 export function sortByRole<T extends { role: UserRole | null }>(users: T[]): T[] {

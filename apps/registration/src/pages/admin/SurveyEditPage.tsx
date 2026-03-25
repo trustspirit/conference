@@ -20,7 +20,7 @@ const sanitizeFields = (fields: SurveyField[]): SurveyField[] =>
       cleaned.grid = {
         ...cleaned.grid,
         rows: cleaned.grid.rows.filter((r) => r.trim() !== ''),
-        columns: cleaned.grid.columns.filter((c) => c.trim() !== ''),
+        columns: cleaned.grid.columns.filter((c) => c.trim() !== '')
       }
     }
     return cleaned
@@ -60,11 +60,37 @@ function SurveyEditPage(): React.ReactElement {
     load()
   }, [surveyId])
 
-  const markDirty = useCallback(() => { isDirty.current = true }, [])
-  const handleTitleChange = useCallback((v: string) => { setTitle(v); markDirty() }, [markDirty])
-  const handleDescChange = useCallback((v: string) => { setDescription(v); markDirty() }, [markDirty])
-  const handleFieldsChange = useCallback((v: SurveyField[]) => { setFields(v); markDirty() }, [markDirty])
-  const handleThemeChange = useCallback((v: SurveyTheme) => { setTheme(v); markDirty() }, [markDirty])
+  const markDirty = useCallback(() => {
+    isDirty.current = true
+  }, [])
+  const handleTitleChange = useCallback(
+    (v: string) => {
+      setTitle(v)
+      markDirty()
+    },
+    [markDirty]
+  )
+  const handleDescChange = useCallback(
+    (v: string) => {
+      setDescription(v)
+      markDirty()
+    },
+    [markDirty]
+  )
+  const handleFieldsChange = useCallback(
+    (v: SurveyField[]) => {
+      setFields(v)
+      markDirty()
+    },
+    [markDirty]
+  )
+  const handleThemeChange = useCallback(
+    (v: SurveyTheme) => {
+      setTheme(v)
+      markDirty()
+    },
+    [markDirty]
+  )
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -109,7 +135,7 @@ function SurveyEditPage(): React.ReactElement {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'questions', label: t('builder.tabQuestions') },
-    { key: 'theme', label: t('builder.tabTheme') },
+    { key: 'theme', label: t('builder.tabTheme') }
   ]
 
   return (
@@ -142,9 +168,7 @@ function SurveyEditPage(): React.ReactElement {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-2.5 text-sm font-medium transition-colors relative ${
-                activeTab === tab.key
-                  ? 'text-primary'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === tab.key ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               {tab.label}

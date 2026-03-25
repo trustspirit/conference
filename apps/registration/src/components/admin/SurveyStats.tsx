@@ -11,7 +11,7 @@ import {
   ArcElement,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 } from 'chart.js'
 import StatCard from './StatCard'
 import ReportFieldSelector from './ReportFieldSelector'
@@ -24,13 +24,34 @@ import {
   getCheckboxDistribution,
   getScaleDistribution,
   getStakeDistribution,
-  getTextResponses,
+  getTextResponses
 } from '../../utils/statsUtils'
 import type { Survey, SurveyResponse, SurveyField } from '../../types'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+  Filler
+)
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1']
+const COLORS = [
+  '#3B82F6',
+  '#10B981',
+  '#F59E0B',
+  '#EF4444',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#84CC16',
+  '#F97316',
+  '#6366F1'
+]
 
 interface SurveyStatsProps {
   survey: Survey
@@ -68,29 +89,29 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
         borderColor: '#3B82F6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
-        tension: 0.3,
-      },
-    ],
+        tension: 0.3
+      }
+    ]
   }
 
   const lineChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
   } as const
 
   const pieOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom' as const } },
+    plugins: { legend: { position: 'bottom' as const } }
   } as const
 
   const barVerticalOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
   } as const
 
   const barHorizontalOptions = {
@@ -98,13 +119,14 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
     maintainAspectRatio: false,
     indexAxis: 'y' as const,
     plugins: { legend: { display: false } },
-    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
   }
 
   function renderFieldChart(field: SurveyField): React.ReactNode {
     // Gender field — always Pie
     if (field.participantField === 'gender') {
-      const options = field.options && field.options.length > 0 ? field.options : ['male', 'female', 'other']
+      const options =
+        field.options && field.options.length > 0 ? field.options : ['male', 'female', 'other']
       const dist = getOptionDistribution(responses, field.id, options)
       return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5" key={field.id}>
@@ -113,7 +135,9 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
             <Pie
               data={{
                 labels: dist.labels,
-                datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+                datasets: [
+                  { data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }
+                ]
               }}
               options={pieOptions}
             />
@@ -133,7 +157,9 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
             <ChartComponent
               data={{
                 labels: dist.labels,
-                datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+                datasets: [
+                  { data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }
+                ]
               }}
               options={pieOptions}
             />
@@ -152,7 +178,7 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
             <Bar
               data={{
                 labels: dist.labels,
-                datasets: [{ data: dist.data, backgroundColor: COLORS[0] }],
+                datasets: [{ data: dist.data, backgroundColor: COLORS[0] }]
               }}
               options={barHorizontalOptions}
             />
@@ -175,7 +201,7 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
             <Bar
               data={{
                 labels: dist.labels,
-                datasets: [{ data: dist.data, backgroundColor: COLORS[0] }],
+                datasets: [{ data: dist.data, backgroundColor: COLORS[0] }]
               }}
               options={barVerticalOptions}
             />
@@ -193,7 +219,9 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
             <Doughnut
               data={{
                 labels: dist.labels,
-                datasets: [{ data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }],
+                datasets: [
+                  { data: dist.data, backgroundColor: COLORS.slice(0, dist.labels.length) }
+                ]
               }}
               options={pieOptions}
             />
@@ -206,11 +234,7 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
   }
 
   if ((!survey.fields || survey.fields.length === 0) && responses.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-12">
-        {t('dashboard.noChartData')}
-      </div>
-    )
+    return <div className="text-center text-gray-500 py-12">{t('dashboard.noChartData')}</div>
   }
 
   return (
@@ -227,7 +251,12 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
           className="px-4 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
           </svg>
           {t('dashboard.exportPDF')}
         </button>
@@ -256,7 +285,10 @@ function SurveyStats({ survey, responses }: SurveyStatsProps): React.ReactElemen
           {textFields.map((field) => {
             const texts = getTextResponses(responses, field.id)
             return (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5" key={field.id}>
+              <div
+                className="bg-white rounded-xl shadow-sm border border-gray-100 p-5"
+                key={field.id}
+              >
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">{field.label}</h3>
                 {texts.length > 0 ? (
                   <ul className="max-h-64 overflow-y-auto">

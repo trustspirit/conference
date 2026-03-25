@@ -16,8 +16,14 @@ interface ApprovalModalProps {
 }
 
 export function ApprovalModal({
-  open, onClose, request, bankBookUrl, budgetUsage,
-  savedSignature, onConfirm, isPending,
+  open,
+  onClose,
+  request,
+  bankBookUrl,
+  budgetUsage,
+  savedSignature,
+  onConfirm,
+  isPending
 }: ApprovalModalProps) {
   const { t } = useTranslation()
   const [signatureData, setSignatureData] = useState(savedSignature || '')
@@ -25,10 +31,19 @@ export function ApprovalModal({
   return (
     <Dialog
       open={open}
-      onClose={() => { if (!isPending) onClose() }}
+      onClose={() => {
+        if (!isPending) onClose()
+      }}
       size="md"
     >
-      <Dialog.Title onClose={() => { if (!isPending) onClose() }} showClose>{t('approval.signTitle')}</Dialog.Title>
+      <Dialog.Title
+        onClose={() => {
+          if (!isPending) onClose()
+        }}
+        showClose
+      >
+        {t('approval.signTitle')}
+      </Dialog.Title>
       <Dialog.Content>
         {request && (
           <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -79,11 +94,7 @@ export function ApprovalModal({
         )}
       </Dialog.Content>
       <Dialog.Actions>
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button variant="outline" onClick={onClose} disabled={isPending}>
           {t('common.cancel')}
         </Button>
         <Button
@@ -113,10 +124,19 @@ export function RejectionModal({ open, onClose, onConfirm, isPending }: Rejectio
   return (
     <Dialog
       open={open}
-      onClose={() => { if (!isPending) onClose() }}
+      onClose={() => {
+        if (!isPending) onClose()
+      }}
       size="md"
     >
-      <Dialog.Title onClose={() => { if (!isPending) onClose() }} showClose>{t('approval.rejectTitle')}</Dialog.Title>
+      <Dialog.Title
+        onClose={() => {
+          if (!isPending) onClose()
+        }}
+        showClose
+      >
+        {t('approval.rejectTitle')}
+      </Dialog.Title>
       <Dialog.Content>
         <p className="text-sm text-gray-500 mb-4">{t('approval.rejectDescription')}</p>
         <TextField
@@ -129,11 +149,7 @@ export function RejectionModal({ open, onClose, onConfirm, isPending }: Rejectio
         />
       </Dialog.Content>
       <Dialog.Actions>
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button variant="outline" onClick={onClose} disabled={isPending}>
           {t('common.cancel')}
         </Button>
         <Button
@@ -156,17 +172,31 @@ interface ForceRejectionModalProps {
   isPending: boolean
 }
 
-export function ForceRejectionModal({ open, onClose, onConfirm, isPending }: ForceRejectionModalProps) {
+export function ForceRejectionModal({
+  open,
+  onClose,
+  onConfirm,
+  isPending
+}: ForceRejectionModalProps) {
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
 
   return (
     <Dialog
       open={open}
-      onClose={() => { if (!isPending) onClose() }}
+      onClose={() => {
+        if (!isPending) onClose()
+      }}
       size="md"
     >
-      <Dialog.Title onClose={() => { if (!isPending) onClose() }} showClose>{t('approval.forceRejectTitle')}</Dialog.Title>
+      <Dialog.Title
+        onClose={() => {
+          if (!isPending) onClose()
+        }}
+        showClose
+      >
+        {t('approval.forceRejectTitle')}
+      </Dialog.Title>
       <Dialog.Content>
         <p className="text-sm text-gray-500 mb-4">{t('approval.forceRejectDescription')}</p>
         <TextField
@@ -179,11 +209,7 @@ export function ForceRejectionModal({ open, onClose, onConfirm, isPending }: For
         />
       </Dialog.Content>
       <Dialog.Actions>
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={isPending}
-        >
+        <Button variant="outline" onClick={onClose} disabled={isPending}>
           {t('common.cancel')}
         </Button>
         <Button

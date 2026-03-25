@@ -15,8 +15,12 @@ export async function getAiSettings(): Promise<AiSettings> {
 
 /** Roles that can access admin-guide context */
 const ADMIN_GUIDE_ROLES = new Set([
-  'admin', 'super_admin', 'finance_prep',
-  'session_director', 'logistic_admin', 'executive',
+  'admin',
+  'super_admin',
+  'finance_prep',
+  'session_director',
+  'logistic_admin',
+  'executive'
 ])
 
 /** Map internal role codes to Korean display names */
@@ -30,12 +34,13 @@ const ROLE_LABELS: Record<string, string> = {
   logistic_admin: '준비 위원장',
   executive: '대회장',
   admin: '시스템 관리자',
-  super_admin: '시스템 관리자',
+  super_admin: '시스템 관리자'
 }
 
 function loadContextFiles(userRole: string): string {
   const contextDir = path.join(__dirname, 'context')
-  const files = fs.readdirSync(contextDir)
+  const files = fs
+    .readdirSync(contextDir)
     .filter((f) => f.endsWith('.md'))
     .filter((f) => {
       // Only load admin-guide for staff roles that need it
@@ -60,7 +65,7 @@ function buildRoleGuidelines(userRole: string): string {
 
   const guidelines: string[] = [
     `The current user's role is "${roleLabel}".`,
-    'Tailor your answers to this role — explain only what this role can do or see.',
+    'Tailor your answers to this role — explain only what this role can do or see.'
   ]
 
   switch (userRole) {
@@ -68,55 +73,55 @@ function buildRoleGuidelines(userRole: string): string {
       guidelines.push(
         'This user can ONLY: submit expense requests, view their own requests, manage their profile, and resubmit rejected requests.',
         'Do NOT explain admin menus, review/approval workflows, dashboard, settlement, receipt management, user management, or project settings.',
-        'If asked about admin features, say that they need to contact the administrator.',
+        'If asked about admin features, say that they need to contact the administrator.'
       )
       break
     case 'finance_ops':
       guidelines.push(
         'This user can: review operations committee requests (approve/reject), plus all basic user functions.',
-        'Do NOT explain preparation committee review, settlement processing, receipt management, user management, dashboard, or project settings.',
+        'Do NOT explain preparation committee review, settlement processing, receipt management, user management, dashboard, or project settings.'
       )
       break
     case 'approver_ops':
       guidelines.push(
         'This user can: final-approve operations committee requests (up to threshold amount), view settlement reports (read-only), plus all basic user functions.',
-        'Do NOT explain preparation committee approval, settlement processing, receipt management, user management, dashboard, or project settings.',
+        'Do NOT explain preparation committee approval, settlement processing, receipt management, user management, dashboard, or project settings.'
       )
       break
     case 'approver_prep':
       guidelines.push(
         'This user can: final-approve preparation committee requests (up to threshold amount), view settlement reports (read-only), plus all basic user functions.',
-        'Do NOT explain operations committee approval, settlement processing, receipt management, user management, dashboard, or project settings.',
+        'Do NOT explain operations committee approval, settlement processing, receipt management, user management, dashboard, or project settings.'
       )
       break
     case 'finance_prep':
       guidelines.push(
         'This user can: review all committee requests, process settlements, manage receipts, view users and change roles, access dashboard, force-reject approved requests, plus all basic user functions.',
-        'Do NOT explain project creation/deletion or project settings — those are admin-only.',
+        'Do NOT explain project creation/deletion or project settings — those are admin-only.'
       )
       break
     case 'session_director':
       guidelines.push(
         'This user can: final-approve operations committee requests (no amount limit), access dashboard, view settlement reports, plus all basic user functions.',
-        'Do NOT explain preparation committee approval, settlement processing, receipt management, user management, or project settings.',
+        'Do NOT explain preparation committee approval, settlement processing, receipt management, user management, or project settings.'
       )
       break
     case 'logistic_admin':
       guidelines.push(
         'This user can: final-approve preparation committee requests (no amount limit), access dashboard, view settlement reports, plus all basic user functions.',
-        'Do NOT explain operations committee approval, settlement processing, receipt management, user management, or project settings.',
+        'Do NOT explain operations committee approval, settlement processing, receipt management, user management, or project settings.'
       )
       break
     case 'executive':
       guidelines.push(
         'This user can: final-approve all committee requests (no amount limit), access dashboard, view settlement reports, plus all basic user functions.',
-        'Do NOT explain settlement processing, receipt management, user management, or project settings — those are finance_prep/admin functions.',
+        'Do NOT explain settlement processing, receipt management, user management, or project settings — those are finance_prep/admin functions.'
       )
       break
     case 'admin':
     case 'super_admin':
       guidelines.push(
-        'This user has full access to all features. Answer any question about the app without restriction.',
+        'This user has full access to all features. Answer any question about the app without restriction.'
       )
       break
   }
@@ -126,7 +131,7 @@ function buildRoleGuidelines(userRole: string): string {
 
 export async function buildSystemPrompt(
   settings: AiSettings,
-  userRole: string = 'user',
+  userRole: string = 'user'
 ): Promise<string> {
   const contextText = loadContextFiles(userRole)
   const roleGuidelines = buildRoleGuidelines(userRole)

@@ -11,6 +11,8 @@
     "finance": "Finance",
     "financeDesc": "Financial management and accounting",
     "apply": "Apply",
-    "applyDesc": "Conference participation application and submission"
+    "applyDesc": "Conference participation application and submission",
+    "inventory": "Inventory",
+    "inventoryDesc": "Inventory and asset management across projects"
   }
 }

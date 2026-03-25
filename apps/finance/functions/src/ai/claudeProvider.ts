@@ -14,11 +14,11 @@ export class ClaudeProvider implements LLMProvider {
       system: params.systemPrompt,
       messages: params.messages.map((m) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content,
+        content: m.content
       })),
       temperature: params.temperature,
       top_p: params.topP,
-      max_tokens: params.maxTokens,
+      max_tokens: params.maxTokens
     })
 
     const block = response.content[0]

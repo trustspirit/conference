@@ -23,7 +23,11 @@ import {
   isToday,
   createDateWithTime
 } from './scheduleUtils'
-import { useScheduleGrid, type TimeRangeWithIndex, type DropTargetWithIndex } from './useScheduleGrid'
+import {
+  useScheduleGrid,
+  type TimeRangeWithIndex,
+  type DropTargetWithIndex
+} from './useScheduleGrid'
 
 interface ScheduleTimelineViewProps {
   onEventClick: (event: ScheduleEvent) => void

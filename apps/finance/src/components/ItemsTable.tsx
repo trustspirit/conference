@@ -30,20 +30,29 @@ export default function ItemsTable({ items, totalAmount }: Props) {
                   <div className="mt-1 text-xs text-gray-500 bg-blue-50 rounded px-2 py-1.5 space-y-0.5">
                     <div>
                       <span className="font-medium">{t('field.transportType')}:</span>{' '}
-                      {item.transportDetail.transportType === 'car' ? t('field.transportCar') : t('field.transportPublic')}
+                      {item.transportDetail.transportType === 'car'
+                        ? t('field.transportCar')
+                        : t('field.transportPublic')}
                       {' · '}
                       <span className="font-medium">{t('field.tripType')}:</span>{' '}
-                      {item.transportDetail.tripType === 'round' ? t('field.tripRound') : t('field.tripOneWay')}
+                      {item.transportDetail.tripType === 'round'
+                        ? t('field.tripRound')
+                        : t('field.tripOneWay')}
                     </div>
                     <div>
                       {item.transportDetail.departure} → {item.transportDetail.destination}
-                      {item.transportDetail.transportType === 'car' && item.transportDetail.distanceKm && (
-                        <span> · {item.transportDetail.distanceKm}km</span>
-                      )}
+                      {item.transportDetail.transportType === 'car' &&
+                        item.transportDetail.distanceKm && (
+                          <span> · {item.transportDetail.distanceKm}km</span>
+                        )}
                     </div>
                     {item.transportDetail.routeMapImage?.url && (
                       <div className="mt-1.5">
-                        <a href={item.transportDetail.routeMapImage.url} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={item.transportDetail.routeMapImage.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <img
                             src={item.transportDetail.routeMapImage.url}
                             alt={`${item.transportDetail.departure} → ${item.transportDetail.destination}`}
@@ -57,7 +66,9 @@ export default function ItemsTable({ items, totalAmount }: Props) {
               </td>
               <td className="px-3 py-2 align-top">
                 {item.budgetCode}
-                <span className="ml-1 text-gray-400 text-xs">{t(`budgetCode.${item.budgetCode}`)}</span>
+                <span className="ml-1 text-gray-400 text-xs">
+                  {t(`budgetCode.${item.budgetCode}`)}
+                </span>
               </td>
               <td className="px-3 py-2 text-right align-top">₩{item.amount.toLocaleString()}</td>
             </tr>
@@ -65,7 +76,9 @@ export default function ItemsTable({ items, totalAmount }: Props) {
         </tbody>
         <tfoot className="border-t font-medium">
           <tr>
-            <td colSpan={3} className="px-3 py-2 text-right">{t('field.totalAmount')}</td>
+            <td colSpan={3} className="px-3 py-2 text-right">
+              {t('field.totalAmount')}
+            </td>
             <td className="px-3 py-2 text-right">₩{totalAmount.toLocaleString()}</td>
           </tr>
         </tfoot>

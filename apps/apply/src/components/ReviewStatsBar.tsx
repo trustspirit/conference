@@ -41,7 +41,7 @@ export default function ReviewStatsBar({ items }: ReviewStatsBarProps) {
         borderRadius: '0.75rem',
         border: '1px solid #e5e7eb',
         marginBottom: '1rem',
-        flexWrap: 'wrap',
+        flexWrap: 'wrap'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -52,15 +52,20 @@ export default function ReviewStatsBar({ items }: ReviewStatsBarProps) {
           {stats.approved}
         </span>
         <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
-          / {stats.total}{t('admin.review.stats.total', '건')}
+          / {stats.total}
+          {t('admin.review.stats.total', '건')}
         </span>
       </div>
 
       <div style={{ width: '1px', height: '1.25rem', backgroundColor: '#d1d5db' }} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <Badge variant="warning" size="sm">{t('admin.review.stats.awaiting', '대기')} {stats.awaiting}</Badge>
-        <Badge variant="danger" size="sm">{t('admin.review.stats.rejected', '거절')} {stats.rejected}</Badge>
+        <Badge variant="warning" size="sm">
+          {t('admin.review.stats.awaiting', '대기')} {stats.awaiting}
+        </Badge>
+        <Badge variant="danger" size="sm">
+          {t('admin.review.stats.rejected', '거절')} {stats.rejected}
+        </Badge>
       </div>
 
       {stats.stakeDistribution.length > 0 && (

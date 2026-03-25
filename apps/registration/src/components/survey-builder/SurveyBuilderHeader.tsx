@@ -8,7 +8,12 @@ interface SurveyBuilderHeaderProps {
   onDescriptionChange: (description: string) => void
 }
 
-function SurveyBuilderHeader({ title, description, onTitleChange, onDescriptionChange }: SurveyBuilderHeaderProps): React.ReactElement {
+function SurveyBuilderHeader({
+  title,
+  description,
+  onTitleChange,
+  onDescriptionChange
+}: SurveyBuilderHeaderProps): React.ReactElement {
   const { t } = useTranslation()
 
   return (

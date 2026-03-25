@@ -67,7 +67,9 @@ function BusesPage(): React.ReactElement {
   useEffect(() => {
     if (!loadMoreRef.current || !hasMore || isLoading) return
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) loadMore() },
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore()
+      },
       { threshold: 0.1 }
     )
     observer.observe(loadMoreRef.current)
@@ -352,7 +354,10 @@ function BusesPage(): React.ReactElement {
         description={
           deleteConfirm.bus
             ? deleteConfirm.bus.participantCount > 0
-              ? t('bus.confirmDeleteWithParticipants', { name: deleteConfirm.bus.name, count: deleteConfirm.bus.participantCount })
+              ? t('bus.confirmDeleteWithParticipants', {
+                  name: deleteConfirm.bus.name,
+                  count: deleteConfirm.bus.participantCount
+                })
               : t('bus.confirmDelete', { name: deleteConfirm.bus.name })
             : ''
         }

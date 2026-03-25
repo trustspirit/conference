@@ -19,7 +19,9 @@ export default function PersonalSettings() {
   const [phone, setPhone] = useState(appUser?.phone || '')
   const [bankName, setBankName] = useState(appUser?.bankName || '')
   const [bankAccount, setBankAccount] = useState(appUser?.bankAccount || '')
-  const [defaultCommittee, setDefaultCommittee] = useState<Committee>(appUser?.defaultCommittee || 'operations')
+  const [defaultCommittee, setDefaultCommittee] = useState<Committee>(
+    appUser?.defaultCommittee || 'operations'
+  )
   const [signature, setSignature] = useState(appUser?.signature || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -37,7 +39,10 @@ export default function PersonalSettings() {
   // Re-format account number when bank changes
   const bankNameMounted = useRef(false)
   useEffect(() => {
-    if (!bankNameMounted.current) { bankNameMounted.current = true; return }
+    if (!bankNameMounted.current) {
+      bankNameMounted.current = true
+      return
+    }
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -45,13 +50,29 @@ export default function PersonalSettings() {
   const uploadBankBook = useUploadBankBook()
 
   const handleSave = async () => {
-    if (!displayName.trim()) { toast({ variant: 'danger', message: t('validation.displayNameRequired') }); return }
-    setSaving(true); setSaved(false)
+    if (!displayName.trim()) {
+      toast({ variant: 'danger', message: t('validation.displayNameRequired') })
+      return
+    }
+    setSaving(true)
+    setSaved(false)
     try {
-      await updateAppUser({ displayName: displayName.trim(), phone: phone.trim(), bankName: bankName.trim(), bankAccount: bankAccount.trim(), defaultCommittee, signature })
+      await updateAppUser({
+        displayName: displayName.trim(),
+        phone: phone.trim(),
+        bankName: bankName.trim(),
+        bankAccount: bankAccount.trim(),
+        defaultCommittee,
+        signature
+      })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-      setSaved(true); setTimeout(() => setSaved(false), 2000)
-    } catch { toast({ variant: 'danger', message: t('settings.saveFailed') }) } finally { setSaving(false) }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      toast({ variant: 'danger', message: t('settings.saveFailed') })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleUploadBankBook = async () => {
@@ -59,20 +80,41 @@ export default function PersonalSettings() {
     setUploadingBankBook(true)
     try {
       const data = await fileToBase64(bankBookFile)
-      const { storagePath, url } = await uploadBankBook.mutateAsync({ file: { name: bankBookFile.name, data } })
+      const { storagePath, url } = await uploadBankBook.mutateAsync({
+        file: { name: bankBookFile.name, data }
+      })
       await updateAppUser({ bankBookImage: '', bankBookPath: storagePath, bankBookUrl: url })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-      setBankBookFile(null); toast({ variant: 'success', message: t('settings.bankBookUploadSuccess') })
-    } catch { toast({ variant: 'danger', message: t('settings.bankBookUploadFailed') }) } finally { setUploadingBankBook(false) }
+      setBankBookFile(null)
+      toast({ variant: 'success', message: t('settings.bankBookUploadSuccess') })
+    } catch {
+      toast({ variant: 'danger', message: t('settings.bankBookUploadFailed') })
+    } finally {
+      setUploadingBankBook(false)
+    }
   }
 
   return (
     <>
       <div className="mb-6 p-4 border border-gray-200 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 mb-2">{i18n.language.startsWith('ko') ? '언어' : 'Language'}</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {i18n.language.startsWith('ko') ? '언어' : 'Language'}
+        </label>
         <div className="flex gap-2">
-          <Button variant={i18n.language.startsWith('ko') ? 'primary' : 'secondary'} size="sm" onClick={() => i18n.changeLanguage('ko')}>한국어</Button>
-          <Button variant={i18n.language.startsWith('en') ? 'primary' : 'secondary'} size="sm" onClick={() => i18n.changeLanguage('en')}>English</Button>
+          <Button
+            variant={i18n.language.startsWith('ko') ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => i18n.changeLanguage('ko')}
+          >
+            한국어
+          </Button>
+          <Button
+            variant={i18n.language.startsWith('en') ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => i18n.changeLanguage('en')}
+          >
+            English
+          </Button>
         </div>
       </div>
       <div className="mb-4">
@@ -82,57 +124,133 @@ export default function PersonalSettings() {
         <TextField label={t('field.email')} value={appUser?.email || ''} disabled fullWidth />
       </div>
       <div className="mb-4">
-        <TextField label={t('field.displayName')} required value={displayName} onChange={(e) => setDisplayName(e.target.value)} helperText={t('settings.displayNameHint')} fullWidth />
+        <TextField
+          label={t('field.displayName')}
+          required
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          helperText={t('settings.displayNameHint')}
+          fullWidth
+        />
       </div>
       <div className="mb-4">
-        <TextField label={t('field.phone')} type="tel" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" fullWidth />
+        <TextField
+          label={t('field.phone')}
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(formatPhone(e.target.value))}
+          placeholder="010-0000-0000"
+          fullWidth
+        />
       </div>
       <div className="mb-4">
         <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} />
       </div>
       <div className="mb-4">
-        <TextField label={t('field.bankAccount')} value={bankAccount}
+        <TextField
+          label={t('field.bankAccount')}
+          value={bankAccount}
           onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-          placeholder={t('field.bankAccount')} fullWidth />
+          placeholder={t('field.bankAccount')}
+          fullWidth
+        />
       </div>
       <div className="mb-4 p-4 border border-gray-200 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 mb-2">{t('field.bankBook')} <span className="text-red-500">*</span></label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('field.bankBook')} <span className="text-red-500">*</span>
+        </label>
         {hasBankBook && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">{t('settings.bankBookUploaded')}</span>
-              <a href={appUser?.bankBookUrl || appUser?.bankBookDriveUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">{t('settings.bankBookViewDrive')}</a>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                {t('settings.bankBookUploaded')}
+              </span>
+              <a
+                href={appUser?.bankBookUrl || appUser?.bankBookDriveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline"
+              >
+                {t('settings.bankBookViewDrive')}
+              </a>
             </div>
-            {(appUser?.bankBookUrl || appUser?.bankBookDriveUrl) && <img src={appUser.bankBookUrl || appUser.bankBookDriveUrl} alt={t('field.bankBook')} className="max-h-32 border border-gray-200 rounded" />}
+            {(appUser?.bankBookUrl || appUser?.bankBookDriveUrl) && (
+              <img
+                src={appUser.bankBookUrl || appUser.bankBookDriveUrl}
+                alt={t('field.bankBook')}
+                className="max-h-32 border border-gray-200 rounded"
+              />
+            )}
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input type="file" accept=".png,.jpg,.jpeg,.pdf" onChange={(e) => {
-            const f = e.target.files?.[0] || null
-            if (f) { const err = validateBankBookFile(f); if (err) { setBankBookError(err); setBankBookFile(null); e.target.value = ''; return } }
-            setBankBookError(null); setBankBookFile(f)
-          }} className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+          <input
+            type="file"
+            accept=".png,.jpg,.jpeg,.pdf"
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null
+              if (f) {
+                const err = validateBankBookFile(f)
+                if (err) {
+                  setBankBookError(err)
+                  setBankBookFile(null)
+                  e.target.value = ''
+                  return
+                }
+              }
+              setBankBookError(null)
+              setBankBookFile(f)
+            }}
+            className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
           {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
           {bankBookFile && (
-            <Button variant="primary" size="sm" onClick={handleUploadBankBook} disabled={uploadingBankBook} loading={uploadingBankBook}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleUploadBankBook}
+              disabled={uploadingBankBook}
+              loading={uploadingBankBook}
+            >
               {uploadingBankBook ? t('settings.bankBookUploading') : t('settings.bankBookUpload')}
             </Button>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-2">{hasBankBook ? t('settings.bankBookReplaceHint') : t('settings.bankBookRequiredHint')}</p>
+        <p className="text-xs text-gray-400 mt-2">
+          {hasBankBook ? t('settings.bankBookReplaceHint') : t('settings.bankBookRequiredHint')}
+        </p>
       </div>
       <div className="mb-4">
-        <CommitteeSelect value={defaultCommittee} onChange={setDefaultCommittee} name="default-committee" label={t('field.defaultCommittee')} />
+        <CommitteeSelect
+          value={defaultCommittee}
+          onChange={setDefaultCommittee}
+          name="default-committee"
+          label={t('field.defaultCommittee')}
+        />
         <p className="text-xs text-gray-400 mt-1">{t('settings.committeeHint')}</p>
       </div>
       <div className="mb-6">
         <div className="flex items-center gap-1.5 mb-1">
           <label className="text-sm font-medium text-gray-700">{t('field.signature')}</label>
           {signature && (
-            <button type="button" onClick={handleResetSignature}
-              className="text-red-500 hover:text-red-700" title={t('common.delete')}>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <button
+              type="button"
+              onClick={handleResetSignature}
+              className="text-red-500 hover:text-red-700"
+              title={t('common.delete')}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
             </button>
           )}

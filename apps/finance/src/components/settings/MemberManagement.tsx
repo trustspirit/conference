@@ -12,9 +12,9 @@ export default function MemberManagement({ project }: { project: Project }) {
     isLoading: usersLoading,
     hasNextPage,
     isFetchingNextPage,
-    fetchNextPage,
+    fetchNextPage
   } = useInfiniteUsers()
-  const users = usersData?.pages.flatMap(p => p.items) ?? []
+  const users = usersData?.pages.flatMap((p) => p.items) ?? []
   const updateMembersMutation = useUpdateProjectMembers()
   const membersContainerRef = useRef<HTMLDivElement>(null)
 
@@ -26,9 +26,11 @@ export default function MemberManagement({ project }: { project: Project }) {
         projectId: project.id,
         addUids: add ? [uid] : [],
         removeUids: add ? [] : [uid],
-        currentMemberUids: project.memberUids || [],
+        currentMemberUids: project.memberUids || []
       })
-    } catch (err) { console.error('Failed to toggle member:', err) }
+    } catch (err) {
+      console.error('Failed to toggle member:', err)
+    }
   }
 
   if (usersLoading) return <p className="text-sm text-gray-500">{t('common.loading')}</p>
@@ -39,8 +41,11 @@ export default function MemberManagement({ project }: { project: Project }) {
         {t('project.memberCount', { count: memberUids.size })}
       </p>
       <div ref={membersContainerRef} className="max-h-80 overflow-y-auto space-y-1">
-        {users.map(u => (
-          <label key={u.uid} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 px-2 py-1.5 rounded">
+        {users.map((u) => (
+          <label
+            key={u.uid}
+            className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 px-2 py-1.5 rounded"
+          >
             <input
               type="checkbox"
               checked={memberUids.has(u.uid)}
