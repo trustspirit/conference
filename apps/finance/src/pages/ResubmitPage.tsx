@@ -285,8 +285,8 @@ export default function ResubmitPage() {
         ...(isVendorRequest
           ? {
               isVendorRequest: true,
-              vendorBankBookPath: vendorBankBookPath ?? null,
-              vendorBankBookUrl: vendorBankBookUrl ?? null
+              vendorBankBookPath,
+              vendorBankBookUrl
             }
           : {})
       })

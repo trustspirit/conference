@@ -389,8 +389,8 @@ export default function RequestFormPage() {
         ...(isVendorRequest
           ? {
               isVendorRequest: true,
-              vendorBankBookPath: vendorBankBookPath ?? null,
-              vendorBankBookUrl: vendorBankBookUrl ?? null
+              vendorBankBookPath,
+              vendorBankBookUrl
             }
           : {})
       })
