@@ -20,7 +20,7 @@ interface Props {
 }
 
 export const TRANSPORT_BUDGET_CODE = 5110
-export const DEFAULT_PER_KM_RATE = 150
+export const DEFAULT_PER_KM_RATE = 250
 
 const emptyTransportDetail = (): TransportDetail => ({
   transportType: 'car',
