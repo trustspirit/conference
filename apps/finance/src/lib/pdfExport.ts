@@ -247,21 +247,28 @@ export async function exportBatchSettlementPdf(
     imageOffset += entries.length
   }
 
-  // Bank books (only if option enabled) — prefer user profile URL, fall back to settlement snapshot
+  // Bank books (only if option enabled)
+  // Vendor requests use the vendor bank book from the request; regular requests prefer user profile URL
   const payeeUsers = options.payeeUsers
   const bankBooks: { payee: string; url: string }[] = []
   if (options.includeBankBooks) {
-    const seenUids = new Set<string>()
+    const seenPayees = new Set<string>()
     for (const s of settlements) {
       const req = originalRequests.find((r) => s.requestIds.includes(r.id))
-      const uid = req?.requestedBy.uid
-      if (uid && seenUids.has(uid)) continue
-      if (uid) seenUids.add(uid)
-      const userBankBook =
-        uid && payeeUsers
-          ? payeeUsers.get(uid)?.bankBookUrl || payeeUsers.get(uid)?.bankBookDriveUrl
-          : undefined
-      const url = userBankBook || s.bankBookUrl
+      const payeeKey = `${s.payee}-${s.bankAccount}`
+      if (seenPayees.has(payeeKey)) continue
+      seenPayees.add(payeeKey)
+      let url: string | undefined
+      if (req?.isVendorRequest) {
+        url = req.vendorBankBookUrl || s.bankBookUrl
+      } else {
+        const uid = req?.requestedBy.uid
+        const userBankBook =
+          uid && payeeUsers
+            ? payeeUsers.get(uid)?.bankBookUrl || payeeUsers.get(uid)?.bankBookDriveUrl
+            : undefined
+        url = userBankBook || s.bankBookUrl
+      }
       if (url) bankBooks.push({ payee: s.payee, url })
     }
   }

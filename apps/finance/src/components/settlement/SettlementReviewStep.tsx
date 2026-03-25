@@ -35,7 +35,9 @@ export default function SettlementReviewStep({
   onBack
 }: Props) {
   const { t } = useTranslation()
-  const bankBookUrl = requester?.bankBookUrl || requester?.bankBookDriveUrl
+  const bankBookUrl = req.isVendorRequest
+    ? req.vendorBankBookUrl
+    : requester?.bankBookUrl || requester?.bankBookDriveUrl
 
   return (
     <>

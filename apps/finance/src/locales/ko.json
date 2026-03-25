@@ -21,6 +21,7 @@
     "loginSubtitle": "Payment / Reimbursement Request",
     "googleLogin": "Google 계정으로 로그인",
     "loginFailed": "로그인 실패",
+    "signingIn": "로그인 중...",
     "loading": "로딩 중..."
   },
   "setup": {

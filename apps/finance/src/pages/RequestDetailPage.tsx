@@ -370,35 +370,36 @@ export default function RequestDetailPage() {
 
             <ReceiptGallery receipts={request.receipts} />
 
-            {/* Bank Book */}
-            {(requester?.bankBookUrl || requester?.bankBookDriveUrl) && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
-                <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
-                  <a
-                    href={requester.bankBookUrl || requester.bankBookDriveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src={requester.bankBookUrl || requester.bankBookDriveUrl || ''}
-                      alt={t('field.bankBook')}
-                      className="max-h-48 object-contain bg-gray-50"
-                    />
-                  </a>
-                  <div className="px-3 py-2 bg-gray-50 border-t">
-                    <a
-                      href={requester.bankBookUrl || requester.bankBookDriveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      {t('settings.bankBookViewDrive')}
+            {/* Bank Book — vendor requests use vendor bank book, otherwise user profile */}
+            {(() => {
+              const bankBookUrl = request.isVendorRequest
+                ? request.vendorBankBookUrl
+                : requester?.bankBookUrl || requester?.bankBookDriveUrl
+              return bankBookUrl ? (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
+                    <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={bankBookUrl}
+                        alt={t('field.bankBook')}
+                        className="max-h-48 object-contain bg-gray-50"
+                      />
                     </a>
+                    <div className="px-3 py-2 bg-gray-50 border-t">
+                      <a
+                        href={bankBookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        {t('settings.bankBookViewDrive')}
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              ) : null
+            })()}
 
             {request.comments && (
               <div className="mb-6">

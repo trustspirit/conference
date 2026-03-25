@@ -21,6 +21,7 @@
     "loginSubtitle": "Payment / Reimbursement Request",
     "googleLogin": "Sign in with Google",
     "loginFailed": "Login failed",
+    "signingIn": "Signing in...",
     "loading": "Loading..."
   },
   "setup": {

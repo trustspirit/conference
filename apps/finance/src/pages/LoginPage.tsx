@@ -1,16 +1,51 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import Spinner from '../components/Spinner'
 
+const LOGIN_TIMEOUT_MS = 30_000
+
 export default function LoginPage() {
   const { t } = useTranslation()
   const { user, loading, signInWithGoogle } = useAuth()
+  const [signingIn, setSigningIn] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  if (loading)
+  const clearLoginTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      setSigningIn(false)
+      clearLoginTimeout()
+    }
+  }, [user, clearLoginTimeout])
+
+  useEffect(() => () => clearLoginTimeout(), [clearLoginTimeout])
+
+  const handleSignIn = async () => {
+    setSigningIn(true)
+    clearLoginTimeout()
+    timeoutRef.current = setTimeout(() => {
+      setSigningIn(false)
+    }, LOGIN_TIMEOUT_MS)
+    try {
+      await signInWithGoogle()
+    } catch {
+      setSigningIn(false)
+      clearLoginTimeout()
+    }
+  }
+
+  if (loading || signingIn)
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner text={t('auth.loading')} />
+        <Spinner text={signingIn ? t('auth.signingIn') : t('auth.loading')} />
       </div>
     )
   if (user) return <Navigate to="/my-requests" replace />
@@ -36,7 +71,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold mb-1">{t('auth.loginTitle')}</h1>
         <p className="text-gray-400 text-sm mb-8">{t('auth.loginSubtitle')}</p>
         <button
-          onClick={signInWithGoogle}
+          onClick={handleSignIn}
           className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg px-6 py-3 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all active:scale-[0.98]"
         >
           <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">

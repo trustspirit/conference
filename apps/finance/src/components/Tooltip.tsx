@@ -25,8 +25,11 @@ export default function Tooltip({ text, className = '', maxWidth = '160px' }: Pr
 
   return (
     <span ref={ref} className={`relative inline-block ${className}`} style={{ maxWidth }}>
+      {/* Mobile: show full text, no truncation */}
+      <span className="block sm:hidden text-xs whitespace-pre-wrap">{text}</span>
+      {/* Desktop: truncated with hover/click tooltip */}
       <span
-        className="block truncate cursor-default"
+        className="hidden sm:block truncate cursor-default"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onClick={() => setOpen((v) => !v)}
