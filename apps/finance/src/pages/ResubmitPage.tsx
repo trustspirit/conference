@@ -437,7 +437,7 @@ export default function ResubmitPage() {
           />
           <TextField label={t('field.session')} value={session} disabled fullWidth />
           <div>
-            <BankSelect value={bankName} onChange={setBankName} label={`${t('field.bank')} *`} />
+            <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
           </div>
           <TextField
             label={t('field.bankAccount')}

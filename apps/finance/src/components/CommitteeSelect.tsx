@@ -13,7 +13,7 @@ export default function CommitteeSelect({ value, onChange, name = 'committee', l
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label ?? t('committee.label')}
+        {label ?? t('committee.label')} <span className="text-red-500">*</span>
       </label>
       <div className="flex gap-4">
         <label className="flex items-center gap-2 cursor-pointer">

@@ -23,21 +23,15 @@ export default function BankSelect({ value, onChange, label, required }: Props) 
   ]
 
   return (
-    <div>
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-          {required ? ' *' : ''}
-        </label>
-      )}
-      <Select
-        options={options}
-        value={value}
-        onChange={(v) => onChange(v as string)}
-        placeholder={t('field.bankSelect')}
-        fullWidth
-        searchable
-      />
-    </div>
+    <Select
+      options={options}
+      value={value}
+      onChange={(v) => onChange(v as string)}
+      placeholder={t('field.bankSelect')}
+      label={label}
+      required={required}
+      fullWidth
+      searchable
+    />
   )
 }

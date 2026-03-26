@@ -35,7 +35,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.8.0",
-    "trust-ui-react": "^0.3.10"
+    "trust-ui-react": "^0.3.12"
   },
   "devDependencies": {
     "@conference/config": "workspace:*",

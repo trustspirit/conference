@@ -278,14 +278,16 @@ export default function ItemRow({
             ) : (
               <>
                 <TextField
-                  label={`${t('field.departure')} *`}
+                  label={t('field.departure')}
+                  required
                   placeholder={t('field.departure')}
                   value={detail.departure}
                   onChange={(e) => updateTransportDetail({ departure: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label={`${t('field.destination')} *`}
+                  label={t('field.destination')}
+                  required
                   placeholder={t('field.destination')}
                   value={detail.destination}
                   onChange={(e) => updateTransportDetail({ destination: e.target.value })}
