@@ -241,7 +241,7 @@ async function drawRouteMap(
   ctx.textBaseline = 'bottom'
   ctx.fillText('© OpenStreetMap contributors', WIDTH - 4, HEIGHT - 2)
 
-  return canvas.toDataURL('image/png')
+  return canvas.toDataURL('image/jpeg', 0.7)
 }
 
 /**
@@ -279,7 +279,7 @@ export async function captureAndUploadRouteMaps(
       )
 
       const result = await uploadRouteMapFn({
-        file: { name: `route_${Date.now()}.png`, data: dataUrl },
+        file: { name: `route_${Date.now()}.jpg`, data: dataUrl },
         committee,
         projectId
       })
