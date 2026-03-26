@@ -8,7 +8,7 @@ import {
   User
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
-import { auth, googleProvider, db, isInAppBrowser } from '@conference/firebase'
+import { auth, googleProvider, db } from '@conference/firebase'
 import { useToast } from 'trust-ui-react'
 import i18n from '../lib/i18n'
 import { AppUser } from '../types'
