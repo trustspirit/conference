@@ -119,15 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      if (isInAppBrowser) {
-        await signInWithRedirect(auth, googleProvider)
-      } else {
-        await signInWithPopup(auth, googleProvider)
-      }
+      await signInWithPopup(auth, googleProvider)
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
       const firebaseError = error as { code?: string; message?: string }
-      // If popup was blocked, fall back to redirect
+      // If popup was blocked or closed, fall back to redirect
       if (
         firebaseError.code === 'auth/popup-blocked' ||
         firebaseError.code === 'auth/popup-closed-by-user'
