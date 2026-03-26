@@ -83,6 +83,8 @@ export default function ItemRow({
       delete updated.distanceKm
       delete updated.departureCoord
       delete updated.destinationCoord
+      updated.departure = ''
+      updated.destination = ''
     }
     // Strip undefined values — Firestore rejects them
     for (const key of Object.keys(updated)) {
