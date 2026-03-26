@@ -119,7 +119,13 @@ export default function ResubmitPage() {
 
   const hasContent = useCallback(() => {
     if (!original) return false
-    return hasChanges() || files.length > 0 || vendorBankBookFile !== null || inlineBankBookFile !== null || inlineSignature !== ''
+    return (
+      hasChanges() ||
+      files.length > 0 ||
+      vendorBankBookFile !== null ||
+      inlineBankBookFile !== null ||
+      inlineSignature !== ''
+    )
   }, [original, files, vendorBankBookFile, inlineBankBookFile, inlineSignature])
 
   const blocker = useBlocker(({ nextLocation }) => {
@@ -418,18 +424,16 @@ export default function ResubmitPage() {
         </div>
       )}
 
-      <form onSubmit={handlePreSubmit} className="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
+      <form
+        onSubmit={handlePreSubmit}
+        className="bg-white rounded-lg shadow p-4 sm:p-6 max-w-4xl mx-auto"
+      >
         <h2 className="text-xl font-bold mb-1">{t('approval.resubmitTitle')}</h2>
         <p className="text-sm text-gray-500 mb-6">{t('approval.resubmitDescription')}</p>
 
         {original?.isVendorRequest && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-            <Checkbox
-              checked={true}
-              onChange={() => {}}
-              label={t('form.vendorRequest')}
-              disabled
-            />
+            <Checkbox checked={true} onChange={() => {}} label={t('form.vendorRequest')} disabled />
             <p className="text-xs text-gray-500 mt-1 ml-6">{t('form.vendorRequestHint')}</p>
           </div>
         )}
@@ -546,9 +550,7 @@ export default function ResubmitPage() {
               {t('form.vendorBankBook')} <span className="text-red-500">*</span>
             </label>
             {original?.vendorBankBookUrl && !vendorBankBookFile && (
-              <p className="text-xs text-green-600 mb-1">
-                {t('form.vendorBankBookExisting')}
-              </p>
+              <p className="text-xs text-green-600 mb-1">{t('form.vendorBankBookExisting')}</p>
             )}
             <input
               type="file"
@@ -569,7 +571,9 @@ export default function ResubmitPage() {
               }}
               className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {vendorBankBookError && <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>}
+            {vendorBankBookError && (
+              <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
+            )}
             {vendorBankBookFile ? (
               <>
                 <p className="text-xs text-green-600 mt-1">
@@ -609,9 +613,7 @@ export default function ResubmitPage() {
           />
         )}
 
-        {needsSignature && (
-          <InlineSignaturePad onChange={setInlineSignature} />
-        )}
+        {needsSignature && <InlineSignaturePad onChange={setInlineSignature} />}
 
         <div className="mb-6">
           <TextField

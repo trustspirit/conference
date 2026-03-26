@@ -1,7 +1,14 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
-import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth'
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  getRedirectResult,
+  User
+} from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
-import { auth, googleProvider, db } from '@conference/firebase'
+import { auth, googleProvider, db, isInAppBrowser } from '@conference/firebase'
 import { useToast } from 'trust-ui-react'
 import i18n from '../lib/i18n'
 import { AppUser } from '../types'
@@ -30,6 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [needsDisplayName, setNeedsDisplayName] = useState(false)
   const [needsConsent, setNeedsConsent] = useState(false)
+
+  useEffect(() => {
+    getRedirectResult(auth).catch(() => {
+      // Redirect result already consumed or no redirect happened
+    })
+  }, [])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -106,10 +119,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider)
+      if (isInAppBrowser) {
+        await signInWithRedirect(auth, googleProvider)
+      } else {
+        await signInWithPopup(auth, googleProvider)
+      }
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
       const firebaseError = error as { code?: string; message?: string }
+      // If popup was blocked, fall back to redirect
+      if (
+        firebaseError.code === 'auth/popup-blocked' ||
+        firebaseError.code === 'auth/popup-closed-by-user'
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider)
+          return
+        } catch {
+          // redirect also failed
+        }
+      }
       toastRef.current({
         variant: 'danger',
         message: `${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}`

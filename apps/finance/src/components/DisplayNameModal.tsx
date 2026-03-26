@@ -66,7 +66,6 @@ export default function DisplayNameModal() {
             helperText={t('settings.displayNameHint')}
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            autoFocus
             fullWidth
           />
 

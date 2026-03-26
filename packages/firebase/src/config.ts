@@ -21,7 +21,7 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig)
 
-const isInAppBrowser =
+export const isInAppBrowser =
   typeof navigator !== 'undefined' &&
   /KAKAOTALK|Line|FBAN|FBAV|Instagram|NAVER/i.test(navigator.userAgent)
 

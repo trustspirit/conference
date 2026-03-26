@@ -135,7 +135,8 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
             width: '100%',
             maxWidth: width,
             height: 'auto',
-            aspectRatio: `${width}/${height}`
+            aspectRatio: `${width}/${height}`,
+            touchAction: 'none'
           }}
           onMouseDown={startDraw}
           onMouseMove={draw}

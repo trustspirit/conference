@@ -44,14 +44,14 @@ export default function LoginPage() {
 
   if (loading || signingIn)
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-dvh bg-gray-50">
         <Spinner text={signingIn ? t('auth.signingIn') : t('auth.loading')} />
       </div>
     )
   if (user) return <Navigate to="/my-requests" replace />
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
+    <div className="flex items-center justify-center min-h-dvh bg-gray-50 px-4">
       <div className="bg-white p-8 sm:p-10 rounded-xl shadow-lg w-full max-w-sm text-center">
         <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-5">
           <svg
