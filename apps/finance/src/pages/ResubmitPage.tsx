@@ -92,8 +92,8 @@ export default function ResubmitPage() {
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
   const onlyCarTransport =
-    validItems.length > 0 &&
-    validItems.every((item) => item.transportDetail?.transportType === 'car')
+    items.some((item) => item.transportDetail?.transportType === 'car') &&
+    items.filter((item) => item.budgetCode > 0).every((item) => item.transportDetail?.transportType === 'car')
 
   const hasChanges = (): boolean => {
     if (!original) return false
@@ -259,7 +259,7 @@ export default function ResubmitPage() {
           committee,
           projectId: currentProject.id
         })
-      } else {
+      } else if (!onlyCarTransport) {
         receipts = original.receipts
       }
 
@@ -555,9 +555,9 @@ export default function ResubmitPage() {
           onFilesChange={setFiles}
           required={!onlyCarTransport}
           disabled={onlyCarTransport}
-          existingCount={original.receipts.length}
+          existingCount={onlyCarTransport ? 0 : original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
-          existingFiles={original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))}
+          existingFiles={onlyCarTransport ? [] : original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))}
         />
 
         {isVendorRequest && (

@@ -130,8 +130,8 @@ export default function RequestFormPage() {
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
   const onlyCarTransport =
-    validItems.length > 0 &&
-    validItems.every((item) => item.transportDetail?.transportType === 'car')
+    items.some((item) => item.transportDetail?.transportType === 'car') &&
+    items.filter((item) => item.budgetCode > 0).every((item) => item.transportDetail?.transportType === 'car')
 
   // Check if form has meaningful content (beyond defaults)
   const hasContent = useCallback(() => {
