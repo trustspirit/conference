@@ -28,6 +28,19 @@ import type { PaymentRequest, RequestStatus } from '../../types'
 
 const PAGE_SIZE = 20
 
+/** Recursively strip undefined values from an object (Firestore rejects undefined) */
+function stripUndefined<T>(obj: T): T {
+  if (Array.isArray(obj)) return obj.map(stripUndefined) as T
+  if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
+    const cleaned: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      if (value !== undefined) cleaned[key] = stripUndefined(value)
+    }
+    return cleaned as T
+  }
+  return obj
+}
+
 export function useRequests(projectId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.requests.all(projectId!),
