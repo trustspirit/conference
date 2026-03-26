@@ -2,6 +2,8 @@ import { useState, useCallback, useRef } from 'react'
 import type { ChatMessage } from '../types/chat'
 import { sendChatMessage } from '../services/chatApi'
 
+const MAX_MESSAGES = 20
+
 let messageIdCounter = 0
 function nextId(): string {
   return `msg-${++messageIdCounter}-${Date.now()}`
@@ -12,6 +14,7 @@ export interface UseChatReturn {
   sendMessage: (content: string) => void
   isLoading: boolean
   error: string | null
+  isLimitReached: boolean
   clearMessages: () => void
 }
 
@@ -22,9 +25,11 @@ export function useChat(): UseChatReturn {
   const messagesRef = useRef<ChatMessage[]>([])
   messagesRef.current = messages
 
+  const isLimitReached = messages.length >= MAX_MESSAGES
+
   const sendMessage = useCallback(
     async (content: string) => {
-      if (isLoading || !content.trim()) return
+      if (isLoading || !content.trim() || isLimitReached) return
 
       const userMessage: ChatMessage = {
         id: nextId(),
@@ -56,7 +61,7 @@ export function useChat(): UseChatReturn {
         setIsLoading(false)
       }
     },
-    [isLoading]
+    [isLoading, isLimitReached]
   )
 
   const clearMessages = useCallback(() => {
@@ -65,5 +70,5 @@ export function useChat(): UseChatReturn {
     setError(null)
   }, [])
 
-  return { messages, sendMessage, isLoading, error, clearMessages }
+  return { messages, sendMessage, isLoading, error, isLimitReached, clearMessages }
 }

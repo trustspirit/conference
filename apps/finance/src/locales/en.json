@@ -422,6 +422,7 @@
     "placeholder": "Type your question...",
     "send": "Send",
     "error": "An error occurred. Please try again.",
+    "limitReached": "Conversation has reached its maximum length. Please refresh the page to start a new conversation.",
     "unavailable": "AI Assistant is currently unavailable."
   },
   "checklist": {

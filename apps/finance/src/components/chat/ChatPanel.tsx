@@ -11,7 +11,7 @@ interface Props {
 
 export default function ChatPanel({ onClose, chat }: Props) {
   const { t } = useTranslation()
-  const { messages, sendMessage, isLoading, error } = chat
+  const { messages, sendMessage, isLoading, error, isLimitReached } = chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -66,11 +66,17 @@ export default function ChatPanel({ onClose, chat }: Props) {
 
         {error && <div className="text-center text-xs text-red-500">{t('chat.error')}</div>}
 
+        {isLimitReached && (
+          <div className="mx-2 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
+            {t('chat.limitReached')}
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isLoading} />
+      <ChatInput onSend={sendMessage} disabled={isLoading || isLimitReached} />
     </div>
   )
 }
