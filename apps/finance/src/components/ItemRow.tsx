@@ -27,8 +27,7 @@ const emptyTransportDetail = (): TransportDetail => ({
   transportType: 'car',
   tripType: 'round',
   departure: '',
-  destination: '',
-  distanceKm: undefined
+  destination: ''
 })
 
 export function calcCarTransportAmount(detail: TransportDetail, perKmRate: number): number {
@@ -79,9 +78,9 @@ export default function ItemRow({
   const updateTransportDetail = (patch: Partial<TransportDetail>) => {
     const updated = { ...detail, ...patch }
     if (patch.transportType === 'public') {
-      updated.distanceKm = undefined
-      updated.departureCoord = undefined
-      updated.destinationCoord = undefined
+      delete updated.distanceKm
+      delete updated.departureCoord
+      delete updated.destinationCoord
     }
     const newItem: RequestItem = { ...item, transportDetail: updated }
     if (updated.transportType === 'car') {
