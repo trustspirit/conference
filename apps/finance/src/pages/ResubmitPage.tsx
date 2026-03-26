@@ -119,14 +119,25 @@ export default function ResubmitPage() {
 
   const hasContent = useCallback(() => {
     if (!original) return false
-    return (
-      hasChanges() ||
-      files.length > 0 ||
-      vendorBankBookFile !== null ||
-      inlineBankBookFile !== null ||
-      inlineSignature !== ''
-    )
-  }, [original, files, vendorBankBookFile, inlineBankBookFile, inlineSignature])
+    if (payee !== original.payee) return true
+    if (phone !== original.phone) return true
+    if (bankName !== original.bankName) return true
+    if (bankAccount !== original.bankAccount) return true
+    if (date !== original.date) return true
+    if (committee !== original.committee) return true
+    if (comments !== original.comments) return true
+    if (files.length > 0) return true
+    if (vendorBankBookFile !== null) return true
+    if (inlineBankBookFile !== null) return true
+    if (inlineSignature !== '') return true
+    const validItems = items.filter((item) => item.description && item.amount > 0)
+    if (original.items.length !== validItems.length) return true
+    const itemsChanged = validItems.some((curr, i) => {
+      const orig = original.items[i]
+      return curr.description !== orig.description || curr.budgetCode !== orig.budgetCode || curr.amount !== orig.amount || JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
+    })
+    return itemsChanged
+  }, [original, payee, phone, bankName, bankAccount, date, committee, comments, files, vendorBankBookFile, inlineBankBookFile, inlineSignature, items])
 
   const blocker = useBlocker(({ nextLocation }) => {
     if (submitting) return false

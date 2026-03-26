@@ -157,7 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (value !== undefined) updateData[key] = value
     }
     await updateDoc(doc(db, 'users', user.uid), updateData)
-    setAppUser((prev) => (prev ? { ...prev, ...fields } : prev))
+    setAppUser((prev) => {
+      if (!prev) return prev
+      const filtered = { ...prev }
+      for (const [key, value] of Object.entries(fields)) {
+        if (value !== undefined) (filtered as Record<string, unknown>)[key] = value
+      }
+      return filtered as AppUser
+    })
   }
 
   return (

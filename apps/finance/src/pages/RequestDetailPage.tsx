@@ -123,7 +123,6 @@ export default function RequestDetailPage() {
   }, [id])
 
   const isSelf = request?.requestedBy.uid === user?.uid
-  const bankBookUrl = requester?.bankBookUrl || requester?.bankBookDriveUrl
 
   // Director-filed request: only executive/admin can approve
   const isDirectorRequest =
@@ -545,7 +544,7 @@ export default function RequestDetailPage() {
         open={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
         request={request}
-        bankBookUrl={bankBookUrl}
+        bankBookUrl={request?.isVendorRequest ? request.vendorBankBookUrl : (requester?.bankBookUrl || requester?.bankBookDriveUrl)}
         budgetUsage={budgetUsage}
         savedSignature={appUser?.signature}
         onConfirm={handleApproveConfirm}
@@ -568,16 +567,16 @@ export default function RequestDetailPage() {
       />
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
-        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Title onClose={closeConfirm}>{t('common.confirm')}</Dialog.Title>
         <Dialog.Content>
           <p>{confirmDialog.message}</p>
         </Dialog.Content>
         <Dialog.Actions>
           <Button variant="outline" onClick={closeConfirm}>
-            취소
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDialog.onConfirm}>
-            확인
+            {t('common.confirm')}
           </Button>
         </Dialog.Actions>
       </Dialog>

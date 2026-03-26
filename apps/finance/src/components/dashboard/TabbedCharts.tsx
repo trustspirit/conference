@@ -7,7 +7,6 @@ import BudgetCodeBarChart from './BudgetCodeBarChart'
 type ChartTab = 'monthly' | 'committee' | 'budgetCode'
 
 export default function TabbedCharts({
-  requests,
   byCommittee,
   byBudgetCode,
   budgetByCode,
@@ -17,7 +16,6 @@ export default function TabbedCharts({
   dailyTrend,
   dailyCount
 }: {
-  requests?: { date: string; totalAmount: number }[]
   byCommittee: Record<string, { count: number; amount: number; approvedAmount: number }>
   byBudgetCode: Record<number, { count: number; amount: number; approvedAmount: number }>
   budgetByCode: Record<number, number>
@@ -56,7 +54,6 @@ export default function TabbedCharts({
       <div className="p-4">
         {tab === 'monthly' && (
           <MonthlyTrendChart
-            requests={requests}
             monthlyTrend={monthlyTrend}
             monthlyCount={monthlyCount}
             dailyTrend={dailyTrend}

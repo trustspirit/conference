@@ -13,14 +13,13 @@ import { useTranslation } from 'react-i18next'
 type TrendMode = 'monthly' | 'daily'
 
 interface Props {
-  requests?: { date: string; totalAmount: number }[]
   monthlyTrend?: Record<string, number>
   monthlyCount?: Record<string, number>
   dailyTrend?: Record<string, number>
   dailyCount?: Record<string, number>
 }
 
-export default function MonthlyTrendChart({ requests, monthlyTrend, monthlyCount, dailyTrend, dailyCount }: Props) {
+export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTrend, dailyCount }: Props) {
   const { t, i18n } = useTranslation()
   const [mode, setMode] = useState<TrendMode>('daily')
 
@@ -40,17 +39,10 @@ export default function MonthlyTrendChart({ requests, monthlyTrend, monthlyCount
         m.amount = monthlyTrend[m.key] || 0
         m.count = monthlyCount[m.key] || 0
       })
-    } else if (requests) {
-      requests.forEach((r) => {
-        if (!r.date) return
-        const key = r.date.substring(0, 7)
-        const entry = months.find((m) => m.key === key)
-        if (entry) { entry.count++; entry.amount += r.totalAmount }
-      })
     }
 
     return months
-  }, [requests, monthlyTrend, monthlyCount, i18n.language])
+  }, [monthlyTrend, monthlyCount, i18n.language])
 
   const dailyData = useMemo(() => {
     const now = new Date()
@@ -68,16 +60,10 @@ export default function MonthlyTrendChart({ requests, monthlyTrend, monthlyCount
         d.amount = dailyTrend[d.key] || 0
         d.count = dailyCount[d.key] || 0
       })
-    } else if (requests) {
-      requests.forEach((r) => {
-        if (!r.date) return
-        const entry = days.find((d) => d.key === r.date)
-        if (entry) { entry.count++; entry.amount += r.totalAmount }
-      })
     }
 
     return days
-  }, [requests, dailyTrend, dailyCount])
+  }, [dailyTrend, dailyCount])
 
   const data = mode === 'monthly' ? monthlyData : dailyData
   const hasData = data.some((d) => d.count > 0)
