@@ -91,6 +91,9 @@ export default function ResubmitPage() {
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
+  const onlyCarTransport =
+    validItems.length > 0 &&
+    validItems.every((item) => item.transportDetail?.transportType === 'car')
 
   const hasChanges = (): boolean => {
     if (!original) return false
@@ -206,8 +209,8 @@ export default function ResubmitPage() {
         break
       }
     }
-    // receipts: use new files or keep original
-    if (files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
+    // receipts: use new files or keep original (not required for car-only transport)
+    if (!onlyCarTransport && files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
       errs.push(t('validation.receiptsRequired'))
     }
     // Signature validation
@@ -550,6 +553,8 @@ export default function ResubmitPage() {
         <FileUpload
           files={files}
           onFilesChange={setFiles}
+          required={!onlyCarTransport}
+          disabled={onlyCarTransport}
           existingCount={original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
           existingFiles={original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))}

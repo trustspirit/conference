@@ -149,6 +149,7 @@
     "leavePage": "Leave Page",
     "submitFailed": "Submission failed. Please try again.",
     "receiptHint": "PNG, JPG, PDF only (max 750KB per file)",
+    "receiptNotRequired": "Receipts are not required for car transport only requests.",
     "receiptPreview": "Receipt preview — verify items and amounts match",
     "totalAmountCheck": "Please verify that the receipt amounts match the total (₩{{amount}}).",
     "routeMapCaptureFailed": "{{count}} route map(s) failed to capture (submission continues)",

@@ -12,6 +12,7 @@ interface Props {
   onFilesChange: (files: File[]) => void
   label?: string
   required?: boolean
+  disabled?: boolean
   existingCount?: number
   existingLabel?: string
   existingFiles?: ExistingFile[]
@@ -22,6 +23,7 @@ export default function FileUpload({
   onFilesChange,
   label,
   required = true,
+  disabled = false,
   existingCount,
   existingLabel,
   existingFiles
@@ -93,9 +95,10 @@ export default function FileUpload({
         multiple
         accept="image/*,.pdf"
         onChange={handleChange}
-        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        disabled={disabled}
+        className={`w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium ${disabled ? 'file:bg-gray-100 file:text-gray-400 opacity-50 cursor-not-allowed' : 'file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'}`}
       />
-      <p className="text-xs text-gray-400 mt-1">{t('form.receiptHint')}</p>
+      <p className="text-xs text-gray-400 mt-1">{disabled ? t('form.receiptNotRequired') : t('form.receiptHint')}</p>
       {errors.length > 0 && (
         <ul className="mt-2 text-sm text-red-600 space-y-1">
           {errors.map((err, i) => (

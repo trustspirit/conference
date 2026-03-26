@@ -129,6 +129,9 @@ export default function RequestFormPage() {
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
+  const onlyCarTransport =
+    validItems.length > 0 &&
+    validItems.every((item) => item.transportDetail?.transportType === 'car')
 
   // Check if form has meaningful content (beyond defaults)
   const hasContent = useCallback(() => {
@@ -260,7 +263,7 @@ export default function RequestFormPage() {
         break
       }
     }
-    if (files.length === 0) errs.push(t('validation.receiptsRequired'))
+    if (!onlyCarTransport && files.length === 0) errs.push(t('validation.receiptsRequired'))
     // Signature validation
     if (isVendorRequest) {
       if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
@@ -592,7 +595,12 @@ export default function RequestFormPage() {
             </div>
           </div>
 
-          <FileUpload files={files} onFilesChange={setFiles} />
+          <FileUpload
+            files={files}
+            onFilesChange={setFiles}
+            required={!onlyCarTransport}
+            disabled={onlyCarTransport}
+          />
 
           {isVendorRequest && (
             <div className="mb-6">
