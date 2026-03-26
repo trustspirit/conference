@@ -175,7 +175,7 @@ export function useCreateRequest() {
     mutationFn: async (
       data: Omit<PaymentRequest, 'id' | 'createdAt'> & { createdAt?: unknown }
     ) => {
-      const docData = { ...data, createdAt: serverTimestamp() }
+      const docData = stripUndefined({ ...data, createdAt: serverTimestamp() })
       const ref = await addDoc(collection(db, 'requests'), docData)
       return ref.id
     },

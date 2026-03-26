@@ -82,6 +82,12 @@ export default function ItemRow({
       delete updated.departureCoord
       delete updated.destinationCoord
     }
+    // Strip undefined values — Firestore rejects them
+    for (const key of Object.keys(updated)) {
+      if ((updated as Record<string, unknown>)[key] === undefined) {
+        delete (updated as Record<string, unknown>)[key]
+      }
+    }
     const newItem: RequestItem = { ...item, transportDetail: updated }
     if (updated.transportType === 'car') {
       newItem.amount = calcCarTransportAmount(updated, perKmRate)
@@ -180,7 +186,7 @@ export default function ItemRow({
                   updated.amount = 0
                 }
                 if (!isTransportItem) {
-                  updated.transportDetail = undefined
+                  delete updated.transportDetail
                 }
                 onChange(index, updated)
               }}
