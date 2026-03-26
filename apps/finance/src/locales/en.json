@@ -38,6 +38,7 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "delete": "Delete",
+    "clear": "Clear",
     "edit": "Edit",
     "back": "Back",
     "backToList": "← Back to list",
@@ -155,7 +156,11 @@
     "vendorRequestHint": "Check for vendor payments. Enter vendor payee info manually.",
     "vendorBankBook": "Vendor Bank Book",
     "vendorBankBookHint": "Attach vendor's bank book copy (PNG, JPG, PDF / max 800KB)",
-    "vendorBankBookExisting": "Existing vendor bank book attached. Upload new to replace."
+    "vendorBankBookExisting": "Existing vendor bank book attached. Upload new to replace.",
+    "bankBookUploadInline": "Bank Book (will be saved to your profile)",
+    "bankBookUploadInlineHint": "Attach your bank book. It will be automatically saved to your profile on submission. (PNG, JPG, PDF / max 800KB)",
+    "signatureInline": "Signature (will be saved to your profile)",
+    "signatureInlineHint": "Register your signature. It will be automatically saved to your profile on submission."
   },
   "validation": {
     "payeeRequired": "Payee name is required.",
@@ -171,8 +176,8 @@
     "transportDistanceRequired": "Please enter the distance for personal car transportation items.",
     "transportTripTypeRequired": "Please select the trip type (round/one-way) for transportation items.",
     "receiptsRequired": "Please attach receipt files.",
-    "signatureRequired": "Signature is required. Please register your signature in settings.",
-    "bankBookRequired": "Bank book copy is required. Please upload in settings.",
+    "signatureRequired": "Please sign below or register your signature in your profile.",
+    "bankBookRequired": "Please upload your bank book below or register it in your profile.",
     "duplicateAmount": "A request with the same amount ₩{{amount}} already exists ({{date}}). This might be a duplicate. Continue anyway?",
     "noChanges": "No changes detected. Please modify at least one field.",
     "committeeRequired": "Please select a committee.",

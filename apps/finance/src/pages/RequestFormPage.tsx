@@ -22,6 +22,8 @@ import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import { canCreateVendorRequest } from '../lib/roles'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
+import InlineSignaturePad from '../components/InlineSignaturePad'
+import InlineBankBookUpload from '../components/InlineBankBookUpload'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
 import { SUBMISSION_CHECKLIST } from '../constants/reviewChecklist'
@@ -96,8 +98,14 @@ export default function RequestFormPage() {
   const [isVendorRequest, setIsVendorRequest] = useState(draft?.isVendorRequest || false)
   const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
   const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
+  const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
+  const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
+  const [inlineSignature, setInlineSignature] = useState('')
 
   const showVendorOption = appUser ? canCreateVendorRequest(appUser.role) : false
+
+  const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsSignature = !isVendorRequest && !appUser?.signature
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
@@ -174,6 +182,9 @@ export default function RequestFormPage() {
     setIsVendorRequest(false)
     setVendorBankBookFile(null)
     setVendorBankBookError(null)
+    setInlineBankBookFile(null)
+    setInlineBankBookError(null)
+    setInlineSignature('')
     setShowDraftBanner(false)
   }
 
@@ -185,12 +196,17 @@ export default function RequestFormPage() {
       setBankName('')
       setBankAccount('')
       setCommittee('preparation')
+      setInlineBankBookFile(null)
+      setInlineBankBookError(null)
+      setInlineSignature('')
     } else {
       setPayee(appUser?.displayName || appUser?.name || '')
       setPhone(appUser?.phone || '')
       setBankName(appUser?.bankName || '')
       setBankAccount(appUser?.bankAccount || '')
       setCommittee(appUser?.defaultCommittee || 'operations')
+      setVendorBankBookFile(null)
+      setVendorBankBookError(null)
     }
   }
 
@@ -245,12 +261,17 @@ export default function RequestFormPage() {
       }
     }
     if (files.length === 0) errs.push(t('validation.receiptsRequired'))
-    if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
+    // Signature validation
+    if (isVendorRequest) {
+      if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
+    } else {
+      if (!appUser?.signature && !inlineSignature) errs.push(t('validation.signatureRequired'))
+    }
     // Bank book validation
     if (isVendorRequest) {
       if (!vendorBankBookFile) errs.push(t('validation.vendorBankBookRequired'))
     } else {
-      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
+      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl && !inlineBankBookFile)
         errs.push(t('validation.bankBookRequired'))
     }
     return errs
@@ -354,6 +375,25 @@ export default function RequestFormPage() {
         if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
         if (bankAccount.trim() !== (appUser.bankAccount || ''))
           profileUpdates.bankAccount = bankAccount.trim()
+
+        // Inline bank book upload → profile sync
+        if (inlineBankBookFile) {
+          const bbData = await fileToBase64(inlineBankBookFile)
+          const uploadFn = httpsCallable<
+            { file: { name: string; data: string } },
+            { fileName: string; storagePath: string; url: string }
+          >(functions, 'uploadBankBookV2')
+          const result = await uploadFn({ file: { name: inlineBankBookFile.name, data: bbData } })
+          profileUpdates.bankBookPath = result.data.storagePath
+          profileUpdates.bankBookUrl = result.data.url
+          profileUpdates.bankBookImage = ''
+        }
+
+        // Inline signature → profile sync
+        if (inlineSignature && !appUser?.signature) {
+          profileUpdates.signature = inlineSignature
+        }
+
         if (Object.keys(profileUpdates).length > 0) {
           await updateAppUser(profileUpdates)
           queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
@@ -599,6 +639,19 @@ export default function RequestFormPage() {
               )}
               <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
             </div>
+          )}
+
+          {needsBankBook && (
+            <InlineBankBookUpload
+              file={inlineBankBookFile}
+              error={inlineBankBookError}
+              onFileChange={setInlineBankBookFile}
+              onErrorChange={setInlineBankBookError}
+            />
+          )}
+
+          {needsSignature && (
+            <InlineSignaturePad onChange={setInlineSignature} />
           )}
 
           <div className="mb-6">

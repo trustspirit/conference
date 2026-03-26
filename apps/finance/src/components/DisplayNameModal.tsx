@@ -1,12 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { httpsCallable } from 'firebase/functions'
-import { functions } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { Committee } from '../types'
-import { formatPhone, formatBankAccount, fileToBase64, validateBankBookFile } from '../lib/utils'
+import { formatPhone } from '../lib/utils'
 import { Dialog, TextField, Button, Checkbox, useToast } from 'trust-ui-react'
-import { BANKS } from '../constants/banks'
 import ErrorAlert from './ErrorAlert'
 import CommitteeSelect from './CommitteeSelect'
 
@@ -16,34 +13,17 @@ export default function DisplayNameModal() {
   const { appUser, updateAppUser, setNeedsDisplayName } = useAuth()
   const [displayName, setDisplayName] = useState(appUser?.name || '')
   const [phone, setPhone] = useState(appUser?.phone || '')
-  const [bankName, setBankName] = useState(appUser?.bankName || '')
-  const [bankAccount, setBankAccount] = useState(appUser?.bankAccount || '')
   const [committee, setCommittee] = useState<Committee | ''>('')
-  const [bankBookFile, setBankBookFile] = useState<File | null>(null)
-  const [bankBookError, setBankBookError] = useState<string | null>(null)
   const [consentAgreed, setConsentAgreed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
-
-  // Re-format account number when bank changes
-  const bankNameMounted = useRef(false)
-  useEffect(() => {
-    if (!bankNameMounted.current) {
-      bankNameMounted.current = true
-      return
-    }
-    if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
-  }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = (): string[] => {
     const errs: string[] = []
     if (!displayName.trim()) errs.push(t('validation.displayNameRequired'))
     if (!phone.trim()) errs.push(t('validation.phoneRequired'))
-    if (!bankName.trim()) errs.push(t('validation.bankRequired'))
-    if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
     if (!committee) errs.push(t('validation.committeeRequired'))
     if (!consentAgreed) errs.push(t('validation.consentRequired'))
-    // bankBook is optional at initial setup - required at request submission
     return errs
   }
 
@@ -56,36 +36,12 @@ export default function DisplayNameModal() {
     setErrors([])
     setSaving(true)
     try {
-      // Upload bank book if selected
-      if (bankBookFile) {
-        const data = await fileToBase64(bankBookFile)
-        const uploadFn = httpsCallable<
-          { file: { name: string; data: string } },
-          { fileName: string; storagePath: string; url: string }
-        >(functions, 'uploadBankBookV2')
-        const result = await uploadFn({ file: { name: bankBookFile.name, data } })
-        const { storagePath, url } = result.data
-        await updateAppUser({
-          displayName: displayName.trim(),
-          phone: phone.trim(),
-          bankName: bankName.trim(),
-          bankAccount: bankAccount.trim(),
-          defaultCommittee: committee as Committee,
-          bankBookImage: '',
-          bankBookPath: storagePath,
-          bankBookUrl: url,
-          consentAgreedAt: new Date().toISOString()
-        })
-      } else {
-        await updateAppUser({
-          displayName: displayName.trim(),
-          phone: phone.trim(),
-          bankName: bankName.trim(),
-          bankAccount: bankAccount.trim(),
-          defaultCommittee: committee as Committee,
-          consentAgreedAt: new Date().toISOString()
-        })
-      }
+      await updateAppUser({
+        displayName: displayName.trim(),
+        phone: phone.trim(),
+        defaultCommittee: committee as Committee,
+        consentAgreedAt: new Date().toISOString()
+      })
       setNeedsDisplayName(false)
     } catch (error) {
       console.error('Failed to save profile:', error)
@@ -123,66 +79,6 @@ export default function DisplayNameModal() {
             placeholder="010-0000-0000"
             fullWidth
           />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.bank')} <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
-            >
-              <option value="">{t('field.bankSelect')}</option>
-              {BANKS.map((bank) => (
-                <option key={bank.code} value={bank.name}>
-                  {bank.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <TextField
-            label={t('field.bankAccount')}
-            required
-            value={bankAccount}
-            onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-            placeholder={t('field.bankAccount')}
-            fullWidth
-          />
-
-          {/* Bank Book Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('field.bankBook')}
-            </label>
-            <input
-              type="file"
-              accept=".png,.jpg,.jpeg,.pdf"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null
-                if (f) {
-                  const err = validateBankBookFile(f)
-                  if (err) {
-                    setBankBookError(err)
-                    setBankBookFile(null)
-                    e.target.value = ''
-                    return
-                  }
-                }
-                setBankBookError(null)
-                setBankBookFile(f)
-              }}
-              className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
-            {bankBookFile && (
-              <p className="text-xs text-green-600 mt-1">
-                {bankBookFile.name} ({(bankBookFile.size / 1024).toFixed(0)}KB)
-              </p>
-            )}
-            <p className="text-xs text-gray-400 mt-1">{t('settings.bankBookRequiredHint')}</p>
-          </div>
 
           <CommitteeSelect
             value={committee}

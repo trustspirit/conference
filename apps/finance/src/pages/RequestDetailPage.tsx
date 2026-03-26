@@ -37,7 +37,7 @@ export default function RequestDetailPage() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { id } = useParams<{ id: string }>()
-  const { user, appUser } = useAuth()
+  const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
   const navigate = useNavigate()
   const location = useLocation()
@@ -178,10 +178,6 @@ export default function RequestDetailPage() {
     if (!request) return
     if (isSelf) {
       toast({ variant: 'danger', message: t('approval.selfApproveError') })
-      return
-    }
-    if (!appUser?.signature) {
-      toast({ variant: 'danger', message: t('validation.signatureRequired') })
       return
     }
     if (!canFinalApproveRequest(role, request.committee, request.totalAmount, threshold)) {
@@ -553,6 +549,13 @@ export default function RequestDetailPage() {
         budgetUsage={budgetUsage}
         savedSignature={appUser?.signature}
         onConfirm={handleApproveConfirm}
+        onSignatureSync={async (sig) => {
+          try {
+            await updateAppUser({ signature: sig })
+          } catch {
+            // Non-blocking — approval still proceeds
+          }
+        }}
         isPending={approveMutation.isPending}
       />
 

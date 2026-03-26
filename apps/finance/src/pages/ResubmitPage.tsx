@@ -17,6 +17,8 @@ import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import BankSelect from '../components/BankSelect'
 import ErrorAlert from '../components/ErrorAlert'
+import InlineSignaturePad from '../components/InlineSignaturePad'
+import InlineBankBookUpload from '../components/InlineBankBookUpload'
 import Spinner from '../components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { TextField, Button, Checkbox, useToast } from 'trust-ui-react'
@@ -55,6 +57,9 @@ export default function ResubmitPage() {
   const [isVendorRequest, setIsVendorRequest] = useState(false)
   const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
   const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
+  const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
+  const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
+  const [inlineSignature, setInlineSignature] = useState('')
   const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
   const routePathsRef = useRef(new Map<number, number[]>())
 
@@ -80,6 +85,9 @@ export default function ResubmitPage() {
     }
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsSignature = !isVendorRequest && !appUser?.signature
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
@@ -163,12 +171,18 @@ export default function ResubmitPage() {
     if (files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
       errs.push(t('validation.receiptsRequired'))
     }
-    if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
+    // Signature validation
+    if (isVendorRequest) {
+      if (!appUser?.signature) errs.push(t('validation.signatureRequired'))
+    } else {
+      if (!appUser?.signature && !inlineSignature) errs.push(t('validation.signatureRequired'))
+    }
+    // Bank book validation
     if (isVendorRequest) {
       if (!vendorBankBookFile && !original?.vendorBankBookUrl)
         errs.push(t('validation.vendorBankBookRequired'))
     } else {
-      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl)
+      if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl && !inlineBankBookFile)
         errs.push(t('validation.bankBookRequired'))
     }
     if (!hasChanges()) errs.push(t('validation.noChanges'))
@@ -267,6 +281,25 @@ export default function ResubmitPage() {
         if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
         if (bankAccount.trim() !== (appUser.bankAccount || ''))
           profileUpdates.bankAccount = bankAccount.trim()
+
+        // Inline bank book upload → profile sync
+        if (inlineBankBookFile) {
+          const bbData = await fileToBase64(inlineBankBookFile)
+          const uploadFn = httpsCallable<
+            { file: { name: string; data: string } },
+            { fileName: string; storagePath: string; url: string }
+          >(functions, 'uploadBankBookV2')
+          const result = await uploadFn({ file: { name: inlineBankBookFile.name, data: bbData } })
+          profileUpdates.bankBookPath = result.data.storagePath
+          profileUpdates.bankBookUrl = result.data.url
+          profileUpdates.bankBookImage = ''
+        }
+
+        // Inline signature → profile sync
+        if (inlineSignature && !appUser?.signature) {
+          profileUpdates.signature = inlineSignature
+        }
+
         if (Object.keys(profileUpdates).length > 0) {
           await updateAppUser(profileUpdates)
           queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
@@ -537,6 +570,19 @@ export default function ResubmitPage() {
             )}
             <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
           </div>
+        )}
+
+        {needsBankBook && (
+          <InlineBankBookUpload
+            file={inlineBankBookFile}
+            error={inlineBankBookError}
+            onFileChange={setInlineBankBookFile}
+            onErrorChange={setInlineBankBookError}
+          />
+        )}
+
+        {needsSignature && (
+          <InlineSignaturePad onChange={setInlineSignature} />
         )}
 
         <div className="mb-6">

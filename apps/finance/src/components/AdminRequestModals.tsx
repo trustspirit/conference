@@ -12,6 +12,7 @@ interface ApprovalModalProps {
   budgetUsage: React.ComponentProps<typeof BudgetWarningBanner>['budgetUsage']
   savedSignature: string | undefined
   onConfirm: (signature: string) => void
+  onSignatureSync?: (signature: string) => void
   isPending: boolean
 }
 
@@ -23,6 +24,7 @@ export function ApprovalModal({
   budgetUsage,
   savedSignature,
   onConfirm,
+  onSignatureSync,
   isPending
 }: ApprovalModalProps) {
   const { t } = useTranslation()
@@ -99,7 +101,12 @@ export function ApprovalModal({
         </Button>
         <Button
           variant="primary"
-          onClick={() => onConfirm(signatureData)}
+          onClick={() => {
+            if (signatureData && signatureData !== savedSignature && onSignatureSync) {
+              onSignatureSync(signatureData)
+            }
+            onConfirm(signatureData)
+          }}
           disabled={!signatureData || isPending}
           loading={isPending}
         >

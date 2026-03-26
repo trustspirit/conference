@@ -21,6 +21,7 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
   const [isDrawing, setIsDrawing] = useState(false)
   const [isEmpty, setIsEmpty] = useState(!initialData)
   const initializedRef = useRef(false)
+  const hasStrokeRef = useRef(false)
 
   const getCtx = useCallback(() => {
     const canvas = canvasRef.current
@@ -84,7 +85,7 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
     ctx.beginPath()
     ctx.moveTo(pos.x, pos.y)
     setIsDrawing(true)
-    setIsEmpty(false)
+    hasStrokeRef.current = false
   }
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -95,12 +96,14 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
     const pos = getPos(e)
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
+    hasStrokeRef.current = true
   }
 
   const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault()
     setIsDrawing(false)
-    if (onChange && canvasRef.current) {
+    if (hasStrokeRef.current && onChange && canvasRef.current) {
+      setIsEmpty(false)
       onChange(canvasRef.current.toDataURL('image/png'))
     }
   }

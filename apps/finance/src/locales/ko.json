@@ -38,6 +38,7 @@
     "cancel": "취소",
     "confirm": "확인",
     "delete": "삭제",
+    "clear": "지우기",
     "edit": "수정",
     "back": "뒤로",
     "backToList": "← 목록으로",
@@ -155,7 +156,11 @@
     "vendorRequestHint": "업체 대상 지불 시 체크하세요. 수취인 정보를 직접 입력합니다.",
     "vendorBankBook": "업체 통장 사본",
     "vendorBankBookHint": "업체의 통장 사본을 첨부하세요 (PNG, JPG, PDF / 최대 800KB)",
-    "vendorBankBookExisting": "기존 업체 통장 사본이 있습니다. 새 파일을 업로드하면 교체됩니다."
+    "vendorBankBookExisting": "기존 업체 통장 사본이 있습니다. 새 파일을 업로드하면 교체됩니다.",
+    "bankBookUploadInline": "통장 사본 (프로필에 등록됩니다)",
+    "bankBookUploadInlineHint": "통장 사본을 첨부하세요. 제출 시 프로필에 자동 저장됩니다. (PNG, JPG, PDF / 최대 800KB)",
+    "signatureInline": "전자 서명 (프로필에 등록됩니다)",
+    "signatureInlineHint": "서명을 등록하세요. 제출 시 프로필에 자동 저장됩니다."
   },
   "validation": {
     "payeeRequired": "신청자를 입력해주세요.",
@@ -171,8 +176,8 @@
     "transportDistanceRequired": "자차 교통비 항목의 거리를 입력해주세요.",
     "transportTripTypeRequired": "교통비 항목의 구간 유형(왕복/편도)을 선택해주세요.",
     "receiptsRequired": "영수증 파일을 첨부해주세요.",
-    "signatureRequired": "서명이 등록되지 않았습니다. 설정에서 서명을 등록해주세요.",
-    "bankBookRequired": "통장사본이 등록되지 않았습니다. 설정에서 통장사본을 업로드해주세요.",
+    "signatureRequired": "서명을 등록해주세요. 아래 서명란에서 서명하거나 프로필에서 등록할 수 있습니다.",
+    "bankBookRequired": "통장 사본을 등록해주세요. 아래에서 업로드하거나 프로필에서 등록할 수 있습니다.",
     "duplicateAmount": "₩{{amount}} 동일 금액의 신청서가 이미 있습니다 ({{date}}). 중복 신청이 아닌지 확인해주세요. 계속 진행하시겠습니까?",
     "noChanges": "원본 신청서에서 변경된 내용이 없습니다. 수정 후 재신청해주세요.",
     "committeeRequired": "소속 위원회를 선택해주세요.",
