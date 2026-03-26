@@ -331,7 +331,9 @@ export function useForceRejectRequest() {
         }
         tx.update(ref, {
           status: 'force_rejected',
-          rejectionReason: params.rejectionReason
+          rejectionReason: params.rejectionReason,
+          forceRejectedBy: params.approver,
+          forceRejectedAt: serverTimestamp()
         })
       })
     },

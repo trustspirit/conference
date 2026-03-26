@@ -47,14 +47,37 @@ service cloud.firestore {
             )
           )
           // --- Final approver transitions (reviewed → approved | rejected) ---
+          // Rejection is allowed by any approver for their committee (no amount check)
           || (
             resource.data.status == 'reviewed'
-            && request.resource.data.status in ['approved', 'rejected']
+            && request.resource.data.status == 'rejected'
             && request.auth.uid != resource.data.requestedBy.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature', 'rejectionReason'])
             && (
               (userRole() == 'approver_ops' && resource.data.committee == 'operations')
               || (userRole() == 'approver_prep' && resource.data.committee == 'preparation')
+              || (userRole() == 'session_director' && resource.data.committee == 'operations')
+              || (userRole() == 'logistic_admin' && resource.data.committee == 'preparation')
+              || userRole() in ['executive', 'admin', 'super_admin']
+            )
+          )
+          // Approval by basic approvers: amount must be within project threshold
+          || (
+            resource.data.status == 'reviewed'
+            && request.resource.data.status == 'approved'
+            && request.auth.uid != resource.data.requestedBy.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature', 'rejectionReason'])
+            && (
+              // Basic approvers: enforce amount threshold from project settings
+              (
+                userRole() in ['approver_ops', 'approver_prep']
+                && (
+                  (userRole() == 'approver_ops' && resource.data.committee == 'operations')
+                  || (userRole() == 'approver_prep' && resource.data.committee == 'preparation')
+                )
+                && resource.data.totalAmount <= get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.directorApprovalThreshold
+              )
+              // Directors, executive, admins: no amount limit
               || (userRole() == 'session_director' && resource.data.committee == 'operations')
               || (userRole() == 'logistic_admin' && resource.data.committee == 'preparation')
               || userRole() in ['executive', 'admin', 'super_admin']
@@ -71,7 +94,7 @@ service cloud.firestore {
           || (
             resource.data.status == 'approved'
             && request.resource.data.status == 'force_rejected'
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectionReason'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectionReason', 'forceRejectedBy', 'forceRejectedAt'])
             && userRole() in ['finance_prep', 'admin', 'super_admin']
           )
           // --- Requester cancel: pending → cancelled (own request only) ---

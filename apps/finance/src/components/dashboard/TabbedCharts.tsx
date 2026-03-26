@@ -11,13 +11,21 @@ export default function TabbedCharts({
   byCommittee,
   byBudgetCode,
   budgetByCode,
-  hasBudget
+  hasBudget,
+  monthlyTrend,
+  monthlyCount,
+  dailyTrend,
+  dailyCount
 }: {
-  requests: { date: string; totalAmount: number }[]
+  requests?: { date: string; totalAmount: number }[]
   byCommittee: Record<string, { count: number; amount: number; approvedAmount: number }>
   byBudgetCode: Record<number, { count: number; amount: number; approvedAmount: number }>
   budgetByCode: Record<number, number>
   hasBudget: boolean
+  monthlyTrend?: Record<string, number>
+  monthlyCount?: Record<string, number>
+  dailyTrend?: Record<string, number>
+  dailyCount?: Record<string, number>
 }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState<ChartTab>('monthly')
@@ -46,7 +54,15 @@ export default function TabbedCharts({
         ))}
       </div>
       <div className="p-4">
-        {tab === 'monthly' && <MonthlyTrendChart requests={requests} />}
+        {tab === 'monthly' && (
+          <MonthlyTrendChart
+            requests={requests}
+            monthlyTrend={monthlyTrend}
+            monthlyCount={monthlyCount}
+            dailyTrend={dailyTrend}
+            dailyCount={dailyCount}
+          />
+        )}
         {tab === 'committee' && <CommitteeBarChart byCommittee={byCommittee} />}
         {tab === 'budgetCode' && (
           <BudgetCodeBarChart

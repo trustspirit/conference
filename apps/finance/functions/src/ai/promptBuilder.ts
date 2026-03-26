@@ -17,7 +17,10 @@ export async function getAiSettings(): Promise<AiSettings> {
 const ADMIN_GUIDE_ROLES = new Set([
   'admin',
   'super_admin',
+  'finance_ops',
   'finance_prep',
+  'approver_ops',
+  'approver_prep',
   'session_director',
   'logistic_admin',
   'executive'

@@ -28,6 +28,9 @@ export const queryKeys = {
     detail: (uid: string) => ['users', uid] as const,
     infinite: () => ['users', 'infinite'] as const
   },
+  dashboard: {
+    stats: (projectId: string) => ['dashboard', projectId, 'stats'] as const
+  },
   settings: {
     global: () => ['settings', 'global'] as const
   }

@@ -698,16 +698,16 @@ export default function RequestFormPage() {
       <ProcessingOverlay open={submitting} text={t('common.processingMessage')} />
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
-        <Dialog.Title onClose={closeConfirm}>확인</Dialog.Title>
+        <Dialog.Title onClose={closeConfirm}>{t('common.confirm')}</Dialog.Title>
         <Dialog.Content>
           <p>{confirmDialog.message}</p>
         </Dialog.Content>
         <Dialog.Actions>
           <Button variant="outline" onClick={closeConfirm}>
-            취소
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDialog.onConfirm}>
-            확인
+            {t('common.confirm')}
           </Button>
         </Dialog.Actions>
       </Dialog>

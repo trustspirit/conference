@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
@@ -10,7 +9,7 @@ import { DocumentIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from '../compon
 import BudgetRingGauge from '../components/dashboard/BudgetRingGauge'
 import TabbedCharts from '../components/dashboard/TabbedCharts'
 import BudgetSettingsSection from '../components/dashboard/BudgetSettingsSection'
-import { useRequests } from '../hooks/queries/useRequests'
+import { useDashboardStats } from '../hooks/queries/useCloudFunctions'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 
 export default function DashboardPage() {
@@ -19,73 +18,8 @@ export default function DashboardPage() {
   const { currentProject } = useProject()
   const budget = currentProject?.budgetConfig ?? { totalBudget: 0, byCode: {} }
 
-  const { data: requests = [], isLoading: loading, error } = useRequests(currentProject?.id)
+  const { data: stats, isLoading: loading, error } = useDashboardStats(currentProject?.id)
   const budgetUsage = useBudgetUsage()
-
-  const stats = useMemo(() => {
-    if (requests.length === 0) return null
-
-    const total = requests.length
-    const pending = requests.filter((r) => r.status === 'pending').length
-    const approvedOnly = requests.filter((r) => r.status === 'approved').length
-    const settled = requests.filter((r) => r.status === 'settled').length
-    const approved = approvedOnly + settled
-    const rejected = requests.filter((r) => r.status === 'rejected').length
-    const totalAmount = requests.reduce((sum, r) => sum + r.totalAmount, 0)
-    const approvedOnlyAmount = requests
-      .filter((r) => r.status === 'approved')
-      .reduce((sum, r) => sum + r.totalAmount, 0)
-    const settledAmount = requests
-      .filter((r) => r.status === 'settled')
-      .reduce((sum, r) => sum + r.totalAmount, 0)
-    const approvedAmount = approvedOnlyAmount + settledAmount
-    const pendingAmount = requests
-      .filter((r) => r.status === 'pending')
-      .reduce((sum, r) => sum + r.totalAmount, 0)
-    const byCommittee: Record<string, { count: number; amount: number; approvedAmount: number }> =
-      {}
-    const byBudgetCode: Record<number, { count: number; amount: number; approvedAmount: number }> =
-      {}
-
-    requests.forEach((r) => {
-      const committee = r.committee || 'operations'
-      if (!byCommittee[committee])
-        byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 }
-      byCommittee[committee].count++
-      byCommittee[committee].amount += r.totalAmount
-      if (r.status === 'approved' || r.status === 'settled')
-        byCommittee[committee].approvedAmount += r.totalAmount
-
-      r.items.forEach((item) => {
-        if (!byBudgetCode[item.budgetCode])
-          byBudgetCode[item.budgetCode] = {
-            count: 0,
-            amount: 0,
-            approvedAmount: 0
-          }
-        byBudgetCode[item.budgetCode].count++
-        byBudgetCode[item.budgetCode].amount += item.amount
-        if (r.status === 'approved' || r.status === 'settled')
-          byBudgetCode[item.budgetCode].approvedAmount += item.amount
-      })
-    })
-
-    return {
-      total,
-      pending,
-      approved,
-      approvedOnly,
-      settled,
-      rejected,
-      totalAmount,
-      approvedAmount,
-      approvedOnlyAmount,
-      settledAmount,
-      pendingAmount,
-      byCommittee,
-      byBudgetCode
-    }
-  }, [requests])
 
   const canEditBudget =
     appUser?.role === 'admin' || appUser?.role === 'super_admin' || appUser?.role === 'finance_prep'
@@ -108,6 +42,8 @@ export default function DashboardPage() {
         <div className="text-center py-16 text-gray-500">{t('common.noData')}</div>
       </Layout>
     )
+
+  const approved = stats.approvedOnly + stats.settled
 
   return (
     <Layout>
@@ -134,7 +70,7 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500">{t('dashboard.approvedRequests')}</p>
           </div>
           <p className="text-lg font-bold">
-            {t('form.itemCount', { count: stats.approved })} ({'\u20A9'}
+            {t('form.itemCount', { count: approved })} ({'\u20A9'}
             {stats.approvedAmount.toLocaleString()})
           </p>
           <div className="mt-2 pt-2 border-t border-green-200 space-y-0.5">
@@ -162,17 +98,19 @@ export default function DashboardPage() {
           totalBudget={budget.totalBudget}
           approvedAmount={stats.approvedAmount}
           pendingAmount={stats.pendingAmount}
-          requests={requests}
         />
       </div>
 
       {/* Tabbed Charts */}
       <TabbedCharts
-        requests={requests}
         byCommittee={stats.byCommittee}
         byBudgetCode={stats.byBudgetCode}
         budgetByCode={budget.byCode}
         hasBudget={budget.totalBudget > 0}
+        monthlyTrend={stats.monthlyTrend}
+        monthlyCount={stats.monthlyCount}
+        dailyTrend={stats.dailyTrend}
+        dailyCount={stats.dailyCount}
       />
 
       {canEditBudget && currentProject && (

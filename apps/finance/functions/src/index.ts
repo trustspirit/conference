@@ -835,6 +835,107 @@ export const weeklyApproverDigest = onSchedule(
   }
 )
 
+// --- Dashboard Stats ---
+export const getDashboardStats = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
+  }
+
+  const { projectId } = request.data as { projectId: string }
+  if (!projectId) {
+    throw new HttpsError('invalid-argument', 'projectId is required')
+  }
+
+  const db = admin.firestore()
+  const snap = await db
+    .collection('requests')
+    .where('projectId', '==', projectId)
+    .select('status', 'totalAmount', 'committee', 'items', 'date', 'createdAt')
+    .get()
+
+  let total = 0
+  let pending = 0
+  let reviewed = 0
+  let approvedOnly = 0
+  let settled = 0
+  let rejected = 0
+  let totalAmount = 0
+  let approvedAmount = 0
+  let approvedOnlyAmount = 0
+  let settledAmount = 0
+  let pendingAmount = 0
+  let reviewedAmount = 0
+  const byCommittee: Record<string, { count: number; amount: number; approvedAmount: number }> = {}
+  const byBudgetCode: Record<number, { count: number; amount: number; approvedAmount: number }> = {}
+  const monthlyTrend: Record<string, number> = {}
+  const monthlyCount: Record<string, number> = {}
+  const dailyTrend: Record<string, number> = {}
+  const dailyCount: Record<string, number> = {}
+
+  snap.forEach((doc) => {
+    const d = doc.data()
+    const status = d.status as string
+    const amount = (d.totalAmount as number) || 0
+    const committee = (d.committee as string) || 'operations'
+    const items = (d.items as { budgetCode: number; amount: number }[]) || []
+    const date = (d.date as string) || ''
+
+    total++
+    totalAmount += amount
+
+    if (status === 'pending') { pending++; pendingAmount += amount }
+    else if (status === 'reviewed') { reviewed++; reviewedAmount += amount }
+    else if (status === 'approved') { approvedOnly++; approvedOnlyAmount += amount }
+    else if (status === 'settled') { settled++; settledAmount += amount }
+    else if (status === 'rejected' || status === 'force_rejected') { rejected++ }
+
+    const isApproved = status === 'approved' || status === 'settled'
+    approvedAmount = approvedOnlyAmount + settledAmount
+
+    if (!byCommittee[committee]) byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 }
+    byCommittee[committee].count++
+    byCommittee[committee].amount += amount
+    if (isApproved) byCommittee[committee].approvedAmount += amount
+
+    for (const item of items) {
+      const code = item.budgetCode
+      if (!byBudgetCode[code]) byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 }
+      byBudgetCode[code].count++
+      byBudgetCode[code].amount += item.amount
+      if (isApproved) byBudgetCode[code].approvedAmount += item.amount
+    }
+
+    if (date) {
+      const month = date.substring(0, 7)
+      monthlyTrend[month] = (monthlyTrend[month] || 0) + amount
+      dailyTrend[date] = (dailyTrend[date] || 0) + amount
+      dailyCount[date] = (dailyCount[date] || 0) + 1
+      monthlyCount[month] = (monthlyCount[month] || 0) + 1
+    }
+  })
+
+  return {
+    total,
+    pending,
+    reviewed,
+    approvedOnly,
+    settled,
+    rejected,
+    totalAmount,
+    approvedAmount,
+    approvedOnlyAmount,
+    settledAmount,
+    pendingAmount,
+    reviewedAmount,
+    byCommittee,
+    byBudgetCode,
+    monthlyTrend,
+    monthlyCount,
+    dailyTrend,
+    dailyCount
+  }
+})
+
 // --- AI Chatbot ---
 import { handleChat } from './ai/chatHandler'
 

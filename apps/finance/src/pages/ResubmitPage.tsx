@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate, useParams, Link, useBlocker } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../hooks/queries/queryKeys'
 import { useAuth } from '../contexts/AuthContext'
@@ -21,7 +21,7 @@ import InlineSignaturePad from '../components/InlineSignaturePad'
 import InlineBankBookUpload from '../components/InlineBankBookUpload'
 import Spinner from '../components/Spinner'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, Checkbox, useToast } from 'trust-ui-react'
+import { TextField, Button, Checkbox, useToast, Dialog } from 'trust-ui-react'
 import { validateBankBookFile } from '../lib/utils'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
@@ -116,6 +116,28 @@ export default function ResubmitPage() {
     if (itemsChanged) return true
     return false
   }
+
+  const hasContent = useCallback(() => {
+    if (!original) return false
+    return hasChanges() || files.length > 0 || vendorBankBookFile !== null || inlineBankBookFile !== null || inlineSignature !== ''
+  }, [original, files, vendorBankBookFile, inlineBankBookFile, inlineSignature])
+
+  const blocker = useBlocker(({ nextLocation }) => {
+    if (submitting) return false
+    if (showConfirm) return true
+    if (nextLocation.pathname.startsWith('/request/')) return false
+    return hasContent()
+  })
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasContent()) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [hasContent])
 
   const updateItem = (index: number, item: RequestItem) => {
     const next = [...items]
@@ -379,6 +401,12 @@ export default function ResubmitPage() {
         <p className="text-gray-500">{t('detail.notFound')}</p>
       </Layout>
     )
+  if (original.projectId !== currentProject?.id)
+    return (
+      <Layout>
+        <p className="text-gray-500">{t('detail.notFound')}</p>
+      </Layout>
+    )
 
   return (
     <Layout>
@@ -619,6 +647,25 @@ export default function ResubmitPage() {
         requestItems={validItems}
         receiptFiles={files.length > 0 ? files : undefined}
       />
+
+      {blocker.state === 'blocked' && (
+        <Dialog open onClose={() => blocker.reset?.()} size="sm">
+          <Dialog.Title onClose={() => blocker.reset?.()} showClose>
+            {t('form.blockerTitle')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <p className="text-sm text-gray-500">{t('form.blockerMessage')}</p>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button variant="outline" onClick={() => blocker.reset?.()}>
+              {t('form.continueEditing')}
+            </Button>
+            <Button variant="primary" onClick={() => blocker.proceed?.()}>
+              {t('form.leavePage')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      )}
     </Layout>
   )
 }
