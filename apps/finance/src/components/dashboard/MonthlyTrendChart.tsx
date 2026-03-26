@@ -188,7 +188,7 @@ function ModeToggle({
       <div className="inline-flex rounded-md bg-gray-100 p-0.5">
         <button
           onClick={() => setMode('daily')}
-          className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'daily'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
@@ -198,7 +198,7 @@ function ModeToggle({
         </button>
         <button
           onClick={() => setMode('monthly')}
-          className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+          className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'monthly'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'

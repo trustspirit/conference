@@ -373,7 +373,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </span>
                     )}
                   </span>
-                  <button onClick={logout} className="text-sm text-red-600 hover:text-red-700">
+                  <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:text-red-700">
                     {t('nav.logout')}
                   </button>
                 </div>

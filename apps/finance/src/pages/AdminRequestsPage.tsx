@@ -185,7 +185,7 @@ export default function AdminRequestsPage() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1 rounded text-sm ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`px-4 py-2.5 rounded text-sm ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             {t(`status.${f}`, f)}
           </button>
@@ -325,6 +325,11 @@ export default function AdminRequestsPage() {
                   <div className="text-right font-semibold text-gray-900">
                     ₩{req.totalAmount.toLocaleString()}
                   </div>
+                  {renderRemarks(req) && (
+                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
+                      {renderRemarks(req)}
+                    </div>
+                  )}
                 </Link>
               ))}
             </div>

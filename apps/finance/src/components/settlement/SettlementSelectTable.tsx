@@ -56,7 +56,7 @@ export default function SettlementSelectTable({
       ) : requests.length === 0 ? (
         <p className="text-gray-500">{t('settlement.noApproved')}</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
@@ -109,7 +109,7 @@ export default function SettlementSelectTable({
               ))}
             </tbody>
           </table>
-          <div className="px-4 py-2 bg-gray-50 border-t text-xs text-gray-400">
+          <div className="hidden sm:block px-4 py-2 bg-gray-50 border-t text-xs text-gray-400">
             Shift+Click: {t('settlement.shiftSelectHint')}
           </div>
         </div>
