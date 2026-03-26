@@ -49,6 +49,8 @@ export default function ItemRow({
   const { t } = useTranslation()
   const [showDistanceHint, setShowDistanceHint] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [calcFailed, setCalcFailed] = useState(false)
+  const [calcError, setCalcError] = useState<string | null>(null)
   const [sdkLoaded, setSdkLoaded] = useState(false)
   const abortRef = useRef(false)
   const [routePath, setRoutePath] = useState<number[]>()
@@ -115,6 +117,8 @@ export default function ItemRow({
 
     abortRef.current = false
     setIsCalculating(true)
+    setCalcFailed(false)
+    setCalcError(null)
     setRoutePath(undefined)
     onRoutePathChange?.(undefined)
 
@@ -136,7 +140,10 @@ export default function ItemRow({
       })
       .catch((err) => {
         if (abortRef.current) return
+        const msg = err instanceof Error ? err.message : String(err)
         console.error('Distance calculation failed:', err)
+        setCalcFailed(true)
+        setCalcError(msg)
       })
       .finally(() => {
         if (!abortRef.current) setIsCalculating(false)
@@ -342,6 +349,9 @@ export default function ItemRow({
                     fullWidth
                   />
                 </div>
+                {calcFailed && (
+                  <p className="text-xs text-red-500">{calcError}</p>
+                )}
                 {detail.distanceKm && (
                   <p className="text-xs text-gray-500">
                     = {detail.distanceKm}km × ₩{perKmRate} ×{' '}

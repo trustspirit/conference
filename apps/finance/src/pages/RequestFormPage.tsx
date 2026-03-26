@@ -102,7 +102,7 @@ export default function RequestFormPage() {
   const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
   const [inlineSignature, setInlineSignature] = useState('')
 
-  const showVendorOption = appUser ? canCreateVendorRequest(appUser.role) : false
+  const showVendorOption = appUser ? canCreateVendorRequest(appUser.role, committee) : false
 
   const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature

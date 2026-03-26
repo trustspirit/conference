@@ -135,7 +135,20 @@ export const ALL_ROLES: UserRole[] = [
   'admin'
 ]
 
-/** Can create vendor requests (finance staff + admins) */
-export function canCreateVendorRequest(role: UserRole): boolean {
-  return ['finance_ops', 'finance_prep', 'admin', 'super_admin'].includes(role)
+/** Can create vendor requests (prep committee all + ops finance/approver + admins) */
+export function canCreateVendorRequest(role: UserRole, committee?: Committee): boolean {
+  if (isAdmin(role)) return true
+  if (
+    [
+      'finance_prep',
+      'approver_prep',
+      'logistic_admin',
+      'finance_ops',
+      'approver_ops'
+    ].includes(role)
+  )
+    return true
+  // General users in preparation committee can also create vendor requests
+  if (role === 'user' && committee === 'preparation') return true
+  return false
 }
