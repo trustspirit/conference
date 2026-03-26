@@ -24,7 +24,8 @@ function Input({
   if (isSupported) {
     return (
       <TextField
-        label={label ? (required ? `${label} *` : label) : undefined}
+        label={label}
+        required={required}
         type={(type as TextFieldType) || undefined}
         error={!!error}
         errorMessage={error}

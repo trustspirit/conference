@@ -446,7 +446,7 @@ export default function LeaderRecommendations() {
                 style={{ marginBottom: '1rem' }}
               >
                 <TextField
-                  label={`${t('leader.recommendations.form.applicantName', '지원자 이름')} *`}
+                  label={t('leader.recommendations.form.applicantName', '지원자 이름')}
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
@@ -473,7 +473,7 @@ export default function LeaderRecommendations() {
                   fullWidth
                 />
                 <TextField
-                  label={`${t('leader.recommendations.form.phone', '전화번호')} *`}
+                  label={t('leader.recommendations.form.phone', '전화번호')}
                   type="tel"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
