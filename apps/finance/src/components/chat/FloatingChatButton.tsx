@@ -5,7 +5,8 @@ import { useChat } from '../../hooks/useChatStream'
 function useIsMobile() {
   return useSyncExternalStore(
     (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb) },
-    () => window.innerWidth < 640
+    () => window.innerWidth < 640,
+    () => false
   )
 }
 

@@ -21,7 +21,7 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
 
   return (
     <div className={fullScreen
-      ? "flex h-full w-full flex-col overflow-hidden bg-white"
+      ? "flex h-screen h-[100dvh] w-full flex-col overflow-hidden bg-white"
       : "flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
     }>
       {/* Header */}
