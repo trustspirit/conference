@@ -6,7 +6,7 @@ export interface BankInfo {
 }
 
 export const BANKS: BankInfo[] = [
-  { code: 'kb', name: 'KB국민은행', format: [3, 2, 4, 3], maxDigits: 12 },
+  { code: 'kb', name: 'KB국민은행', format: [3, 2, 4, 4], maxDigits: 14 },
   { code: 'shinhan', name: '신한은행', format: [3, 3, 6], maxDigits: 12 },
   { code: 'woori', name: '우리은행', format: [4, 3, 6], maxDigits: 13 },
   { code: 'hana', name: '하나은행', format: [3, 6, 5], maxDigits: 14 },
