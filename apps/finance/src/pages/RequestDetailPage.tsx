@@ -484,17 +484,41 @@ export default function RequestDetailPage() {
               ]}
             />
 
-            {request.approvalSignature && (
+            {(request.requestedBySignature || requester?.signature || request.approvalSignature) && (
               <div className="mt-4 pt-4 border-t">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">
-                  {t('approval.approvalSignature')}
-                </h3>
-                <div className="border border-gray-200 rounded p-2 bg-gray-50 inline-block">
-                  <img
-                    src={request.approvalSignature}
-                    alt={t('approval.approvalSignature')}
-                    className="max-h-20"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      {t('field.requestedBy')}
+                    </h3>
+                    {(request.requestedBySignature || requester?.signature) ? (
+                      <div className="border border-gray-200 rounded p-2 bg-gray-50 inline-block">
+                        <img
+                          src={(request.requestedBySignature || requester?.signature)!}
+                          alt={t('field.requestedBy')}
+                          className="max-h-20"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      {t('approval.approvalSignature')}
+                    </h3>
+                    {request.approvalSignature ? (
+                      <div className="border border-gray-200 rounded p-2 bg-gray-50 inline-block">
+                        <img
+                          src={request.approvalSignature}
+                          alt={t('approval.approvalSignature')}
+                          className="max-h-20"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

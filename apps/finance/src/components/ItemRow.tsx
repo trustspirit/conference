@@ -169,7 +169,7 @@ export default function ItemRow({
         <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:flex-wrap gap-2">
           <div className="flex-1 min-w-[120px]">
             <TextField
-              placeholder={t('field.items')}
+              placeholder={t('field.itemDescriptionPlaceholder')}
               value={item.description}
               onChange={(e) => onChange(index, { ...item, description: e.target.value })}
               fullWidth
@@ -207,7 +207,7 @@ export default function ItemRow({
           <div className="sm:w-32 sm:shrink-0">
             <TextField
               type="number"
-              placeholder={isAmountDisabled ? t('field.carAmountAutoCalc') : t('field.totalAmount')}
+              placeholder={isAmountDisabled ? t('field.carAmountAutoCalc') : t('field.amountPlaceholder')}
               value={item.amount || ''}
               onChange={(e) => onChange(index, { ...item, amount: parseInt(e.target.value) || 0 })}
               disabled={isAmountDisabled}

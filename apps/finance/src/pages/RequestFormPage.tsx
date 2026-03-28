@@ -421,6 +421,9 @@ export default function RequestFormPage() {
           name: appUser.displayName || appUser.name,
           email: appUser.email
         },
+        requestedBySignature: isVendorRequest
+          ? (appUser.signature || null)
+          : (inlineSignature || appUser.signature || null),
         reviewedBy: null,
         reviewedAt: null,
         approvedBy: null,
@@ -553,7 +556,7 @@ export default function RequestFormPage() {
           </div>
 
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-medium text-gray-700">
                 {t('field.items')} <span className="text-red-500">*</span>
               </h3>
@@ -567,6 +570,7 @@ export default function RequestFormPage() {
                 {t('form.addItem')}
               </Button>
             </div>
+            <p className="text-xs text-gray-400 mb-3">{t('form.itemsHint')}</p>
             <div className="space-y-2">
               {items.map((item, i) => (
                 <ItemRow

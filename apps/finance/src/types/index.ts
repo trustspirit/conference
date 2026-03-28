@@ -131,6 +131,7 @@ export interface PaymentRequest {
   reviewedBy: { uid: string; name: string; email: string } | null
   reviewedAt: Date | null
   approvedBy: { uid: string; name: string; email: string } | null
+  requestedBySignature: string | null
   approvalSignature: string | null
   approvedAt: Date | null
   rejectionReason: string | null

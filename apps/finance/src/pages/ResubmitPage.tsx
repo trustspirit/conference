@@ -366,6 +366,9 @@ export default function ResubmitPage() {
           name: appUser.displayName || appUser.name,
           email: appUser.email
         },
+        requestedBySignature: isVendorRequest
+          ? (appUser.signature || null)
+          : (inlineSignature || appUser.signature || null),
         reviewedBy: null,
         reviewedAt: null,
         approvedBy: null,

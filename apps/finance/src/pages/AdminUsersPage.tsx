@@ -33,8 +33,7 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
   return (
     <div
       ref={ref}
-      className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-72"
-      style={{ transform: 'translateY(4px)' }}
+      className="z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-72"
     >
       <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
       <p className="text-sm text-gray-900 mb-2">
@@ -74,14 +73,18 @@ function UserNameWithTooltip({
   const { t } = useTranslation()
   const [showTooltip, setShowTooltip] = useState(false)
   const anchorRef = useRef<HTMLSpanElement>(null)
-  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; above: boolean }>({ top: 0, left: 0, above: false })
 
   const openTooltip = useCallback(() => {
     if (anchorRef.current) {
       const rect = anchorRef.current.getBoundingClientRect()
+      const tooltipHeight = 200
+      const spaceBelow = window.innerHeight - rect.bottom
+      const showAbove = spaceBelow < tooltipHeight && rect.top > tooltipHeight
       setTooltipPos({
-        top: rect.bottom + window.scrollY,
-        left: Math.min(rect.left, window.innerWidth - 300)
+        top: showAbove ? rect.top : rect.bottom,
+        left: Math.min(rect.left, window.innerWidth - 300),
+        above: showAbove
       })
     }
     setShowTooltip(true)
@@ -107,12 +110,121 @@ function UserNameWithTooltip({
       {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
       {showTooltip && (
         <div
-          style={{ position: 'absolute', top: tooltipPos.top, left: tooltipPos.left, zIndex: 9999 }}
+          style={{
+            position: 'fixed',
+            top: tooltipPos.top,
+            left: tooltipPos.left,
+            zIndex: 9999,
+            transform: tooltipPos.above ? 'translateY(-100%) translateY(-4px)' : 'translateY(4px)'
+          }}
         >
           <BankInfoTooltip user={user} onClose={() => setShowTooltip(false)} />
         </div>
       )}
     </>
+  )
+}
+
+function MobileUserCard({
+  user: u,
+  currentUser,
+  isAdmin,
+  roleLabel,
+  successUid,
+  onRoleChange,
+  onDelete
+}: {
+  user: AppUser
+  currentUser: AppUser | null
+  isAdmin: boolean
+  roleLabel: string
+  successUid: string | null
+  onRoleChange: (uid: string, role: UserRole) => void
+  onDelete: (uid: string) => void
+}) {
+  const { t } = useTranslation()
+  const [showBank, setShowBank] = useState(false)
+  const bankBookImg = u.bankBookUrl || u.bankBookDriveUrl
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4">
+      <div className="mb-3">
+        <p className="font-medium text-gray-900">
+          <span
+            className="cursor-pointer underline decoration-dotted underline-offset-2 text-blue-600"
+            onClick={() => setShowBank((v) => !v)}
+          >
+            {u.displayName || u.name || '-'}
+          </span>
+          {u.displayName && u.name && u.displayName !== u.name && (
+            <span className="ml-1 text-xs text-gray-400">({u.name})</span>
+          )}
+          {u.uid === currentUser?.uid && (
+            <span className="ml-2 text-xs text-blue-600">{t('users.me')}</span>
+          )}
+          {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
+        </p>
+        <p className="text-sm text-gray-500 mt-1">{u.email}</p>
+        <p className="text-sm text-gray-500">{u.phone || '-'}</p>
+        {showBank && (
+          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
+            <p className="text-sm text-gray-900 mb-2">
+              {u.bankName ? `${u.bankName} ${u.bankAccount}` : '-'}
+            </p>
+            <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankBook')}</p>
+            {bankBookImg ? (
+              <a href={bankBookImg} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={bankBookImg}
+                  alt={t('field.bankBook')}
+                  className="max-h-40 w-full object-contain bg-white rounded border border-gray-200"
+                />
+              </a>
+            ) : (
+              <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>
+            )}
+          </div>
+        )}
+      </div>
+      {isAdmin ? (
+        <div>
+          {u.role === 'super_admin' ? (
+            <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
+          ) : (
+            <>
+              <Select
+                options={[
+                  { value: 'user', label: t('role.user') },
+                  { value: 'finance_ops', label: t('role.finance_ops') },
+                  { value: 'approver_ops', label: t('role.approver_ops') },
+                  { value: 'finance_prep', label: t('role.finance_prep') },
+                  { value: 'approver_prep', label: t('role.approver_prep') },
+                  { value: 'session_director', label: t('role.session_director') },
+                  { value: 'logistic_admin', label: t('role.logistic_admin') },
+                  { value: 'executive', label: t('role.executive') },
+                  { value: 'admin', label: t('role.admin') }
+                ]}
+                value={u.role}
+                disabled={u.uid === currentUser?.uid}
+                onChange={(v) => onRoleChange(u.uid, v as UserRole)}
+                fullWidth
+              />
+              {successUid === u.uid && (
+                <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
+              )}
+            </>
+          )}
+          {u.uid !== currentUser?.uid && u.role !== 'super_admin' && (
+            <Button variant="ghost" size="sm" onClick={() => onDelete(u.uid)}>
+              <TrashIcon className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400">{roleLabel}</p>
+      )}
+    </div>
   )
 }
 
@@ -314,57 +426,16 @@ export default function AdminUsersPage() {
           {/* Mobile card view */}
           <div className="sm:hidden space-y-3">
             {users.map((u) => (
-              <div key={u.uid} className="bg-white rounded-lg shadow p-4">
-                <div className="mb-3">
-                  <p className="font-medium text-gray-900">
-                    <UserNameWithTooltip
-                      user={u}
-                      currentUser={currentUser}
-                      isAdmin={isAdmin}
-                      roleLabel={ROLE_LABELS[u.role]}
-                    />
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">{u.email}</p>
-                  <p className="text-sm text-gray-500">{u.phone || '-'}</p>
-                </div>
-                {isAdmin ? (
-                  <div>
-                    {u.role === 'super_admin' ? (
-                      <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
-                    ) : (
-                      <>
-                        <Select
-                          options={[
-                            { value: 'user', label: t('role.user') },
-                            { value: 'finance_ops', label: t('role.finance_ops') },
-                            { value: 'approver_ops', label: t('role.approver_ops') },
-                            { value: 'finance_prep', label: t('role.finance_prep') },
-                            { value: 'approver_prep', label: t('role.approver_prep') },
-                            { value: 'session_director', label: t('role.session_director') },
-                            { value: 'logistic_admin', label: t('role.logistic_admin') },
-                            { value: 'executive', label: t('role.executive') },
-                            { value: 'admin', label: t('role.admin') }
-                          ]}
-                          value={u.role}
-                          disabled={u.uid === currentUser?.uid}
-                          onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
-                          fullWidth
-                        />
-                        {successUid === u.uid && (
-                          <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
-                        )}
-                      </>
-                    )}
-                    {u.uid !== currentUser?.uid && u.role !== 'super_admin' && (
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(u.uid)}>
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-400">{ROLE_LABELS[u.role]}</p>
-                )}
-              </div>
+              <MobileUserCard
+                key={u.uid}
+                user={u}
+                currentUser={currentUser}
+                isAdmin={isAdmin}
+                roleLabel={ROLE_LABELS[u.role]}
+                successUid={successUid}
+                onRoleChange={handleRoleChange}
+                onDelete={handleDeleteUser}
+              />
             ))}
           </div>
 
