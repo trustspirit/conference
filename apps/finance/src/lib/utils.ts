@@ -86,43 +86,6 @@ export function validateFiles(
   return { valid, errors }
 }
 
-/** 이미지 파일을 Canvas로 리사이즈하여 maxBytes 이하로 압축 */
-export async function compressImageFile(file: File, maxBytes = 800 * 1024): Promise<File> {
-  if (!file.type.startsWith('image/') || file.size <= maxBytes) return file
-
-  const bitmap = await createImageBitmap(file)
-  const { width, height } = bitmap
-
-  // 비율을 유지하면서 최대 1600px로 축소
-  const MAX_DIM = 1600
-  let w = width
-  let h = height
-  if (w > MAX_DIM || h > MAX_DIM) {
-    const ratio = Math.min(MAX_DIM / w, MAX_DIM / h)
-    w = Math.round(w * ratio)
-    h = Math.round(h * ratio)
-  }
-
-  const canvas = new OffscreenCanvas(w, h)
-  const ctx = canvas.getContext('2d')!
-  ctx.drawImage(bitmap, 0, 0, w, h)
-  bitmap.close()
-
-  // quality를 낮춰가며 목표 크기 이하로 압축
-  const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
-  let quality = 0.85
-  let blob = await canvas.convertToBlob({ type: mimeType, quality })
-
-  while (blob.size > maxBytes && quality > 0.1) {
-    quality -= 0.1
-    blob = await canvas.convertToBlob({ type: mimeType, quality })
-  }
-
-  const ext = mimeType === 'image/png' ? '.png' : '.jpg'
-  const baseName = file.name.replace(/\.[^.]+$/, '')
-  return new File([blob], `${baseName}${ext}`, { type: mimeType })
-}
-
 /** 통장사본 파일 검증 (PNG/JPG/PDF, 800KB 이하) */
 export function validateBankBookFile(file: File): string | null {
   const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'application/pdf']

@@ -7,9 +7,10 @@ import ChatInput from './ChatInput'
 interface Props {
   onClose: () => void
   chat: UseChatReturn
+  fullScreen?: boolean
 }
 
-export default function ChatPanel({ onClose, chat }: Props) {
+export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
   const { t } = useTranslation()
   const { messages, sendMessage, isLoading, error, isLimitReached } = chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -19,7 +20,10 @@ export default function ChatPanel({ onClose, chat }: Props) {
   }, [messages, isLoading])
 
   return (
-    <div className="flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl max-sm:h-[calc(100dvh-100px)] max-sm:w-[calc(100vw-32px)]">
+    <div className={fullScreen
+      ? "flex h-full w-full flex-col overflow-hidden bg-white"
+      : "flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+    }>
       {/* Header */}
       <div className="flex items-center justify-between bg-blue-600 px-4 py-3">
         <h3 className="text-sm font-semibold text-white">{t('chat.title')}</h3>

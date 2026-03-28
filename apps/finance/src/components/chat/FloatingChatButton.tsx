@@ -8,11 +8,16 @@ export default function FloatingChatButton() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Chat Panel */}
+      {/* Chat Panel - full screen on mobile, popup on desktop */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 chat-panel-enter">
-          <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
-        </div>
+        <>
+          <div className="fixed inset-0 z-50 sm:hidden">
+            <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen />
+          </div>
+          <div className="absolute bottom-16 right-0 chat-panel-enter hidden sm:block">
+            <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
+          </div>
+        </>
       )}
 
       {/* FAB Button */}
