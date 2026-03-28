@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import './scroll-lock.css'
 import ChatPanel from './ChatPanel'
 import { useChat } from '../../hooks/useChatStream'
 
@@ -16,26 +15,43 @@ export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false)
   const isMobile = useIsMobile()
   const chat = useChat()
+  const overlayRef = useRef<HTMLDivElement>(null)
 
-  // 모바일 전체화면 챗봇 열림 시 배경 스크롤 완전 차단 (iOS Safari 대응)
-  const scrollYRef = useRef(0)
   useEffect(() => {
     if (!isOpen || !isMobile) return
-    scrollYRef.current = window.scrollY
-    const { style } = document.documentElement
-    style.setProperty('--scroll-lock-top', `-${scrollYRef.current}px`)
-    document.documentElement.classList.add('scroll-locked')
+    const vv = window.visualViewport
+    const el = overlayRef.current
+    if (!vv || !el) return
+
+    const sync = () => {
+      el.style.top = `${vv.offsetTop}px`
+      el.style.height = `${vv.height}px`
+    }
+    sync()
+    vv.addEventListener('resize', sync)
+    vv.addEventListener('scroll', sync)
+
+    // 배경 스크롤 차단 (메시지 영역 내부 스크롤만 허용)
+    const onTouchMove = (e: TouchEvent) => {
+      let node = e.target as HTMLElement | null
+      while (node && node !== el) {
+        if (node.scrollHeight > node.clientHeight && node.classList.contains('overflow-y-auto')) return
+        node = node.parentElement
+      }
+      e.preventDefault()
+    }
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
+
     return () => {
-      document.documentElement.classList.remove('scroll-locked')
-      style.removeProperty('--scroll-lock-top')
-      window.scrollTo(0, scrollYRef.current)
+      vv.removeEventListener('resize', sync)
+      vv.removeEventListener('scroll', sync)
+      document.removeEventListener('touchmove', onTouchMove)
     }
   }, [isOpen, isMobile])
 
-  // 모바일 전체화면은 Portal로 body에 직접 렌더링 (부모 DOM에서 분리)
   const mobilePanel = isOpen && isMobile
     ? createPortal(
-        <div className="fixed inset-0 z-[9999]">
+        <div ref={overlayRef} className="fixed left-0 right-0 z-[9999] bg-white" style={{ top: 0, height: '100%' }}>
           <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen />
         </div>,
         document.body
@@ -46,14 +62,12 @@ export default function FloatingChatButton() {
     <>
       {mobilePanel}
       <div className="fixed bottom-6 right-6 z-50">
-        {/* Desktop popup */}
         {isOpen && !isMobile && (
           <div className="absolute bottom-16 right-0 chat-panel-enter">
             <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
           </div>
         )}
 
-        {/* FAB Button */}
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}

@@ -1,9 +1,0 @@
-html.scroll-locked,
-html.scroll-locked body {
-  position: fixed;
-  top: var(--scroll-lock-top, 0);
-  left: 0;
-  right: 0;
-  overflow: hidden;
-  height: 100%;
-}
