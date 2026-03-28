@@ -52,7 +52,7 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
 
   return (
     <div className="h-[250px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={data} layout="vertical">
           <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
           <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={formatAxis} />
