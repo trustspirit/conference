@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react'
+import './scroll-lock.css'
 import ChatPanel from './ChatPanel'
 import { useChat } from '../../hooks/useChatStream'
 
@@ -15,31 +16,29 @@ export default function FloatingChatButton() {
   const isMobile = useIsMobile()
   const chat = useChat()
 
-  // 모바일 전체화면 챗봇 열림 시 배경 터치 스크롤 차단
-  const overlayRef = useRef<HTMLDivElement>(null)
+  // 모바일 전체화면 챗봇 열림 시 배경 스크롤 완전 차단 (iOS Safari 대응)
+  const scrollYRef = useRef(0)
   useEffect(() => {
     if (!isOpen || !isMobile) return
-    const el = overlayRef.current
-    if (!el) return
-    // 오버레이 바깥의 터치 스크롤을 차단 (내부 스크롤 영역은 overscroll-contain으로 처리)
-    const prevent = (e: TouchEvent) => {
-      if (e.target === el) e.preventDefault()
+    scrollYRef.current = window.scrollY
+    const { style } = document.documentElement
+    style.setProperty('--scroll-lock-top', `-${scrollYRef.current}px`)
+    document.documentElement.classList.add('scroll-locked')
+    return () => {
+      document.documentElement.classList.remove('scroll-locked')
+      style.removeProperty('--scroll-lock-top')
+      window.scrollTo(0, scrollYRef.current)
     }
-    el.addEventListener('touchmove', prevent, { passive: false })
-    return () => el.removeEventListener('touchmove', prevent)
   }, [isOpen, isMobile])
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {/* Chat Panel - single instance, full screen on mobile */}
       {isOpen && (
-        <div
-          ref={isMobile ? overlayRef : undefined}
-          className={isMobile
-            ? "fixed inset-0 z-50"
-            : "absolute bottom-16 right-0 chat-panel-enter"
-          }
-        >
+        <div className={isMobile
+          ? "fixed inset-0 z-50"
+          : "absolute bottom-16 right-0 chat-panel-enter"
+        }>
           <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen={isMobile} />
         </div>
       )}
