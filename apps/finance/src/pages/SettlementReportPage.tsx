@@ -94,9 +94,11 @@ export default function SettlementReportPage() {
   const dateStr = formatFirestoreDate(settlement.createdAt)
   const uniquePayees = [...new Set(settlements.map((s) => s.payee))]
   const uniqueApprovers =
-    (originalRequests || []).length > 0
-      ? [...new Set((originalRequests || []).map((r) => r.approvedBy?.uid).filter(Boolean))]
-      : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
+    settlements.some((s) => s.approvers?.length)
+      ? [...new Set(settlements.flatMap((s) => s.approvers?.map((a) => a.uid) || []))]
+      : (originalRequests || []).length > 0
+        ? [...new Set((originalRequests || []).map((r) => r.approvedBy?.uid).filter(Boolean))]
+        : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
   const needsIndividualForms = uniquePayees.length > 1 || uniqueApprovers.length > 1
   const payeeDisplay = needsIndividualForms ? 'Multi' : uniquePayees[0]
   const bankDisplay = needsIndividualForms
@@ -407,11 +409,11 @@ export default function SettlementReportPage() {
               const uid = req?.requestedBy.uid
               if (uid && seenUids.has(uid)) continue
               if (uid) seenUids.add(uid)
-              // Try user profile first, fall back to settlement snapshot
+              // 정산 시점 스냅샷 우선, 없으면 사용자 프로필 fallback
               const userBankBook = uid
                 ? payeeUsers?.get(uid)?.bankBookUrl || payeeUsers?.get(uid)?.bankBookDriveUrl
                 : undefined
-              const url = userBankBook || s.bankBookUrl
+              const url = s.bankBookUrl || userBankBook
               if (url) bankBooks.push({ payee: s.payee, url })
             }
             if (bankBooks.length === 0) return null

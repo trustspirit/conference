@@ -143,11 +143,13 @@ export async function exportBatchSettlementPdf(
 
   const originalRequests = options.originalRequests || []
   const uniquePayees = [...new Set(settlements.map((s) => s.payee))]
-  // Use original requests for accurate approver list (settlements only store first approver)
+  // Use approvers array if available, fall back to originalRequests, then single approvedBy
   const uniqueApprovers =
-    originalRequests.length > 0
-      ? [...new Set(originalRequests.map((r) => r.approvedBy?.uid).filter(Boolean))]
-      : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
+    settlements.some((s) => s.approvers?.length)
+      ? [...new Set(settlements.flatMap((s) => s.approvers?.map((a) => a.uid) || []))]
+      : originalRequests.length > 0
+        ? [...new Set(originalRequests.map((r) => r.approvedBy?.uid).filter(Boolean))]
+        : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map((s) => s.committee))]
   const committeeLabel = uniqueCommittees.map((c) => t(`committee.${c}`)).join(' / ')
 
@@ -262,12 +264,13 @@ export async function exportBatchSettlementPdf(
       if (req?.isVendorRequest) {
         url = req.vendorBankBookUrl || s.bankBookUrl
       } else {
+        // 정산 시점 스냅샷 우선, 없으면 사용자 프로필 fallback
         const uid = req?.requestedBy.uid
         const userBankBook =
           uid && payeeUsers
             ? payeeUsers.get(uid)?.bankBookUrl || payeeUsers.get(uid)?.bankBookDriveUrl
             : undefined
-        url = userBankBook || s.bankBookUrl
+        url = s.bankBookUrl || userBankBook
       }
       if (url) bankBooks.push({ payee: s.payee, url })
     }

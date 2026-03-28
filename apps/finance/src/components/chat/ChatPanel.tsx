@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { UseChatReturn } from '../../hooks/useChatStream'
 import ChatMessage from './ChatMessage'
@@ -14,16 +14,36 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
   const { t } = useTranslation()
   const { messages, sendMessage, isLoading, error, isLimitReached } = chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [vpHeight, setVpHeight] = useState<number | null>(null)
 
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+  }, [])
+
+  useEffect(() => { scrollToBottom() }, [messages, isLoading, scrollToBottom])
+
+  // visualViewport로 키보드 높이 대응 (카카오톡 UX)
+  useEffect(() => {
+    if (!fullScreen || !window.visualViewport) return
+    const vv = window.visualViewport
+    const onResize = () => {
+      setVpHeight(vv.height)
+      requestAnimationFrame(scrollToBottom)
+    }
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [fullScreen, scrollToBottom])
 
   return (
-    <div className={fullScreen
-      ? "flex h-screen h-[100dvh] w-full flex-col overflow-hidden bg-white"
-      : "flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
-    }>
+    <div
+      ref={containerRef}
+      className={fullScreen
+        ? "flex w-full flex-col overflow-hidden bg-white"
+        : "flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+      }
+      style={fullScreen && vpHeight ? { height: vpHeight } : fullScreen ? { height: '100%' } : undefined}
+    >
       {/* Header */}
       <div className="flex items-center justify-between bg-blue-600 px-4 py-3">
         <h3 className="text-sm font-semibold text-white">{t('chat.title')}</h3>

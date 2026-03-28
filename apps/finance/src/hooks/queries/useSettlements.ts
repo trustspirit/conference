@@ -13,7 +13,7 @@ import {
   query,
   where,
   orderBy,
-  writeBatch,
+  runTransaction,
   serverTimestamp,
   limit,
   startAfter,
@@ -142,24 +142,35 @@ export function useCreateSettlement() {
       projectId: string
       settlements: Array<Omit<Settlement, 'id' | 'createdAt'>>
     }) => {
-      const batch = writeBatch(db)
-
-      for (const settlement of params.settlements) {
-        const settlementRef = doc(collection(db, 'settlements'))
-        batch.set(settlementRef, {
-          ...settlement,
-          createdAt: serverTimestamp()
-        })
-
-        for (const requestId of settlement.requestIds) {
-          batch.update(doc(db, 'requests', requestId), {
-            status: 'settled',
-            settlementId: settlementRef.id
-          })
+      await runTransaction(db, async (tx) => {
+        // 1) 모든 요청의 현재 상태를 읽어서 approved인지 확인
+        const allRequestIds = params.settlements.flatMap((s) => s.requestIds)
+        const requestSnaps = await Promise.all(
+          allRequestIds.map((id) => tx.get(doc(db, 'requests', id)))
+        )
+        for (const snap of requestSnaps) {
+          if (!snap.exists()) throw new Error(`Request ${snap.id} not found`)
+          if (snap.data().status !== 'approved') {
+            throw new Error(`Request ${snap.id} is no longer approved (status: ${snap.data().status})`)
+          }
         }
-      }
 
-      await batch.commit()
+        // 2) 정산 문서 생성 + 요청 상태 업데이트
+        for (const settlement of params.settlements) {
+          const settlementRef = doc(collection(db, 'settlements'))
+          tx.set(settlementRef, {
+            ...settlement,
+            createdAt: serverTimestamp()
+          })
+
+          for (const requestId of settlement.requestIds) {
+            tx.update(doc(db, 'requests', requestId), {
+              status: 'settled',
+              settlementId: settlementRef.id
+            })
+          }
+        }
+      })
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({

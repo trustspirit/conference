@@ -208,7 +208,7 @@ export default function SettlementPage() {
       }
 
       const totalOps = Object.values(groupedByPayee).reduce((sum, reqs) => sum + 1 + reqs.length, 0)
-      if (totalOps >= 500) {
+      if (totalOps > 500) {
         toast({
           variant: 'danger',
           message:
@@ -261,6 +261,12 @@ export default function SettlementPage() {
           requestIds: reqs.map((r) => r.id),
           requestedBySignature: userData?.signature || null,
           approvedBy: first.approvedBy,
+          approvers: Object.values(
+            reqs.reduce<Record<string, { uid: string; name: string; email: string }>>((acc, r) => {
+              if (r.approvedBy && !acc[r.approvedBy.uid]) acc[r.approvedBy.uid] = r.approvedBy
+              return acc
+            }, {})
+          ),
           approvalSignature: first.approvalSignature || null
         }
       })

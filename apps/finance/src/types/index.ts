@@ -161,5 +161,6 @@ export interface Settlement {
   requestIds: string[]
   requestedBySignature: string | null
   approvedBy: { uid: string; name: string; email: string } | null
+  approvers?: Array<{ uid: string; name: string; email: string }>
   approvalSignature: string | null
 }

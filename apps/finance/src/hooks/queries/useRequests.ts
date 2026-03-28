@@ -81,7 +81,8 @@ export function useApprovedRequests(projectId: string | undefined) {
       const q = query(
         collection(db, 'requests'),
         where('projectId', '==', projectId),
-        where('status', '==', 'approved')
+        where('status', '==', 'approved'),
+        orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PaymentRequest)
