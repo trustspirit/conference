@@ -183,7 +183,7 @@ export default function PersonalSettings() {
             )}
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div>
           <input
             type="file"
             accept=".png,.jpg,.jpeg,.pdf"
@@ -208,6 +208,7 @@ export default function PersonalSettings() {
             <Button
               variant="primary"
               size="sm"
+              className="mt-2"
               onClick={handleUploadBankBook}
               disabled={uploadingBankBook}
               loading={uploadingBankBook}

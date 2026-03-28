@@ -47,7 +47,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
         placeholder={t('chat.placeholder')}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
+        className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
       />
       <button
         onClick={handleSend}
