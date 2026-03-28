@@ -1,32 +1,36 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import ChatPanel from './ChatPanel'
 import { useChat } from '../../hooks/useChatStream'
 
+function useIsMobile() {
+  return useSyncExternalStore(
+    (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb) },
+    () => window.innerWidth < 640
+  )
+}
+
 export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const isMobile = useIsMobile()
   const chat = useChat()
 
   // 모바일 전체화면 챗봇 열림 시 배경 스크롤 방지
   useEffect(() => {
-    if (!isOpen) return
-    const isMobile = window.innerWidth < 640
-    if (!isMobile) return
+    if (!isOpen || !isMobile) return
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
-  }, [isOpen])
+  }, [isOpen, isMobile])
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Chat Panel - full screen on mobile, popup on desktop */}
+      {/* Chat Panel - single instance, full screen on mobile */}
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-50 sm:hidden">
-            <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen />
-          </div>
-          <div className="absolute bottom-16 right-0 chat-panel-enter hidden sm:block">
-            <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
-          </div>
-        </>
+        <div className={isMobile
+          ? "fixed inset-0 z-50"
+          : "absolute bottom-16 right-0 chat-panel-enter"
+        }>
+          <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen={isMobile} />
+        </div>
       )}
 
       {/* FAB Button */}
