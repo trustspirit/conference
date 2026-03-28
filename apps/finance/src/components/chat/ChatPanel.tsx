@@ -114,7 +114,7 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
       </div>
 
       {/* Input */}
-      <ChatInput onSend={sendMessage} disabled={isLoading || isLimitReached} />
+      <ChatInput onSend={sendMessage} disabled={isLoading || isLimitReached} preventAutoScroll={fullScreen} />
     </div>
   )
 }

@@ -1,12 +1,13 @@
-import { useState, useRef, KeyboardEvent } from 'react'
+import { useState, useRef, KeyboardEvent, FocusEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
   onSend: (message: string) => void
   disabled: boolean
+  preventAutoScroll?: boolean
 }
 
-export default function ChatInput({ onSend, disabled }: Props) {
+export default function ChatInput({ onSend, disabled, preventAutoScroll }: Props) {
   const { t } = useTranslation()
   const [value, setValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -44,6 +45,11 @@ export default function ChatInput({ onSend, disabled }: Props) {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         onInput={handleInput}
+        onFocus={preventAutoScroll ? (e: FocusEvent) => {
+          // iOS가 input focus 시 페이지를 밀어올리는 것을 방지
+          e.target.scrollIntoView = () => {}
+          requestAnimationFrame(() => { window.scrollTo(0, 0) })
+        } : undefined}
         placeholder={t('chat.placeholder')}
         disabled={disabled}
         rows={1}
