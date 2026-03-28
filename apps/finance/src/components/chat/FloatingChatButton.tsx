@@ -1,10 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatPanel from './ChatPanel'
 import { useChat } from '../../hooks/useChatStream'
 
 export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false)
   const chat = useChat()
+
+  // 모바일 전체화면 챗봇 열림 시 배경 스크롤 방지
+  useEffect(() => {
+    if (!isOpen) return
+    const isMobile = window.innerWidth < 640
+    if (!isMobile) return
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
