@@ -207,7 +207,9 @@ export default function SettlementPage() {
         return
       }
 
-      const totalOps = Object.values(groupedByPayee).reduce((sum, reqs) => sum + 1 + reqs.length, 0)
+      const totalRequests = Object.values(groupedByPayee).reduce((sum, reqs) => sum + reqs.length, 0)
+      const totalSettlements = Object.keys(groupedByPayee).length
+      const totalOps = totalRequests * 2 + totalSettlements // reads + updates + creates
       if (totalOps > 500) {
         toast({
           variant: 'danger',
