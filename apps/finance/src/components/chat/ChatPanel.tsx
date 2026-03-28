@@ -10,12 +10,31 @@ interface Props {
   fullScreen?: boolean
 }
 
+/** visualViewport를 추적하여 iOS 키보드에 대응 */
+function useVisualViewport(enabled: boolean) {
+  const [rect, setRect] = useState<{ top: number; height: number } | null>(null)
+
+  useEffect(() => {
+    if (!enabled || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => setRect({ top: vv.offsetTop, height: vv.height })
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [enabled])
+
+  return rect
+}
+
 export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
   const { t } = useTranslation()
   const { messages, sendMessage, isLoading, error, isLimitReached } = chat
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [vpHeight, setVpHeight] = useState<number | null>(null)
+  const vp = useVisualViewport(!!fullScreen)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -23,26 +42,21 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
 
   useEffect(() => { scrollToBottom() }, [messages, isLoading, scrollToBottom])
 
-  // visualViewport로 키보드 높이 대응 (카카오톡 UX)
+  // 키보드 열릴 때 최신 메시지로 스크롤
   useEffect(() => {
-    if (!fullScreen || !window.visualViewport) return
-    const vv = window.visualViewport
-    const onResize = () => {
-      setVpHeight(vv.height)
-      requestAnimationFrame(scrollToBottom)
-    }
-    vv.addEventListener('resize', onResize)
-    return () => vv.removeEventListener('resize', onResize)
-  }, [fullScreen, scrollToBottom])
+    if (vp) requestAnimationFrame(scrollToBottom)
+  }, [vp?.height, scrollToBottom]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
-      ref={containerRef}
       className={fullScreen
         ? "flex w-full flex-col overflow-hidden bg-white"
         : "flex h-[500px] w-[380px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
       }
-      style={fullScreen && vpHeight ? { height: vpHeight } : fullScreen ? { height: '100%' } : undefined}
+      style={fullScreen && vp
+        ? { position: 'fixed', top: vp.top, left: 0, right: 0, height: vp.height }
+        : undefined
+      }
     >
       {/* Header */}
       <div className="flex items-center justify-between bg-blue-600 px-4 py-3">
