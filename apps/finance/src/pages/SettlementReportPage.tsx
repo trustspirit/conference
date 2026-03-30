@@ -17,6 +17,7 @@ import Spinner from '../components/Spinner'
 import InfoGrid from '../components/InfoGrid'
 import ItemsTable from '../components/ItemsTable'
 import ReceiptGallery from '../components/ReceiptGallery'
+import BankBookPreview from '../components/BankBookPreview'
 
 export default function SettlementReportPage() {
   const { t } = useTranslation()
@@ -423,10 +424,11 @@ export default function SettlementReportPage() {
                 <div className="grid grid-cols-2 gap-4">
                   {bankBooks.map((bb) => (
                     <div key={bb.payee} className="border rounded overflow-hidden">
-                      <img
-                        src={bb.url}
+                      <BankBookPreview
+                        url={bb.url}
                         alt={bb.payee}
-                        className="w-full max-h-60 object-contain bg-gray-50"
+                        maxHeight="max-h-60"
+                        className="w-full object-contain bg-gray-50"
                       />
                       <p className="text-xs text-gray-600 px-2 py-1 bg-gray-50 border-t">
                         {bb.payee}

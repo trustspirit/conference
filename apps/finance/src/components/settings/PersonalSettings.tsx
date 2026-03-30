@@ -8,6 +8,7 @@ import BankSelect from '../BankSelect'
 import { useAuth } from '../../contexts/AuthContext'
 import { Committee } from '../../types'
 import SignaturePad, { SignaturePadRef } from '../SignaturePad'
+import BankBookPreview from '../BankBookPreview'
 import CommitteeSelect from '../CommitteeSelect'
 import { useUploadBankBook } from '../../hooks/queries/useCloudFunctions'
 
@@ -175,10 +176,10 @@ export default function PersonalSettings() {
               </a>
             </div>
             {(appUser?.bankBookUrl || appUser?.bankBookDriveUrl) && (
-              <img
-                src={appUser.bankBookUrl || appUser.bankBookDriveUrl}
+              <BankBookPreview
+                url={(appUser.bankBookUrl || appUser.bankBookDriveUrl)!}
                 alt={t('field.bankBook')}
-                className="max-h-32 border border-gray-200 rounded"
+                className="border border-gray-200 rounded"
               />
             )}
           </div>

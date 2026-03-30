@@ -3,6 +3,7 @@ import { PaymentRequest, AppUser } from '../../types'
 import InfoGrid from '../InfoGrid'
 import ItemsTable from '../ItemsTable'
 import ReceiptGallery from '../ReceiptGallery'
+import BankBookPreview from '../BankBookPreview'
 import { ForceRejectionModal } from '../AdminRequestModals'
 import ReviewChecklist from '../ReviewChecklist'
 import { SETTLEMENT_CHECKLIST } from '../../constants/reviewChecklist'
@@ -98,10 +99,11 @@ export default function SettlementReviewStep({
                 <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
                 <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
                   <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={bankBookUrl}
+                    <BankBookPreview
+                      url={bankBookUrl}
                       alt={t('field.bankBook')}
-                      className="max-h-48 object-contain bg-gray-50"
+                      maxHeight="max-h-48"
+                      className="object-contain bg-gray-50"
                     />
                   </a>
                   <div className="px-3 py-2 bg-gray-50 border-t">

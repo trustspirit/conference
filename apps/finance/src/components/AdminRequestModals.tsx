@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialog, Button, Checkbox, TextField } from 'trust-ui-react'
 import SignaturePad from './SignaturePad'
 import BudgetWarningBanner from './BudgetWarningBanner'
+import BankBookPreview from './BankBookPreview'
 
 interface ApprovalModalProps {
   open: boolean
@@ -57,11 +58,7 @@ export function ApprovalModal({
             </p>
             {bankBookUrl ? (
               <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={bankBookUrl}
-                  alt={t('field.bankBook')}
-                  className="max-h-32 rounded border border-gray-200 object-contain bg-white"
-                />
+                <BankBookPreview url={bankBookUrl} alt={t('field.bankBook')} className="object-contain rounded border border-gray-200 bg-white" />
               </a>
             ) : (
               <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>

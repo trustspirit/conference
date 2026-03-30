@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate, useBlocker } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../hooks/queries/queryKeys'
@@ -27,6 +27,7 @@ import InlineBankBookUpload from '../components/InlineBankBookUpload'
 import BankSelect from '../components/BankSelect'
 import ReviewChecklist from '../components/ReviewChecklist'
 import { SUBMISSION_CHECKLIST } from '../constants/reviewChecklist'
+import BankBookPreview from '../components/BankBookPreview'
 
 const DRAFT_KEY = 'request-form-draft'
 const emptyItem = (): RequestItem => ({ description: '', budgetCode: 0, amount: 0 })
@@ -101,6 +102,16 @@ export default function RequestFormPage() {
   const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
   const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
   const [inlineSignature, setInlineSignature] = useState('')
+
+  const vendorBankBookPreviewUrl = useMemo(
+    () => (vendorBankBookFile ? URL.createObjectURL(vendorBankBookFile) : null),
+    [vendorBankBookFile]
+  )
+  useEffect(() => {
+    return () => {
+      if (vendorBankBookPreviewUrl) URL.revokeObjectURL(vendorBankBookPreviewUrl)
+    }
+  }, [vendorBankBookPreviewUrl])
 
   const showVendorOption = appUser ? canCreateVendorRequest(appUser.role, committee) : false
 
@@ -638,12 +649,14 @@ export default function RequestFormPage() {
                   <p className="text-xs text-green-600 mt-1">
                     {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                   </p>
-                  {vendorBankBookFile.type.startsWith('image/') && (
+                  {vendorBankBookPreviewUrl && (
                     <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
-                      <img
-                        src={URL.createObjectURL(vendorBankBookFile)}
+                      <BankBookPreview
+                        url={vendorBankBookPreviewUrl}
                         alt={t('form.vendorBankBook')}
-                        className="max-h-48 object-contain bg-gray-50"
+                        maxHeight="max-h-48"
+                        className="object-contain bg-gray-50"
+                        isPdf={vendorBankBookFile.type === 'application/pdf'}
                       />
                     </div>
                   )}

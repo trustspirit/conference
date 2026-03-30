@@ -11,6 +11,7 @@ import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import { Select, Button, Dialog, useToast } from 'trust-ui-react'
 import { TrashIcon } from '../components/Icons'
 import ProcessingOverlay from '../components/ProcessingOverlay'
+import BankBookPreview from '../components/BankBookPreview'
 
 function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void }) {
   const { t } = useTranslation()
@@ -46,10 +47,11 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
           target="_blank"
           rel="noopener noreferrer"
         >
-          <img
-            src={bankBookImg}
+          <BankBookPreview
+            url={bankBookImg}
             alt={t('field.bankBook')}
-            className="max-h-40 w-full object-contain bg-gray-50 rounded border border-gray-200"
+            maxHeight="max-h-40"
+            className="w-full object-contain bg-gray-50 rounded border border-gray-200"
           />
         </a>
       ) : (
@@ -175,10 +177,11 @@ function MobileUserCard({
             <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankBook')}</p>
             {bankBookImg ? (
               <a href={bankBookImg} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={bankBookImg}
+                <BankBookPreview
+                  url={bankBookImg}
                   alt={t('field.bankBook')}
-                  className="max-h-40 w-full object-contain bg-white rounded border border-gray-200"
+                  maxHeight="max-h-40"
+                  className="w-full object-contain bg-white rounded border border-gray-200"
                 />
               </a>
             ) : (
