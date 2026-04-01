@@ -55,6 +55,7 @@ export default function ResubmitPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [isVendorRequest, setIsVendorRequest] = useState(false)
+  const [isCorporateCard, setIsCorporateCard] = useState(false)
   const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
   const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
   const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
@@ -74,6 +75,7 @@ export default function ResubmitPage() {
     setItems(original.items.length > 0 ? original.items : [emptyItem()])
     setComments(original.comments)
     setIsVendorRequest(original.isVendorRequest || false)
+    setIsCorporateCard(original.isCorporateCard || false)
   }, [original])
 
   // Re-format account number when bank changes
@@ -384,7 +386,8 @@ export default function ResubmitPage() {
               vendorBankBookPath,
               vendorBankBookUrl
             }
-          : {})
+          : {}),
+        isCorporateCard: isCorporateCard || undefined
       })
 
       navigate('/my-requests')

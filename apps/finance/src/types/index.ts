@@ -26,6 +26,7 @@ export interface Project {
   directorApprovalThreshold: number
   budgetWarningThreshold?: number
   perKmRate?: number
+  corporateCardReportTitle?: string
   memberUids: string[]
   isActive: boolean
   deletedAt?: Date | null
@@ -139,6 +140,7 @@ export interface PaymentRequest {
   originalRequestId: string | null
   comments: string
   isVendorRequest?: boolean
+  isCorporateCard?: boolean
   vendorBankBookPath?: string
   vendorBankBookUrl?: string
 }
@@ -164,4 +166,5 @@ export interface Settlement {
   approvedBy: { uid: string; name: string; email: string } | null
   approvers?: Array<{ uid: string; name: string; email: string }>
   approvalSignature: string | null
+  isCorporateCard?: boolean
 }

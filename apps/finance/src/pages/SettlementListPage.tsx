@@ -25,6 +25,7 @@ interface BatchGroup {
   totalRequests: number
   date: string
   settlementCount: number
+  isCorporateCard?: boolean
 }
 
 function groupByBatch(settlements: Settlement[]): BatchGroup[] {
@@ -38,6 +39,7 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
       existing.totalAmount += s.totalAmount
       existing.totalRequests += s.requestIds.length
       existing.settlementCount += 1
+      existing.isCorporateCard = existing.isCorporateCard || !!s.isCorporateCard
     } else {
       map.set(key, {
         batchId: key,
@@ -47,7 +49,8 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
         totalAmount: s.totalAmount,
         totalRequests: s.requestIds.length,
         date: formatFirestoreDate(s.createdAt),
-        settlementCount: 1
+        settlementCount: 1,
+        isCorporateCard: s.isCorporateCard || false
       })
     }
   }
@@ -160,7 +163,14 @@ export default function SettlementListPage() {
                   {batches.map((b) => (
                     <tr key={b.batchId} className="hover:bg-gray-50">
                       <td className="px-4 py-3">{b.date}</td>
-                      <td className="px-4 py-3">{payeeLabel(b)}</td>
+                      <td className="px-4 py-3">
+                        {payeeLabel(b)}
+                        {b.isCorporateCard && (
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                            {t('form.requestTypeCorporateCard')}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">{committeeLabel(b)}</td>
                       <td className="px-4 py-3 text-right font-medium">
                         ₩{b.totalAmount.toLocaleString()}
@@ -192,7 +202,14 @@ export default function SettlementListPage() {
                 className="block bg-white rounded-lg shadow p-4"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{payeeLabel(b)}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium">{payeeLabel(b)}</span>
+                    {b.isCorporateCard && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                        {t('form.requestTypeCorporateCard')}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-400">{b.date}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">

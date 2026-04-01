@@ -161,6 +161,10 @@
     "vendorBankBook": "Vendor Bank Book",
     "vendorBankBookHint": "Attach vendor's bank book copy (PNG, JPG, PDF / max 800KB)",
     "vendorBankBookExisting": "Existing vendor bank book attached. Upload new to replace.",
+    "requestType": "Request Type",
+    "requestTypeRegular": "Regular Request",
+    "requestTypeVendor": "Vendor Request",
+    "requestTypeCorporateCard": "Corporate Card",
     "bankBookUploadInline": "Bank Book (will be saved to your profile)",
     "bankBookUploadInlineHint": "Attach your bank book. It will be automatically saved to your profile on submission. (PNG, JPG, PDF / max 800KB)",
     "signatureInline": "Signature (will be saved to your profile)",
@@ -274,7 +278,8 @@
     "includeBankBooks": "Include bank books",
     "payeeSummary": "Payee Summary",
     "payeeCount_one": "{{count}} person",
-    "payeeCount_other": "{{count}} people"
+    "payeeCount_other": "{{count}} people",
+    "corporateCardReport": "Shinhan Card Report"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -374,7 +379,9 @@
     "createFailed": "Failed to create project.",
     "autoDeleteDays": "Auto-delete in {{days}} days",
     "perKmRate": "Per-km Rate (Personal Car)",
-    "perKmRateHint": "Rate applied per km when calculating personal car transportation costs."
+    "perKmRateHint": "Rate applied per km when calculating personal car transportation costs.",
+    "corporateCardReportTitle": "Corporate Card Report Title",
+    "corporateCardReportTitleHint": "Title displayed on corporate card settlement reports."
   },
   "budget": {
     "warning": "{{percent}}% of the budget has been used. (Warning threshold: {{threshold}}%)",

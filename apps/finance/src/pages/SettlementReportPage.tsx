@@ -43,6 +43,8 @@ export default function SettlementReportPage() {
         ? [settlement]
         : []
   const isBatch = settlements.length > 1
+  const isCorporateCard = settlements.some((s) => s.isCorporateCard)
+  const corporateCardTitle = currentProject?.corporateCardReportTitle || t('settlement.corporateCardReport')
 
   // Load original requests for individual forms (preserves per-request approval signatures)
   const allRequestIds = settlements.flatMap((s) => s.requestIds)
@@ -61,7 +63,12 @@ export default function SettlementReportPage() {
         documentNo,
         projectName,
         perKmRate,
-        { includeBankBooks, originalRequests: originalRequests || [], payeeUsers }
+        {
+          includeBankBooks,
+          originalRequests: originalRequests || [],
+          payeeUsers,
+          reportTitle: isCorporateCard ? corporateCardTitle : undefined
+        }
       )
       if (!success)
         toast({ variant: 'danger', message: 'Popup blocked. Please allow popups for this site.' })
@@ -151,9 +158,15 @@ export default function SettlementReportPage() {
 
         <div className="mb-6">
           <h2 className="text-xl font-bold">
-            {isBatch ? t('settlement.batchReport') : t('settlement.reportTitle')}
+            {isCorporateCard
+              ? corporateCardTitle
+              : isBatch
+                ? t('settlement.batchReport')
+                : t('settlement.reportTitle')}
           </h2>
-          <p className="text-sm text-gray-500">{t('settlement.reportSubtitle')}</p>
+          <p className="text-sm text-gray-500">
+            {isCorporateCard ? corporateCardTitle : t('settlement.reportSubtitle')}
+          </p>
         </div>
 
         {/* Overview */}

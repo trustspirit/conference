@@ -19,10 +19,15 @@ import SettlementSummary from '../components/settlement/SettlementSummary'
 
 type ReviewPhase = 'select' | 'review' | 'summary'
 
-const payeeKey = (req: PaymentRequest) =>
-  req.isVendorRequest
-    ? `vendor|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
-    : `${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+const payeeKey = (req: PaymentRequest) => {
+  if (req.isCorporateCard) {
+    return `cc|${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+  }
+  if (req.isVendorRequest) {
+    return `vendor|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+  }
+  return `${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+}
 
 export default function SettlementPage() {
   const { t } = useTranslation()
@@ -235,7 +240,9 @@ export default function SettlementPage() {
         })
       )
 
+      const hasCorporateCard = includedRequests.some((r) => r.isCorporateCard)
       const batchId = crypto.randomUUID()
+      const ccBatchId = hasCorporateCard ? crypto.randomUUID() : batchId
 
       const settlementData = Object.values(groupedByPayee).map((reqs) => {
         const first = reqs[0]
@@ -246,7 +253,7 @@ export default function SettlementPage() {
 
         return {
           projectId: currentProject.id,
-          batchId,
+          batchId: first.isCorporateCard ? ccBatchId : batchId,
           createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
           payee: first.payee,
           phone: first.phone,
@@ -269,7 +276,8 @@ export default function SettlementPage() {
               return acc
             }, {})
           ),
-          approvalSignature: first.approvalSignature || null
+          approvalSignature: first.approvalSignature || null,
+          isCorporateCard: first.isCorporateCard || undefined
         }
       })
 

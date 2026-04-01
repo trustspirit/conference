@@ -161,6 +161,10 @@
     "vendorBankBook": "업체 통장 사본",
     "vendorBankBookHint": "업체의 통장 사본을 첨부하세요 (PNG, JPG, PDF / 최대 800KB)",
     "vendorBankBookExisting": "기존 업체 통장 사본이 있습니다. 새 파일을 업로드하면 교체됩니다.",
+    "requestType": "신청서 유형",
+    "requestTypeRegular": "일반 신청서",
+    "requestTypeVendor": "업체 신청서",
+    "requestTypeCorporateCard": "법인카드 정산",
     "bankBookUploadInline": "통장 사본 (프로필에 등록됩니다)",
     "bankBookUploadInlineHint": "통장 사본을 첨부하세요. 제출 시 프로필에 자동 저장됩니다. (PNG, JPG, PDF / 최대 800KB)",
     "signatureInline": "전자 서명 (프로필에 등록됩니다)",
@@ -274,7 +278,8 @@
     "includeBankBooks": "통장 사본 포함",
     "payeeSummary": "수령인별 요약",
     "payeeCount_one": "{{count}}명",
-    "payeeCount_other": "{{count}}명"
+    "payeeCount_other": "{{count}}명",
+    "corporateCardReport": "신한카드 보고서"
   },
   "dashboard": {
     "title": "대시보드",
@@ -374,7 +379,9 @@
     "createFailed": "프로젝트 생성에 실패했습니다.",
     "autoDeleteDays": "{{days}}일 후 자동 삭제",
     "perKmRate": "자차 km당 단가",
-    "perKmRateHint": "자차 교통비 산정 시 km당 적용되는 금액입니다."
+    "perKmRateHint": "자차 교통비 산정 시 km당 적용되는 금액입니다.",
+    "corporateCardReportTitle": "법인카드 보고서 타이틀",
+    "corporateCardReportTitleHint": "법인카드 정산 리포트에 표시될 타이틀입니다."
   },
   "budget": {
     "warning": "예산의 {{percent}}%를 사용했습니다. (경고 기준: {{threshold}}%)",

@@ -13,6 +13,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
   const [threshold, setThreshold] = useState(project.directorApprovalThreshold ?? 600000)
   const [warningPct, setWarningPct] = useState(project.budgetWarningThreshold ?? 85)
   const [perKmRate, setPerKmRate] = useState(project.perKmRate ?? DEFAULT_PER_KM_RATE)
+  const [ccReportTitle, setCcReportTitle] = useState(project.corporateCardReportTitle || '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -24,7 +25,8 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
     documentNo !== (project.documentNo || '') ||
     threshold !== (project.directorApprovalThreshold ?? 600000) ||
     warningPct !== (project.budgetWarningThreshold ?? 85) ||
-    perKmRate !== (project.perKmRate ?? DEFAULT_PER_KM_RATE)
+    perKmRate !== (project.perKmRate ?? DEFAULT_PER_KM_RATE) ||
+    ccReportTitle !== (project.corporateCardReportTitle || '')
 
   const handleSave = async () => {
     setSaving(true)
@@ -38,7 +40,8 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           documentNo,
           directorApprovalThreshold: threshold,
           budgetWarningThreshold: warningPct,
-          perKmRate
+          perKmRate,
+          corporateCardReportTitle: ccReportTitle || undefined
         }
       })
       setSaved(true)
@@ -125,6 +128,19 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           <span className="text-sm text-gray-500 whitespace-nowrap">/ km</span>
         </div>
         <p className="text-xs text-gray-400 mt-1">{t('project.perKmRateHint')}</p>
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">
+          {t('project.corporateCardReportTitle')}
+        </label>
+        <input
+          type="text"
+          value={ccReportTitle}
+          onChange={(e) => setCcReportTitle(e.target.value)}
+          placeholder={t('settlement.corporateCardReport')}
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-1">{t('project.corporateCardReportTitleHint')}</p>
       </div>
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">

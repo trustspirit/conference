@@ -15,7 +15,7 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, Dialog, Checkbox, useToast } from 'trust-ui-react'
+import { TextField, Button, Dialog, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
 import { validateBankBookFile } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
@@ -42,6 +42,7 @@ interface DraftData {
   items: RequestItem[]
   comments: string
   isVendorRequest?: boolean
+  isCorporateCard?: boolean
   savedAt: string
 }
 
@@ -97,6 +98,7 @@ export default function RequestFormPage() {
   const [submitted, setSubmitted] = useState(false)
   const [showDraftBanner, setShowDraftBanner] = useState(!!draft)
   const [isVendorRequest, setIsVendorRequest] = useState(draft?.isVendorRequest || false)
+  const [isCorporateCard, setIsCorporateCard] = useState(draft?.isCorporateCard || false)
   const [vendorBankBookFile, setVendorBankBookFile] = useState<File | null>(null)
   const [vendorBankBookError, setVendorBankBookError] = useState<string | null>(null)
   const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
@@ -113,7 +115,7 @@ export default function RequestFormPage() {
     }
   }, [vendorBankBookPreviewUrl])
 
-  const showVendorOption = appUser ? canCreateVendorRequest(appUser.role, committee) : false
+  const showRequestTypeDropdown = appUser ? canCreateVendorRequest(appUser.role, committee) : false
 
   const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
@@ -156,11 +158,11 @@ export default function RequestFormPage() {
     if (submitted) return
     const timer = setTimeout(() => {
       if (hasContent()) {
-        saveDraft({ payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest })
+        saveDraft({ payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, isCorporateCard })
       }
     }, 500)
     return () => clearTimeout(timer)
-  }, [payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, hasContent, submitted])
+  }, [payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, isCorporateCard, hasContent, submitted])
 
   // Block navigation when form has content (except to /settings)
   const blocker = useBlocker(({ nextLocation }) => {
@@ -194,6 +196,7 @@ export default function RequestFormPage() {
     setComments('')
     setFiles([])
     setIsVendorRequest(false)
+    setIsCorporateCard(false)
     setVendorBankBookFile(null)
     setVendorBankBookError(null)
     setInlineBankBookFile(null)
@@ -221,6 +224,21 @@ export default function RequestFormPage() {
       setCommittee(appUser?.defaultCommittee || 'operations')
       setVendorBankBookFile(null)
       setVendorBankBookError(null)
+    }
+  }
+
+  const requestType = isCorporateCard ? 'corporate_card' : isVendorRequest ? 'vendor' : 'regular'
+
+  const handleRequestTypeChange = (type: 'regular' | 'vendor' | 'corporate_card') => {
+    if (type === 'vendor') {
+      handleVendorToggle(true)
+      setIsCorporateCard(false)
+    } else if (type === 'corporate_card') {
+      if (isVendorRequest) handleVendorToggle(false)
+      setIsCorporateCard(true)
+    } else {
+      if (isVendorRequest) handleVendorToggle(false)
+      setIsCorporateCard(false)
     }
   }
 
@@ -450,7 +468,8 @@ export default function RequestFormPage() {
               vendorBankBookPath,
               vendorBankBookUrl
             }
-          : {})
+          : {}),
+        isCorporateCard: isCorporateCard || undefined
       })
 
       setSubmitted(true)
@@ -499,14 +518,20 @@ export default function RequestFormPage() {
           <h2 className="text-xl font-bold mb-1">{t('form.title')}</h2>
           <p className="text-sm text-gray-500 mb-6">{t('form.subtitle')}</p>
 
-          {showVendorOption && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-              <Checkbox
-                checked={isVendorRequest}
-                onChange={(e) => handleVendorToggle(e.target.checked)}
-                label={t('form.vendorRequest')}
-              />
-              <p className="text-xs text-gray-500 mt-1 ml-6">{t('form.vendorRequestHint')}</p>
+          {showRequestTypeDropdown && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t('form.requestType')}
+              </label>
+              <select
+                value={requestType}
+                onChange={(e) => handleRequestTypeChange(e.target.value as 'regular' | 'vendor' | 'corporate_card')}
+                className="w-full sm:w-auto border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+              >
+                <option value="regular">{t('form.requestTypeRegular')}</option>
+                <option value="vendor">{t('form.requestTypeVendor')}</option>
+                <option value="corporate_card">{t('form.requestTypeCorporateCard')}</option>
+              </select>
             </div>
           )}
 

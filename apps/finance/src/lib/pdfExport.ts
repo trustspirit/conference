@@ -152,6 +152,7 @@ export interface PdfExportOptions {
   includeBankBooks?: boolean
   originalRequests?: PaymentRequest[]
   payeeUsers?: Map<string, AppUser>
+  reportTitle?: string
 }
 
 /**
@@ -169,6 +170,9 @@ export async function exportBatchSettlementPdf(
   options: PdfExportOptions = { includeBankBooks: true }
 ) {
   if (settlements.length === 0) return false
+
+  const reportTitle = options.reportTitle || t('settlement.reportTitle')
+  const reportSubtitle = options.reportTitle ? options.reportTitle : t('settlement.reportSubtitle')
 
   const isBatch = settlements.length > 1
   const dateStr =
@@ -319,9 +323,9 @@ export async function exportBatchSettlementPdf(
 
   // ── Page 1: Cover — Budget Code Summary ──
   parts.push(`
-  <h1>${t('settlement.reportTitle')}</h1>
+  <h1>${escapeHtml(reportTitle)}</h1>
   ${projectName ? `<p class="subtitle" style="font-weight:600;">${escapeHtml(projectName)}</p>` : ''}
-  <p class="subtitle">${t('settlement.reportSubtitle')}</p>
+  <p class="subtitle">${escapeHtml(reportSubtitle)}</p>
 
   <div class="info-grid">
     <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeDisplay)}${isBatch ? ` (${t('settlement.payeeCount', { count: uniquePayees.length })})` : ''}</div>
@@ -621,7 +625,7 @@ export async function exportBatchSettlementPdf(
   const fullHtml = `<!DOCTYPE html>
 <html><head>
   <meta charset="utf-8">
-  <title>${t('settlement.reportTitle')} - ${escapeHtml(payeeDisplay)}</title>
+  <title>${escapeHtml(reportTitle)} - ${escapeHtml(payeeDisplay)}</title>
   <style>${buildPdfStyles()}</style>
 </head><body>
   ${parts.join('')}
