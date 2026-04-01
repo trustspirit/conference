@@ -17,12 +17,7 @@ function isPdfUrl(url: string): boolean {
   }
 }
 
-function PdfPreview({
-  url,
-  alt,
-  maxHeight,
-  className
-}: Omit<Props, 'isPdf'>) {
+function PdfPreview({ url, alt, maxHeight, className }: Omit<Props, 'isPdf'>) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
 

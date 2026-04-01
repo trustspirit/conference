@@ -13,6 +13,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 const t = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts)
+const tEn = i18n.getFixedT('en')
+
+/** Korean label + English in grayscale (for PDF headers / bilingual cells) */
+function bilingual(key: string) {
+  const ko = t(key)
+  const en = tEn(key)
+  if (!en || ko === en) return ko
+  return `${ko} <span style="color:#999; font-weight:400;">${en}</span>`
+}
 
 function escapeHtml(str: string) {
   return str
@@ -35,7 +44,9 @@ async function pdfPageToDataUrl(base64Data: string): Promise<string | null> {
     const canvas = document.createElement('canvas')
     canvas.width = viewport.width
     canvas.height = viewport.height
-    await page.render({ canvas, viewport } as never).promise
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise
     return canvas.toDataURL('image/png')
   } catch {
     return null
@@ -144,12 +155,11 @@ export async function exportBatchSettlementPdf(
   const originalRequests = options.originalRequests || []
   const uniquePayees = [...new Set(settlements.map((s) => s.payee))]
   // Use approvers array if available, fall back to originalRequests, then single approvedBy
-  const uniqueApprovers =
-    settlements.some((s) => s.approvers?.length)
-      ? [...new Set(settlements.flatMap((s) => s.approvers?.map((a) => a.uid) || []))]
-      : originalRequests.length > 0
-        ? [...new Set(originalRequests.map((r) => r.approvedBy?.uid).filter(Boolean))]
-        : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
+  const uniqueApprovers = settlements.some((s) => s.approvers?.length)
+    ? [...new Set(settlements.flatMap((s) => s.approvers?.map((a) => a.uid) || []))]
+    : originalRequests.length > 0
+      ? [...new Set(originalRequests.map((r) => r.approvedBy?.uid).filter(Boolean))]
+      : [...new Set(settlements.map((s) => s.approvedBy?.uid).filter(Boolean))]
   const uniqueCommittees = [...new Set(settlements.map((s) => s.committee))]
   const committeeLabel = uniqueCommittees.map((c) => t(`committee.${c}`)).join(' / ')
 
@@ -296,9 +306,9 @@ export async function exportBatchSettlementPdf(
   <h2>${t('settlement.budgetSummary')}</h2>
   <table>
     <thead><tr>
-      <th>${t('field.budgetCode')}</th>
-      <th>${t('field.comments')}</th>
-      <th class="text-right">${t('field.totalAmount')}</th>
+      <th>${bilingual('field.budgetCode')}</th>
+      <th>${bilingual('field.comments')}</th>
+      <th class="text-right">${bilingual('field.totalAmount')}</th>
     </tr></thead>
     <tbody>
       ${UNIQUE_BUDGET_CODES.map((code) => {
@@ -306,7 +316,7 @@ export async function exportBatchSettlementPdf(
         if (!entry) return ''
         return `<tr>
           <td>${code}</td>
-          <td>${t(`budgetCode.${code}`)}</td>
+          <td>${t(`budgetCode.${code}`)} <span style="color:#999;">${tEn(`budgetCode.${code}`)}</span></td>
           <td class="text-right">₩${entry.total.toLocaleString()}</td>
         </tr>`
       }).join('')}
@@ -361,10 +371,10 @@ export async function exportBatchSettlementPdf(
       <table>
         <thead><tr>
           <th>#</th>
-          <th>${t('field.payee')}</th>
-          <th>${t('field.bank')}</th>
-          <th>${t('field.bankAccount')}</th>
-          <th class="text-right">${t('field.totalAmount')}</th>
+          <th>${bilingual('field.payee')}</th>
+          <th>${bilingual('field.bank')}</th>
+          <th>${bilingual('field.bankAccount')}</th>
+          <th class="text-right">${bilingual('field.totalAmount')}</th>
         </tr></thead>
         <tbody>
           ${settlements
@@ -460,11 +470,11 @@ export async function exportBatchSettlementPdf(
         <table>
           <thead><tr>
             <th>#</th>
-            <th>${t('field.budgetCode')}</th>
-            <th>${t('field.comments')}</th>
-            <th>${t('field.transportType')}</th>
-            <th>${t('settlement.transportCost')}</th>
-            <th class="text-right">${t('field.totalAmount')}</th>
+            <th>${bilingual('field.budgetCode')}</th>
+            <th>${bilingual('field.comments')}</th>
+            <th>${bilingual('field.transportType')}</th>
+            <th>${bilingual('settlement.transportCost')}</th>
+            <th class="text-right">${bilingual('field.totalAmount')}</th>
           </tr></thead>
           <tbody>
             ${formItems
