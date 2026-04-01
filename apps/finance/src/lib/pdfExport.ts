@@ -31,13 +31,9 @@ function escapeHtml(str: string) {
     .replace(/"/g, '&quot;')
 }
 
-async function pdfPageToDataUrl(base64Data: string): Promise<string | null> {
+async function pdfToImageDataUrl(data: ArrayBuffer | Uint8Array): Promise<string | null> {
   try {
-    const binary = atob(base64Data)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-
-    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise
+    const pdf = await pdfjsLib.getDocument({ data }).promise
     const page = await pdf.getPage(1)
     const scale = 2
     const viewport = page.getViewport({ scale })
@@ -48,6 +44,29 @@ async function pdfPageToDataUrl(base64Data: string): Promise<string | null> {
     if (!ctx) return null
     await page.render({ canvas, canvasContext: ctx, viewport }).promise
     return canvas.toDataURL('image/png')
+  } catch {
+    return null
+  }
+}
+
+/** Fetch a URL and convert to data URL (handles both images and PDFs) */
+async function preloadImageUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const blob = await res.blob()
+    const isPdf =
+      blob.type === 'application/pdf' || decodeURIComponent(url).toLowerCase().includes('.pdf')
+    if (isPdf) {
+      const arrayBuffer = await blob.arrayBuffer()
+      return await pdfToImageDataUrl(arrayBuffer)
+    }
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(blob)
+    })
   } catch {
     return null
   }
@@ -69,7 +88,10 @@ async function preloadReceipts(receipts: Receipt[]) {
         const isPdf = r.fileName.toLowerCase().endsWith('.pdf')
 
         if (isPdf) {
-          const pageDataUrl = await pdfPageToDataUrl(data)
+          const binary = atob(data)
+          const bytes = new Uint8Array(binary.length)
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+          const pageDataUrl = await pdfToImageDataUrl(bytes)
           return { fileName: r.fileName, dataUrl: pageDataUrl }
         }
 
@@ -262,9 +284,10 @@ export async function exportBatchSettlementPdf(
   // Bank books (only if option enabled)
   // Vendor requests use the vendor bank book from the request; regular requests prefer user profile URL
   const payeeUsers = options.payeeUsers
-  const bankBooks: { payee: string; url: string }[] = []
+  const bankBooks: { payee: string; dataUrl: string }[] = []
   if (options.includeBankBooks) {
     const seenPayees = new Set<string>()
+    const bankBookEntries: { payee: string; url: string }[] = []
     for (const s of settlements) {
       const req = originalRequests.find((r) => s.requestIds.includes(r.id))
       const payeeKey = `${s.payee}-${s.bankAccount}`
@@ -282,7 +305,12 @@ export async function exportBatchSettlementPdf(
             : undefined
         url = s.bankBookUrl || userBankBook
       }
-      if (url) bankBooks.push({ payee: s.payee, url })
+      if (url) bankBookEntries.push({ payee: s.payee, url })
+    }
+    // Preload bank book images as data URLs to avoid CORS/auth issues in print window
+    const preloaded = await Promise.all(bankBookEntries.map((bb) => preloadImageUrl(bb.url)))
+    for (let i = 0; i < bankBookEntries.length; i++) {
+      if (preloaded[i]) bankBooks.push({ payee: bankBookEntries[i].payee, dataUrl: preloaded[i]! })
     }
   }
 
@@ -579,7 +607,7 @@ export async function exportBatchSettlementPdf(
           .map(
             (bb) => `
           <div class="bankbook-card">
-            <img src="${escapeHtml(bb.url)}" />
+            <img src="${escapeHtml(bb.dataUrl)}" />
             <p class="bankbook-label">${escapeHtml(bb.payee)}</p>
           </div>
         `
