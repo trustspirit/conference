@@ -15,7 +15,7 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
-import { TextField, Button, Dialog, useToast } from 'trust-ui-react'
+import { TextField, Button, Dialog, Select, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
 import { validateBankBookFile } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
@@ -520,18 +520,17 @@ export default function RequestFormPage() {
 
           {showRequestTypeDropdown && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('form.requestType')}
-              </label>
-              <select
+              <Select
+                options={[
+                  { value: 'regular', label: t('form.requestTypeRegular') },
+                  { value: 'vendor', label: t('form.requestTypeVendor') },
+                  { value: 'corporate_card', label: t('form.requestTypeCorporateCard') }
+                ]}
                 value={requestType}
-                onChange={(e) => handleRequestTypeChange(e.target.value as 'regular' | 'vendor' | 'corporate_card')}
-                className="w-full sm:w-auto border border-gray-300 rounded px-3 py-2 text-sm bg-white"
-              >
-                <option value="regular">{t('form.requestTypeRegular')}</option>
-                <option value="vendor">{t('form.requestTypeVendor')}</option>
-                <option value="corporate_card">{t('form.requestTypeCorporateCard')}</option>
-              </select>
+                onChange={(v) => handleRequestTypeChange(v as 'regular' | 'vendor' | 'corporate_card')}
+                label={t('form.requestType')}
+                fullWidth
+              />
             </div>
           )}
 
