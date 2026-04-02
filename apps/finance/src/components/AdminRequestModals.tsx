@@ -8,7 +8,7 @@ import BankBookPreview from './BankBookPreview'
 interface ApprovalModalProps {
   open: boolean
   onClose: () => void
-  request: { payee: string; bankName: string; bankAccount: string } | null
+  request: { payee: string; bankName: string; bankAccount: string; isCorporateCard?: boolean } | null
   bankBookUrl: string | undefined
   budgetUsage: React.ComponentProps<typeof BudgetWarningBanner>['budgetUsage']
   savedSignature: string | undefined
@@ -53,15 +53,19 @@ export function ApprovalModal({
             <p className="text-xs font-medium text-gray-500 mb-1">
               {t('field.payee')}: {request.payee}
             </p>
-            <p className="text-xs text-gray-500 mb-2">
-              {t('field.bankAndAccount')}: {request.bankName} {request.bankAccount}
-            </p>
-            {bankBookUrl ? (
-              <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
-                <BankBookPreview url={bankBookUrl} alt={t('field.bankBook')} className="object-contain rounded border border-gray-200 bg-white" />
-              </a>
-            ) : (
-              <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>
+            {!request.isCorporateCard && (
+              <p className="text-xs text-gray-500 mb-2">
+                {t('field.bankAndAccount')}: {request.bankName} {request.bankAccount}
+              </p>
+            )}
+            {!request.isCorporateCard && (
+              bankBookUrl ? (
+                <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
+                  <BankBookPreview url={bankBookUrl} alt={t('field.bankBook')} className="object-contain rounded border border-gray-200 bg-white" />
+                </a>
+              ) : (
+                <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>
+              )
             )}
           </div>
         )}

@@ -117,7 +117,7 @@ export default function RequestFormPage() {
 
   const showRequestTypeDropdown = appUser ? canCreateVendorRequest(appUser.role, committee) : false
 
-  const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsBankBook = !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -261,8 +261,10 @@ export default function RequestFormPage() {
     const errs: string[] = []
     if (!payee.trim()) errs.push(t('validation.payeeRequired'))
     if (!phone.trim()) errs.push(t('validation.phoneRequired'))
-    if (!bankName.trim()) errs.push(t('validation.bankRequired'))
-    if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
+    if (!isCorporateCard) {
+      if (!bankName.trim()) errs.push(t('validation.bankRequired'))
+      if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
+    }
     if (!date) errs.push(t('validation.dateRequired'))
     if (validItems.length === 0) errs.push(t('validation.itemsRequired'))
     const missingBudgetCode = validItems.some((item) => !item.budgetCode)
@@ -302,7 +304,7 @@ export default function RequestFormPage() {
     // Bank book validation
     if (isVendorRequest) {
       if (!vendorBankBookFile) errs.push(t('validation.vendorBankBookRequired'))
-    } else {
+    } else if (!isCorporateCard) {
       if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl && !inlineBankBookFile)
         errs.push(t('validation.bankBookRequired'))
     }
@@ -404,9 +406,11 @@ export default function RequestFormPage() {
       if (!isVendorRequest) {
         const profileUpdates: Record<string, string> = {}
         if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
-        if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
-        if (bankAccount.trim() !== (appUser.bankAccount || ''))
-          profileUpdates.bankAccount = bankAccount.trim()
+        if (!isCorporateCard) {
+          if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+          if (bankAccount.trim() !== (appUser.bankAccount || ''))
+            profileUpdates.bankAccount = bankAccount.trim()
+        }
 
         // Inline bank book upload → profile sync
         if (inlineBankBookFile) {
@@ -507,7 +511,7 @@ export default function RequestFormPage() {
 
       {/* Mobile: collapsible submission checklist */}
       <div className="sm:hidden mb-4 max-w-4xl mx-auto">
-        <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" />
+        <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
       </div>
 
       <div className="flex gap-6 justify-center">
@@ -565,17 +569,21 @@ export default function RequestFormPage() {
               fullWidth
             />
             <TextField label={t('field.session')} value={session} disabled fullWidth />
-            <div>
-              <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
-            </div>
-            <TextField
-              label={t('field.bankAccount')}
-              required
-              value={bankAccount}
-              onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-              placeholder={t('field.bankAccount')}
-              fullWidth
-            />
+            {!isCorporateCard && (
+              <div>
+                <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
+              </div>
+            )}
+            {!isCorporateCard && (
+              <TextField
+                label={t('field.bankAccount')}
+                required
+                value={bankAccount}
+                onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
+                placeholder={t('field.bankAccount')}
+                fullWidth
+              />
+            )}
             <div className="sm:col-span-2">
               {isVendorRequest ? (
                 <TextField
@@ -723,7 +731,7 @@ export default function RequestFormPage() {
 
         {/* Desktop: sticky sidebar submission checklist */}
         <div className="hidden sm:block shrink-0">
-          <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" />
+          <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
         </div>
       </div>
 
@@ -735,7 +743,7 @@ export default function RequestFormPage() {
         items={[
           { label: t('field.payee'), value: payee },
           { label: t('field.date'), value: date },
-          { label: t('field.bankAndAccount'), value: `${bankName} ${bankAccount}` },
+          ...(!isCorporateCard ? [{ label: t('field.bankAndAccount'), value: `${bankName} ${bankAccount}` }] : []),
           { label: t('field.committee'), value: t(`committee.${committee}`) }
         ]}
         totalAmount={validItems.reduce((sum, item) => sum + item.amount, 0)}

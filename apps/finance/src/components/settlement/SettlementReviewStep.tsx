@@ -44,7 +44,7 @@ export default function SettlementReviewStep({
     <>
       {/* Mobile: collapsible checklist banner */}
       <div className="sm:hidden mb-4 max-w-3xl mx-auto">
-        <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" />
+        <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" excludeKeys={req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
       </div>
 
       <div className="flex gap-6 justify-center">
@@ -78,7 +78,7 @@ export default function SettlementReviewStep({
                 { label: t('field.date'), value: req.date },
                 { label: t('field.phone'), value: req.phone },
                 { label: t('field.session'), value: req.session },
-                { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
+                ...(!req.isCorporateCard ? [{ label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` }] : []),
                 {
                   label: t('field.committee'),
                   value:
@@ -94,7 +94,7 @@ export default function SettlementReviewStep({
             <ReceiptGallery receipts={req.receipts} />
 
             {/* Bank Book */}
-            {bankBookUrl && (
+            {bankBookUrl && !req.isCorporateCard && (
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
                 <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
@@ -163,7 +163,7 @@ export default function SettlementReviewStep({
 
         {/* Desktop: sticky sidebar checklist */}
         <div className="hidden sm:block shrink-0">
-          <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" />
+          <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" excludeKeys={req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
         </div>
       </div>
 

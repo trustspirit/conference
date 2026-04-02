@@ -137,15 +137,17 @@ export default function SettlementReportPage() {
             {t('settlement.backToList')}
           </Link>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={includeBankBooks}
-                onChange={(e) => setIncludeBankBooks(e.target.checked)}
-                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-              />
-              {t('settlement.includeBankBooks')}
-            </label>
+            {!isCorporateCard && (
+              <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={includeBankBooks}
+                  onChange={(e) => setIncludeBankBooks(e.target.checked)}
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                />
+                {t('settlement.includeBankBooks')}
+              </label>
+            )}
             <button
               onClick={handleExportPdf}
               disabled={exporting}
@@ -179,7 +181,7 @@ export default function SettlementReportPage() {
                 ? `${payeeDisplay} (${t('settlement.payeeCount', { count: uniquePayees.length })})`
                 : payeeDisplay
             },
-            { label: t('field.bankAndAccount'), value: bankDisplay },
+            ...(!isCorporateCard ? [{ label: t('field.bankAndAccount'), value: bankDisplay }] : []),
             { label: t('settlement.settlementDate'), value: dateStr },
             { label: t('committee.label'), value: committeeLabel },
             { label: t('settlement.requestCount'), value: String(totalRequests) }
@@ -243,12 +245,16 @@ export default function SettlementReportPage() {
                     <th className="text-left px-3 py-2 font-medium text-gray-600">
                       {t('field.payee')}
                     </th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">
-                      {t('field.bank')}
-                    </th>
-                    <th className="text-left px-3 py-2 font-medium text-gray-600">
-                      {t('field.bankAccount')}
-                    </th>
+                    {!isCorporateCard && (
+                      <th className="text-left px-3 py-2 font-medium text-gray-600">
+                        {t('field.bank')}
+                      </th>
+                    )}
+                    {!isCorporateCard && (
+                      <th className="text-left px-3 py-2 font-medium text-gray-600">
+                        {t('field.bankAccount')}
+                      </th>
+                    )}
                     <th className="text-right px-3 py-2 font-medium text-gray-600">
                       {t('field.totalAmount')}
                     </th>
@@ -259,8 +265,8 @@ export default function SettlementReportPage() {
                     <tr key={s.id}>
                       <td className="px-3 py-2 text-gray-500">{i + 1}</td>
                       <td className="px-3 py-2">{s.payee}</td>
-                      <td className="px-3 py-2 text-gray-500">{s.bankName}</td>
-                      <td className="px-3 py-2 text-gray-500">{s.bankAccount}</td>
+                      {!isCorporateCard && <td className="px-3 py-2 text-gray-500">{s.bankName}</td>}
+                      {!isCorporateCard && <td className="px-3 py-2 text-gray-500">{s.bankAccount}</td>}
                       <td className="px-3 py-2 text-right font-medium">
                         ₩{s.totalAmount.toLocaleString()}
                       </td>
@@ -269,7 +275,7 @@ export default function SettlementReportPage() {
                 </tbody>
                 <tfoot className="border-t bg-gray-100">
                   <tr>
-                    <td colSpan={4} className="px-3 py-2 font-semibold text-right">
+                    <td colSpan={isCorporateCard ? 2 : 4} className="px-3 py-2 font-semibold text-right">
                       {t('field.totalAmount')}
                     </td>
                     <td className="px-3 py-2 text-right font-bold">
@@ -299,7 +305,7 @@ export default function SettlementReportPage() {
                 items={[
                   { label: t('field.phone'), value: req.phone },
                   { label: t('field.session'), value: req.session },
-                  { label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` },
+                  ...(!isCorporateCard ? [{ label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` }] : []),
                   { label: t('committee.label'), value: t(`committee.${req.committee}`) },
                   { label: t('field.approvedBy'), value: req.approvedBy?.name || '-' }
                 ]}
@@ -413,7 +419,7 @@ export default function SettlementReportPage() {
         )}
 
         {/* Bank Book Copies */}
-        {includeBankBooks &&
+        {includeBankBooks && !isCorporateCard &&
           (() => {
             const bankBooks: { payee: string; url: string }[] = []
             const seenUids = new Set<string>()

@@ -253,7 +253,7 @@ export default function RequestDetailPage() {
       {/* Mobile: collapsible checklist banner */}
       {showChecklist && (
         <div className="sm:hidden mb-4">
-          <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} />
+          <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} excludeKeys={request?.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
         </div>
       )}
 
@@ -354,10 +354,10 @@ export default function RequestDetailPage() {
                 { label: t('field.date'), value: request.date },
                 { label: t('field.phone'), value: request.phone },
                 { label: t('field.session'), value: request.session },
-                {
+                ...(!request.isCorporateCard ? [{
                   label: t('field.bankAndAccount'),
                   value: `${request.bankName} ${request.bankAccount}`
-                },
+                }] : []),
                 { label: t('committee.label'), value: t(`committee.${request.committee}`) }
               ]}
             />
@@ -366,8 +366,9 @@ export default function RequestDetailPage() {
 
             <ReceiptGallery receipts={request.receipts} />
 
-            {/* Bank Book — vendor requests use vendor bank book, otherwise user profile */}
+            {/* Bank Book — vendor requests use vendor bank book, otherwise user profile (skip for corporate card) */}
             {(() => {
+              if (request.isCorporateCard) return null
               const bankBookUrl = request.isVendorRequest
                 ? request.vendorBankBookUrl
                 : requester?.bankBookUrl || requester?.bankBookDriveUrl
@@ -542,7 +543,7 @@ export default function RequestDetailPage() {
         {/* Desktop: sticky sidebar checklist */}
         {showChecklist && (
           <div className="hidden sm:block shrink-0">
-            <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} />
+            <ReviewChecklist items={checklistItems} stage={canDoReview ? 'review' : 'approval'} excludeKeys={request?.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
           </div>
         )}
       </div>

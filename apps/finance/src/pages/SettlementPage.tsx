@@ -21,7 +21,7 @@ type ReviewPhase = 'select' | 'review' | 'summary'
 
 const payeeKey = (req: PaymentRequest) => {
   if (req.isCorporateCard) {
-    return `cc|${req.requestedBy.uid}|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`
+    return `cc|${req.requestedBy.uid}|${req.committee}|${req.session}`
   }
   if (req.isVendorRequest) {
     return `vendor|${req.bankName}|${req.bankAccount}|${req.committee}|${req.session}`

@@ -88,7 +88,7 @@ export default function ResubmitPage() {
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const needsBankBook = !isVendorRequest && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsBankBook = !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
@@ -180,8 +180,10 @@ export default function ResubmitPage() {
     const errs: string[] = []
     if (!payee.trim()) errs.push(t('validation.payeeRequired'))
     if (!phone.trim()) errs.push(t('validation.phoneRequired'))
-    if (!bankName.trim()) errs.push(t('validation.bankRequired'))
-    if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
+    if (!isCorporateCard) {
+      if (!bankName.trim()) errs.push(t('validation.bankRequired'))
+      if (!bankAccount.trim()) errs.push(t('validation.bankAccountRequired'))
+    }
     if (!date) errs.push(t('validation.dateRequired'))
     if (validItems.length === 0) errs.push(t('validation.itemsRequired'))
     const missingBudgetCode = validItems.some((item) => !item.budgetCode)
@@ -225,7 +227,7 @@ export default function ResubmitPage() {
     if (isVendorRequest) {
       if (!vendorBankBookFile && !original?.vendorBankBookUrl)
         errs.push(t('validation.vendorBankBookRequired'))
-    } else {
+    } else if (!isCorporateCard) {
       if (!appUser?.bankBookUrl && !appUser?.bankBookDriveUrl && !inlineBankBookFile)
         errs.push(t('validation.bankBookRequired'))
     }
@@ -322,9 +324,11 @@ export default function ResubmitPage() {
       if (!isVendorRequest) {
         const profileUpdates: Record<string, string> = {}
         if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
-        if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
-        if (bankAccount.trim() !== (appUser.bankAccount || ''))
-          profileUpdates.bankAccount = bankAccount.trim()
+        if (!isCorporateCard) {
+          if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+          if (bankAccount.trim() !== (appUser.bankAccount || ''))
+            profileUpdates.bankAccount = bankAccount.trim()
+        }
 
         // Inline bank book upload → profile sync
         if (inlineBankBookFile) {
@@ -488,17 +492,21 @@ export default function ResubmitPage() {
             fullWidth
           />
           <TextField label={t('field.session')} value={session} disabled fullWidth />
-          <div>
-            <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
-          </div>
-          <TextField
-            label={t('field.bankAccount')}
-            required
-            value={bankAccount}
-            onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
-            placeholder={t('field.bankAccount')}
-            fullWidth
-          />
+          {!isCorporateCard && (
+            <div>
+              <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
+            </div>
+          )}
+          {!isCorporateCard && (
+            <TextField
+              label={t('field.bankAccount')}
+              required
+              value={bankAccount}
+              onChange={(e) => setBankAccount(formatBankAccount(e.target.value, bankName))}
+              placeholder={t('field.bankAccount')}
+              fullWidth
+            />
+          )}
           <div className="sm:col-span-2">
             {isVendorRequest ? (
               <TextField

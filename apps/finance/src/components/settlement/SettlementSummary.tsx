@@ -49,9 +49,11 @@ export default function SettlementSummary({
               <div className="flex justify-between items-baseline mb-2">
                 <h3 className="text-sm font-medium text-gray-800">
                   {first.payee}
-                  <span className="ml-2 text-xs text-gray-400">
-                    {first.bankName} {first.bankAccount}
-                  </span>
+                  {!first.isCorporateCard && (
+                    <span className="ml-2 text-xs text-gray-400">
+                      {first.bankName} {first.bankAccount}
+                    </span>
+                  )}
                 </h3>
                 <span className="text-sm font-semibold">₩{subtotal.toLocaleString()}</span>
               </div>

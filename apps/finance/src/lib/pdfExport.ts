@@ -174,6 +174,7 @@ export async function exportBatchSettlementPdf(
   const reportTitle = options.reportTitle || t('settlement.reportTitle')
   const reportSubtitle = options.reportTitle ? options.reportTitle : t('settlement.reportSubtitle')
 
+  const isCorporateCard = settlements.some((s) => s.isCorporateCard)
   const isBatch = settlements.length > 1
   const dateStr =
     formatFirestoreDate(settlements[0].createdAt) || new Date().toLocaleDateString('ko-KR')
@@ -285,11 +286,11 @@ export async function exportBatchSettlementPdf(
     imageOffset += entries.length
   }
 
-  // Bank books (only if option enabled)
+  // Bank books (only if option enabled, skip for corporate card)
   // Vendor requests use the vendor bank book from the request; regular requests prefer user profile URL
   const payeeUsers = options.payeeUsers
   const bankBooks: { payee: string; dataUrl: string }[] = []
-  if (options.includeBankBooks) {
+  if (options.includeBankBooks && !isCorporateCard) {
     const seenPayees = new Set<string>()
     const bankBookEntries: { payee: string; url: string }[] = []
     for (const s of settlements) {
@@ -329,7 +330,7 @@ export async function exportBatchSettlementPdf(
 
   <div class="info-grid">
     <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(payeeDisplay)}${isBatch ? ` (${t('settlement.payeeCount', { count: uniquePayees.length })})` : ''}</div>
-    <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(bankDisplay)}</div>
+    ${!isCorporateCard ? `<div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(bankDisplay)}</div>` : ''}
     <div><span class="label">${t('settlement.settlementDate')}:</span> ${escapeHtml(dateStr)}</div>
     ${committeeLabel ? `<div><span class="label">${t('committee.label')}:</span> ${committeeLabel}</div>` : ''}
     <div><span class="label">${t('settlement.requestCount')}:</span> ${settlements.reduce((sum, s) => sum + s.requestIds.length, 0)}</div>
@@ -404,8 +405,8 @@ export async function exportBatchSettlementPdf(
         <thead><tr>
           <th>#</th>
           <th>${bilingual('field.payee')}</th>
-          <th>${bilingual('field.bank')}</th>
-          <th>${bilingual('field.bankAccount')}</th>
+          ${!isCorporateCard ? `<th>${bilingual('field.bank')}</th>
+          <th>${bilingual('field.bankAccount')}</th>` : ''}
           <th class="text-right">${bilingual('field.totalAmount')}</th>
         </tr></thead>
         <tbody>
@@ -415,15 +416,15 @@ export async function exportBatchSettlementPdf(
             <tr>
               <td>${i + 1}</td>
               <td>${escapeHtml(s.payee)}</td>
-              <td>${escapeHtml(s.bankName)}</td>
-              <td>${escapeHtml(s.bankAccount)}</td>
+              ${!isCorporateCard ? `<td>${escapeHtml(s.bankName)}</td>
+              <td>${escapeHtml(s.bankAccount)}</td>` : ''}
               <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
             </tr>
           `
             )
             .join('')}
           <tr class="total-row">
-            <td colspan="4" class="text-right">${t('field.totalAmount')}</td>
+            <td colspan="${isCorporateCard ? 2 : 4}" class="text-right">${t('field.totalAmount')}</td>
             <td class="text-right">₩${grandTotal.toLocaleString()}</td>
           </tr>
         </tbody>
@@ -495,7 +496,7 @@ export async function exportBatchSettlementPdf(
           <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(source.payee)}</div>
           <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(source.phone)}</div>
           <div><span class="label">${t('field.session')}:</span> ${escapeHtml(source.session)}</div>
-          <div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>
+          ${!isCorporateCard ? `<div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>` : ''}
           <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${source.committee}`)}</div>
         </div>
 

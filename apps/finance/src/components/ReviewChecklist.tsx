@@ -5,9 +5,10 @@ import { ChecklistItem } from '../constants/reviewChecklist'
 interface Props {
   items: ChecklistItem[]
   stage: 'review' | 'approval' | 'settlement' | 'submission'
+  excludeKeys?: string[]
 }
 
-export default function ReviewChecklist({ items, stage }: Props) {
+export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
@@ -32,6 +33,10 @@ export default function ReviewChecklist({ items, stage }: Props) {
         ? 'text-green-400'
         : 'text-amber-400'
 
+  const filteredItems = excludeKeys?.length
+    ? items.filter((item) => !excludeKeys.includes(item.key))
+    : items
+
   return (
     <>
       {/* Desktop: sticky sidebar card */}
@@ -53,7 +58,7 @@ export default function ReviewChecklist({ items, stage }: Props) {
           {t('checklist.title')}
         </h4>
         <ul className="space-y-2">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <li
               key={item.key}
               className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed"
@@ -93,7 +98,7 @@ export default function ReviewChecklist({ items, stage }: Props) {
         </button>
         {open && (
           <ul className="px-3 pb-3 space-y-1.5">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <li
                 key={item.key}
                 className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed"
