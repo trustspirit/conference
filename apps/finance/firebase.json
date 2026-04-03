@@ -21,7 +21,7 @@
           { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
           {
             "key": "Content-Security-Policy",
-            "value": "default-src 'self'; script-src 'self' https://apis.google.com https://dapi.kakao.com https://*.daumcdn.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://lh3.googleusercontent.com https://*.daumcdn.net https://tile.openstreetmap.org; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.google.com https://*.firebaseio.com wss://*.firebaseio.com https://*.cloudfunctions.net https://dapi.kakao.com https://tile.openstreetmap.org; frame-src blob: https://accounts.google.com https://*.firebaseapp.com; object-src 'none'; base-uri 'self'"
+            "value": "default-src 'self'; script-src 'self' https://apis.google.com https://dapi.kakao.com https://*.daumcdn.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://lh3.googleusercontent.com https://*.daumcdn.net https://tile.openstreetmap.org; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.google.com https://*.firebaseio.com wss://*.firebaseio.com https://*.cloudfunctions.net https://dapi.kakao.com https://tile.openstreetmap.org; frame-src blob: https://accounts.google.com https://*.firebaseapp.com https://firebasestorage.googleapis.com; object-src 'none'; base-uri 'self'"
           }
         ]
       }

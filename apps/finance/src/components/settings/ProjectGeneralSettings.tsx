@@ -41,7 +41,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           directorApprovalThreshold: threshold,
           budgetWarningThreshold: warningPct,
           perKmRate,
-          corporateCardReportTitle: ccReportTitle || undefined
+          ...(ccReportTitle ? { corporateCardReportTitle: ccReportTitle } : {})
         }
       })
       setSaved(true)

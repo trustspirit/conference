@@ -153,8 +153,8 @@ export interface Settlement {
   createdBy: { uid: string; name: string; email: string }
   payee: string
   phone: string
-  bankName: string
-  bankAccount: string
+  bankName?: string
+  bankAccount?: string
   bankBookUrl?: string
   session: string
   committee: Committee

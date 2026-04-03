@@ -473,7 +473,7 @@ export default function RequestFormPage() {
               vendorBankBookUrl
             }
           : {}),
-        isCorporateCard: isCorporateCard || undefined
+        ...(isCorporateCard ? { isCorporateCard: true } : {})
       })
 
       setSubmitted(true)

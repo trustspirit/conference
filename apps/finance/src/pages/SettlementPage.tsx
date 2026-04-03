@@ -257,11 +257,13 @@ export default function SettlementPage() {
           createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
           payee: first.payee,
           phone: first.phone,
-          bankName: first.bankName,
-          bankAccount: first.bankAccount,
-          bankBookUrl: first.isVendorRequest
-  ? first.vendorBankBookUrl || ''
-  : userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
+          ...(first.isCorporateCard ? {} : {
+            bankName: first.bankName,
+            bankAccount: first.bankAccount,
+            bankBookUrl: first.isVendorRequest
+              ? first.vendorBankBookUrl || ''
+              : userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
+          }),
           session: first.session,
           committee: first.committee,
           items: allItems,
@@ -277,7 +279,7 @@ export default function SettlementPage() {
             }, {})
           ),
           approvalSignature: first.approvalSignature || null,
-          isCorporateCard: first.isCorporateCard || undefined
+          ...(first.isCorporateCard ? { isCorporateCard: true } : {})
         }
       })
 

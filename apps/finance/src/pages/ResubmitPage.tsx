@@ -391,7 +391,7 @@ export default function ResubmitPage() {
               vendorBankBookUrl
             }
           : {}),
-        isCorporateCard: isCorporateCard || undefined
+        ...(isCorporateCard ? { isCorporateCard: true } : {})
       })
 
       navigate('/my-requests')

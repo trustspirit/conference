@@ -33,7 +33,8 @@ function escapeHtml(str: string) {
 
 async function pdfToImageDataUrl(data: ArrayBuffer | Uint8Array): Promise<string | null> {
   try {
-    const pdf = await pdfjsLib.getDocument({ data }).promise
+    const loadingTask = pdfjsLib.getDocument({ data })
+    const pdf = await loadingTask.promise
     const page = await pdf.getPage(1)
     const scale = 2
     const viewport = page.getViewport({ scale })
@@ -43,8 +44,12 @@ async function pdfToImageDataUrl(data: ArrayBuffer | Uint8Array): Promise<string
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
     await page.render({ canvas, canvasContext: ctx, viewport }).promise
-    return canvas.toDataURL('image/png')
-  } catch {
+    const dataUrl = canvas.toDataURL('image/png')
+    canvas.width = 0
+    canvas.height = 0
+    return dataUrl
+  } catch (err) {
+    console.error('pdfToImageDataUrl failed:', err)
     return null
   }
 }
@@ -67,7 +72,8 @@ async function preloadImageUrl(url: string): Promise<string | null> {
       reader.onerror = () => resolve(null)
       reader.readAsDataURL(blob)
     })
-  } catch {
+  } catch (err) {
+    console.error('preloadImageUrl failed:', err)
     return null
   }
 }
@@ -85,7 +91,8 @@ async function preloadReceipts(receipts: Receipt[]) {
 
         const result = await downloadFn({ storagePath: r.storagePath })
         const { data, contentType } = result.data
-        const isPdf = r.fileName.toLowerCase().endsWith('.pdf')
+        const isPdf =
+          r.fileName.toLowerCase().endsWith('.pdf') || contentType === 'application/pdf'
 
         if (isPdf) {
           const binary = atob(data)
@@ -96,7 +103,8 @@ async function preloadReceipts(receipts: Receipt[]) {
         }
 
         return { fileName: r.fileName, dataUrl: `data:${contentType};base64,${data}` }
-      } catch {
+      } catch (err) {
+        console.error(`Failed to preload receipt "${r.fileName}":`, err)
         return { fileName: r.fileName, dataUrl: null }
       }
     })
@@ -227,8 +235,8 @@ export async function exportBatchSettlementPdf(
         budgetCode: item.budgetCode,
         description: item.description,
         payee: settlement.payee,
-        bankName: settlement.bankName,
-        bankAccount: settlement.bankAccount,
+        bankName: settlement.bankName || '',
+        bankAccount: settlement.bankAccount || '',
         transportInfo,
         transportCost,
         amount: item.amount,
@@ -416,8 +424,8 @@ export async function exportBatchSettlementPdf(
             <tr>
               <td>${i + 1}</td>
               <td>${escapeHtml(s.payee)}</td>
-              ${!isCorporateCard ? `<td>${escapeHtml(s.bankName)}</td>
-              <td>${escapeHtml(s.bankAccount)}</td>` : ''}
+              ${!isCorporateCard ? `<td>${escapeHtml(s.bankName || '')}</td>
+              <td>${escapeHtml(s.bankAccount || '')}</td>` : ''}
               <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
             </tr>
           `
@@ -462,8 +470,8 @@ export async function exportBatchSettlementPdf(
           budgetCode: item.budgetCode,
           description: item.description,
           payee: source.payee,
-          bankName: source.bankName,
-          bankAccount: source.bankAccount,
+          bankName: source.bankName || '',
+          bankAccount: source.bankAccount || '',
           transportInfo: ti,
           transportCost: tc,
           amount: item.amount,
@@ -496,7 +504,7 @@ export async function exportBatchSettlementPdf(
           <div><span class="label">${t('field.payee')}:</span> ${escapeHtml(source.payee)}</div>
           <div><span class="label">${t('field.phone')}:</span> ${escapeHtml(source.phone)}</div>
           <div><span class="label">${t('field.session')}:</span> ${escapeHtml(source.session)}</div>
-          ${!isCorporateCard ? `<div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName)} ${escapeHtml(source.bankAccount)}</div>` : ''}
+          ${!isCorporateCard ? `<div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(source.bankName || '')} ${escapeHtml(source.bankAccount || '')}</div>` : ''}
           <div><span class="label">${t('committee.label')}:</span> ${t(`committee.${source.committee}`)}</div>
         </div>
 
