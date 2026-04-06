@@ -293,13 +293,22 @@ export function useRejectRequest() {
         if (status !== 'pending' && status !== 'reviewed') {
           throw new Error('already_processed')
         }
-        tx.update(ref, {
-          status: 'rejected',
-          approvedBy: params.approver,
-          approvalSignature: null,
-          approvedAt: serverTimestamp(),
-          rejectionReason: params.rejectionReason
-        })
+        if (status === 'pending') {
+          tx.update(ref, {
+            status: 'rejected',
+            reviewedBy: params.approver,
+            reviewedAt: serverTimestamp(),
+            rejectionReason: params.rejectionReason
+          })
+        } else {
+          tx.update(ref, {
+            status: 'rejected',
+            approvedBy: params.approver,
+            approvalSignature: null,
+            approvedAt: serverTimestamp(),
+            rejectionReason: params.rejectionReason
+          })
+        }
       })
     },
     onSuccess: (_data, variables) => {
