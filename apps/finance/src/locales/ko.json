@@ -48,7 +48,10 @@
     "noData": "데이터가 없습니다.",
     "loadError": "데이터를 불러오는 중 오류가 발생했습니다.",
     "exportCsv": "CSV 내보내기",
-    "exporting": "내보내는 중..."
+    "exporting": "내보내는 중...",
+    "exportColumns": "내보낼 항목 선택",
+    "defaultColumns": "기본 항목",
+    "optionalColumns": "추가 항목"
   },
   "role": {
     "label": "권한",

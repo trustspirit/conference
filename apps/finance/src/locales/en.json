@@ -48,7 +48,10 @@
     "noData": "No data available.",
     "loadError": "An error occurred while loading data.",
     "exportCsv": "Export CSV",
-    "exporting": "Exporting..."
+    "exporting": "Exporting...",
+    "exportColumns": "Select Export Columns",
+    "defaultColumns": "Default Columns",
+    "optionalColumns": "Optional Columns"
   },
   "role": {
     "label": "Role",
