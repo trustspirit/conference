@@ -47,7 +47,8 @@
     "processingMessage": "처리 중입니다. 잠시 기다려주세요.",
     "noData": "데이터가 없습니다.",
     "loadError": "데이터를 불러오는 중 오류가 발생했습니다.",
-    "required": "*"
+    "exportCsv": "CSV 내보내기",
+    "exporting": "내보내는 중..."
   },
   "role": {
     "label": "권한",
@@ -112,6 +113,7 @@
     "requestedBy": "신청자",
     "approvedBy": "승인자",
     "remarks": "비고",
+    "settlementStatus": "정산현황",
     "bankSelect": "은행 선택",
     "transportType": "교통 수단",
     "transportCar": "자차",

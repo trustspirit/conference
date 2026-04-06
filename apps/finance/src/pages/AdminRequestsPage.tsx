@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import { RequestStatus } from '../types'
+import type { Committee, RequestStatus } from '../types'
 import { formatFirestoreTime } from '../lib/utils'
 import Layout from '../components/Layout'
 import StatusBadge from '../components/StatusBadge'
@@ -13,8 +13,8 @@ import Tooltip from '../components/Tooltip'
 import { useTranslation } from 'react-i18next'
 import { Select } from 'trust-ui-react'
 import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
-
-import { useInfiniteRequests } from '../hooks/queries/useRequests'
+import { useInfiniteRequests, fetchAllRequests } from '../hooks/queries/useRequests'
+import { exportRequestsCsv } from '../lib/csvExport'
 
 type SortKey = 'date' | 'payee' | 'totalAmount' | 'status'
 type SortDir = 'asc' | 'desc'
@@ -46,6 +46,7 @@ export default function AdminRequestsPage() {
   const { currentProject } = useProject()
   const role = appUser?.role || 'user'
   const [filter, setFilter] = useState<RequestStatus | 'all'>('all')
+  const [committeeFilter, setCommitteeFilter] = useState<Committee | 'all'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -53,8 +54,28 @@ export default function AdminRequestsPage() {
     filter === 'all' ? undefined : filter === 'rejected' ? ['rejected', 'force_rejected'] : filter
   const sortParam = useMemo(() => ({ field: sortKey, dir: sortDir }), [sortKey, sortDir])
 
+  const firestoreCommittee = committeeFilter === 'all' ? undefined : committeeFilter
+
   const { data, isLoading, isFetching, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useInfiniteRequests(currentProject?.id, firestoreStatus, sortParam)
+    useInfiniteRequests(currentProject?.id, firestoreStatus, sortParam, firestoreCommittee)
+
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportCsv = useCallback(async () => {
+    if (!currentProject?.id || isExporting) return
+    setIsExporting(true)
+    try {
+      const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
+      const filtered = all.filter(
+        (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+      )
+      exportRequestsCsv(filtered)
+    } catch {
+      alert(t('common.loadError'))
+    } finally {
+      setIsExporting(false)
+    }
+  }, [currentProject?.id, role, firestoreCommittee, t])
 
   const allRequests = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
@@ -95,6 +116,13 @@ export default function AdminRequestsPage() {
   }
 
   const filterTabs = ['all', 'pending', 'reviewed', 'approved', 'settled', 'rejected'] as const
+
+  const committeeTabs = useMemo(() => {
+    const canOps = canSeeCommitteeRequests(role, 'operations')
+    const canPrep = canSeeCommitteeRequests(role, 'preparation')
+    if (canOps && canPrep) return ['all', 'operations', 'preparation'] as const
+    return null // 한 위원회만 볼 수 있으면 필터 불필요
+  }, [role])
 
   // Remarks column content
   const renderRemarks = (req: (typeof allRequests)[0]) => {
@@ -178,9 +206,16 @@ export default function AdminRequestsPage() {
 
   return (
     <Layout>
-      <PageHeader title={t('nav.adminRequests')} />
+      <PageHeader
+        title={t('nav.adminRequests')}
+        action={{
+          label: isExporting ? t('common.exporting') : t('common.exportCsv'),
+          onClick: handleExportCsv,
+          disabled: isExporting
+        }}
+      />
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-6">
         {filterTabs.map((f) => (
           <button
             key={f}
@@ -190,6 +225,25 @@ export default function AdminRequestsPage() {
             {t(`status.${f}`, f)}
           </button>
         ))}
+
+        {committeeTabs && (
+          <>
+            <span className="mx-1 text-gray-300">|</span>
+            {committeeTabs.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCommitteeFilter(c)}
+                className={`px-4 py-2.5 rounded-full text-sm font-medium ${
+                  committeeFilter === c
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {c === 'all' ? t('status.all') : t(`committee.${c}Short`)}
+              </button>
+            ))}
+          </>
+        )}
       </div>
 
       {isLoading ? (

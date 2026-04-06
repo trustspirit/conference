@@ -47,7 +47,8 @@
     "processingMessage": "Processing. Please wait.",
     "noData": "No data available.",
     "loadError": "An error occurred while loading data.",
-    "required": "*"
+    "exportCsv": "Export CSV",
+    "exporting": "Exporting..."
   },
   "role": {
     "label": "Role",
@@ -112,6 +113,7 @@
     "requestedBy": "Requested by",
     "approvedBy": "Approved by",
     "remarks": "Remarks",
+    "settlementStatus": "Settlement Status",
     "bankSelect": "Select Bank",
     "transportType": "Transport Type",
     "transportCar": "Personal Car",

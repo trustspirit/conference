@@ -41,18 +41,25 @@ function stripUndefined<T>(obj: T): T {
   return obj
 }
 
+export async function fetchAllRequests(
+  projectId: string,
+  committee?: 'operations' | 'preparation'
+): Promise<PaymentRequest[]> {
+  const committeeConstraint = committee ? [where('committee', '==', committee)] : []
+  const q = query(
+    collection(db, 'requests'),
+    where('projectId', '==', projectId),
+    ...committeeConstraint,
+    orderBy('createdAt', 'desc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PaymentRequest)
+}
+
 export function useRequests(projectId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.requests.all(projectId!),
-    queryFn: async () => {
-      const q = query(
-        collection(db, 'requests'),
-        where('projectId', '==', projectId),
-        orderBy('createdAt', 'desc')
-      )
-      const snap = await getDocs(q)
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PaymentRequest)
-    },
+    queryFn: () => fetchAllRequests(projectId!),
     enabled: !!projectId
   })
 }
@@ -94,7 +101,8 @@ export function useApprovedRequests(projectId: string | undefined) {
 export function useInfiniteRequests(
   projectId: string | undefined,
   status?: RequestStatus | RequestStatus[],
-  sort?: { field: string; dir: 'asc' | 'desc' }
+  sort?: { field: string; dir: 'asc' | 'desc' },
+  committee?: 'operations' | 'preparation'
 ) {
   const sortField = sort?.field ?? 'createdAt'
   const sortDir = sort?.dir ?? 'desc'
@@ -102,8 +110,8 @@ export function useInfiniteRequests(
 
   const statusKey = Array.isArray(status) ? status.join(',') : status
   const queryKey = statusKey
-    ? queryKeys.requests.infiniteByStatus(projectId!, statusKey, sortKey)
-    : queryKeys.requests.infinite(projectId!, sortKey)
+    ? queryKeys.requests.infiniteByStatus(projectId!, statusKey, sortKey, committee)
+    : queryKeys.requests.infinite(projectId!, sortKey, committee)
 
   return useInfiniteQuery({
     queryKey,
@@ -113,9 +121,11 @@ export function useInfiniteRequests(
           ? [where('status', 'in', status)]
           : [where('status', '==', status)]
         : []
+      const committeeConstraint = committee ? [where('committee', '==', committee)] : []
       const constraints: QueryConstraint[] = [
         where('projectId', '==', projectId),
         ...statusConstraint,
+        ...committeeConstraint,
         orderBy(sortField, sortDir)
       ]
       if (pageParam) constraints.push(startAfter(pageParam))
