@@ -37,6 +37,7 @@ export default function ReceiptGallery({ receipts, title }: Props) {
                   <BankBookPreview
                     url={thumbUrl || fileUrl}
                     alt={r.fileName}
+                    maxHeight=""
                     className="absolute inset-0 w-full h-full object-contain"
                   />
                 ) : null}

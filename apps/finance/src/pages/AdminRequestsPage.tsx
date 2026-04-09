@@ -101,13 +101,24 @@ export default function AdminRequestsPage() {
 
   const threshold = currentProject?.directorApprovalThreshold ?? DEFAULT_APPROVAL_THRESHOLD
 
+  // Hide original requests that have been resubmitted (replaced by newer version)
+  const resubmittedIds = useMemo(
+    () => new Set(allRequests.filter((r) => r.originalRequestId).map((r) => r.originalRequestId!)),
+    [allRequests]
+  )
+
   const accessible = useMemo(() => {
     const filtered =
       filter === 'all'
         ? allRequests.filter(
-            (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+            (r) =>
+              canSeeCommitteeRequests(role, r.committee) &&
+              r.status !== 'cancelled' &&
+              !resubmittedIds.has(r.id)
           )
-        : allRequests.filter((r) => canSeeCommitteeRequests(role, r.committee))
+        : allRequests.filter(
+            (r) => canSeeCommitteeRequests(role, r.committee) && !resubmittedIds.has(r.id)
+          )
     // Stable secondary sort by createdAt within same primary sort value
     const toTime = (d: unknown): number => {
       if (!d) return 0
@@ -124,7 +135,7 @@ export default function AdminRequestsPage() {
         ? toTime(b.createdAt) - toTime(a.createdAt)
         : toTime(a.createdAt) - toTime(b.createdAt)
     })
-  }, [allRequests, filter, committeeFilter, role, sortKey, sortDir])
+  }, [allRequests, filter, committeeFilter, role, sortKey, sortDir, resubmittedIds])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
