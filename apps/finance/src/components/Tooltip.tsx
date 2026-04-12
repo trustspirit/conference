@@ -17,8 +17,8 @@ export default function Tooltip({ text, className = '', maxWidth = '160px' }: Pr
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
     setPosition({
-      top: rect.top + window.scrollY,
-      left: rect.left + window.scrollX
+      top: rect.top,
+      left: rect.left
     })
   }, [])
 
@@ -30,9 +30,13 @@ export default function Tooltip({ text, className = '', maxWidth = '160px' }: Pr
     }
     document.addEventListener('mousedown', handler)
     document.addEventListener('touchstart', handler)
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
     return () => {
       document.removeEventListener('mousedown', handler)
       document.removeEventListener('touchstart', handler)
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
     }
   }, [open, updatePosition])
 

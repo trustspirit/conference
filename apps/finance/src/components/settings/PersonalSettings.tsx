@@ -263,7 +263,10 @@ export default function PersonalSettings() {
             </button>
           )}
         </div>
-        <SignaturePad ref={signaturePadRef} initialData={signature} onChange={setSignature} />
+        <SignaturePad ref={signaturePadRef} initialData={signature} onChange={(dataUrl) => {
+          setSignature(dataUrl)
+          if (dataUrl) setSignatureCleared(false)
+        }} />
         <p className="text-xs text-gray-400 mt-1">{t('settings.signatureHint')}</p>
       </div>
       <div className="flex items-center gap-3">

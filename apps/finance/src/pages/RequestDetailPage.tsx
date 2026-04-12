@@ -261,6 +261,9 @@ export default function RequestDetailPage() {
         onSuccess: () => {
           setShowForceRejectionModal(false)
           navigateToNext()
+        },
+        onError: () => {
+          toast({ variant: 'danger', message: t('approval.forceRejectFailed') })
         }
       }
     )

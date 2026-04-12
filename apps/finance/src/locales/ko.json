@@ -225,6 +225,7 @@
     "forceRejectTitle": "반려 사유",
     "forceRejectDescription": "반려 사유를 입력해주세요. 신청자에게 알림이 발송됩니다.",
     "forceRejectPlaceholder": "반려 사유를 입력하세요...",
+    "forceRejectFailed": "반려 처리에 실패했습니다.",
     "rejectionReason": "반려 사유",
     "forceRejectionReason": "반려 사유",
     "reviewedBy": "검토자",

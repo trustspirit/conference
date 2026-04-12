@@ -225,6 +225,7 @@
     "forceRejectTitle": "Rejection Reason",
     "forceRejectDescription": "Please enter the reason for rejection. The applicant will be notified.",
     "forceRejectPlaceholder": "Enter rejection reason...",
+    "forceRejectFailed": "Failed to reject the request.",
     "rejectionReason": "Rejection Reason",
     "forceRejectionReason": "Rejection Reason",
     "reviewedBy": "Reviewed by",
