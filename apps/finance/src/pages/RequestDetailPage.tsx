@@ -8,7 +8,8 @@ import {
   useCancelRequest,
   useReviewRequest,
   useApproveRequest,
-  useRejectRequest
+  useRejectRequest,
+  useForceRejectRequest
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
 import { useUser } from '../hooks/queries/useUsers'
@@ -19,6 +20,7 @@ import {
   canFinalApproveCommittee,
   canFinalApproveRequest,
   canApproveDirectorRequest,
+  canForceReject,
   DEFAULT_APPROVAL_THRESHOLD
 } from '../lib/roles'
 import Layout from '../components/Layout'
@@ -27,7 +29,7 @@ import Spinner from '../components/Spinner'
 import InfoGrid from '../components/InfoGrid'
 import ItemsTable from '../components/ItemsTable'
 import ReceiptGallery from '../components/ReceiptGallery'
-import { ApprovalModal, RejectionModal } from '../components/AdminRequestModals'
+import { ApprovalModal, RejectionModal, ForceRejectionModal } from '../components/AdminRequestModals'
 import StatusProgress from '../components/StatusProgress'
 import ReviewChecklist from '../components/ReviewChecklist'
 import { Dialog, Button, useToast } from 'trust-ui-react'
@@ -50,6 +52,7 @@ export default function RequestDetailPage() {
   const reviewMutation = useReviewRequest()
   const approveMutation = useApproveRequest()
   const rejectMutation = useRejectRequest()
+  const forceRejectMutation = useForceRejectRequest()
   const budgetUsage = useBudgetUsage()
 
   const { data: request, isLoading: requestLoading } = useRequest(id)
@@ -59,6 +62,7 @@ export default function RequestDetailPage() {
 
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
+  const [showForceRejectionModal, setShowForceRejectionModal] = useState(false)
   const [showReviewConfirm, setShowReviewConfirm] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
@@ -148,6 +152,9 @@ export default function RequestDetailPage() {
       canFinalApproveCommittee(role, request.committee) &&
       (!isDirectorRequest || canApproveDirectorRequest(role)))
 
+  // Force reject action (approved → force_rejected) — finance_prep/admin only
+  const canDoForceReject = request?.status === 'approved' && canForceReject(role)
+
   const showChecklist = canDoReview || canDoApprove
   const checklistItems = canDoReview ? REVIEW_CHECKLIST : APPROVAL_CHECKLIST
 
@@ -229,6 +236,30 @@ export default function RequestDetailPage() {
       {
         onSuccess: () => {
           setShowRejectionModal(false)
+          navigateToNext()
+        }
+      }
+    )
+  }
+
+  const handleForceRejectOpen = () => {
+    if (!request) return
+    setShowForceRejectionModal(true)
+  }
+
+  const handleForceRejectConfirm = (reason: string) => {
+    if (!user || !appUser || !request) return
+    const name = appUser.displayName || appUser.name
+    forceRejectMutation.mutate(
+      {
+        requestId: request.id,
+        projectId: currentProject!.id,
+        approver: { uid: user.uid, name, email: appUser.email },
+        rejectionReason: reason
+      },
+      {
+        onSuccess: () => {
+          setShowForceRejectionModal(false)
           navigateToNext()
         }
       }
@@ -424,8 +455,8 @@ export default function RequestDetailPage() {
               </div>
             )}
 
-            {/* Action buttons: review / approve / reject */}
-            {(canDoReview || canDoApprove || canDoReject) && (
+            {/* Action buttons: review / approve / reject / force-reject */}
+            {(canDoReview || canDoApprove || canDoReject || canDoForceReject) && (
               <div className="mb-6 flex flex-wrap items-center gap-2">
                 {canDoReview && (
                   <Button
@@ -445,6 +476,11 @@ export default function RequestDetailPage() {
                 {canDoReject && (
                   <Button variant="danger" onClick={handleRejectOpen}>
                     {t('approval.reject')}
+                  </Button>
+                )}
+                {canDoForceReject && (
+                  <Button variant="danger" onClick={handleForceRejectOpen}>
+                    {t('approval.forceReject')}
                   </Button>
                 )}
                 {remainingCount > 0 && (
@@ -591,6 +627,14 @@ export default function RequestDetailPage() {
         onClose={() => setShowRejectionModal(false)}
         onConfirm={handleRejectConfirm}
         isPending={rejectMutation.isPending}
+      />
+
+      <ForceRejectionModal
+        key={showForceRejectionModal ? 'force-rejection-open' : 'force-rejection-closed'}
+        open={showForceRejectionModal}
+        onClose={() => setShowForceRejectionModal(false)}
+        onConfirm={handleForceRejectConfirm}
+        isPending={forceRejectMutation.isPending}
       />
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
