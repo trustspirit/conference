@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 export interface SignaturePadRef {
   clear: () => void
+  hasDrawn: () => boolean
 }
 
 interface Props {
@@ -22,6 +23,7 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
   const [isEmpty, setIsEmpty] = useState(!initialData)
   const initializedRef = useRef(false)
   const hasStrokeRef = useRef(false)
+  const hasEverDrawnRef = useRef(!!initialData)
 
   const getCtx = useCallback(() => {
     const canvas = canvasRef.current
@@ -104,6 +106,7 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
     setIsDrawing(false)
     if (hasStrokeRef.current && onChange && canvasRef.current) {
       setIsEmpty(false)
+      hasEverDrawnRef.current = true
       onChange(canvasRef.current.toDataURL('image/png'))
     }
   }
@@ -118,10 +121,11 @@ const SignaturePad = forwardRef<SignaturePadRef, Props>(function SignaturePad(
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     setIsEmpty(true)
+    hasEverDrawnRef.current = false
     onChange?.('')
   }
 
-  useImperativeHandle(ref, () => ({ clear }), [clear]) // eslint-disable-line react-hooks/exhaustive-deps
+  useImperativeHandle(ref, () => ({ clear, hasDrawn: () => hasEverDrawnRef.current }), [clear]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>

@@ -31,10 +31,12 @@ export default function PersonalSettings() {
   const [bankBookError, setBankBookError] = useState<string | null>(null)
   const signaturePadRef = useRef<SignaturePadRef>(null)
   const hasBankBook = !!(appUser?.bankBookUrl || appUser?.bankBookDriveUrl)
+  const [signatureCleared, setSignatureCleared] = useState(false)
 
   const handleResetSignature = useCallback(() => {
     signaturePadRef.current?.clear()
     setSignature('')
+    setSignatureCleared(true)
   }, [])
 
   // Re-format account number when bank changes
@@ -55,6 +57,10 @@ export default function PersonalSettings() {
       toast({ variant: 'danger', message: t('validation.displayNameRequired') })
       return
     }
+    // Only save signature if user actually drew something; respect explicit clear
+    const effectiveSignature = signatureCleared
+      ? ''
+      : signaturePadRef.current?.hasDrawn() ? signature : (appUser?.signature || '')
     setSaving(true)
     setSaved(false)
     try {
@@ -64,7 +70,7 @@ export default function PersonalSettings() {
         bankName: bankName.trim(),
         bankAccount: bankAccount.trim(),
         defaultCommittee,
-        signature
+        signature: effectiveSignature
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       setSaved(true)
