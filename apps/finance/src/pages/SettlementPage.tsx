@@ -255,6 +255,7 @@ export default function SettlementPage() {
           projectId: currentProject.id,
           batchId: first.isCorporateCard ? ccBatchId : batchId,
           createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
+          createdBySignature: appUser.signature || null,
           payee: first.payee,
           phone: first.phone,
           ...(first.isCorporateCard ? {} : {

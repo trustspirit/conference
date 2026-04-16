@@ -11,6 +11,7 @@ import {
   useRequestsByIds,
   useUsersByUids
 } from '../hooks/queries/useSettlements'
+import { useUser } from '../hooks/queries/useUsers'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
@@ -54,6 +55,14 @@ export default function SettlementReportPage() {
   const requesterUids = [...new Set((originalRequests || []).map((r) => r.requestedBy.uid))]
   const { data: payeeUsers, isLoading: usersLoading } = useUsersByUids(requesterUids)
 
+  // Load creator profile for signature fallback (older settlements without createdBySignature)
+  const creatorUid = settlement?.createdBy?.uid
+  const { data: creatorUser } = useUser(
+    settlement?.createdBySignature === undefined ? creatorUid : undefined
+  )
+  const creatorSignature = settlement?.createdBySignature ?? creatorUser?.signature ?? null
+  const creatorName = settlement?.createdBy?.name || ''
+
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
     setExporting(true)
@@ -67,7 +76,9 @@ export default function SettlementReportPage() {
           includeBankBooks,
           originalRequests: originalRequests || [],
           payeeUsers,
-          reportTitle: isCorporateCard ? corporateCardTitle : undefined
+          reportTitle: isCorporateCard ? corporateCardTitle : undefined,
+          createdBySignature: creatorSignature,
+          createdByName: creatorName
         }
       )
       if (!success)
@@ -354,15 +365,15 @@ export default function SettlementReportPage() {
             <div className="flex justify-between items-end mb-6 pt-4 border-t">
               <div>
                 <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
-                {settlements[0]?.requestedBySignature && (
+                {creatorSignature && (
                   <img
-                    src={settlements[0].requestedBySignature}
-                    alt="signature"
+                    src={creatorSignature}
+                    alt="creator signature"
                     className="h-10 mb-1"
                   />
                 )}
                 <div className="border-t border-gray-300 w-40 pt-0.5 text-[10px] text-gray-600">
-                  {settlements[0]?.payee}
+                  {creatorName || '\u00A0'}
                 </div>
               </div>
               <div className="text-center">

@@ -161,6 +161,8 @@ export interface PdfExportOptions {
   originalRequests?: PaymentRequest[]
   payeeUsers?: Map<string, AppUser>
   reportTitle?: string
+  createdBySignature?: string | null
+  createdByName?: string
 }
 
 /**
@@ -371,14 +373,8 @@ export async function exportBatchSettlementPdf(
   <div style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end;">
     <div style="flex:1;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Requested by</p>
-      ${
-        !needsIndividualForms && settlements[0].requestedBySignature
-          ? `<img src="${settlements[0].requestedBySignature}" alt="requester signature" style="max-height:50px;" />`
-          : needsIndividualForms
-            ? `<p style="font-size:11px; color:#666; font-style:italic;">${t('settlement.seeBelow')}</p>`
-            : ''
-      }
-      <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${escapeHtml(payeeDisplay)}</div>
+      ${options.createdBySignature ? `<img src="${options.createdBySignature}" alt="creator signature" style="max-height:50px;" />` : ''}
+      <div style="border-top:1px solid #ccc; width:200px; margin-top:4px; padding-top:2px; font-size:10px;">${options.createdByName ? escapeHtml(options.createdByName) : '&nbsp;'}</div>
     </div>
     <div style="flex:1; text-align:center;">
       <p style="font-size:10px; color:#666; margin-bottom:4px;">Approved by (signature of budget approver)</p>

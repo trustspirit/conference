@@ -166,5 +166,6 @@ export interface Settlement {
   approvedBy: { uid: string; name: string; email: string } | null
   approvers?: Array<{ uid: string; name: string; email: string }>
   approvalSignature: string | null
+  createdBySignature?: string | null
   isCorporateCard?: boolean
 }
