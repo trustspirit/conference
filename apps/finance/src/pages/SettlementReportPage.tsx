@@ -60,7 +60,7 @@ export default function SettlementReportPage() {
   const { data: creatorUser } = useUser(
     settlement?.createdBySignature === undefined ? creatorUid : undefined
   )
-  const creatorSignature = settlement?.createdBySignature ?? creatorUser?.signature ?? null
+  const creatorSignature = settlement?.createdBySignature || creatorUser?.signature || null
   const creatorName = settlement?.createdBy?.name || ''
 
   const handleExportPdf = async () => {

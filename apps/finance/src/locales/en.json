@@ -285,8 +285,7 @@
     "payeeSummary": "Payee Summary",
     "payeeCount_one": "{{count}} person",
     "payeeCount_other": "{{count}} people",
-    "corporateCardReport": "Shinhan Card Report",
-    "createdBy": "Prepared by"
+    "corporateCardReport": "Shinhan Card Report"
   },
   "dashboard": {
     "title": "Dashboard",

@@ -285,8 +285,7 @@
     "payeeSummary": "수령인별 요약",
     "payeeCount_one": "{{count}}명",
     "payeeCount_other": "{{count}}명",
-    "corporateCardReport": "신한카드 보고서",
-    "createdBy": "작성자"
+    "corporateCardReport": "신한카드 보고서"
   },
   "dashboard": {
     "title": "대시보드",
