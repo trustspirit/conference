@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from 'trust-ui-react'
@@ -36,6 +36,7 @@ export default function SettlementReportPage() {
   const perKmRate = currentProject?.perKmRate ?? DEFAULT_PER_KM_RATE
   const [exporting, setExporting] = useState(false)
   const [includeBankBooks, setIncludeBankBooks] = useState(true)
+  const [routeMapDataUrls, setRouteMapDataUrls] = useState<Map<string, string>>(new Map())
 
   const settlements =
     batchSettlements && batchSettlements.length > 0
@@ -62,6 +63,43 @@ export default function SettlementReportPage() {
   )
   const creatorSignature = settlement?.createdBySignature || creatorUser?.signature || null
   const creatorName = settlement?.createdBy?.name || ''
+
+  // Preload route map images as data URLs so they render correctly when printing via Ctrl+P
+  const settlementIds = settlements.map((s) => s.id).join(',')
+  useEffect(() => {
+    const urls = settlements
+      .flatMap((s) => s.items)
+      .map((item) => item.transportDetail?.routeMapImage?.url)
+      .filter((url): url is string => Boolean(url))
+    if (urls.length === 0) return
+
+    let cancelled = false
+    const uniqueUrls = [...new Set(urls)]
+    const map = new Map<string, string>()
+    Promise.all(
+      uniqueUrls.map(async (url) => {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) return
+          const blob = await res.blob()
+          await new Promise<void>((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              if (typeof reader.result === 'string') map.set(url, reader.result)
+              resolve()
+            }
+            reader.onerror = () => resolve()
+            reader.readAsDataURL(blob)
+          })
+        } catch {
+          // keep original URL as fallback
+        }
+      })
+    ).then(() => {
+      if (!cancelled) setRouteMapDataUrls(new Map(map))
+    })
+    return () => { cancelled = true }
+  }, [settlementIds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
@@ -143,7 +181,7 @@ export default function SettlementReportPage() {
   return (
     <Layout>
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 print:hidden">
           <Link to="/admin/settlements" className="text-sm text-purple-600 hover:underline">
             {t('settlement.backToList')}
           </Link>
@@ -407,9 +445,13 @@ export default function SettlementReportPage() {
                           href={item.transportDetail!.routeMapImage!.url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="print:pointer-events-none"
                         >
                           <img
-                            src={item.transportDetail!.routeMapImage!.url}
+                            src={
+                              routeMapDataUrls.get(item.transportDetail!.routeMapImage!.url) ||
+                              item.transportDetail!.routeMapImage!.url
+                            }
                             alt={`${item.transportDetail!.departure} → ${item.transportDetail!.destination}`}
                             className="w-full max-h-[160px] object-contain bg-gray-50"
                           />

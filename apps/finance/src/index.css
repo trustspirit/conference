@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+@media print {
+  /* Ensure images render with full color (not suppressed by browser economy mode) */
+  img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    max-width: 100%;
+  }
+}
+
 html {
   background-color: #f9fafb; /* gray-50, matches Layout bg */
 }
