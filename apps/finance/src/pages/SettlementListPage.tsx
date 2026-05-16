@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -79,6 +79,16 @@ export default function SettlementListPage() {
   const batches = useMemo(() => groupByBatch(settlements), [settlements])
 
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set())
+
+  // 무한스크롤로 새 배치가 로드될 때, 이전에 전체선택 상태였다면 새 배치도 선택에 포함
+  const prevBatchLengthRef = useRef(0)
+  useEffect(() => {
+    const prev = prevBatchLengthRef.current
+    prevBatchLengthRef.current = batches.length
+    if (prev > 0 && selectedBatchIds.size === prev && batches.length > prev) {
+      setSelectedBatchIds(new Set(batches.map((b) => b.batchId)))
+    }
+  }, [batches])
 
   const allBatchesSelected =
     batches.length > 0 && batches.every((b) => selectedBatchIds.has(b.batchId))

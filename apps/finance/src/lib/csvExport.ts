@@ -158,6 +158,10 @@ function getCsvCellValue(req: PaymentRequest, key: CsvColumnKey): string {
       return req.rejectionReason || ''
     case 'itemDescriptions':
       return req.items.map((item) => item.description).join(', ')
+    default: {
+      const _exhaustive: never = key
+      return _exhaustive
+    }
   }
 }
 

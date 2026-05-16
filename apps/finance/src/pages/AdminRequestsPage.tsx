@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
@@ -147,7 +147,17 @@ export default function AdminRequestsPage() {
     } finally {
       setIsExporting(false)
     }
-  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, t])
+  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, isExporting, t])
+
+  // 무한스크롤로 새 항목이 로드될 때, 이전에 전체선택 상태였다면 새 항목도 선택에 포함
+  const prevAccessibleLengthRef = useRef(0)
+  useEffect(() => {
+    const prev = prevAccessibleLengthRef.current
+    prevAccessibleLengthRef.current = accessible.length
+    if (prev > 0 && selectedIds.size === prev && accessible.length > prev) {
+      setSelectedIds(new Set(accessible.map((r) => r.id)))
+    }
+  }, [accessible])
 
   const allSelected =
     accessible.length > 0 && accessible.every((r) => selectedIds.has(r.id))
