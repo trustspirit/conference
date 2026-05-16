@@ -23,7 +23,7 @@ export default function CsvExportDialog({
   onExport,
   isExporting,
   exportMode,
-  onExportModeChange,
+  onExportModeChange
 }: Props) {
   const { t } = useTranslation()
   const [selectedOptionals, setSelectedOptionals] = useState<Set<string>>(new Set())
@@ -52,7 +52,7 @@ export default function CsvExportDialog({
                     value={mode}
                     checked={exportMode === mode}
                     onChange={() => onExportModeChange(mode)}
-                    className="accent-blue-600"
+                    className="accent-[#002C5F]"
                   />
                   {t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
                 </label>
@@ -64,7 +64,7 @@ export default function CsvExportDialog({
           <p className="text-xs text-gray-500 mb-2 font-medium">{t('common.defaultColumns')}</p>
           <div className="flex flex-wrap gap-2">
             {defaultColumns.map((key) => (
-              <span key={key} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded text-sm">
+              <span key={key} className="px-2.5 py-1 bg-[#E8EEF5] text-[#002C5F] rounded text-sm">
                 {getColumnLabel(key)}
               </span>
             ))}
@@ -81,7 +81,7 @@ export default function CsvExportDialog({
                   className={`px-2.5 py-1 rounded text-sm border transition-colors ${
                     selectedOptionals.has(key)
                       ? 'bg-green-50 text-green-700 border-green-300'
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
+                      : 'bg-[#F8FAFC] text-[#667085] border-[#D8DDE5] hover:border-[#002C5F]'
                   }`}
                 >
                   {selectedOptionals.has(key) ? '✓ ' : ''}

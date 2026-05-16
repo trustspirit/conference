@@ -19,7 +19,12 @@ interface Props {
   dailyCount?: Record<string, number>
 }
 
-export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTrend, dailyCount }: Props) {
+export default function MonthlyTrendChart({
+  monthlyTrend,
+  monthlyCount,
+  dailyTrend,
+  dailyCount
+}: Props) {
   const { t, i18n } = useTranslation()
   const [mode, setMode] = useState<TrendMode>('daily')
 
@@ -72,7 +77,7 @@ export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTre
     return (
       <>
         <ModeToggle mode={mode} setMode={setMode} t={t} />
-        <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
+        <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
           {t('common.noData')}
         </div>
       </>
@@ -87,12 +92,12 @@ export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTre
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#002C5F" stopOpacity={0.28} />
+                <stop offset="95%" stopColor="#002C5F" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                <stop offset="5%" stopColor="#007FA8" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#007FA8" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
@@ -130,7 +135,7 @@ export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTre
               type="monotone"
               dataKey="count"
               name="count"
-              stroke="#3B82F6"
+              stroke="#002C5F"
               fill="url(#colorCount)"
               strokeWidth={2}
             />
@@ -139,7 +144,7 @@ export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTre
               type="monotone"
               dataKey="amount"
               name="amount"
-              stroke="#10B981"
+              stroke="#007FA8"
               fill="url(#colorAmount)"
               strokeWidth={2}
             />
@@ -148,12 +153,12 @@ export default function MonthlyTrendChart({ monthlyTrend, monthlyCount, dailyTre
       </div>
       <div className="flex justify-center gap-4 mt-2">
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="w-3 h-0.5 bg-blue-500 rounded" />
-          <span className="text-gray-600">{t('dashboard.requestCount')}</span>
+          <span className="w-3 h-0.5 bg-[#002C5F] rounded" />
+          <span className="text-[#667085]">{t('dashboard.requestCount')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="w-3 h-0.5 bg-emerald-500 rounded" />
-          <span className="text-gray-600">{t('dashboard.requestAmount')}</span>
+          <span className="w-3 h-0.5 bg-[#007FA8] rounded" />
+          <span className="text-[#667085]">{t('dashboard.requestAmount')}</span>
         </div>
       </div>
     </>
@@ -171,13 +176,13 @@ function ModeToggle({
 }) {
   return (
     <div className="flex justify-end mb-2">
-      <div className="inline-flex rounded-md bg-gray-100 p-0.5">
+      <div className="inline-flex rounded-md bg-[#EEF1F5] p-0.5">
         <button
           onClick={() => setMode('daily')}
           className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'daily'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-[#002C5F] shadow-sm'
+              : 'text-[#667085] hover:text-[#002C5F]'
           }`}
         >
           {t('dashboard.dailyTrend')}
@@ -186,8 +191,8 @@ function ModeToggle({
           onClick={() => setMode('monthly')}
           className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'monthly'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-[#002C5F] shadow-sm'
+              : 'text-[#667085] hover:text-[#002C5F]'
           }`}
         >
           {t('dashboard.monthlyTrend')}

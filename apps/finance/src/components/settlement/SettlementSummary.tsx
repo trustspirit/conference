@@ -25,10 +25,10 @@ export default function SettlementSummary({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-6">{t('settlement.reviewSummary')}</h2>
+      <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('settlement.reviewSummary')}</h2>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
-        <div className="flex justify-between text-sm">
+      <div className="finance-panel rounded-lg p-4 mb-6 space-y-4 sm:p-6">
+        <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
           <span className="text-green-700 font-medium">
             {t('settlement.includedCount', { count: reviewedCount })}
           </span>
@@ -36,7 +36,7 @@ export default function SettlementSummary({
             {t('settlement.rejectedCount', { count: rejectedCount })}
           </span>
         </div>
-        <div className="text-right text-lg font-bold">
+        <div className="text-left text-lg font-bold sm:text-right">
           {t('field.totalAmount')}: ₩{includedTotal.toLocaleString()}
         </div>
 
@@ -45,9 +45,9 @@ export default function SettlementSummary({
           const first = reqs[0]
           const subtotal = reqs.reduce((sum, r) => sum + r.totalAmount, 0)
           return (
-            <div key={key} className="border-t pt-4">
-              <div className="flex justify-between items-baseline mb-2">
-                <h3 className="text-sm font-medium text-gray-800">
+            <div key={key} className="border-t border-[#D8DDE5] pt-4">
+              <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-baseline sm:justify-between">
+                <h3 className="text-sm font-medium text-[#001F43]">
                   {first.payee}
                   {!first.isCorporateCard && (
                     <span className="ml-2 text-xs text-gray-400">
@@ -57,13 +57,13 @@ export default function SettlementSummary({
                 </h3>
                 <span className="text-sm font-semibold">₩{subtotal.toLocaleString()}</span>
               </div>
-              <ul className="text-sm text-gray-600 space-y-0.5 pl-2">
+              <ul className="text-sm text-[#667085] space-y-0.5 pl-2">
                 {reqs.map((r) => (
-                  <li key={r.id} className="flex justify-between">
-                    <span>
+                  <li key={r.id} className="flex justify-between gap-3">
+                    <span className="min-w-0">
                       {r.date} — {t('form.itemCount', { count: r.items.length })}
                     </span>
-                    <span>₩{r.totalAmount.toLocaleString()}</span>
+                    <span className="shrink-0">₩{r.totalAmount.toLocaleString()}</span>
                   </li>
                 ))}
               </ul>
@@ -72,17 +72,17 @@ export default function SettlementSummary({
         })}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           onClick={onBack}
-          className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          className="finance-secondary-button px-4 py-2 text-sm rounded transition-colors"
         >
           {t('settlement.backToSelect')}
         </button>
         <button
           onClick={onSettle}
           disabled={reviewedCount === 0 || processing}
-          className="flex-1 bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400"
+          className="flex-1 finance-primary-button px-4 py-2 rounded text-sm font-semibold disabled:bg-gray-400"
         >
           {processing ? t('settlement.processing') : t('settlement.finalSettle')}
         </button>

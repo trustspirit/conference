@@ -10,12 +10,70 @@
 }
 
 html {
-  background-color: #f9fafb; /* gray-50, matches Layout bg */
+  background-color: var(--finance-bg);
 }
 
 /* Fix: Select dropdown (z-1000) renders behind Dialog (z-1050) on mobile Safari */
 :root {
   --tui-z-dropdown: 1100;
+  --finance-primary: #002c5f;
+  --finance-primary-hover: #001f43;
+  --finance-accent: #007fa8;
+  --finance-bg: #f6f7f9;
+  --finance-panel: #ffffff;
+  --finance-border: #d8dde5;
+  --finance-border-soft: #edf0f4;
+  --finance-muted: #667085;
+  --finance-text: #111827;
+  --finance-warning: #9a6b00;
+  --finance-danger: #a43f3f;
+}
+
+.finance-app-bg {
+  background-color: var(--finance-bg);
+  color: var(--finance-text);
+}
+
+.finance-panel {
+  background-color: var(--finance-panel);
+  border: 1px solid var(--finance-border);
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
+}
+
+.finance-panel-soft {
+  background-color: var(--finance-panel);
+  border: 1px solid var(--finance-border);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.035);
+}
+
+.finance-primary-button {
+  background-color: var(--finance-primary);
+  color: #ffffff;
+}
+
+.finance-primary-button:hover {
+  background-color: var(--finance-primary-hover);
+}
+
+.finance-secondary-button {
+  background-color: #ffffff;
+  color: var(--finance-primary);
+  border: 1px solid #b7c4d4;
+}
+
+.finance-secondary-button:hover {
+  background-color: #f0f4f8;
+}
+
+.finance-nav-active {
+  background-color: #e8eef5;
+  color: var(--finance-primary);
+}
+
+.finance-tab-active {
+  background-color: var(--finance-primary);
+  border-color: var(--finance-primary);
+  color: #ffffff;
 }
 
 @keyframes chatPanelEnter {

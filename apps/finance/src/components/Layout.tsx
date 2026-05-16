@@ -64,7 +64,7 @@ function NavDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-0.5 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
-          hasActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+          hasActive ? 'finance-nav-active font-semibold' : 'text-[#4B5563] hover:bg-[#F0F4F8]'
         }`}
       >
         {group.label}
@@ -73,7 +73,7 @@ function NavDropdown({
         />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div className="finance-panel-soft absolute top-full left-0 mt-1 w-44 rounded-lg py-1 z-50">
           {group.items.map((item) => (
             <Link
               key={item.to}
@@ -81,8 +81,8 @@ function NavDropdown({
               onClick={() => setOpen(false)}
               className={`block px-4 py-2 text-sm transition-colors ${
                 isActive(item.to)
-                  ? 'bg-blue-50 text-blue-700 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'finance-nav-active font-semibold'
+                  : 'text-[#374151] hover:bg-[#F0F4F8]'
               }`}
             >
               {item.label}
@@ -121,12 +121,12 @@ function UserMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm hover:bg-[#F0F4F8] transition-colors"
       >
-        <span className="text-gray-700">
+        <span className="text-[#374151]">
           {userName}
           {role !== 'user' && (
-            <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+            <span className="ml-1.5 text-xs bg-[#E8EEF5] text-[#002C5F] px-1.5 py-0.5 rounded">
               {t(`role.${role}`)}
             </span>
           )}
@@ -136,19 +136,19 @@ function UserMenu({
         />
       </button>
       {open && (
-        <div className="absolute top-full right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+        <div className="finance-panel-soft absolute top-full right-0 mt-1 w-44 rounded-lg py-1 z-50">
           <Link
             to="/profile"
             onClick={() => setOpen(false)}
             className={`block px-4 py-2 text-sm transition-colors ${
               isActive('/profile')
-                ? 'bg-blue-50 text-blue-700 font-medium'
-                : 'text-gray-700 hover:bg-gray-50'
+                ? 'finance-nav-active font-semibold'
+                : 'text-[#374151] hover:bg-[#F0F4F8]'
             }`}
           >
             {t('project.personalSettings')}
           </Link>
-          <div className="border-t border-gray-100 my-1" />
+          <div className="border-t border-[#EDF0F4] my-1" />
           <button
             onClick={() => {
               setOpen(false)
@@ -219,15 +219,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 print:hidden">
-        <div className="max-w-6xl mx-auto px-4">
+    <div className="min-h-screen finance-app-bg">
+      <nav className="bg-white border-b border-[#D8DDE5] fixed top-0 left-0 right-0 z-40 print:hidden">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3 shrink-0">
-              <Link to="/my-requests" className="font-bold text-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <Link to="/my-requests" className="truncate font-bold text-lg text-[#002C5F]">
                 {t('app.title')}
               </Link>
-              <ProjectSelector />
+              <div className="hidden sm:block">
+                <ProjectSelector />
+              </div>
             </div>
 
             {/* Desktop Nav */}
@@ -238,8 +240,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   to={item.to}
                   className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                     isActive(item.to)
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'finance-nav-active font-semibold'
+                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                   }`}
                 >
                   {item.label}
@@ -254,8 +256,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       to={item.to}
                       className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                         isActive(item.to)
-                          ? 'bg-blue-50 text-blue-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-100'
+                          ? 'finance-nav-active font-semibold'
+                          : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                       }`}
                     >
                       {item.label}
@@ -272,9 +274,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   to="/settings"
                   aria-label={t('nav.settings')}
-                  className={`p-2 rounded-md transition-colors ${isActive('/settings') ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                  className={`p-2 rounded-md transition-colors ${
+                    isActive('/settings') ? 'finance-nav-active' : 'hover:bg-[#F0F4F8]'
+                  }`}
                 >
-                  <GearIcon className="w-4 h-4 text-gray-500" />
+                  <GearIcon className="w-4 h-4 text-[#667085]" />
                 </Link>
               )}
               <UserMenu userName={userName} role={role} onLogout={logout} isActive={isActive} />
@@ -283,7 +287,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
+              className="lg:hidden ml-2 shrink-0 p-2 rounded-md text-[#002C5F] hover:bg-[#F0F4F8]"
               aria-label="Menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -297,7 +301,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden border-t border-gray-100 py-2">
+            <div className="lg:hidden max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-[#D8DDE5] px-2 py-2">
               <div className="px-3 py-2">
                 <ProjectSelector />
               </div>
@@ -311,8 +315,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-3 py-2.5 rounded-md text-sm ${
                     isActive(item.to)
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'finance-nav-active font-semibold'
+                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                   }`}
                 >
                   {item.label}
@@ -330,8 +334,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`block px-3 py-2.5 rounded-md text-sm ${
                         isActive(item.to)
-                          ? 'bg-blue-50 text-blue-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
+                          ? 'finance-nav-active font-semibold'
+                          : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                       }`}
                     >
                       {item.label}
@@ -339,15 +343,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   ))}
                 </>
               )}
-              <div className="border-t border-gray-100 mt-2 pt-2">
+              <div className="border-t border-[#EDF0F4] mt-2 pt-2">
                 {checkIsAdmin(role) && (
                   <Link
                     to="/settings"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-3 py-2.5 text-sm rounded-md ${
                       isActive('/settings')
-                        ? 'bg-blue-50 text-blue-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'finance-nav-active font-semibold'
+                        : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                     }`}
                   >
                     {t('project.projectSettings')}
@@ -358,22 +362,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`block px-3 py-2.5 text-sm rounded-md ${
                     isActive('/profile')
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'finance-nav-active font-semibold'
+                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
                   }`}
                 >
                   {t('project.personalSettings')}
                 </Link>
-                <div className="px-3 py-2 flex items-center justify-between">
-                  <span className="text-sm text-gray-500">
+                <div className="px-3 py-2 flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-sm text-[#667085]">
                     {userName}
                     {role !== 'user' && (
-                      <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                      <span className="ml-1.5 text-xs bg-[#E8EEF5] text-[#002C5F] px-1.5 py-0.5 rounded">
                         {t(`role.${role}`)}
                       </span>
                     )}
                   </span>
-                  <button onClick={logout} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:text-red-700">
+                  <button
+                    onClick={logout}
+                    className="shrink-0 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
                     {t('nav.logout')}
                   </button>
                 </div>
@@ -382,7 +389,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </nav>
-      <main className="max-w-6xl mx-auto px-4 py-6 mt-14 print:mt-0">{children}</main>
+      <main className="max-w-6xl mx-auto px-3 py-4 mt-14 sm:px-4 sm:py-6 print:mt-0">
+        {children}
+      </main>
       <FloatingChatButton />
     </div>
   )

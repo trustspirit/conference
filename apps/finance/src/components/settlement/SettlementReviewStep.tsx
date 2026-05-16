@@ -44,32 +44,36 @@ export default function SettlementReviewStep({
     <>
       {/* Mobile: collapsible checklist banner */}
       <div className="sm:hidden mb-4 max-w-3xl mx-auto">
-        <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" excludeKeys={req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
+        <ReviewChecklist
+          items={SETTLEMENT_CHECKLIST}
+          stage="settlement"
+          excludeKeys={req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined}
+        />
       </div>
 
       <div className="flex gap-6 justify-center">
         <div className="flex-1 min-w-0 max-w-3xl">
           {/* Progress header */}
-          <div className="flex items-center justify-between mb-6">
-            <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700">
+          <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
+            <button onClick={onBack} className="text-sm text-[#667085] hover:text-[#002C5F]">
               {t('settlement.backToSelect')}
             </button>
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-sm font-medium text-[#667085]">
               {t('settlement.reviewProgress', { current: reviewIndex + 1, total })}
             </span>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-6">
+          <div className="w-full bg-[#EEF1F5] rounded-full h-1.5 mb-6">
             <div
-              className="bg-purple-600 h-1.5 rounded-full transition-all"
+              className="finance-primary-button h-1.5 rounded-full transition-all"
               style={{ width: `${((reviewIndex + 1) / total) * 100}%` }}
             />
           </div>
 
           {/* Request detail card */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-lg font-bold mb-4">{req.payee}</h3>
+          <div className="finance-panel rounded-lg p-4 mb-6 sm:p-6">
+            <h3 className="text-lg font-bold text-[#002C5F] mb-4">{req.payee}</h3>
 
             <InfoGrid
               className="mb-6"
@@ -78,7 +82,14 @@ export default function SettlementReviewStep({
                 { label: t('field.date'), value: req.date },
                 { label: t('field.phone'), value: req.phone },
                 { label: t('field.session'), value: req.session },
-                ...(!req.isCorporateCard ? [{ label: t('field.bankAndAccount'), value: `${req.bankName} ${req.bankAccount}` }] : []),
+                ...(!req.isCorporateCard
+                  ? [
+                      {
+                        label: t('field.bankAndAccount'),
+                        value: `${req.bankName} ${req.bankAccount}`
+                      }
+                    ]
+                  : []),
                 {
                   label: t('field.committee'),
                   value:
@@ -96,22 +107,22 @@ export default function SettlementReviewStep({
             {/* Bank Book */}
             {bankBookUrl && !req.isCorporateCard && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">{t('field.bankBook')}</h3>
-                <div className="border border-gray-200 rounded-lg overflow-hidden inline-block">
+                <h3 className="text-sm font-medium text-[#002C5F] mb-3">{t('field.bankBook')}</h3>
+                <div className="border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
                   <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
                     <BankBookPreview
                       url={bankBookUrl}
                       alt={t('field.bankBook')}
                       maxHeight="max-h-48"
-                      className="object-contain bg-gray-50"
+                      className="object-contain bg-[#F8FAFC]"
                     />
                   </a>
-                  <div className="px-3 py-2 bg-gray-50 border-t">
+                  <div className="px-3 py-2 bg-[#F8FAFC] border-t border-[#D8DDE5]">
                     <a
                       href={bankBookUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-[#002C5F] hover:underline"
                     >
                       {t('settings.bankBookViewDrive')}
                     </a>
@@ -122,7 +133,7 @@ export default function SettlementReviewStep({
 
             {/* Meta info */}
             <InfoGrid
-              className="border-t pt-4"
+              className="border-t border-[#D8DDE5] pt-4"
               items={[
                 {
                   label: t('field.requestedBy'),
@@ -145,7 +156,7 @@ export default function SettlementReviewStep({
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => onReject(req.id)}
               className="flex-1 bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700"
@@ -163,7 +174,13 @@ export default function SettlementReviewStep({
 
         {/* Desktop: sticky sidebar checklist */}
         <div className="hidden sm:block shrink-0">
-          <ReviewChecklist items={SETTLEMENT_CHECKLIST} stage="settlement" excludeKeys={req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
+          <ReviewChecklist
+            items={SETTLEMENT_CHECKLIST}
+            stage="settlement"
+            excludeKeys={
+              req.isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined
+            }
+          />
         </div>
       </div>
 

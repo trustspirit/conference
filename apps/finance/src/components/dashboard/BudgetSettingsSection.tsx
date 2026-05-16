@@ -59,16 +59,16 @@ export default function BudgetSettingsSection({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-gray-700">{t('dashboard.budgetSettings')}</h3>
+      <div className="finance-panel rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-semibold text-[#002C5F]">{t('dashboard.budgetSettings')}</h3>
           {!editingBudget ? (
             <button
               onClick={() => {
                 setTempBudget(budget)
                 setEditingBudget(true)
               }}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[#002C5F] hover:text-[#001F43]"
             >
               {t('common.edit')}
             </button>
@@ -76,14 +76,14 @@ export default function BudgetSettingsSection({
             <div className="flex gap-2">
               <button
                 onClick={() => setEditingBudget(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-[#667085] hover:text-[#111827]"
               >
                 {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveBudget}
                 disabled={savingBudget}
-                className="text-sm text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
               >
                 {savingBudget ? t('common.saving') : t('common.save')}
               </button>
@@ -91,7 +91,7 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-1">{t('dashboard.totalBudget')}</label>
+          <label className="block text-sm text-[#667085] mb-1">{t('dashboard.totalBudget')}</label>
           {editingBudget ? (
             <input
               type="number"
@@ -102,7 +102,7 @@ export default function BudgetSettingsSection({
                   totalBudget: parseInt(e.target.value) || 0
                 })
               }
-              className="border border-gray-300 rounded px-3 py-2 text-sm w-full sm:w-48"
+              className="border border-[#D8DDE5] rounded px-3 py-2 text-sm w-full sm:w-48 focus:border-[#002C5F] focus:outline-none"
               placeholder="0"
             />
           ) : (
@@ -113,19 +113,19 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b">
+          <table className="min-w-[520px] w-full text-sm">
+            <thead className="border-b border-[#D8DDE5] bg-[#F8FAFC]">
               <tr>
                 <th className="text-left py-2">Code</th>
                 <th className="text-left py-2">{t('field.comments')}</th>
                 <th className="text-right py-2">{t('dashboard.allocatedBudget')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-[#EDF0F4]">
               {UNIQUE_BUDGET_CODES.map((code) => (
                 <tr key={code}>
                   <td className="py-2 font-mono">{code}</td>
-                  <td className="py-2 text-gray-500">{t(`budgetCode.${code}`)}</td>
+                  <td className="py-2 text-[#667085]">{t(`budgetCode.${code}`)}</td>
                   <td className="py-2 text-right">
                     {editingBudget ? (
                       <input
@@ -140,7 +140,7 @@ export default function BudgetSettingsSection({
                             }
                           })
                         }
-                        className="border border-gray-300 rounded px-2 py-1 text-sm w-full sm:w-36 text-right"
+                        className="border border-[#D8DDE5] rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-[#002C5F] focus:outline-none"
                         placeholder="0"
                       />
                     ) : (
@@ -160,7 +160,7 @@ export default function BudgetSettingsSection({
               const diff = codeTotal - cb.totalBudget
               const hasTotal = cb.totalBudget > 0
               return (
-                <tfoot className="border-t">
+                <tfoot className="border-t border-[#D8DDE5]">
                   <tr>
                     <td colSpan={2} className="py-2 text-right font-medium">
                       {t('dashboard.codeTotal')}
@@ -176,7 +176,7 @@ export default function BudgetSettingsSection({
                         {t('dashboard.difference')}
                       </td>
                       <td
-                        className={`py-2 text-right font-bold ${diff > 0 ? 'text-red-600' : 'text-green-600'}`}
+                        className={`py-2 text-right font-bold ${diff > 0 ? 'text-[#A43F3F]' : 'text-[#007FA8]'}`}
                       >
                         {diff > 0 ? '+' : ''}
                         {`\u20A9${diff.toLocaleString()}`}
@@ -188,7 +188,7 @@ export default function BudgetSettingsSection({
                       <td colSpan={2} className="py-2 text-right font-medium">
                         {t('dashboard.difference')}
                       </td>
-                      <td className="py-2 text-right font-bold text-green-600">{'\u20A9'}0</td>
+                      <td className="py-2 text-right font-bold text-[#007FA8]">{'\u20A9'}0</td>
                     </tr>
                   )}
                 </tfoot>
@@ -197,16 +197,18 @@ export default function BudgetSettingsSection({
           </table>
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-gray-700">{t('dashboard.documentNoSettings')}</h3>
+      <div className="finance-panel rounded-lg p-4 mt-6 sm:p-6">
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-semibold text-[#002C5F]">
+            {t('dashboard.documentNoSettings')}
+          </h3>
           {!editingDocNo ? (
             <button
               onClick={() => {
                 setTempDocNo(docNo)
                 setEditingDocNo(true)
               }}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-[#002C5F] hover:text-[#001F43]"
             >
               {t('common.edit')}
             </button>
@@ -214,14 +216,14 @@ export default function BudgetSettingsSection({
             <div className="flex gap-2">
               <button
                 onClick={() => setEditingDocNo(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-[#667085] hover:text-[#111827]"
               >
                 {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveDocNo}
                 disabled={savingDocNo}
-                className="text-sm text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
               >
                 {savingDocNo ? t('common.saving') : t('common.save')}
               </button>
@@ -229,19 +231,19 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">{t('dashboard.documentNo')}</label>
+          <label className="block text-sm text-[#667085] mb-1">{t('dashboard.documentNo')}</label>
           {editingDocNo ? (
             <input
               type="text"
               value={tempDocNo}
               onChange={(e) => setTempDocNo(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 text-sm w-full font-mono"
+              className="border border-[#D8DDE5] rounded px-3 py-2 text-sm w-full font-mono focus:border-[#002C5F] focus:outline-none"
               placeholder="KOR01-6762808-5xxx-KYSA2025KOR"
             />
           ) : (
             <p className="text-sm font-mono font-medium">{docNo || t('dashboard.notSet')}</p>
           )}
-          <p className="text-xs text-gray-400 mt-1">{t('dashboard.documentNoHint')}</p>
+          <p className="text-xs text-[#667085] mt-1">{t('dashboard.documentNoHint')}</p>
         </div>
       </div>
     </>

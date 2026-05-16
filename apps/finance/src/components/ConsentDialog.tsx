@@ -41,7 +41,12 @@ export default function ConsentDialog() {
         <Button variant="outline" onClick={logout}>
           {t('nav.logout', '로그아웃')}
         </Button>
-        <Button variant="primary" disabled={!agreed || saving} onClick={handleAgree}>
+        <Button
+          variant="primary"
+          className="finance-primary-button"
+          disabled={!agreed || saving}
+          onClick={handleAgree}
+        >
           {saving ? t('common.saving', '저장 중...') : t('consent.confirm', '동의하고 계속하기')}
         </Button>
       </Dialog.Actions>

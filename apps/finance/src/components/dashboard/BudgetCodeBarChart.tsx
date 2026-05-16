@@ -36,7 +36,7 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
+      <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
         {t('common.noData')}
       </div>
     )
@@ -69,7 +69,7 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
           )}
           <Bar dataKey="approved" name={t('dashboard.approvedAmount')} radius={[0, 4, 4, 0]}>
             {data.map((entry) => (
-              <Cell key={entry.code} fill={entry.over ? '#EF4444' : '#3B82F6'} />
+              <Cell key={entry.code} fill={entry.over ? '#A43F3F' : '#002C5F'} />
             ))}
           </Bar>
         </BarChart>

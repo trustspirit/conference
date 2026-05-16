@@ -5,7 +5,10 @@ import { useChat } from '../../hooks/useChatStream'
 
 function useIsMobile() {
   return useSyncExternalStore(
-    (cb) => { window.addEventListener('resize', cb); return () => window.removeEventListener('resize', cb) },
+    (cb) => {
+      window.addEventListener('resize', cb)
+      return () => window.removeEventListener('resize', cb)
+    },
     () => window.innerWidth < 640,
     () => false
   )
@@ -35,7 +38,8 @@ export default function FloatingChatButton() {
     const onTouchMove = (e: TouchEvent) => {
       let node = e.target as HTMLElement | null
       while (node && node !== el) {
-        if (node.scrollHeight > node.clientHeight && node.classList.contains('overflow-y-auto')) return
+        if (node.scrollHeight > node.clientHeight && node.classList.contains('overflow-y-auto'))
+          return
         node = node.parentElement
       }
       e.preventDefault()
@@ -49,19 +53,24 @@ export default function FloatingChatButton() {
     }
   }, [isOpen, isMobile])
 
-  const mobilePanel = isOpen && isMobile
-    ? createPortal(
-        <div ref={overlayRef} className="fixed left-0 right-0 z-[9999] bg-white" style={{ top: 0, height: '100%' }}>
-          <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen />
-        </div>,
-        document.body
-      )
-    : null
+  const mobilePanel =
+    isOpen && isMobile
+      ? createPortal(
+          <div
+            ref={overlayRef}
+            className="fixed left-0 right-0 z-[9999] bg-white"
+            style={{ top: 0, height: '100%' }}
+          >
+            <ChatPanel onClose={() => setIsOpen(false)} chat={chat} fullScreen />
+          </div>,
+          document.body
+        )
+      : null
 
   return (
     <>
       {mobilePanel}
-      <div className="fixed bottom-6 right-6 z-50 print:hidden">
+      <div className="fixed bottom-4 right-4 z-50 print:hidden sm:bottom-6 sm:right-6">
         {isOpen && !isMobile && (
           <div className="absolute bottom-16 right-0 chat-panel-enter">
             <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />
@@ -71,7 +80,7 @@ export default function FloatingChatButton() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl active:scale-95 animate-pulse-subtle"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#002C5F] text-white shadow-lg transition-all hover:bg-[#001F43] hover:shadow-xl active:scale-95 animate-pulse-subtle"
             aria-label="Open AI chat"
           >
             <svg

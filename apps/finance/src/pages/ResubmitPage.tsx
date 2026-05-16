@@ -88,14 +88,17 @@ export default function ResubmitPage() {
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const needsBankBook = !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsBankBook =
+    !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
   const onlyCarTransport =
     items.some((item) => item.transportDetail?.transportType === 'car') &&
-    items.filter((item) => item.budgetCode > 0).every((item) => item.transportDetail?.transportType === 'car')
+    items
+      .filter((item) => item.budgetCode > 0)
+      .every((item) => item.transportDetail?.transportType === 'car')
 
   const hasChanges = (): boolean => {
     if (!original) return false
@@ -139,10 +142,29 @@ export default function ResubmitPage() {
     if (original.items.length !== validItems.length) return true
     const itemsChanged = validItems.some((curr, i) => {
       const orig = original.items[i]
-      return curr.description !== orig.description || curr.budgetCode !== orig.budgetCode || curr.amount !== orig.amount || JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
+      return (
+        curr.description !== orig.description ||
+        curr.budgetCode !== orig.budgetCode ||
+        curr.amount !== orig.amount ||
+        JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
+      )
     })
     return itemsChanged
-  }, [original, payee, phone, bankName, bankAccount, date, committee, comments, files, vendorBankBookFile, inlineBankBookFile, inlineSignature, items])
+  }, [
+    original,
+    payee,
+    phone,
+    bankName,
+    bankAccount,
+    date,
+    committee,
+    comments,
+    files,
+    vendorBankBookFile,
+    inlineBankBookFile,
+    inlineSignature,
+    items
+  ])
 
   const blocker = useBlocker(({ nextLocation }) => {
     if (submitting) return false
@@ -214,7 +236,11 @@ export default function ResubmitPage() {
       }
     }
     // receipts: use new files or keep original (not required for car-only transport)
-    if (!onlyCarTransport && files.length === 0 && (!original?.receipts || original.receipts.length === 0)) {
+    if (
+      !onlyCarTransport &&
+      files.length === 0 &&
+      (!original?.receipts || original.receipts.length === 0)
+    ) {
       errs.push(t('validation.receiptsRequired'))
     }
     // Signature validation
@@ -325,7 +351,8 @@ export default function ResubmitPage() {
         const profileUpdates: Record<string, string> = {}
         if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
         if (!isCorporateCard) {
-          if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+          if (bankName.trim() !== (appUser.bankName || ''))
+            profileUpdates.bankName = bankName.trim()
           if (bankAccount.trim() !== (appUser.bankAccount || ''))
             profileUpdates.bankAccount = bankAccount.trim()
         }
@@ -373,8 +400,8 @@ export default function ResubmitPage() {
           email: appUser.email
         },
         requestedBySignature: isVendorRequest
-          ? (appUser.signature || null)
-          : (inlineSignature || appUser.signature || null),
+          ? appUser.signature || null
+          : inlineSignature || appUser.signature || null,
         reviewedBy: null,
         reviewedAt: null,
         approvedBy: null,
@@ -450,10 +477,10 @@ export default function ResubmitPage() {
 
       <form
         onSubmit={handlePreSubmit}
-        className="bg-white rounded-lg shadow p-4 sm:p-6 max-w-4xl mx-auto"
+        className="finance-panel rounded-lg p-4 sm:p-6 max-w-4xl mx-auto"
       >
-        <h2 className="text-xl font-bold mb-1">{t('approval.resubmitTitle')}</h2>
-        <p className="text-sm text-gray-500 mb-6">{t('approval.resubmitDescription')}</p>
+        <h2 className="text-xl font-bold text-[#002C5F] mb-1">{t('approval.resubmitTitle')}</h2>
+        <p className="text-sm text-[#667085] mb-6">{t('approval.resubmitDescription')}</p>
 
         {original?.isVendorRequest && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
@@ -473,14 +500,14 @@ export default function ResubmitPage() {
             fullWidth
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#374151] mb-1">
               {t('field.date')} <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
             />
           </div>
           <TextField
@@ -494,7 +521,12 @@ export default function ResubmitPage() {
           <TextField label={t('field.session')} value={session} disabled fullWidth />
           {!isCorporateCard && (
             <div>
-              <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
+              <BankSelect
+                value={bankName}
+                onChange={setBankName}
+                label={t('field.bank')}
+                required
+              />
             </div>
           )}
           {!isCorporateCard && (
@@ -523,7 +555,7 @@ export default function ResubmitPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-700">
+            <h3 className="text-sm font-medium text-[#002C5F]">
               {t('field.items')} <span className="text-red-500">*</span>
             </h3>
             <Button
@@ -571,12 +603,16 @@ export default function ResubmitPage() {
           disabled={onlyCarTransport}
           existingCount={onlyCarTransport ? 0 : original.receipts.length}
           existingLabel={`${t('field.receipts')} ${original.receipts.length} - existing kept. Upload new to replace.`}
-          existingFiles={onlyCarTransport ? [] : original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))}
+          existingFiles={
+            onlyCarTransport
+              ? []
+              : original.receipts.map((r) => ({ url: r.url, fileName: r.fileName }))
+          }
         />
 
         {isVendorRequest && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#374151] mb-1">
               {t('form.vendorBankBook')} <span className="text-red-500">*</span>
             </label>
             {original?.vendorBankBookUrl && !vendorBankBookFile && (
@@ -599,7 +635,7 @@ export default function ResubmitPage() {
                 setVendorBankBookError(null)
                 setVendorBankBookFile(f)
               }}
-              className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full text-sm text-[#667085] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#DCE6F0]"
             />
             {vendorBankBookError && (
               <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
@@ -610,27 +646,27 @@ export default function ResubmitPage() {
                   {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                 </p>
                 {vendorBankBookFile.type.startsWith('image/') && (
-                  <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                  <div className="mt-2 border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
                     <img
                       src={URL.createObjectURL(vendorBankBookFile)}
                       alt={t('form.vendorBankBook')}
-                      className="max-h-48 object-contain bg-gray-50"
+                      className="max-h-48 object-contain bg-[#F8FAFC]"
                     />
                   </div>
                 )}
               </>
             ) : (
               original?.vendorBankBookUrl && (
-                <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                <div className="mt-2 border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
                   <img
                     src={original.vendorBankBookUrl}
                     alt={t('form.vendorBankBook')}
-                    className="max-h-48 object-contain bg-gray-50"
+                    className="max-h-48 object-contain bg-[#F8FAFC]"
                   />
                 </div>
               )
             )}
-            <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
+            <p className="text-xs text-[#667085] mt-1">{t('form.vendorBankBookHint')}</p>
           </div>
         )}
 
@@ -656,11 +692,20 @@ export default function ResubmitPage() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <Link to={`/request/${original.id}`} className="text-sm text-gray-500 hover:underline">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            to={`/request/${original.id}`}
+            className="text-sm text-[#667085] hover:text-[#002C5F] hover:underline"
+          >
             {t('approval.originalRequest')}
           </Link>
-          <Button type="submit" variant="primary" disabled={submitting} loading={submitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="finance-primary-button w-full sm:w-auto"
+            disabled={submitting}
+            loading={submitting}
+          >
             {submitting ? t('common.submitting') : t('approval.resubmit')}
           </Button>
         </div>
@@ -692,7 +737,11 @@ export default function ResubmitPage() {
             <Button variant="outline" onClick={() => blocker.reset?.()}>
               {t('form.continueEditing')}
             </Button>
-            <Button variant="primary" onClick={() => blocker.proceed?.()}>
+            <Button
+              variant="primary"
+              className="finance-primary-button"
+              onClick={() => blocker.proceed?.()}
+            >
               {t('form.leavePage')}
             </Button>
           </Dialog.Actions>

@@ -117,7 +117,8 @@ export default function RequestFormPage() {
 
   const showRequestTypeDropdown = appUser ? canCreateVendorRequest(appUser.role, committee) : false
 
-  const needsBankBook = !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
+  const needsBankBook =
+    !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -144,7 +145,9 @@ export default function RequestFormPage() {
   const validItems = items.filter((item) => item.description && item.amount > 0)
   const onlyCarTransport =
     items.some((item) => item.transportDetail?.transportType === 'car') &&
-    items.filter((item) => item.budgetCode > 0).every((item) => item.transportDetail?.transportType === 'car')
+    items
+      .filter((item) => item.budgetCode > 0)
+      .every((item) => item.transportDetail?.transportType === 'car')
 
   // Check if form has meaningful content (beyond defaults)
   const hasContent = useCallback(() => {
@@ -158,11 +161,35 @@ export default function RequestFormPage() {
     if (submitted) return
     const timer = setTimeout(() => {
       if (hasContent()) {
-        saveDraft({ payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, isCorporateCard })
+        saveDraft({
+          payee,
+          phone,
+          bankName,
+          bankAccount,
+          date,
+          committee,
+          items,
+          comments,
+          isVendorRequest,
+          isCorporateCard
+        })
       }
     }, 500)
     return () => clearTimeout(timer)
-  }, [payee, phone, bankName, bankAccount, date, committee, items, comments, isVendorRequest, isCorporateCard, hasContent, submitted])
+  }, [
+    payee,
+    phone,
+    bankName,
+    bankAccount,
+    date,
+    committee,
+    items,
+    comments,
+    isVendorRequest,
+    isCorporateCard,
+    hasContent,
+    submitted
+  ])
 
   // Block navigation when form has content (except to /settings)
   const blocker = useBlocker(({ nextLocation }) => {
@@ -407,7 +434,8 @@ export default function RequestFormPage() {
         const profileUpdates: Record<string, string> = {}
         if (phone.trim() !== (appUser.phone || '')) profileUpdates.phone = phone.trim()
         if (!isCorporateCard) {
-          if (bankName.trim() !== (appUser.bankName || '')) profileUpdates.bankName = bankName.trim()
+          if (bankName.trim() !== (appUser.bankName || ''))
+            profileUpdates.bankName = bankName.trim()
           if (bankAccount.trim() !== (appUser.bankAccount || ''))
             profileUpdates.bankAccount = bankAccount.trim()
         }
@@ -455,8 +483,8 @@ export default function RequestFormPage() {
           email: appUser.email
         },
         requestedBySignature: isVendorRequest
-          ? (appUser.signature || null)
-          : (inlineSignature || appUser.signature || null),
+          ? appUser.signature || null
+          : inlineSignature || appUser.signature || null,
         reviewedBy: null,
         reviewedAt: null,
         approvedBy: null,
@@ -491,18 +519,18 @@ export default function RequestFormPage() {
     <Layout>
       {/* Draft restored banner */}
       {showDraftBanner && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 max-w-4xl mx-auto flex items-center justify-between">
-          <p className="text-sm text-blue-700">
+        <div className="finance-panel-soft mx-auto mb-4 flex max-w-4xl flex-col gap-2 rounded-lg p-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[#002C5F]">
             {t('form.draftRestored')}
             {draft?.savedAt && (
-              <span className="text-blue-500 ml-1">
+              <span className="text-[#667085] ml-1">
                 ({new Date(draft.savedAt).toLocaleString('ko-KR')})
               </span>
             )}
           </p>
           <button
             onClick={handleClearDraft}
-            className="text-xs text-blue-600 hover:text-blue-800 whitespace-nowrap ml-3"
+            className="self-end whitespace-nowrap text-xs text-[#002C5F] hover:text-[#001F43] sm:ml-3 sm:self-auto"
           >
             {t('form.draftClear')}
           </button>
@@ -511,16 +539,20 @@ export default function RequestFormPage() {
 
       {/* Mobile: collapsible submission checklist */}
       <div className="sm:hidden mb-4 max-w-4xl mx-auto">
-        <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
+        <ReviewChecklist
+          items={SUBMISSION_CHECKLIST}
+          stage="submission"
+          excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined}
+        />
       </div>
 
       <div className="flex gap-6 justify-center">
         <form
           onSubmit={handlePreSubmit}
-          className="bg-white rounded-lg shadow p-4 sm:p-6 max-w-4xl flex-1 min-w-0"
+          className="finance-panel rounded-lg p-4 sm:p-6 max-w-4xl flex-1 min-w-0"
         >
-          <h2 className="text-xl font-bold mb-1">{t('form.title')}</h2>
-          <p className="text-sm text-gray-500 mb-6">{t('form.subtitle')}</p>
+          <h2 className="text-xl font-bold text-[#002C5F] mb-1">{t('form.title')}</h2>
+          <p className="text-sm text-[#667085] mb-6">{t('form.subtitle')}</p>
 
           {showRequestTypeDropdown && (
             <div className="mb-4">
@@ -531,7 +563,9 @@ export default function RequestFormPage() {
                   { value: 'corporate_card', label: t('form.requestTypeCorporateCard') }
                 ]}
                 value={requestType}
-                onChange={(v) => handleRequestTypeChange(v as 'regular' | 'vendor' | 'corporate_card')}
+                onChange={(v) =>
+                  handleRequestTypeChange(v as 'regular' | 'vendor' | 'corporate_card')
+                }
                 label={t('form.requestType')}
                 fullWidth
               />
@@ -549,14 +583,14 @@ export default function RequestFormPage() {
               fullWidth
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 {t('field.date')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
               />
             </div>
             <TextField
@@ -571,7 +605,12 @@ export default function RequestFormPage() {
             <TextField label={t('field.session')} value={session} disabled fullWidth />
             {!isCorporateCard && (
               <div>
-                <BankSelect value={bankName} onChange={setBankName} label={t('field.bank')} required />
+                <BankSelect
+                  value={bankName}
+                  onChange={setBankName}
+                  label={t('field.bank')}
+                  required
+                />
               </div>
             )}
             {!isCorporateCard && (
@@ -600,7 +639,7 @@ export default function RequestFormPage() {
 
           <div className="mb-6">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-medium text-gray-700">
+              <h3 className="text-sm font-semibold text-[#002C5F]">
                 {t('field.items')} <span className="text-red-500">*</span>
               </h3>
               <Button
@@ -613,7 +652,7 @@ export default function RequestFormPage() {
                 {t('form.addItem')}
               </Button>
             </div>
-            <p className="text-xs text-gray-400 mb-3">{t('form.itemsHint')}</p>
+            <p className="text-xs text-[#667085] mb-3">{t('form.itemsHint')}</p>
             <div className="space-y-2">
               {items.map((item, i) => (
                 <ItemRow
@@ -635,8 +674,8 @@ export default function RequestFormPage() {
                 />
               ))}
             </div>
-            <div className="flex justify-end mt-3 pt-3 border-t">
-              <span className="text-sm font-medium">
+            <div className="flex justify-end mt-3 pt-3 border-t border-[#EDF0F4]">
+              <span className="text-sm font-semibold text-[#111827]">
                 {t('field.totalAmount')}: ₩{totalAmount.toLocaleString()}
               </span>
             </div>
@@ -651,7 +690,7 @@ export default function RequestFormPage() {
 
           {isVendorRequest && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 {t('form.vendorBankBook')} <span className="text-red-500">*</span>
               </label>
               <input
@@ -671,7 +710,7 @@ export default function RequestFormPage() {
                   setVendorBankBookError(null)
                   setVendorBankBookFile(f)
                 }}
-                className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="w-full text-sm text-[#667085] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#DCE6F0]"
               />
               {vendorBankBookError && (
                 <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
@@ -682,19 +721,19 @@ export default function RequestFormPage() {
                     {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                   </p>
                   {vendorBankBookPreviewUrl && (
-                    <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden inline-block">
+                    <div className="mt-2 border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
                       <BankBookPreview
                         url={vendorBankBookPreviewUrl}
                         alt={t('form.vendorBankBook')}
                         maxHeight="max-h-48"
-                        className="object-contain bg-gray-50"
+                        className="object-contain bg-[#F6F7F9]"
                         isPdf={vendorBankBookFile.type === 'application/pdf'}
                       />
                     </div>
                   )}
                 </>
               )}
-              <p className="text-xs text-gray-400 mt-1">{t('form.vendorBankBookHint')}</p>
+              <p className="text-xs text-[#667085] mt-1">{t('form.vendorBankBookHint')}</p>
             </div>
           )}
 
@@ -707,9 +746,7 @@ export default function RequestFormPage() {
             />
           )}
 
-          {needsSignature && (
-            <InlineSignaturePad onChange={setInlineSignature} />
-          )}
+          {needsSignature && <InlineSignaturePad onChange={setInlineSignature} />}
 
           <div className="mb-6">
             <TextField
@@ -723,7 +760,13 @@ export default function RequestFormPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" variant="primary" disabled={submitting} loading={submitting}>
+            <Button
+              type="submit"
+              variant="primary"
+              className="finance-primary-button w-full sm:w-auto"
+              disabled={submitting}
+              loading={submitting}
+            >
               {submitting ? t('common.submitting') : t('form.submitRequest')}
             </Button>
           </div>
@@ -731,7 +774,11 @@ export default function RequestFormPage() {
 
         {/* Desktop: sticky sidebar submission checklist */}
         <div className="hidden sm:block shrink-0">
-          <ReviewChecklist items={SUBMISSION_CHECKLIST} stage="submission" excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined} />
+          <ReviewChecklist
+            items={SUBMISSION_CHECKLIST}
+            stage="submission"
+            excludeKeys={isCorporateCard ? ['bankBookNameMatches', 'bankBookCorrect'] : undefined}
+          />
         </div>
       </div>
 
@@ -743,7 +790,9 @@ export default function RequestFormPage() {
         items={[
           { label: t('field.payee'), value: payee },
           { label: t('field.date'), value: date },
-          ...(!isCorporateCard ? [{ label: t('field.bankAndAccount'), value: `${bankName} ${bankAccount}` }] : []),
+          ...(!isCorporateCard
+            ? [{ label: t('field.bankAndAccount'), value: `${bankName} ${bankAccount}` }]
+            : []),
           { label: t('field.committee'), value: t(`committee.${committee}`) }
         ]}
         totalAmount={validItems.reduce((sum, item) => sum + item.amount, 0)}
@@ -776,7 +825,7 @@ export default function RequestFormPage() {
             {t('form.blockerTitle')}
           </Dialog.Title>
           <Dialog.Content>
-            <p className="text-sm text-gray-500">{t('form.blockerMessage')}</p>
+            <p className="text-sm text-[#667085]">{t('form.blockerMessage')}</p>
           </Dialog.Content>
           <Dialog.Actions>
             <Button variant="outline" onClick={() => blocker.reset?.()}>
@@ -784,6 +833,7 @@ export default function RequestFormPage() {
             </Button>
             <Button
               variant="primary"
+              className="finance-primary-button w-full sm:w-auto"
               onClick={() => {
                 clearDraft()
                 blocker.proceed?.()

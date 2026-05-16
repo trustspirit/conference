@@ -29,9 +29,9 @@ export default function InlineSignaturePad({ onChange }: Props) {
   }
 
   return (
-    <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+    <div className="mb-6 p-4 border border-[#D8DDE5] bg-[#F8FAFC] rounded-lg">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-[#374151]">
           {t('form.signatureInline')} <span className="text-red-500">*</span>
         </label>
         <Button type="button" variant="ghost" size="sm" onClick={handleClear}>
@@ -39,7 +39,7 @@ export default function InlineSignaturePad({ onChange }: Props) {
         </Button>
       </div>
       <SignaturePad ref={padRef} onChange={handleChange} />
-      <p className="text-xs text-gray-400 mt-1">{t('form.signatureInlineHint')}</p>
+      <p className="text-xs text-[#667085] mt-1">{t('form.signatureInlineHint')}</p>
     </div>
   )
 }

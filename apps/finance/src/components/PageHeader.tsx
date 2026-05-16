@@ -19,16 +19,13 @@ interface Props {
 }
 
 function ActionButton({ action }: { action: ActionItem }) {
-  const btnClass =
-    action.variant === 'purple'
-      ? 'bg-purple-600 hover:bg-purple-700'
-      : 'bg-blue-600 hover:bg-blue-700'
+  const btnClass = 'finance-primary-button'
 
   if (action.to) {
     return (
       <Link
         to={action.to}
-        className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium text-center whitespace-nowrap`}
+        className={`${btnClass} block w-full px-4 py-2 rounded text-sm font-semibold text-center whitespace-nowrap transition-colors sm:w-auto`}
       >
         {action.label}
       </Link>
@@ -38,31 +35,38 @@ function ActionButton({ action }: { action: ActionItem }) {
     <button
       onClick={action.onClick}
       disabled={action.disabled}
-      className={`${btnClass} text-white px-4 py-2 rounded text-sm font-medium whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed`}
+      className={`${btnClass} w-full px-4 py-2 rounded text-sm font-semibold whitespace-nowrap transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:w-auto`}
     >
       {action.label}
     </button>
   )
 }
 
-export default function PageHeader({ title, description, backTo, backLabel, action, actions }: Props) {
+export default function PageHeader({
+  title,
+  description,
+  backTo,
+  backLabel,
+  action,
+  actions
+}: Props) {
   const { t } = useTranslation()
   const allActions = actions ?? (action ? [action] : [])
 
   return (
     <div className="mb-6">
       {backTo && (
-        <Link to={backTo} className="text-sm text-gray-500 hover:text-gray-700 mb-2 inline-block">
+        <Link to={backTo} className="text-sm text-[#667085] hover:text-[#002C5F] mb-2 inline-block">
           ← {backLabel || t('common.back')}
         </Link>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold">{title}</h2>
-          {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+          <h2 className="text-xl font-bold text-[#002C5F]">{title}</h2>
+          {description && <p className="text-sm text-[#667085] mt-1">{description}</p>}
         </div>
         {allActions.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             {allActions.map((a, i) => (
               <ActionButton key={i} action={a} />
             ))}

@@ -149,7 +149,7 @@ export default function PlaceSearchInput({ label, value, coord, onChange, placeh
         {sdkReady && isManual && (
           <button
             type="button"
-            className="text-xs text-blue-500 hover:underline mt-1"
+            className="text-xs text-[#007FA8] hover:underline mt-1"
             onClick={() => setIsManual(false)}
           >
             {t('field.placeSearchPlaceholder')}
@@ -173,21 +173,21 @@ export default function PlaceSearchInput({ label, value, coord, onChange, placeh
       />
       {coord && <p className="text-xs text-gray-400 mt-0.5 truncate">{coord.addressName}</p>}
       {showDropdown && (
-        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-[#D8DDE5] rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {results.map((r, i) => (
             <button
               key={i}
               type="button"
-              className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+              className="w-full text-left px-3 py-2 hover:bg-[#E8EEF5] border-b border-[#EDF0F4] last:border-b-0"
               onClick={() => handleSelect(r)}
             >
-              <span className="text-sm font-medium text-gray-800">{r.placeName}</span>
+              <span className="text-sm font-medium text-[#001F43]">{r.placeName}</span>
               <span className="block text-xs text-gray-400 truncate">{r.addressName}</span>
             </button>
           ))}
           <button
             type="button"
-            className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 border-t border-gray-200"
+            className="w-full text-left px-3 py-2 text-sm text-[#667085] hover:bg-[#F0F4F8] border-t border-[#D8DDE5]"
             onClick={handleManualInput}
           >
             {t('field.manualInput')}

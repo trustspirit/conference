@@ -62,7 +62,7 @@ export default function ProjectCreateForm({
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder={t('project.name')}
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
         autoFocus
       />
       <input
@@ -70,21 +70,21 @@ export default function ProjectCreateForm({
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
         placeholder={t('project.description')}
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+        className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleCreate}
           disabled={saving || !name.trim()}
-          className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          className="finance-primary-button text-sm px-4 py-1.5 rounded disabled:bg-gray-400"
         >
           {saving ? t('common.saving') : t('project.create')}
         </button>
         <button
           onClick={onCancel}
           disabled={saving}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-sm text-[#667085] hover:text-[#002C5F]"
         >
           {t('common.cancel')}
         </button>

@@ -13,7 +13,7 @@ export default function ReceiptGallery({ receipts, title }: Props) {
 
   return (
     <div className="mb-6">
-      <h3 className="text-sm font-medium text-gray-700 mb-3">
+      <h3 className="text-sm font-medium text-[#002C5F] mb-3">
         {title ?? t('field.receipts')} ({receipts.length})
       </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -30,9 +30,9 @@ export default function ReceiptGallery({ receipts, title }: Props) {
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-400 transition-colors"
+              className="relative block border border-[#D8DDE5] rounded-lg overflow-hidden hover:border-[#002C5F] transition-colors"
             >
-              <div className="aspect-[3/4] overflow-hidden bg-gray-50 relative">
+              <div className="aspect-[3/4] overflow-hidden bg-[#F8FAFC] relative">
                 {fileUrl ? (
                   <BankBookPreview
                     url={thumbUrl || fileUrl}
@@ -42,7 +42,7 @@ export default function ReceiptGallery({ receipts, title }: Props) {
                   />
                 ) : null}
               </div>
-              <span className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/50 text-[10px] text-white truncate">
+              <span className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-[#001F43]/80 text-[10px] text-white truncate">
                 {r.fileName}
               </span>
             </a>

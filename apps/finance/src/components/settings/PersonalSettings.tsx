@@ -60,7 +60,9 @@ export default function PersonalSettings() {
     // Only save signature if user actually drew something; respect explicit clear
     const effectiveSignature = signatureCleared
       ? ''
-      : signaturePadRef.current?.hasDrawn() ? signature : (appUser?.signature || '')
+      : signaturePadRef.current?.hasDrawn()
+        ? signature
+        : appUser?.signature || ''
     setSaving(true)
     setSaved(false)
     try {
@@ -103,14 +105,17 @@ export default function PersonalSettings() {
 
   return (
     <>
-      <div className="mb-6 p-4 border border-gray-200 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="mb-6 p-4 border border-[#D8DDE5] rounded-lg">
+        <label className="block text-sm font-medium text-[#002C5F] mb-2">
           {i18n.language.startsWith('ko') ? '언어' : 'Language'}
         </label>
         <div className="flex gap-2">
           <Button
             variant={i18n.language.startsWith('ko') ? 'primary' : 'secondary'}
             size="sm"
+            className={
+              i18n.language.startsWith('ko') ? 'finance-primary-button' : 'finance-secondary-button'
+            }
             onClick={() => i18n.changeLanguage('ko')}
           >
             한국어
@@ -118,6 +123,9 @@ export default function PersonalSettings() {
           <Button
             variant={i18n.language.startsWith('en') ? 'primary' : 'secondary'}
             size="sm"
+            className={
+              i18n.language.startsWith('en') ? 'finance-primary-button' : 'finance-secondary-button'
+            }
             onClick={() => i18n.changeLanguage('en')}
           >
             English
@@ -162,8 +170,8 @@ export default function PersonalSettings() {
           fullWidth
         />
       </div>
-      <div className="mb-4 p-4 border border-gray-200 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="mb-4 p-4 border border-[#D8DDE5] rounded-lg">
+        <label className="block text-sm font-medium text-[#002C5F] mb-2">
           {t('field.bankBook')} <span className="text-red-500">*</span>
         </label>
         {hasBankBook && (
@@ -176,7 +184,7 @@ export default function PersonalSettings() {
                 href={appUser?.bankBookUrl || appUser?.bankBookDriveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-[#002C5F] hover:underline"
               >
                 {t('settings.bankBookViewDrive')}
               </a>
@@ -185,7 +193,7 @@ export default function PersonalSettings() {
               <BankBookPreview
                 url={(appUser.bankBookUrl || appUser.bankBookDriveUrl)!}
                 alt={t('field.bankBook')}
-                className="border border-gray-200 rounded"
+                className="border border-[#D8DDE5] rounded"
               />
             )}
           </div>
@@ -208,14 +216,14 @@ export default function PersonalSettings() {
               setBankBookError(null)
               setBankBookFile(f)
             }}
-            className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#E8EEF5]"
           />
           {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
           {bankBookFile && (
             <Button
               variant="primary"
               size="sm"
-              className="mt-2"
+              className="finance-primary-button mt-2"
               onClick={handleUploadBankBook}
               disabled={uploadingBankBook}
               loading={uploadingBankBook}
@@ -239,7 +247,7 @@ export default function PersonalSettings() {
       </div>
       <div className="mb-6">
         <div className="flex items-center gap-1.5 mb-1">
-          <label className="text-sm font-medium text-gray-700">{t('field.signature')}</label>
+          <label className="text-sm font-medium text-[#002C5F]">{t('field.signature')}</label>
           {signature && (
             <button
               type="button"
@@ -263,14 +271,24 @@ export default function PersonalSettings() {
             </button>
           )}
         </div>
-        <SignaturePad ref={signaturePadRef} initialData={signature} onChange={(dataUrl) => {
-          setSignature(dataUrl)
-          if (dataUrl) setSignatureCleared(false)
-        }} />
+        <SignaturePad
+          ref={signaturePadRef}
+          initialData={signature}
+          onChange={(dataUrl) => {
+            setSignature(dataUrl)
+            if (dataUrl) setSignatureCleared(false)
+          }}
+        />
         <p className="text-xs text-gray-400 mt-1">{t('settings.signatureHint')}</p>
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="primary" onClick={handleSave} disabled={saving} loading={saving}>
+        <Button
+          variant="primary"
+          className="finance-primary-button"
+          onClick={handleSave}
+          disabled={saving}
+          loading={saving}
+        >
           {saving ? t('common.saving') : t('common.save')}
         </Button>
         {saved && <span className="text-sm text-green-600">{t('common.saved')}</span>}

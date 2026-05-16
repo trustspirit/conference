@@ -43,7 +43,7 @@ export default function InfiniteScrollSentinel({
   return (
     <div ref={sentinelRef} className="flex justify-center py-4">
       {isFetchingNextPage && (
-        <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-gray-200 border-t-[#002C5F] rounded-full animate-spin" />
       )}
     </div>
   )

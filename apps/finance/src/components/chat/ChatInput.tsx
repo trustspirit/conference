@@ -37,7 +37,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
   }
 
   return (
-    <div className="flex items-end gap-2 border-t border-gray-200 p-3">
+    <div className="flex items-end gap-2 border-t border-[#D8DDE5] p-3">
       <textarea
         ref={textareaRef}
         value={value}
@@ -47,12 +47,12 @@ export default function ChatInput({ onSend, disabled }: Props) {
         placeholder={t('chat.placeholder')}
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
+        className="flex-1 resize-none rounded-lg border border-[#D8DDE5] px-3 py-2 text-base sm:text-sm focus:border-[#002C5F] focus:outline-none disabled:bg-[#F8FAFC]"
       />
       <button
         onClick={handleSend}
         disabled={disabled || !value.trim()}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:bg-gray-300"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#002C5F] text-white transition-colors hover:bg-[#001F43] disabled:bg-gray-300"
         aria-label={t('chat.send')}
       >
         <svg

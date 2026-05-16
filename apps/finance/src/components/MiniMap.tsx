@@ -104,7 +104,7 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
   return (
     <div
       ref={setRefs}
-      className={`w-full rounded-lg border border-gray-200 overflow-hidden ${hasRoute ? 'h-[200px]' : 'h-[150px]'}`}
+      className={`w-full rounded-lg border border-[#D8DDE5] overflow-hidden ${hasRoute ? 'h-[200px]' : 'h-[150px]'}`}
     />
   )
 }

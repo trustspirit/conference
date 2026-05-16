@@ -32,10 +32,7 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
   const bankBookImg = user.bankBookUrl || user.bankBookDriveUrl
 
   return (
-    <div
-      ref={ref}
-      className="z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-72"
-    >
+    <div ref={ref} className="finance-panel z-50 rounded-lg p-4 w-72">
       <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
       <p className="text-sm text-gray-900 mb-2">
         {user.bankName ? `${user.bankName} ${user.bankAccount}` : '-'}
@@ -51,7 +48,7 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
             url={bankBookImg}
             alt={t('field.bankBook')}
             maxHeight="max-h-40"
-            className="w-full object-contain bg-gray-50 rounded border border-gray-200"
+            className="w-full object-contain bg-[#F8FAFC] rounded border border-[#D8DDE5]"
           />
         </a>
       ) : (
@@ -75,7 +72,11 @@ function UserNameWithTooltip({
   const { t } = useTranslation()
   const [showTooltip, setShowTooltip] = useState(false)
   const anchorRef = useRef<HTMLSpanElement>(null)
-  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; above: boolean }>({ top: 0, left: 0, above: false })
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; above: boolean }>({
+    top: 0,
+    left: 0,
+    above: false
+  })
 
   const openTooltip = useCallback(() => {
     if (anchorRef.current) {
@@ -96,7 +97,7 @@ function UserNameWithTooltip({
     <>
       <span
         ref={anchorRef}
-        className="cursor-pointer hover:text-blue-600 underline decoration-dotted underline-offset-2"
+        className="cursor-pointer hover:text-[#002C5F] underline decoration-dotted underline-offset-2"
         onMouseEnter={openTooltip}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={openTooltip}
@@ -107,7 +108,7 @@ function UserNameWithTooltip({
         <span className="ml-1 text-xs text-gray-400">({user.name})</span>
       )}
       {user.uid === currentUser?.uid && (
-        <span className="ml-2 text-xs text-blue-600">{t('users.me')}</span>
+        <span className="ml-2 text-xs text-[#002C5F]">{t('users.me')}</span>
       )}
       {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
       {showTooltip && (
@@ -149,11 +150,11 @@ function MobileUserCard({
   const bankBookImg = u.bankBookUrl || u.bankBookDriveUrl
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="finance-panel rounded-lg p-4">
       <div className="mb-3">
         <p className="font-medium text-gray-900">
           <span
-            className="cursor-pointer underline decoration-dotted underline-offset-2 text-blue-600"
+            className="cursor-pointer underline decoration-dotted underline-offset-2 text-[#002C5F]"
             onClick={() => setShowBank((v) => !v)}
           >
             {u.displayName || u.name || '-'}
@@ -162,14 +163,14 @@ function MobileUserCard({
             <span className="ml-1 text-xs text-gray-400">({u.name})</span>
           )}
           {u.uid === currentUser?.uid && (
-            <span className="ml-2 text-xs text-blue-600">{t('users.me')}</span>
+            <span className="ml-2 text-xs text-[#002C5F]">{t('users.me')}</span>
           )}
           {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
         </p>
         <p className="text-sm text-gray-500 mt-1">{u.email}</p>
         <p className="text-sm text-gray-500">{u.phone || '-'}</p>
         {showBank && (
-          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mt-2 p-3 bg-[#F8FAFC] rounded-lg border border-[#D8DDE5]">
             <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
             <p className="text-sm text-gray-900 mb-2">
               {u.bankName ? `${u.bankName} ${u.bankAccount}` : '-'}
@@ -181,7 +182,7 @@ function MobileUserCard({
                   url={bankBookImg}
                   alt={t('field.bankBook')}
                   maxHeight="max-h-40"
-                  className="w-full object-contain bg-white rounded border border-gray-200"
+                  className="w-full object-contain bg-white rounded border border-[#D8DDE5]"
                 />
               </a>
             ) : (
@@ -339,32 +340,32 @@ export default function AdminUsersPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="bg-white rounded-lg shadow">
+            <div className="finance-panel rounded-lg">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.displayName')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.email')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.phone')}
                     </th>
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-gray-600 min-w-[180px]">
+                      <th className="text-center px-4 py-3 font-medium text-[#667085] min-w-[180px]">
                         {t('role.label')}
                       </th>
                     )}
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-gray-600 w-16"></th>
+                      <th className="text-center px-4 py-3 font-medium text-[#667085] w-16"></th>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-[#EDF0F4]">
                   {users.map((u) => (
-                    <tr key={u.uid} className="hover:bg-gray-50">
+                    <tr key={u.uid} className="hover:bg-[#F8FAFC]">
                       <td className="px-4 py-3">
                         <UserNameWithTooltip
                           user={u}

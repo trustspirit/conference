@@ -25,7 +25,7 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
+      <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
         {t('common.noData')}
       </div>
     )
@@ -52,7 +52,7 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
           <Bar
             dataKey="approved"
             name={t('dashboard.approvedAmount')}
-            fill="#3B82F6"
+            fill="#002C5F"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

@@ -10,19 +10,20 @@ export default function StatCard({
   icon?: React.ReactNode
 }) {
   const colors: Record<string, string> = {
-    gray: 'bg-white',
-    yellow: 'bg-yellow-50 border-yellow-200',
-    green: 'bg-green-50 border-green-200',
-    blue: 'bg-blue-50 border-blue-200',
-    red: 'bg-red-50 border-red-200'
+    gray: 'bg-[#002C5F]',
+    yellow: 'bg-[#6B7280]',
+    green: 'bg-[#007FA8]',
+    blue: 'bg-[#002C5F]',
+    red: 'bg-[#A43F3F]'
   }
   return (
-    <div className={`rounded-lg shadow border p-4 ${colors[color]}`}>
+    <div className="finance-panel rounded-lg p-4 overflow-hidden">
       <div className="flex items-center gap-2 mb-1">
         {icon}
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xs text-[#667085]">{label}</p>
       </div>
-      <p className="text-lg font-bold">{value}</p>
+      <p className="text-lg font-bold text-[#111827]">{value}</p>
+      <div className={`mt-3 h-0.5 w-full ${colors[color]}`} />
     </div>
   )
 }

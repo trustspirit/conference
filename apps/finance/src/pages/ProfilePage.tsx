@@ -7,8 +7,8 @@ export default function ProfilePage() {
 
   return (
     <Layout>
-      <div className="bg-white rounded-lg shadow p-6 max-w-lg mx-auto">
-        <h2 className="text-xl font-bold mb-6">{t('project.personalSettings')}</h2>
+      <div className="finance-panel rounded-lg p-4 max-w-lg mx-auto sm:p-6">
+        <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('project.personalSettings')}</h2>
         <PersonalSettings />
       </div>
     </Layout>

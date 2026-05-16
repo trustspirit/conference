@@ -30,7 +30,7 @@ function isPdf(fileName: string) {
 function PdfIcon({ className }: { className?: string }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center bg-gray-50 text-gray-400 ${className}`}
+      className={`flex flex-col items-center justify-center bg-[#F8FAFC] text-[#9AA4B2] ${className}`}
     >
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -215,12 +215,16 @@ export default function ReceiptsPage() {
     <Layout>
       <PageHeader title={t('receipts.title')} />
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {(['all', 'operations', 'preparation'] as const).map((f) => (
           <button
             key={f}
             onClick={() => handleFilterChange(f)}
-            className={`px-3 py-1 rounded text-sm ${committeeFilter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`px-3 py-1 rounded text-sm font-semibold border transition-colors ${
+              committeeFilter === f
+                ? 'finance-tab-active'
+                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+            }`}
           >
             {f === 'all' ? t('status.all') : t(`committee.${f}Short`)}
           </button>
@@ -230,7 +234,7 @@ export default function ReceiptsPage() {
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="ml-auto px-4 py-1.5 bg-purple-600 text-white rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400 flex items-center gap-1.5"
+            className="flex w-full items-center justify-center gap-1.5 rounded px-4 py-1.5 text-sm font-semibold finance-primary-button disabled:bg-gray-400 sm:ml-auto sm:w-auto"
           >
             <DownloadIcon className="w-4 h-4" />
             {downloading
@@ -242,7 +246,7 @@ export default function ReceiptsPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-xs text-[#667085] mb-4">
         {t('receipts.totalCount', { count: filtered.length })}
       </p>
 
@@ -254,9 +258,9 @@ export default function ReceiptsPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="bg-white rounded-lg shadow">
+            <div className="finance-panel rounded-lg overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
                   <tr>
                     <th className="px-4 py-3 w-10">
                       <input
@@ -266,29 +270,29 @@ export default function ReceiptsPage() {
                         className="rounded border-gray-300"
                       />
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.receipts')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.payee')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.date')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.committee')}
                     </th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
+                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-[#EDF0F4]">
                   {filtered.map((row) => {
                     const key = getRowKey(row)
                     const imgUrl = row.receipt.url || row.receipt.driveUrl
                     return (
                       <tr
                         key={key}
-                        className={`hover:bg-gray-50 ${selected.has(key) ? 'bg-blue-50' : ''}`}
+                        className={`hover:bg-[#F8FAFC] ${selected.has(key) ? 'bg-[#E8EEF5]' : ''}`}
                       >
                         <td className="px-4 py-3">
                           <input
@@ -306,15 +310,15 @@ export default function ReceiptsPage() {
                                   <object
                                     data={imgUrl}
                                     type="application/pdf"
-                                    className="w-10 h-10 rounded border border-gray-200 bg-white pointer-events-none"
+                                    className="w-10 h-10 rounded border border-[#D8DDE5] bg-white pointer-events-none"
                                   >
-                                    <PdfIcon className="w-10 h-10 rounded border border-gray-200" />
+                                    <PdfIcon className="w-10 h-10 rounded border border-[#D8DDE5]" />
                                   </object>
                                 ) : (
                                   <img
                                     src={imgUrl}
                                     alt={row.receipt.fileName}
-                                    className="w-10 h-10 object-cover rounded border border-gray-200 bg-gray-50"
+                                    className="w-10 h-10 object-cover rounded border border-[#D8DDE5] bg-[#F8FAFC]"
                                   />
                                 )}
                               </a>
@@ -323,7 +327,7 @@ export default function ReceiptsPage() {
                               href={imgUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline text-xs truncate max-w-[200px]"
+                              className="text-[#002C5F] hover:underline text-xs truncate max-w-[200px]"
                             >
                               {row.receipt.fileName}
                             </a>
@@ -337,7 +341,7 @@ export default function ReceiptsPage() {
                         <td className="px-4 py-3 text-center">
                           <Link
                             to={`/request/${row.requestId}`}
-                            className="text-xs text-blue-600 hover:underline"
+                            className="text-xs text-[#002C5F] hover:underline"
                           >
                             {t('receipts.viewRequest')}
                           </Link>
@@ -358,7 +362,7 @@ export default function ReceiptsPage() {
               return (
                 <div
                   key={key}
-                  className={`bg-white rounded-lg shadow p-3 flex items-center gap-3 ${selected.has(key) ? 'ring-2 ring-blue-400' : ''}`}
+                  className={`finance-panel rounded-lg p-3 flex items-center gap-3 ${selected.has(key) ? 'ring-2 ring-[#7AA7C7]' : ''}`}
                   onClick={() => toggleOne(key)}
                 >
                   <input
@@ -373,15 +377,15 @@ export default function ReceiptsPage() {
                       <object
                         data={imgUrl}
                         type="application/pdf"
-                        className="w-12 h-12 rounded border border-gray-200 bg-white pointer-events-none shrink-0"
+                        className="w-12 h-12 rounded border border-[#D8DDE5] bg-white pointer-events-none shrink-0"
                       >
-                        <PdfIcon className="w-12 h-12 rounded border border-gray-200 shrink-0" />
+                        <PdfIcon className="w-12 h-12 rounded border border-[#D8DDE5] shrink-0" />
                       </object>
                     ) : (
                       <img
                         src={imgUrl}
                         alt={row.receipt.fileName}
-                        className="w-12 h-12 object-cover rounded border border-gray-200 bg-gray-50 shrink-0"
+                        className="w-12 h-12 object-cover rounded border border-[#D8DDE5] bg-[#F8FAFC] shrink-0"
                       />
                     ))}
                   <div className="min-w-0 flex-1">
@@ -397,7 +401,7 @@ export default function ReceiptsPage() {
                       <Link
                         to={`/request/${row.requestId}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-blue-600 hover:underline"
+                        className="text-[#002C5F] hover:underline"
                       >
                         {t('receipts.viewRequest')}
                       </Link>

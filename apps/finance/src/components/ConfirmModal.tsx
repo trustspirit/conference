@@ -70,7 +70,7 @@ export default function ConfirmModal({
         </div>
 
         {totalAmount !== undefined && (
-          <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+          <div className="bg-[#E8EEF5] border border-[#D8DDE5] rounded p-3 mb-4">
             <div className="flex justify-between text-sm font-medium">
               <span>{resolvedTotalLabel}</span>
               <span>
@@ -78,7 +78,7 @@ export default function ConfirmModal({
                 {totalAmount.toLocaleString()}
               </span>
             </div>
-            <p className="text-xs text-blue-600 mt-2">
+            <p className="text-xs text-[#002C5F] mt-2">
               {t('form.totalAmountCheck', { amount: totalAmount.toLocaleString() })}
             </p>
           </div>
@@ -91,12 +91,12 @@ export default function ConfirmModal({
 
             {/* Items summary */}
             {requestItems && requestItems.length > 0 && (
-              <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
+              <div className="mb-3 p-2 bg-[#F8FAFC] border border-[#D8DDE5] rounded text-xs">
                 <table className="w-full">
                   <tbody>
                     {requestItems.map((item, i) => (
                       <tr key={i}>
-                        <td className="py-0.5 text-gray-600">
+                        <td className="py-0.5 text-[#667085]">
                           {item.description}
                           {item.transportDetail && (
                             <div className="text-[10px] text-gray-400 mt-0.5">
@@ -127,9 +127,12 @@ export default function ConfirmModal({
             )}
 
             {/* Receipt images */}
-            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto sm:grid-cols-2">
               {receiptFiles!.map((f, i) => (
-                <div key={i} className="border border-gray-200 rounded overflow-hidden bg-gray-50">
+                <div
+                  key={i}
+                  className="border border-[#D8DDE5] rounded overflow-hidden bg-[#F8FAFC]"
+                >
                   {previews[i].isImage ? (
                     <img
                       src={previews[i].url}
@@ -146,7 +149,7 @@ export default function ConfirmModal({
                         >
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 8V3l5 5h-5zm-2 8.5c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-4c0-.28.22-.5.5-.5h2c.28 0 .5.22.5.5v4z" />
                         </svg>
-                        <span className="text-xs text-gray-600 text-center truncate max-w-[90%]">
+                        <span className="text-xs text-[#667085] text-center truncate max-w-[90%]">
                           {f.name}
                         </span>
                       </div>
@@ -165,7 +168,7 @@ export default function ConfirmModal({
         <Button variant="outline" onClick={onClose}>
           {resolvedCancel}
         </Button>
-        <Button variant="primary" onClick={onConfirm}>
+        <Button variant="primary" className="finance-primary-button" onClick={onConfirm}>
           {resolvedConfirm}
         </Button>
       </Dialog.Actions>

@@ -44,7 +44,7 @@ export default function MemberManagement({ project }: { project: Project }) {
         {users.map((u) => (
           <label
             key={u.uid}
-            className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 px-2 py-1.5 rounded"
+            className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[#F0F4F8] px-2 py-1.5 rounded"
           >
             <input
               type="checkbox"

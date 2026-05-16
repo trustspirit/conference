@@ -12,8 +12,8 @@ export default function InlineBankBookUpload({ file, error, onFileChange, onErro
   const { t } = useTranslation()
 
   return (
-    <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+    <div className="mb-6 p-4 border border-[#D8DDE5] bg-[#F8FAFC] rounded-lg">
+      <label className="block text-sm font-medium text-[#374151] mb-1">
         {t('form.bankBookUploadInline')} <span className="text-red-500">*</span>
       </label>
       <input
@@ -33,7 +33,7 @@ export default function InlineBankBookUpload({ file, error, onFileChange, onErro
           onErrorChange(null)
           onFileChange(f)
         }}
-        className="w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        className="w-full text-sm text-[#667085] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#DCE6F0]"
       />
       {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
       {file && (
@@ -41,7 +41,7 @@ export default function InlineBankBookUpload({ file, error, onFileChange, onErro
           {file.name} ({(file.size / 1024).toFixed(0)}KB)
         </p>
       )}
-      <p className="text-xs text-gray-400 mt-1">{t('form.bankBookUploadInlineHint')}</p>
+      <p className="text-xs text-[#667085] mt-1">{t('form.bankBookUploadInlineHint')}</p>
     </div>
   )
 }

@@ -14,21 +14,21 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
 
   const titleColor =
     stage === 'submission'
-      ? 'text-blue-700'
+      ? 'text-[#002C5F]'
       : stage === 'approval'
         ? 'text-green-700'
         : 'text-amber-700'
 
   const bgColor =
     stage === 'submission'
-      ? 'bg-blue-50/80 border-blue-200'
+      ? 'bg-[#E8EEF5]/80 border-[#D8DDE5]'
       : stage === 'approval'
         ? 'bg-green-50/80 border-green-200'
         : 'bg-amber-50/80 border-amber-200'
 
   const bulletColor =
     stage === 'submission'
-      ? 'text-blue-400'
+      ? 'text-[#7AA7C7]'
       : stage === 'approval'
         ? 'text-green-400'
         : 'text-amber-400'
@@ -61,7 +61,7 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
           {filteredItems.map((item) => (
             <li
               key={item.key}
-              className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed"
+              className="flex items-start gap-1.5 text-xs text-[#667085] leading-relaxed"
             >
               <span className={`mt-0.5 ${bulletColor}`}>&#8226;</span>
               {t(`checklist.${item.key}`)}
@@ -101,7 +101,7 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
             {filteredItems.map((item) => (
               <li
                 key={item.key}
-                className="flex items-start gap-1.5 text-xs text-gray-600 leading-relaxed"
+                className="flex items-start gap-1.5 text-xs text-[#667085] leading-relaxed"
               >
                 <span className={`mt-0.5 ${bulletColor}`}>&#8226;</span>
                 {t(`checklist.${item.key}`)}

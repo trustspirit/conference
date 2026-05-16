@@ -8,7 +8,12 @@ import BankBookPreview from './BankBookPreview'
 interface ApprovalModalProps {
   open: boolean
   onClose: () => void
-  request: { payee: string; bankName: string; bankAccount: string; isCorporateCard?: boolean } | null
+  request: {
+    payee: string
+    bankName: string
+    bankAccount: string
+    isCorporateCard?: boolean
+  } | null
   bankBookUrl: string | undefined
   budgetUsage: React.ComponentProps<typeof BudgetWarningBanner>['budgetUsage']
   savedSignature: string | undefined
@@ -49,30 +54,33 @@ export function ApprovalModal({
       </Dialog.Title>
       <Dialog.Content>
         {request && (
-          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-xs font-medium text-gray-500 mb-1">
+          <div className="mb-4 p-3 bg-[#F8FAFC] border border-[#D8DDE5] rounded-lg">
+            <p className="text-xs font-medium text-[#667085] mb-1">
               {t('field.payee')}: {request.payee}
             </p>
             {!request.isCorporateCard && (
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-[#667085] mb-2">
                 {t('field.bankAndAccount')}: {request.bankName} {request.bankAccount}
               </p>
             )}
-            {!request.isCorporateCard && (
-              bankBookUrl ? (
+            {!request.isCorporateCard &&
+              (bankBookUrl ? (
                 <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
-                  <BankBookPreview url={bankBookUrl} alt={t('field.bankBook')} className="object-contain rounded border border-gray-200 bg-white" />
+                  <BankBookPreview
+                    url={bankBookUrl}
+                    alt={t('field.bankBook')}
+                    className="object-contain rounded border border-[#D8DDE5] bg-white"
+                  />
                 </a>
               ) : (
                 <p className="text-xs text-gray-400">{t('settings.bankBookRequiredHint')}</p>
-              )
-            )}
+              ))}
           </div>
         )}
 
         <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-4" />
 
-        <p className="text-sm text-gray-500 mb-4">{t('approval.signDescription')}</p>
+        <p className="text-sm text-[#667085] mb-4">{t('approval.signDescription')}</p>
 
         {savedSignature && (
           <div className="mb-3">
@@ -82,7 +90,7 @@ export function ApprovalModal({
               label={t('approval.useSavedSignature')}
             />
             {signatureData === savedSignature && (
-              <div className="mt-2 border border-gray-200 rounded p-2 bg-gray-50">
+              <div className="mt-2 border border-[#D8DDE5] rounded p-2 bg-[#F8FAFC]">
                 <img src={savedSignature} alt="Saved signature" className="max-h-24 mx-auto" />
               </div>
             )}
@@ -102,6 +110,7 @@ export function ApprovalModal({
         </Button>
         <Button
           variant="primary"
+          className="finance-primary-button"
           onClick={() => {
             if (signatureData && signatureData !== savedSignature && onSignatureSync) {
               onSignatureSync(signatureData)

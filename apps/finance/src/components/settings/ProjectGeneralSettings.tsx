@@ -61,7 +61,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+          className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
         />
       </div>
       <div>
@@ -70,7 +70,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+          className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
         />
       </div>
       <div>
@@ -79,7 +79,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           type="text"
           value={documentNo}
           onChange={(e) => setDocumentNo(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono"
+          className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm font-mono focus:border-[#002C5F] focus:outline-none"
         />
       </div>
       <div>
@@ -90,7 +90,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
             type="number"
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value) || 0)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
             step="10000"
             min="0"
           />
@@ -104,7 +104,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
             type="number"
             value={warningPct}
             onChange={(e) => setWarningPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
             step="5"
             min="0"
             max="100"
@@ -121,7 +121,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
             type="number"
             value={perKmRate}
             onChange={(e) => setPerKmRate(Number(e.target.value) || 0)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
             step="10"
             min="0"
           />
@@ -138,7 +138,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           value={ccReportTitle}
           onChange={(e) => setCcReportTitle(e.target.value)}
           placeholder={t('settlement.corporateCardReport')}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+          className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
         />
         <p className="text-xs text-gray-400 mt-1">{t('project.corporateCardReportTitleHint')}</p>
       </div>
@@ -147,7 +147,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
         <button
           onClick={handleSave}
           disabled={saving || !dirty}
-          className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 disabled:bg-gray-300"
+          className="finance-primary-button text-sm px-4 py-1.5 rounded disabled:bg-gray-300"
         >
           {saving ? t('common.saving') : t('common.save')}
         </button>

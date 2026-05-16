@@ -12,7 +12,7 @@ export default function ChatMessage({ message }: Props) {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-          isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
+          isUser ? 'bg-[#002C5F] text-white' : 'bg-[#F0F4F8] text-[#001F43]'
         }`}
       >
         {isUser ? (
@@ -30,17 +30,17 @@ export default function ChatMessage({ message }: Props) {
                 <table className="my-2 w-full text-xs border-collapse">{children}</table>
               ),
               th: ({ children }) => (
-                <th className="border border-gray-300 bg-gray-200 px-2 py-1 text-left font-semibold">
+                <th className="border border-[#D8DDE5] bg-[#E8EEF5] px-2 py-1 text-left font-semibold">
                   {children}
                 </th>
               ),
               td: ({ children }) => (
-                <td className="border border-gray-300 px-2 py-1">{children}</td>
+                <td className="border border-[#D8DDE5] px-2 py-1">{children}</td>
               ),
               code: ({ children }) => (
-                <code className="rounded bg-gray-200 px-1 text-xs">{children}</code>
+                <code className="rounded bg-[#E8EEF5] px-1 text-xs">{children}</code>
               ),
-              hr: () => <hr className="my-2 border-gray-300" />
+              hr: () => <hr className="my-2 border-[#D8DDE5]" />
             }}
           >
             {message.content}

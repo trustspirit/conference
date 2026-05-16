@@ -29,15 +29,15 @@ export default function SettlementSelectTable({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">{t('settlement.title')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('settlement.description')}</p>
+          <h2 className="text-xl font-bold text-[#002C5F]">{t('settlement.title')}</h2>
+          <p className="text-sm text-[#667085] mt-1">{t('settlement.description')}</p>
         </div>
         <button
           onClick={onStartReview}
           disabled={selected.size === 0}
-          className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-purple-700 disabled:bg-gray-400"
+          className="finance-primary-button w-full px-4 py-2 rounded text-sm font-semibold disabled:bg-gray-400 sm:w-auto"
         >
           {t('settlement.startReview', { count: selected.size })}
         </button>
@@ -46,7 +46,7 @@ export default function SettlementSelectTable({
       <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-4" />
 
       {selectedSummary && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4 text-sm">
+        <div className="bg-[#E8EEF5] border border-[#D8DDE5] rounded-lg p-4 mb-4 text-sm">
           {t('settlement.selectedSummary', selectedSummary)}
         </div>
       )}
@@ -54,11 +54,11 @@ export default function SettlementSelectTable({
       {loading ? (
         <Spinner />
       ) : requests.length === 0 ? (
-        <p className="text-gray-500">{t('settlement.noApproved')}</p>
+        <p className="text-[#667085]">{t('settlement.noApproved')}</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+        <div className="finance-panel rounded-lg overflow-hidden overflow-x-auto">
+          <table className="min-w-[720px] w-full text-sm">
+            <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
               <tr>
                 <th className="px-4 py-3 w-10">
                   <input
@@ -67,26 +67,28 @@ export default function SettlementSelectTable({
                     onChange={onToggleAll}
                   />
                 </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">{t('field.date')}</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
+                <th className="text-left px-4 py-3 font-medium text-[#667085]">
+                  {t('field.date')}
+                </th>
+                <th className="text-left px-4 py-3 font-medium text-[#667085]">
                   {t('field.payee')}
                 </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
+                <th className="text-left px-4 py-3 font-medium text-[#667085]">
                   {t('field.committee')}
                 </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
+                <th className="text-left px-4 py-3 font-medium text-[#667085]">
                   {t('field.items')}
                 </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">
+                <th className="text-right px-4 py-3 font-medium text-[#667085]">
                   {t('field.totalAmount')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-[#EDF0F4]">
               {requests.map((req, index) => (
                 <tr
                   key={req.id}
-                  className={`hover:bg-gray-50 cursor-pointer select-none ${selected.has(req.id) ? 'bg-purple-50' : ''}`}
+                  className={`hover:bg-[#F8FAFC] cursor-pointer select-none ${selected.has(req.id) ? 'bg-[#E8EEF5]' : ''}`}
                   onClick={(e) => onRowClick(req.id, index, e)}
                 >
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -109,7 +111,7 @@ export default function SettlementSelectTable({
               ))}
             </tbody>
           </table>
-          <div className="hidden sm:block px-4 py-2 bg-gray-50 border-t text-xs text-gray-400">
+          <div className="hidden sm:block px-4 py-2 bg-[#F8FAFC] border-t border-[#D8DDE5] text-xs text-[#667085]">
             Shift+Click: {t('settlement.shiftSelectHint')}
           </div>
         </div>

@@ -9,7 +9,7 @@ import {
   getSettlementCsvColumnLabel,
   DEFAULT_SETTLEMENT_CSV_COLUMNS,
   OPTIONAL_SETTLEMENT_CSV_COLUMNS,
-  type SettlementCsvColumnKey,
+  type SettlementCsvColumnKey
 } from '../lib/csvExport'
 import CsvExportDialog from '../components/CsvExportDialog'
 import { formatFirestoreDate } from '../lib/utils'
@@ -132,7 +132,7 @@ export default function SettlementListPage() {
       const requestDateMap = await fetchRequestDatesByIds(allRequestIds)
       const columns = [
         ...DEFAULT_SETTLEMENT_CSV_COLUMNS,
-        ...(selectedOptionals as Set<SettlementCsvColumnKey>),
+        ...(selectedOptionals as Set<SettlementCsvColumnKey>)
       ]
       exportSettlementsByBudgetCodeCsv(toExport, requestDateMap, columns)
       setSelectedBatchIds(new Set())
@@ -164,27 +164,37 @@ export default function SettlementListPage() {
         title={t('settlement.listTitle')}
         actions={[
           {
-            label: selectedBatchIds.size > 0
-              ? `${t('common.exportCsv')} (${selectedBatchIds.size})`
-              : t('common.exportCsv'),
+            label:
+              selectedBatchIds.size > 0
+                ? `${t('common.exportCsv')} (${selectedBatchIds.size})`
+                : t('common.exportCsv'),
             onClick: () => setExportDialogOpen(true),
-            disabled: selectedBatchIds.size === 0,
+            disabled: selectedBatchIds.size === 0
           },
           ...(canProcess
-            ? [{ label: t('settlement.newSettlement'), to: '/admin/settlement/new', variant: 'purple' as const }]
-            : []),
+            ? [
+                {
+                  label: t('settlement.newSettlement'),
+                  to: '/admin/settlement/new',
+                  variant: 'purple' as const
+                }
+              ]
+            : [])
         ]}
       />
 
-      <div className="flex gap-2 mb-4">
+      <div className="-mx-3 mb-4 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => { setCommitteeFilter(tab.value); setSelectedBatchIds(new Set()) }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            onClick={() => {
+              setCommitteeFilter(tab.value)
+              setSelectedBatchIds(new Set())
+            }}
+            className={`shrink-0 px-4 py-1.5 rounded text-sm font-semibold border transition-colors ${
               committeeFilter === tab.value
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'finance-tab-active'
+                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
             }`}
           >
             {tab.label}
@@ -205,52 +215,52 @@ export default function SettlementListPage() {
         <>
           {/* Desktop */}
           <div className="hidden sm:block">
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="finance-panel rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
                   <tr>
                     <th className="w-10 px-4 py-3">
                       <input
                         type="checkbox"
                         checked={allBatchesSelected}
                         onChange={toggleAllBatches}
-                        className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+                        className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
                       />
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('settlement.settlementDate')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.payee')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.committee')}
                     </th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">
+                    <th className="text-right px-4 py-3 font-medium text-[#667085]">
                       {t('field.totalAmount')}
                     </th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600">
+                    <th className="text-center px-4 py-3 font-medium text-[#667085]">
                       {t('settlement.requestCount')}
                     </th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
+                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-[#EDF0F4]">
                   {batches.map((b) => (
-                    <tr key={b.batchId} className="hover:bg-gray-50">
+                    <tr key={b.batchId} className="hover:bg-[#F8FAFC]">
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
                           checked={selectedBatchIds.has(b.batchId)}
                           onChange={() => toggleBatch(b.batchId)}
-                          className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+                          className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
                         />
                       </td>
                       <td className="px-4 py-3">{b.date}</td>
                       <td className="px-4 py-3">
                         {payeeLabel(b)}
                         {b.isCorporateCard && (
-                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
                             {t('form.requestTypeCorporateCard')}
                           </span>
                         )}
@@ -265,7 +275,7 @@ export default function SettlementListPage() {
                       <td className="px-4 py-3 text-center">
                         <Link
                           to={`/admin/settlement/${b.firstId}`}
-                          className="text-purple-600 hover:underline text-sm"
+                          className="text-[#002C5F] hover:underline text-sm"
                         >
                           {t('settlement.report')}
                         </Link>
@@ -280,33 +290,30 @@ export default function SettlementListPage() {
           {/* Mobile */}
           <div className="sm:hidden space-y-3">
             {batches.map((b) => (
-              <div key={b.batchId} className="flex items-start gap-3 bg-white rounded-lg shadow p-4">
+              <div key={b.batchId} className="finance-panel flex items-start gap-3 rounded-lg p-4">
                 <input
                   type="checkbox"
                   checked={selectedBatchIds.has(b.batchId)}
                   onChange={() => toggleBatch(b.batchId)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-purple-600 flex-shrink-0"
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#002C5F] flex-shrink-0"
                 />
-                <Link
-                  to={`/admin/settlement/${b.firstId}`}
-                  className="flex-1 min-w-0"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium">{payeeLabel(b)}</span>
+                <Link to={`/admin/settlement/${b.firstId}`} className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <span className="break-words text-sm font-medium">{payeeLabel(b)}</span>
                       {b.isCorporateCard && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
                           {t('form.requestTypeCorporateCard')}
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400">{b.date}</span>
+                    <span className="shrink-0 text-xs text-gray-400">{b.date}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">
+                  <div className="flex items-start justify-between gap-3 text-sm">
+                    <span className="text-[#667085]">
                       {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
                     </span>
-                    <span className="font-medium text-purple-700">
+                    <span className="shrink-0 font-medium text-[#002C5F]">
                       ₩{b.totalAmount.toLocaleString()}
                     </span>
                   </div>

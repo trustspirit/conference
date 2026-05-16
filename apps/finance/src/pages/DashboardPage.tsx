@@ -47,12 +47,12 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <h2 className="text-xl font-bold mb-6">{t('dashboard.title')}</h2>
+      <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('dashboard.title')}</h2>
 
       <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-6" />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard
           label={t('dashboard.totalRequests')}
           value={t('form.itemCount', { count: stats.total })}
@@ -64,25 +64,26 @@ export default function DashboardPage() {
           color="yellow"
           icon={<ClockIcon className="w-4 h-4 text-yellow-500" />}
         />
-        <div className="rounded-lg shadow border p-4 bg-green-50 border-green-200">
+        <div className="finance-panel rounded-lg p-4 overflow-hidden">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircleIcon className="w-4 h-4 text-green-500" />
-            <p className="text-xs text-gray-500">{t('dashboard.approvedRequests')}</p>
+            <CheckCircleIcon className="w-4 h-4 text-[#007FA8]" />
+            <p className="text-xs text-[#667085]">{t('dashboard.approvedRequests')}</p>
           </div>
-          <p className="text-lg font-bold">
+          <p className="text-lg font-bold text-[#111827]">
             {t('form.itemCount', { count: approved })} ({'\u20A9'}
             {stats.approvedAmount.toLocaleString()})
           </p>
-          <div className="mt-2 pt-2 border-t border-green-200 space-y-0.5">
-            <p className="text-xs text-gray-500">
+          <div className="mt-2 pt-2 border-t border-[#EDF0F4] space-y-0.5">
+            <p className="text-xs text-[#667085]">
               {t('dashboard.settledCount', { count: stats.settled })} {'\u20A9'}
               {stats.settledAmount.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[#667085]">
               {t('dashboard.unsettledCount', { count: stats.approvedOnly })} {'\u20A9'}
               {stats.approvedOnlyAmount.toLocaleString()}
             </p>
           </div>
+          <div className="mt-3 h-0.5 w-full bg-[#007FA8]" />
         </div>
         <StatCard
           label={t('dashboard.rejectedRequests')}

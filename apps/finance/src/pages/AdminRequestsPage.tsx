@@ -38,7 +38,7 @@ function SortIcon({
   if (sortKey !== columnKey) return null
   return (
     <svg
-      className="inline-block w-3 h-3 ml-1 text-blue-600"
+      className="inline-block w-3 h-3 ml-1 text-[#002C5F]"
       viewBox="0 0 12 12"
       fill="currentColor"
     >
@@ -111,32 +111,44 @@ export default function AdminRequestsPage() {
     })
   }, [allRequests, filter, committeeFilter, role, sortKey, sortDir, resubmittedIds])
 
-  const handleExportCsv = useCallback(async (selectedOptionals: Set<string>) => {
-    if (!currentProject?.id || isExporting) return
-    setIsExporting(true)
-    try {
-      let toExport: PaymentRequest[]
-      if (selectedIds.size > 0) {
-        toExport = accessible.filter((r) => selectedIds.has(r.id))
-      } else {
-        const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
-        toExport = all.filter(
-          (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
-        )
+  const handleExportCsv = useCallback(
+    async (selectedOptionals: Set<string>) => {
+      if (!currentProject?.id || isExporting) return
+      setIsExporting(true)
+      try {
+        let toExport: PaymentRequest[]
+        if (selectedIds.size > 0) {
+          toExport = accessible.filter((r) => selectedIds.has(r.id))
+        } else {
+          const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
+          toExport = all.filter(
+            (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+          )
+        }
+        const columns = [...DEFAULT_CSV_COLUMNS, ...(selectedOptionals as Set<CsvColumnKey>)]
+        if (exportMode === 'byBudgetCode') {
+          exportRequestsByBudgetCodeCsv(toExport, columns)
+        } else {
+          exportRequestsCsv(toExport, columns)
+        }
+        setExportDialogOpen(false)
+      } catch {
+        alert(t('common.loadError'))
+      } finally {
+        setIsExporting(false)
       }
-      const columns = [...DEFAULT_CSV_COLUMNS, ...(selectedOptionals as Set<CsvColumnKey>)]
-      if (exportMode === 'byBudgetCode') {
-        exportRequestsByBudgetCodeCsv(toExport, columns)
-      } else {
-        exportRequestsCsv(toExport, columns)
-      }
-      setExportDialogOpen(false)
-    } catch {
-      alert(t('common.loadError'))
-    } finally {
-      setIsExporting(false)
-    }
-  }, [currentProject?.id, role, firestoreCommittee, exportMode, selectedIds, accessible, isExporting, t])
+    },
+    [
+      currentProject?.id,
+      role,
+      firestoreCommittee,
+      exportMode,
+      selectedIds,
+      accessible,
+      isExporting,
+      t
+    ]
+  )
 
   // 무한스크롤로 새 항목이 로드될 때, 이전에 전체선택 상태였다면 새 항목도 선택에 포함
   const prevAccessibleLengthRef = useRef(0)
@@ -151,8 +163,7 @@ export default function AdminRequestsPage() {
     }
   }, [accessible])
 
-  const allSelected =
-    accessible.length > 0 && accessible.every((r) => selectedIds.has(r.id))
+  const allSelected = accessible.length > 0 && accessible.every((r) => selectedIds.has(r.id))
 
   const toggleAll = () => {
     if (allSelected) {
@@ -273,16 +284,19 @@ export default function AdminRequestsPage() {
     <Layout>
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-xl font-bold">{t('nav.adminRequests')}</h2>
-          <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#002C5F]">{t('nav.adminRequests')}</h2>
+          <div className="flex flex-wrap items-center gap-2">
             {committeeTabs?.map((c) => (
               <button
                 key={c}
-                onClick={() => { setCommitteeFilter(c); setSelectedIds(new Set()) }}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                onClick={() => {
+                  setCommitteeFilter(c)
+                  setSelectedIds(new Set())
+                }}
+                className={`px-3 py-1.5 rounded text-sm font-semibold border transition-colors ${
                   committeeFilter === c
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'finance-tab-active'
+                    : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
                 }`}
               >
                 {c === 'all' ? t('status.all') : t(`committee.${c}Short`)}
@@ -290,7 +304,7 @@ export default function AdminRequestsPage() {
             ))}
             <button
               onClick={() => setExportDialogOpen(true)}
-              className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded font-medium hover:bg-blue-700"
+              className="finance-secondary-button w-full px-4 py-1.5 text-sm rounded font-semibold transition-colors sm:w-auto"
             >
               {selectedIds.size > 0
                 ? `${t('common.exportCsv')} (${selectedIds.size})`
@@ -300,12 +314,19 @@ export default function AdminRequestsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-6">
+      <div className="-mx-3 mb-6 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {filterTabs.map((f) => (
           <button
             key={f}
-            onClick={() => { setFilter(f); setSelectedIds(new Set()) }}
-            className={`px-4 py-2.5 rounded text-sm ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            onClick={() => {
+              setFilter(f)
+              setSelectedIds(new Set())
+            }}
+            className={`shrink-0 px-4 py-2.5 rounded text-sm font-semibold border transition-colors ${
+              filter === f
+                ? 'finance-tab-active'
+                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+            }`}
           >
             {t(`status.${f}`, f)}
           </button>
@@ -318,17 +339,17 @@ export default function AdminRequestsPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="finance-panel rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
                     <tr>
                       <th className="w-10 px-4 py-3">
                         <input
                           type="checkbox"
                           checked={allSelected}
                           onChange={toggleAll}
-                          className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                          className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
                         />
                       </th>
                       {(
@@ -353,8 +374,8 @@ export default function AdminRequestsPage() {
                           key={i}
                           className={`${col.align} px-4 py-3 font-medium select-none ${
                             col.key
-                              ? `cursor-pointer hover:text-gray-900 ${sortKey === col.key ? 'text-blue-600' : 'text-gray-600'}`
-                              : 'text-gray-600'
+                              ? `cursor-pointer hover:text-[#111827] ${sortKey === col.key ? 'text-[#002C5F]' : 'text-[#667085]'}`
+                              : 'text-[#667085]'
                           }`}
                           onClick={col.key ? () => handleSort(col.key!) : undefined}
                         >
@@ -367,23 +388,23 @@ export default function AdminRequestsPage() {
                     </tr>
                   </thead>
                   <tbody
-                    className={`divide-y transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+                    className={`divide-y divide-[#EDF0F4] transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
                   >
                     {accessible.map((req) => (
-                      <tr key={req.id} className="hover:bg-gray-50">
+                      <tr key={req.id} className="hover:bg-[#F8FAFC]">
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             checked={selectedIds.has(req.id)}
                             onChange={() => toggleOne(req.id)}
-                            className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                            className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
                           />
                         </td>
                         <td className="px-4 py-3">
                           <Link
                             to={`/request/${req.id}`}
                             state={{ from: '/admin/requests' }}
-                            className="text-blue-600 hover:underline"
+                            className="text-[#002C5F] hover:underline"
                           >
                             {req.date}
                           </Link>
@@ -401,7 +422,7 @@ export default function AdminRequestsPage() {
                         <td className="px-4 py-3 text-center">
                           <StatusBadge status={req.status} />
                         </td>
-                        <td className="px-4 py-3 text-xs text-gray-500">{renderRemarks(req)}</td>
+                        <td className="px-4 py-3 text-xs text-[#667085]">{renderRemarks(req)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -439,43 +460,45 @@ export default function AdminRequestsPage() {
               {accessible.map((req) => {
                 const remarks = renderRemarks(req)
                 return (
-                <div key={req.id} className="flex items-start gap-3 bg-white rounded-lg shadow p-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(req.id)}
-                    onChange={() => toggleOne(req.id)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-blue-600 flex-shrink-0"
-                  />
-                  <Link
-                    to={`/request/${req.id}`}
-                    state={{ from: '/admin/requests' }}
-                    className="flex-1 min-w-0"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">{req.payee}</span>
-                      <StatusBadge status={req.status} />
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-                      <span>
-                        {req.date}
-                        {formatFirestoreTime(req.createdAt) && (
-                          <span className="ml-1 text-xs text-gray-400">
-                            {formatFirestoreTime(req.createdAt)}
-                          </span>
-                        )}
-                      </span>
-                      <span>{t(`committee.${req.committee}Short`)}</span>
-                    </div>
-                    <div className="text-right font-semibold text-gray-900">
-                      ₩{req.totalAmount.toLocaleString()}
-                    </div>
-                    {remarks && (
-                      <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-                        {remarks}
+                  <div key={req.id} className="finance-panel flex items-start gap-3 rounded-lg p-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(req.id)}
+                      onChange={() => toggleOne(req.id)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#002C5F] flex-shrink-0"
+                    />
+                    <Link
+                      to={`/request/${req.id}`}
+                      state={{ from: '/admin/requests' }}
+                      className="flex-1 min-w-0"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="min-w-0 break-words font-medium text-[#111827]">
+                          {req.payee}
+                        </span>
+                        <StatusBadge status={req.status} />
                       </div>
-                    )}
-                  </Link>
-                </div>
+                      <div className="flex items-start justify-between gap-3 text-sm text-[#667085] mb-1">
+                        <span className="min-w-0">
+                          {req.date}
+                          {formatFirestoreTime(req.createdAt) && (
+                            <span className="ml-1 text-xs text-gray-400">
+                              {formatFirestoreTime(req.createdAt)}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0">{t(`committee.${req.committee}Short`)}</span>
+                      </div>
+                      <div className="text-right font-semibold text-[#111827]">
+                        ₩{req.totalAmount.toLocaleString()}
+                      </div>
+                      {remarks && (
+                        <div className="mt-2 pt-2 border-t border-[#EDF0F4] text-xs text-[#667085]">
+                          {remarks}
+                        </div>
+                      )}
+                    </Link>
+                  </div>
                 )
               })}
             </div>

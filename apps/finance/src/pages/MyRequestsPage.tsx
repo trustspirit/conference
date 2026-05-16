@@ -76,12 +76,16 @@ export default function MyRequestsPage() {
         action={{ label: t('myRequests.newRequest'), to: '/request/new' }}
       />
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="-mx-3 mb-6 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {filterTabs.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2.5 rounded text-sm ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+            className={`shrink-0 px-4 py-2.5 rounded text-sm font-semibold border transition-colors ${
+              filter === f
+                ? 'finance-tab-active'
+                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+            }`}
           >
             {t(`status.${f}`, f)}
           </button>
@@ -103,35 +107,35 @@ export default function MyRequestsPage() {
         <>
           {/* Desktop table */}
           <div className="hidden sm:block">
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="finance-panel rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.date')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.committee')}
                     </th>
-                    <th className="text-left px-4 py-3 font-medium text-gray-600">
+                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
                       {t('field.items')}
                     </th>
-                    <th className="text-right px-4 py-3 font-medium text-gray-600">
+                    <th className="text-right px-4 py-3 font-medium text-[#667085]">
                       {t('field.totalAmount')}
                     </th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600">
+                    <th className="text-center px-4 py-3 font-medium text-[#667085]">
                       {t('status.label')}
                     </th>
-                    <th className="text-center px-4 py-3 font-medium text-gray-600"></th>
+                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
                   </tr>
                 </thead>
                 <tbody
-                  className={`divide-y transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+                  className={`divide-y divide-[#EDF0F4] transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
                 >
                   {requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50">
+                    <tr key={req.id} className="hover:bg-[#F8FAFC]">
                       <td className="px-4 py-3">
-                        <Link to={`/request/${req.id}`} className="text-blue-600 hover:underline">
+                        <Link to={`/request/${req.id}`} className="text-[#002C5F] hover:underline">
                           {req.date}
                         </Link>
                         {formatFirestoreTime(req.createdAt) && (
@@ -165,7 +169,7 @@ export default function MyRequestsPage() {
                             <Link
                               to={`/request/resubmit/${req.id}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-block px-3 py-1 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
+                              className="inline-block px-3 py-1 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
                             >
                               {t('approval.resubmit')}
                             </Link>
@@ -186,10 +190,10 @@ export default function MyRequestsPage() {
               <Link
                 key={req.id}
                 to={`/request/${req.id}`}
-                className="block bg-white rounded-lg shadow p-4"
+                className="finance-panel block rounded-lg p-4"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-600">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-sm font-medium text-[#002C5F]">
                     {req.date}
                     {formatFirestoreTime(req.createdAt) && (
                       <span className="ml-1 text-xs text-gray-400 font-normal">
@@ -199,11 +203,11 @@ export default function MyRequestsPage() {
                   </span>
                   <StatusBadge status={req.status} />
                 </div>
-                <div className="text-sm text-gray-600 mb-1">
+                <div className="text-sm text-[#667085] mb-1">
                   {t(`committee.${req.committee}Short`)}
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-[#667085]">
                     {t('form.itemCount', { count: req.items.length })}
                   </span>
                   <span className="font-medium">₩{req.totalAmount.toLocaleString()}</span>
@@ -221,17 +225,17 @@ export default function MyRequestsPage() {
                   req.status === 'rejected' ||
                   req.status === 'force_rejected') &&
                   !resubmittedIds.has(req.id) && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      navigate(`/request/resubmit/${req.id}`)
-                    }}
-                    className="mt-3 w-full text-center px-3 py-1.5 rounded border border-blue-200 bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
-                  >
-                    {t('approval.resubmit')}
-                  </button>
-                )}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        navigate(`/request/resubmit/${req.id}`)
+                      }}
+                      className="mt-3 w-full text-center px-3 py-1.5 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
+                    >
+                      {t('approval.resubmit')}
+                    </button>
+                  )}
               </Link>
             ))}
           </div>

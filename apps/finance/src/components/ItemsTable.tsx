@@ -10,9 +10,9 @@ export default function ItemsTable({ items, totalAmount }: Props) {
   const { t } = useTranslation()
 
   return (
-    <div className="overflow-x-auto mb-6">
+    <div className="overflow-x-auto mb-6 rounded-lg border border-[#D8DDE5]">
       <table className="w-full text-sm">
-        <thead className="border-b bg-gray-50">
+        <thead className="border-b border-[#D8DDE5] bg-[#F8FAFC] text-[#667085]">
           <tr>
             <th className="text-left px-3 py-2">#</th>
             <th className="text-left px-3 py-2">{t('field.comments')}</th>
@@ -20,14 +20,14 @@ export default function ItemsTable({ items, totalAmount }: Props) {
             <th className="text-right px-3 py-2">{t('field.totalAmount')}</th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y divide-[#EDF0F4]">
           {items.map((item, i) => (
             <tr key={i}>
               <td className="px-3 py-2 align-top">{i + 1}</td>
               <td className="px-3 py-2">
                 <div>{item.description}</div>
                 {item.transportDetail && (
-                  <div className="mt-1 text-xs text-gray-500 bg-blue-50 rounded px-2 py-1.5 space-y-0.5">
+                  <div className="mt-1 text-xs text-[#002C5F] bg-[#E8EEF5] rounded px-2 py-1.5 space-y-0.5">
                     <div>
                       <span className="font-medium">{t('field.transportType')}:</span>{' '}
                       {item.transportDetail.transportType === 'car'
@@ -56,7 +56,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
                           <img
                             src={item.transportDetail.routeMapImage.url}
                             alt={`${item.transportDetail.departure} → ${item.transportDetail.destination}`}
-                            className="max-w-[200px] max-h-[120px] rounded border border-gray-200 object-contain bg-gray-50"
+                            className="max-w-[200px] max-h-[120px] rounded border border-[#D8DDE5] object-contain bg-[#F8FAFC]"
                           />
                         </a>
                       </div>
@@ -74,7 +74,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
             </tr>
           ))}
         </tbody>
-        <tfoot className="border-t font-medium">
+        <tfoot className="border-t border-[#D8DDE5] bg-[#F8FAFC] font-medium">
           <tr>
             <td colSpan={3} className="px-3 py-2 text-right">
               {t('field.totalAmount')}

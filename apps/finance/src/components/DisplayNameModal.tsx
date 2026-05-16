@@ -97,7 +97,13 @@ export default function DisplayNameModal() {
         </div>
       </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="primary" onClick={handleSave} loading={saving} fullWidth>
+        <Button
+          variant="primary"
+          className="finance-primary-button"
+          onClick={handleSave}
+          loading={saving}
+          fullWidth
+        >
           {saving ? t('setup.saving') : t('setup.start')}
         </Button>
       </Dialog.Actions>
