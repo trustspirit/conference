@@ -82,33 +82,6 @@ export default function AdminRequestsPage() {
     })
   }
 
-  const handleExportCsv = useCallback(async () => {
-    if (!currentProject?.id || isExporting) return
-    setIsExporting(true)
-    try {
-      let toExport: PaymentRequest[]
-      if (selectedIds.size > 0) {
-        toExport = accessible.filter((r) => selectedIds.has(r.id))
-      } else {
-        const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
-        toExport = all.filter(
-          (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
-        )
-      }
-      const columns = [...DEFAULT_CSV_COLUMNS, ...selectedOptionalColumns]
-      if (exportMode === 'byBudgetCode') {
-        exportRequestsByBudgetCodeCsv(toExport, columns)
-      } else {
-        exportRequestsCsv(toExport, columns)
-      }
-      setExportDialogOpen(false)
-    } catch {
-      alert(t('common.loadError'))
-    } finally {
-      setIsExporting(false)
-    }
-  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, t])
-
   const allRequests = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
   const threshold = currentProject?.directorApprovalThreshold ?? DEFAULT_APPROVAL_THRESHOLD
@@ -148,6 +121,33 @@ export default function AdminRequestsPage() {
         : toTime(a.createdAt) - toTime(b.createdAt)
     })
   }, [allRequests, filter, committeeFilter, role, sortKey, sortDir, resubmittedIds])
+
+  const handleExportCsv = useCallback(async () => {
+    if (!currentProject?.id || isExporting) return
+    setIsExporting(true)
+    try {
+      let toExport: PaymentRequest[]
+      if (selectedIds.size > 0) {
+        toExport = accessible.filter((r) => selectedIds.has(r.id))
+      } else {
+        const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
+        toExport = all.filter(
+          (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+        )
+      }
+      const columns = [...DEFAULT_CSV_COLUMNS, ...selectedOptionalColumns]
+      if (exportMode === 'byBudgetCode') {
+        exportRequestsByBudgetCodeCsv(toExport, columns)
+      } else {
+        exportRequestsCsv(toExport, columns)
+      }
+      setExportDialogOpen(false)
+    } catch {
+      alert(t('common.loadError'))
+    } finally {
+      setIsExporting(false)
+    }
+  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, t])
 
   const allSelected =
     accessible.length > 0 && accessible.every((r) => selectedIds.has(r.id))

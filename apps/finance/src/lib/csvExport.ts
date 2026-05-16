@@ -195,8 +195,8 @@ function getBudgetCodeCsvCellValue(flattened: FlattenedItem, key: CsvColumnKey):
     case 'rejectionReason':
       return req.rejectionReason || ''
     default: {
-      const _: never = key
-      return ''
+      const _exhaustive: never = key
+      return _exhaustive
     }
   }
 }
@@ -261,8 +261,8 @@ function getSettlementCsvCellValue(s: Settlement, key: SettlementCsvColumnKey): 
     case 'approvedBy':
       return s.approvedBy?.name || ''
     default: {
-      const _: never = key
-      return ''
+      const _exhaustive: never = key
+      return _exhaustive
     }
   }
 }
