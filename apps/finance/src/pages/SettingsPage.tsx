@@ -51,7 +51,7 @@ function ProjectManagement() {
         <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
           <span className="min-w-0 break-words">{selectedProject.name}</span>
           {isDefault && (
-            <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs bg-[#E7F3F5] text-[#007FA8] px-2 py-0.5 rounded-full">
               <CheckIcon className="w-3 h-3" />
               {t('project.isDefault')}
             </span>

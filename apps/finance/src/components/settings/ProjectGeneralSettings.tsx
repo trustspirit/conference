@@ -151,7 +151,7 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
         >
           {saving ? t('common.saving') : t('common.save')}
         </button>
-        {saved && <span className="text-xs text-green-600">{t('common.saved')}</span>}
+        {saved && <span className="finance-success-text text-xs">{t('common.saved')}</span>}
       </div>
     </div>
   )

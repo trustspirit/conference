@@ -3,6 +3,7 @@ import { PaymentRequest } from '../../types'
 import Spinner from '../Spinner'
 import BudgetWarningBanner from '../BudgetWarningBanner'
 import { BudgetUsage } from '../../hooks/useBudgetUsage'
+import FinanceTable from '../table/FinanceTable'
 
 interface Props {
   requests: PaymentRequest[]
@@ -56,61 +57,58 @@ export default function SettlementSelectTable({
       ) : requests.length === 0 ? (
         <p className="text-[#667085]">{t('settlement.noApproved')}</p>
       ) : (
-        <div className="finance-panel rounded-lg overflow-hidden overflow-x-auto">
-          <table className="min-w-[720px] w-full text-sm">
-            <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
+        <div className="finance-panel rounded-lg overflow-hidden">
+          <FinanceTable variant="plain" minWidthClassName="min-w-[720px]">
+            <FinanceTable.Head>
               <tr>
-                <th className="px-4 py-3 w-10">
+                <FinanceTable.Th className="w-10">
                   <input
                     type="checkbox"
                     checked={requests.length > 0 && selected.size === requests.length}
                     onChange={onToggleAll}
+                    className="finance-checkbox"
                   />
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                  {t('field.date')}
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                  {t('field.payee')}
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                  {t('field.committee')}
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                  {t('field.items')}
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-[#667085]">
-                  {t('field.totalAmount')}
-                </th>
+                </FinanceTable.Th>
+                <FinanceTable.Th>{t('field.date')}</FinanceTable.Th>
+                <FinanceTable.Th>{t('field.payee')}</FinanceTable.Th>
+                <FinanceTable.Th>{t('field.committee')}</FinanceTable.Th>
+                <FinanceTable.Th>{t('field.items')}</FinanceTable.Th>
+                <FinanceTable.Th align="right">{t('field.totalAmount')}</FinanceTable.Th>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EDF0F4]">
+            </FinanceTable.Head>
+            <FinanceTable.Body>
               {requests.map((req, index) => (
-                <tr
+                <FinanceTable.Row
                   key={req.id}
-                  className={`hover:bg-[#F8FAFC] cursor-pointer select-none ${selected.has(req.id) ? 'bg-[#E8EEF5]' : ''}`}
+                  selected={selected.has(req.id)}
+                  className="cursor-pointer select-none"
                   onClick={(e) => onRowClick(req.id, index, e)}
                 >
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                  <FinanceTable.Td onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selected.has(req.id)}
                       onChange={(e) => onRowClick(req.id, index, e as unknown as React.MouseEvent)}
+                      className="finance-checkbox"
                     />
-                  </td>
-                  <td className="px-4 py-3">{req.date}</td>
-                  <td className="px-4 py-3">{req.payee}</td>
-                  <td className="px-4 py-3">
+                  </FinanceTable.Td>
+                  <FinanceTable.Td>{req.date}</FinanceTable.Td>
+                  <FinanceTable.Td>{req.payee}</FinanceTable.Td>
+                  <FinanceTable.Td>
                     {req.committee === 'operations'
                       ? t('committee.operationsShort')
                       : t('committee.preparationShort')}
-                  </td>
-                  <td className="px-4 py-3">{t('form.itemCount', { count: req.items.length })}</td>
-                  <td className="px-4 py-3 text-right">₩{req.totalAmount.toLocaleString()}</td>
-                </tr>
+                  </FinanceTable.Td>
+                  <FinanceTable.Td>
+                    {t('form.itemCount', { count: req.items.length })}
+                  </FinanceTable.Td>
+                  <FinanceTable.Td align="right">
+                    ₩{req.totalAmount.toLocaleString()}
+                  </FinanceTable.Td>
+                </FinanceTable.Row>
               ))}
-            </tbody>
-          </table>
+            </FinanceTable.Body>
+          </FinanceTable>
           <div className="hidden sm:block px-4 py-2 bg-[#F8FAFC] border-t border-[#D8DDE5] text-xs text-[#667085]">
             Shift+Click: {t('settlement.shiftSelectHint')}
           </div>

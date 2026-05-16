@@ -20,6 +20,7 @@ import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
+import FinanceTable from '../components/table/FinanceTable'
 
 type CommitteeFilter = 'all' | Committee
 
@@ -176,7 +177,7 @@ export default function SettlementListPage() {
                 {
                   label: t('settlement.newSettlement'),
                   to: '/admin/settlement/new',
-                  variant: 'purple' as const
+                  variant: 'primary' as const
                 }
               ]
             : [])
@@ -215,76 +216,64 @@ export default function SettlementListPage() {
         <>
           {/* Desktop */}
           <div className="hidden sm:block">
-            <div className="finance-panel rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
-                  <tr>
-                    <th className="w-10 px-4 py-3">
+            <FinanceTable>
+              <FinanceTable.Head>
+                <tr>
+                  <FinanceTable.Th className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={allBatchesSelected}
+                      onChange={toggleAllBatches}
+                      className="finance-checkbox"
+                    />
+                  </FinanceTable.Th>
+                  <FinanceTable.Th>{t('settlement.settlementDate')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.payee')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.committee')}</FinanceTable.Th>
+                  <FinanceTable.Th align="right">{t('field.totalAmount')}</FinanceTable.Th>
+                  <FinanceTable.Th align="center">{t('settlement.requestCount')}</FinanceTable.Th>
+                  <FinanceTable.Th align="center"></FinanceTable.Th>
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body>
+                {batches.map((b) => (
+                  <FinanceTable.Row key={b.batchId}>
+                    <FinanceTable.Td>
                       <input
                         type="checkbox"
-                        checked={allBatchesSelected}
-                        onChange={toggleAllBatches}
-                        className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
+                        checked={selectedBatchIds.has(b.batchId)}
+                        onChange={() => toggleBatch(b.batchId)}
+                        className="finance-checkbox"
                       />
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('settlement.settlementDate')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.payee')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.committee')}
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-[#667085]">
-                      {t('field.totalAmount')}
-                    </th>
-                    <th className="text-center px-4 py-3 font-medium text-[#667085]">
-                      {t('settlement.requestCount')}
-                    </th>
-                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EDF0F4]">
-                  {batches.map((b) => (
-                    <tr key={b.batchId} className="hover:bg-[#F8FAFC]">
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedBatchIds.has(b.batchId)}
-                          onChange={() => toggleBatch(b.batchId)}
-                          className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
-                        />
-                      </td>
-                      <td className="px-4 py-3">{b.date}</td>
-                      <td className="px-4 py-3">
-                        {payeeLabel(b)}
-                        {b.isCorporateCard && (
-                          <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
-                            {t('form.requestTypeCorporateCard')}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">{committeeLabel(b)}</td>
-                      <td className="px-4 py-3 text-right font-medium">
-                        ₩{b.totalAmount.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {t('form.itemCount', { count: b.totalRequests })}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Link
-                          to={`/admin/settlement/${b.firstId}`}
-                          className="text-[#002C5F] hover:underline text-sm"
-                        >
-                          {t('settlement.report')}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </FinanceTable.Td>
+                    <FinanceTable.Td>{b.date}</FinanceTable.Td>
+                    <FinanceTable.Td>
+                      {payeeLabel(b)}
+                      {b.isCorporateCard && (
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
+                          {t('form.requestTypeCorporateCard')}
+                        </span>
+                      )}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td>{committeeLabel(b)}</FinanceTable.Td>
+                    <FinanceTable.Td align="right" className="font-medium">
+                      ₩{b.totalAmount.toLocaleString()}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="center">
+                      {t('form.itemCount', { count: b.totalRequests })}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="center">
+                      <Link
+                        to={`/admin/settlement/${b.firstId}`}
+                        className="text-[#002C5F] hover:underline text-sm"
+                      >
+                        {t('settlement.report')}
+                      </Link>
+                    </FinanceTable.Td>
+                  </FinanceTable.Row>
+                ))}
+              </FinanceTable.Body>
+            </FinanceTable>
           </div>
 
           {/* Mobile */}
@@ -295,7 +284,7 @@ export default function SettlementListPage() {
                   type="checkbox"
                   checked={selectedBatchIds.has(b.batchId)}
                   onChange={() => toggleBatch(b.batchId)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#002C5F] flex-shrink-0"
+                  className="finance-checkbox mt-0.5"
                 />
                 <Link to={`/admin/settlement/${b.firstId}`} className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-2">

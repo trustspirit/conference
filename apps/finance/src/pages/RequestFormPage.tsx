@@ -717,7 +717,7 @@ export default function RequestFormPage() {
               )}
               {vendorBankBookFile && (
                 <>
-                  <p className="text-xs text-green-600 mt-1">
+                  <p className="finance-success-text text-xs mt-1">
                     {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                   </p>
                   {vendorBankBookPreviewUrl && (

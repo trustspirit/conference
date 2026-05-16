@@ -13,6 +13,7 @@ import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
+import FinanceTable from '../components/table/FinanceTable'
 import JSZip from 'jszip'
 
 interface ReceiptRow {
@@ -258,100 +259,87 @@ export default function ReceiptsPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="finance-panel rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
-                  <tr>
-                    <th className="px-4 py-3 w-10">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        onChange={toggleAll}
-                        className="rounded border-gray-300"
-                      />
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.receipts')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.payee')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.date')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.committee')}
-                    </th>
-                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EDF0F4]">
-                  {filtered.map((row) => {
-                    const key = getRowKey(row)
-                    const imgUrl = row.receipt.url || row.receipt.driveUrl
-                    return (
-                      <tr
-                        key={key}
-                        className={`hover:bg-[#F8FAFC] ${selected.has(key) ? 'bg-[#E8EEF5]' : ''}`}
-                      >
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(key)}
-                            onChange={() => toggleOne(key)}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {imgUrl && (
-                              <a href={imgUrl} target="_blank" rel="noopener noreferrer">
-                                {isPdf(row.receipt.fileName) ? (
-                                  <object
-                                    data={imgUrl}
-                                    type="application/pdf"
-                                    className="w-10 h-10 rounded border border-[#D8DDE5] bg-white pointer-events-none"
-                                  >
-                                    <PdfIcon className="w-10 h-10 rounded border border-[#D8DDE5]" />
-                                  </object>
-                                ) : (
-                                  <img
-                                    src={imgUrl}
-                                    alt={row.receipt.fileName}
-                                    className="w-10 h-10 object-cover rounded border border-[#D8DDE5] bg-[#F8FAFC]"
-                                  />
-                                )}
-                              </a>
-                            )}
-                            <a
-                              href={imgUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#002C5F] hover:underline text-xs truncate max-w-[200px]"
-                            >
-                              {row.receipt.fileName}
+            <FinanceTable>
+              <FinanceTable.Head>
+                <tr>
+                  <FinanceTable.Th className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      className="finance-checkbox"
+                    />
+                  </FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.receipts')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.payee')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.date')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.committee')}</FinanceTable.Th>
+                  <FinanceTable.Th align="center"></FinanceTable.Th>
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body>
+                {filtered.map((row) => {
+                  const key = getRowKey(row)
+                  const imgUrl = row.receipt.url || row.receipt.driveUrl
+                  return (
+                    <FinanceTable.Row key={key} selected={selected.has(key)}>
+                      <FinanceTable.Td>
+                        <input
+                          type="checkbox"
+                          checked={selected.has(key)}
+                          onChange={() => toggleOne(key)}
+                          className="finance-checkbox"
+                        />
+                      </FinanceTable.Td>
+                      <FinanceTable.Td>
+                        <div className="flex items-center gap-3">
+                          {imgUrl && (
+                            <a href={imgUrl} target="_blank" rel="noopener noreferrer">
+                              {isPdf(row.receipt.fileName) ? (
+                                <object
+                                  data={imgUrl}
+                                  type="application/pdf"
+                                  className="w-10 h-10 rounded border border-[#D8DDE5] bg-white pointer-events-none"
+                                >
+                                  <PdfIcon className="w-10 h-10 rounded border border-[#D8DDE5]" />
+                                </object>
+                              ) : (
+                                <img
+                                  src={imgUrl}
+                                  alt={row.receipt.fileName}
+                                  className="w-10 h-10 object-cover rounded border border-[#D8DDE5] bg-[#F8FAFC]"
+                                />
+                              )}
                             </a>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-gray-700">{row.payee}</td>
-                        <td className="px-4 py-3 text-gray-500">{row.requestDate}</td>
-                        <td className="px-4 py-3 text-gray-500">
-                          {t(`committee.${row.committee}Short`)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Link
-                            to={`/request/${row.requestId}`}
-                            className="text-xs text-[#002C5F] hover:underline"
+                          )}
+                          <a
+                            href={imgUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#002C5F] hover:underline text-xs truncate max-w-[200px]"
                           >
-                            {t('receipts.viewRequest')}
-                          </Link>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {row.receipt.fileName}
+                          </a>
+                        </div>
+                      </FinanceTable.Td>
+                      <FinanceTable.Td className="text-gray-700">{row.payee}</FinanceTable.Td>
+                      <FinanceTable.Td className="text-gray-500">{row.requestDate}</FinanceTable.Td>
+                      <FinanceTable.Td className="text-gray-500">
+                        {t(`committee.${row.committee}Short`)}
+                      </FinanceTable.Td>
+                      <FinanceTable.Td align="center">
+                        <Link
+                          to={`/request/${row.requestId}`}
+                          className="text-xs text-[#002C5F] hover:underline"
+                        >
+                          {t('receipts.viewRequest')}
+                        </Link>
+                      </FinanceTable.Td>
+                    </FinanceTable.Row>
+                  )
+                })}
+              </FinanceTable.Body>
+            </FinanceTable>
           </div>
 
           {/* Mobile card view */}
@@ -370,7 +358,7 @@ export default function ReceiptsPage() {
                     checked={selected.has(key)}
                     onChange={() => toggleOne(key)}
                     onClick={(e) => e.stopPropagation()}
-                    className="rounded border-gray-300 shrink-0"
+                    className="finance-checkbox"
                   />
                   {imgUrl &&
                     (isPdf(row.receipt.fileName) ? (

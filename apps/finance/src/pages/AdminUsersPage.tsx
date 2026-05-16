@@ -12,6 +12,7 @@ import { Select, Button, Dialog, useToast } from 'trust-ui-react'
 import { TrashIcon } from '../components/Icons'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 import BankBookPreview from '../components/BankBookPreview'
+import FinanceTable from '../components/table/FinanceTable'
 
 function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void }) {
   const { t } = useTranslation()
@@ -215,7 +216,7 @@ function MobileUserCard({
                 fullWidth
               />
               {successUid === u.uid && (
-                <p className="text-xs text-green-600 mt-1">{t('users.roleChanged')}</p>
+                <p className="finance-success-text text-xs mt-1">{t('users.roleChanged')}</p>
               )}
             </>
           )}
@@ -340,91 +341,81 @@ export default function AdminUsersPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="finance-panel rounded-lg">
-              <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.displayName')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.email')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.phone')}
-                    </th>
+            <FinanceTable>
+              <FinanceTable.Head>
+                <tr>
+                  <FinanceTable.Th>{t('field.displayName')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.email')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.phone')}</FinanceTable.Th>
+                  {isAdmin && (
+                    <FinanceTable.Th align="center" className="min-w-[180px]">
+                      {t('role.label')}
+                    </FinanceTable.Th>
+                  )}
+                  {isAdmin && <FinanceTable.Th align="center" className="w-16"></FinanceTable.Th>}
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body>
+                {users.map((u) => (
+                  <FinanceTable.Row key={u.uid}>
+                    <FinanceTable.Td>
+                      <UserNameWithTooltip
+                        user={u}
+                        currentUser={currentUser}
+                        isAdmin={isAdmin}
+                        roleLabel={ROLE_LABELS[u.role]}
+                      />
+                    </FinanceTable.Td>
+                    <FinanceTable.Td className="text-gray-500">{u.email}</FinanceTable.Td>
+                    <FinanceTable.Td className="text-gray-500">{u.phone || '-'}</FinanceTable.Td>
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-[#667085] min-w-[180px]">
-                        {t('role.label')}
-                      </th>
+                      <FinanceTable.Td align="center">
+                        {u.role === 'super_admin' ? (
+                          <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
+                        ) : (
+                          <>
+                            <Select
+                              options={[
+                                { value: 'user', label: t('role.user') },
+                                { value: 'finance_ops', label: t('role.finance_ops') },
+                                { value: 'approver_ops', label: t('role.approver_ops') },
+                                { value: 'finance_prep', label: t('role.finance_prep') },
+                                { value: 'approver_prep', label: t('role.approver_prep') },
+                                { value: 'session_director', label: t('role.session_director') },
+                                { value: 'logistic_admin', label: t('role.logistic_admin') },
+                                { value: 'executive', label: t('role.executive') },
+                                { value: 'admin', label: t('role.admin') }
+                              ]}
+                              value={u.role}
+                              disabled={u.uid === currentUser?.uid}
+                              onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
+                              fullWidth
+                            />
+                            {successUid === u.uid && (
+                              <p className="finance-success-text text-xs mt-1">
+                                {t('users.roleChanged')}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </FinanceTable.Td>
                     )}
                     {isAdmin && (
-                      <th className="text-center px-4 py-3 font-medium text-[#667085] w-16"></th>
+                      <FinanceTable.Td align="center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteUser(u.uid)}
+                          disabled={u.uid === currentUser?.uid || u.role === 'super_admin'}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </FinanceTable.Td>
                     )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EDF0F4]">
-                  {users.map((u) => (
-                    <tr key={u.uid} className="hover:bg-[#F8FAFC]">
-                      <td className="px-4 py-3">
-                        <UserNameWithTooltip
-                          user={u}
-                          currentUser={currentUser}
-                          isAdmin={isAdmin}
-                          roleLabel={ROLE_LABELS[u.role]}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                      <td className="px-4 py-3 text-gray-500">{u.phone || '-'}</td>
-                      {isAdmin && (
-                        <td className="px-4 py-3 text-center">
-                          {u.role === 'super_admin' ? (
-                            <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
-                          ) : (
-                            <>
-                              <Select
-                                options={[
-                                  { value: 'user', label: t('role.user') },
-                                  { value: 'finance_ops', label: t('role.finance_ops') },
-                                  { value: 'approver_ops', label: t('role.approver_ops') },
-                                  { value: 'finance_prep', label: t('role.finance_prep') },
-                                  { value: 'approver_prep', label: t('role.approver_prep') },
-                                  { value: 'session_director', label: t('role.session_director') },
-                                  { value: 'logistic_admin', label: t('role.logistic_admin') },
-                                  { value: 'executive', label: t('role.executive') },
-                                  { value: 'admin', label: t('role.admin') }
-                                ]}
-                                value={u.role}
-                                disabled={u.uid === currentUser?.uid}
-                                onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
-                                fullWidth
-                              />
-                              {successUid === u.uid && (
-                                <p className="text-xs text-green-600 mt-1">
-                                  {t('users.roleChanged')}
-                                </p>
-                              )}
-                            </>
-                          )}
-                        </td>
-                      )}
-                      {isAdmin && (
-                        <td className="px-4 py-3 text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteUser(u.uid)}
-                            disabled={u.uid === currentUser?.uid || u.role === 'super_admin'}
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </FinanceTable.Row>
+                ))}
+              </FinanceTable.Body>
+            </FinanceTable>
           </div>
 
           {/* Mobile card view */}

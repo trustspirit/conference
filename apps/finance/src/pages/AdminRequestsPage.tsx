@@ -9,6 +9,7 @@ import StatusBadge from '../components/StatusBadge'
 import Spinner from '../components/Spinner'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import Tooltip from '../components/Tooltip'
+import FinanceTable from '../components/table/FinanceTable'
 import { useTranslation } from 'react-i18next'
 import { Select } from 'trust-ui-react'
 import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
@@ -339,96 +340,95 @@ export default function AdminRequestsPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
-            <div className="finance-panel rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
-                    <tr>
-                      <th className="w-10 px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={toggleAll}
-                          className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
-                        />
-                      </th>
-                      {(
-                        [
-                          { key: 'date' as SortKey, label: t('field.date'), align: 'text-left' },
-                          { key: 'payee' as SortKey, label: t('field.payee'), align: 'text-left' },
-                          { key: null, label: t('field.committee'), align: 'text-left' },
-                          {
-                            key: 'totalAmount' as SortKey,
-                            label: t('field.totalAmount'),
-                            align: 'text-right'
-                          },
-                          {
-                            key: 'status' as SortKey,
-                            label: t('status.label'),
-                            align: 'text-center'
-                          },
-                          { key: null, label: t('field.remarks'), align: 'text-left' }
-                        ] as const
-                      ).map((col, i) => (
-                        <th
-                          key={i}
-                          className={`${col.align} px-4 py-3 font-medium select-none ${
-                            col.key
-                              ? `cursor-pointer hover:text-[#111827] ${sortKey === col.key ? 'text-[#002C5F]' : 'text-[#667085]'}`
-                              : 'text-[#667085]'
-                          }`}
-                          onClick={col.key ? () => handleSort(col.key!) : undefined}
-                        >
-                          {col.label}
-                          {col.key && (
-                            <SortIcon columnKey={col.key} sortKey={sortKey} sortDir={sortDir} />
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody
-                    className={`divide-y divide-[#EDF0F4] transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
-                  >
-                    {accessible.map((req) => (
-                      <tr key={req.id} className="hover:bg-[#F8FAFC]">
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(req.id)}
-                            onChange={() => toggleOne(req.id)}
-                            className="h-4 w-4 rounded border-gray-300 accent-[#002C5F]"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Link
-                            to={`/request/${req.id}`}
-                            state={{ from: '/admin/requests' }}
-                            className="text-[#002C5F] hover:underline"
-                          >
-                            {req.date}
-                          </Link>
-                          {formatFirestoreTime(req.createdAt) && (
-                            <span className="ml-1.5 text-xs text-gray-400">
-                              {formatFirestoreTime(req.createdAt)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">{req.payee}</td>
-                        <td className="px-4 py-3">{t(`committee.${req.committee}Short`)}</td>
-                        <td className="px-4 py-3 text-right">
-                          ₩{req.totalAmount.toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <StatusBadge status={req.status} />
-                        </td>
-                        <td className="px-4 py-3 text-xs text-[#667085]">{renderRemarks(req)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <FinanceTable>
+              <FinanceTable.Head>
+                <tr>
+                  <FinanceTable.Th className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      className="finance-checkbox"
+                    />
+                  </FinanceTable.Th>
+                  {(
+                    [
+                      { key: 'date' as SortKey, label: t('field.date'), align: 'left' },
+                      { key: 'payee' as SortKey, label: t('field.payee'), align: 'left' },
+                      { key: null, label: t('field.committee'), align: 'left' },
+                      {
+                        key: 'totalAmount' as SortKey,
+                        label: t('field.totalAmount'),
+                        align: 'right'
+                      },
+                      {
+                        key: 'status' as SortKey,
+                        label: t('status.label'),
+                        align: 'center'
+                      },
+                      { key: null, label: t('field.remarks'), align: 'left' }
+                    ] as const
+                  ).map((col, i) => (
+                    <FinanceTable.Th
+                      key={i}
+                      align={col.align}
+                      className={`select-none ${
+                        col.key
+                          ? `finance-table-th-sortable ${sortKey === col.key ? 'finance-table-th-active' : ''}`
+                          : ''
+                      }`}
+                      onClick={col.key ? () => handleSort(col.key!) : undefined}
+                    >
+                      {col.label}
+                      {col.key && (
+                        <SortIcon columnKey={col.key} sortKey={sortKey} sortDir={sortDir} />
+                      )}
+                    </FinanceTable.Th>
+                  ))}
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body
+                className={`transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+              >
+                {accessible.map((req) => (
+                  <FinanceTable.Row key={req.id}>
+                    <FinanceTable.Td>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(req.id)}
+                        onChange={() => toggleOne(req.id)}
+                        className="finance-checkbox"
+                      />
+                    </FinanceTable.Td>
+                    <FinanceTable.Td>
+                      <Link
+                        to={`/request/${req.id}`}
+                        state={{ from: '/admin/requests' }}
+                        className="text-[#002C5F] hover:underline"
+                      >
+                        {req.date}
+                      </Link>
+                      {formatFirestoreTime(req.createdAt) && (
+                        <span className="ml-1.5 text-xs text-gray-400">
+                          {formatFirestoreTime(req.createdAt)}
+                        </span>
+                      )}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td>{req.payee}</FinanceTable.Td>
+                    <FinanceTable.Td>{t(`committee.${req.committee}Short`)}</FinanceTable.Td>
+                    <FinanceTable.Td align="right">
+                      ₩{req.totalAmount.toLocaleString()}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="center">
+                      <StatusBadge status={req.status} />
+                    </FinanceTable.Td>
+                    <FinanceTable.Td className="text-xs text-[#667085]">
+                      {renderRemarks(req)}
+                    </FinanceTable.Td>
+                  </FinanceTable.Row>
+                ))}
+              </FinanceTable.Body>
+            </FinanceTable>
           </div>
 
           {/* Mobile: sort selector + card view */}
@@ -465,7 +465,7 @@ export default function AdminRequestsPage() {
                       type="checkbox"
                       checked={selectedIds.has(req.id)}
                       onChange={() => toggleOne(req.id)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#002C5F] flex-shrink-0"
+                      className="finance-checkbox mt-0.5"
                     />
                     <Link
                       to={`/request/${req.id}`}

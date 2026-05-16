@@ -16,22 +16,22 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
     stage === 'submission'
       ? 'text-[#002C5F]'
       : stage === 'approval'
-        ? 'text-green-700'
-        : 'text-amber-700'
+        ? 'text-[#007FA8]'
+        : 'text-[#9A6B00]'
 
   const bgColor =
     stage === 'submission'
       ? 'bg-[#E8EEF5]/80 border-[#D8DDE5]'
       : stage === 'approval'
-        ? 'bg-green-50/80 border-green-200'
-        : 'bg-amber-50/80 border-amber-200'
+        ? 'bg-[#E7F3F5]/80 border-[#B8D8DD]'
+        : 'bg-[#FFF7E0]/80 border-[#E6D3A0]'
 
   const bulletColor =
     stage === 'submission'
       ? 'text-[#7AA7C7]'
       : stage === 'approval'
-        ? 'text-green-400'
-        : 'text-amber-400'
+        ? 'text-[#007FA8]'
+        : 'text-[#9A6B00]'
 
   const filteredItems = excludeKeys?.length
     ? items.filter((item) => !excludeKeys.includes(item.key))

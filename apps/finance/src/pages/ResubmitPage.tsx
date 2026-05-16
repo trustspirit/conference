@@ -616,7 +616,9 @@ export default function ResubmitPage() {
               {t('form.vendorBankBook')} <span className="text-red-500">*</span>
             </label>
             {original?.vendorBankBookUrl && !vendorBankBookFile && (
-              <p className="text-xs text-green-600 mb-1">{t('form.vendorBankBookExisting')}</p>
+              <p className="finance-success-text text-xs mb-1">
+                {t('form.vendorBankBookExisting')}
+              </p>
             )}
             <input
               type="file"
@@ -642,7 +644,7 @@ export default function ResubmitPage() {
             )}
             {vendorBankBookFile ? (
               <>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="finance-success-text text-xs mt-1">
                   {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                 </p>
                 {vendorBankBookFile.type.startsWith('image/') && (

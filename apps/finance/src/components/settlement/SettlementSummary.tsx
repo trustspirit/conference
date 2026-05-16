@@ -29,7 +29,7 @@ export default function SettlementSummary({
 
       <div className="finance-panel rounded-lg p-4 mb-6 space-y-4 sm:p-6">
         <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
-          <span className="text-green-700 font-medium">
+          <span className="finance-success-text font-medium">
             {t('settlement.includedCount', { count: reviewedCount })}
           </span>
           <span className="text-red-600 font-medium">

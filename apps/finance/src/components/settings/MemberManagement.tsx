@@ -50,6 +50,7 @@ export default function MemberManagement({ project }: { project: Project }) {
               type="checkbox"
               checked={memberUids.has(u.uid)}
               onChange={(e) => handleToggle(u.uid, e.target.checked)}
+              className="finance-checkbox"
             />
             <span className="font-medium">{u.displayName || u.name}</span>
             <span className="text-xs text-gray-400">{u.email}</span>

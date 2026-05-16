@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
 import { useUpdateProject } from '../../hooks/queries/useProjects'
+import FinanceTable from '../table/FinanceTable'
 
 interface BudgetConfig {
   totalBudget: number
@@ -112,90 +113,110 @@ export default function BudgetSettingsSection({
             </p>
           )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-[520px] w-full text-sm">
-            <thead className="border-b border-[#D8DDE5] bg-[#F8FAFC]">
-              <tr>
-                <th className="text-left py-2">Code</th>
-                <th className="text-left py-2">{t('field.comments')}</th>
-                <th className="text-right py-2">{t('dashboard.allocatedBudget')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EDF0F4]">
-              {UNIQUE_BUDGET_CODES.map((code) => (
-                <tr key={code}>
-                  <td className="py-2 font-mono">{code}</td>
-                  <td className="py-2 text-[#667085]">{t(`budgetCode.${code}`)}</td>
-                  <td className="py-2 text-right">
-                    {editingBudget ? (
-                      <input
-                        type="number"
-                        value={tempBudget.byCode[code] || ''}
-                        onChange={(e) =>
-                          setTempBudget({
-                            ...tempBudget,
-                            byCode: {
-                              ...tempBudget.byCode,
-                              [code]: parseInt(e.target.value) || 0
-                            }
-                          })
-                        }
-                        className="border border-[#D8DDE5] rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-[#002C5F] focus:outline-none"
-                        placeholder="0"
-                      />
-                    ) : (
-                      <span>
-                        {budget.byCode[code]
-                          ? `\u20A9${budget.byCode[code].toLocaleString()}`
-                          : '-'}
-                      </span>
-                    )}
-                  </td>
+        <FinanceTable variant="embedded" minWidthClassName="min-w-[520px]">
+          <FinanceTable.Head>
+            <tr>
+              <FinanceTable.Th size="compact">Code</FinanceTable.Th>
+              <FinanceTable.Th size="compact">{t('field.comments')}</FinanceTable.Th>
+              <FinanceTable.Th size="compact" align="right">
+                {t('dashboard.allocatedBudget')}
+              </FinanceTable.Th>
+            </tr>
+          </FinanceTable.Head>
+          <FinanceTable.Body>
+            {UNIQUE_BUDGET_CODES.map((code) => (
+              <FinanceTable.Row key={code} hover={false}>
+                <FinanceTable.Td size="compact" className="font-mono">
+                  {code}
+                </FinanceTable.Td>
+                <FinanceTable.Td size="compact" className="text-[#667085]">
+                  {t(`budgetCode.${code}`)}
+                </FinanceTable.Td>
+                <FinanceTable.Td size="compact" align="right">
+                  {editingBudget ? (
+                    <input
+                      type="number"
+                      value={tempBudget.byCode[code] || ''}
+                      onChange={(e) =>
+                        setTempBudget({
+                          ...tempBudget,
+                          byCode: {
+                            ...tempBudget.byCode,
+                            [code]: parseInt(e.target.value) || 0
+                          }
+                        })
+                      }
+                      className="border border-[#D8DDE5] rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-[#002C5F] focus:outline-none"
+                      placeholder="0"
+                    />
+                  ) : (
+                    <span>
+                      {budget.byCode[code] ? `\u20A9${budget.byCode[code].toLocaleString()}` : '-'}
+                    </span>
+                  )}
+                </FinanceTable.Td>
+              </FinanceTable.Row>
+            ))}
+          </FinanceTable.Body>
+          {(() => {
+            const cb = editingBudget ? tempBudget : budget
+            const codeTotal = Object.values(cb.byCode).reduce((s, v) => s + (v || 0), 0)
+            const diff = codeTotal - cb.totalBudget
+            const hasTotal = cb.totalBudget > 0
+            return (
+              <FinanceTable.Footer>
+                <tr>
+                  <FinanceTable.Td size="compact" colSpan={2} align="right" className="font-medium">
+                    {t('dashboard.codeTotal')}
+                  </FinanceTable.Td>
+                  <FinanceTable.Td size="compact" align="right" className="font-bold">
+                    {'\u20A9'}
+                    {codeTotal.toLocaleString()}
+                  </FinanceTable.Td>
                 </tr>
-              ))}
-            </tbody>
-            {(() => {
-              const cb = editingBudget ? tempBudget : budget
-              const codeTotal = Object.values(cb.byCode).reduce((s, v) => s + (v || 0), 0)
-              const diff = codeTotal - cb.totalBudget
-              const hasTotal = cb.totalBudget > 0
-              return (
-                <tfoot className="border-t border-[#D8DDE5]">
+                {hasTotal && diff !== 0 && (
                   <tr>
-                    <td colSpan={2} className="py-2 text-right font-medium">
-                      {t('dashboard.codeTotal')}
-                    </td>
-                    <td className="py-2 text-right font-bold">
-                      {'\u20A9'}
-                      {codeTotal.toLocaleString()}
-                    </td>
+                    <FinanceTable.Td
+                      size="compact"
+                      colSpan={2}
+                      align="right"
+                      className="font-medium"
+                    >
+                      {t('dashboard.difference')}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td
+                      size="compact"
+                      align="right"
+                      className={`font-bold ${diff > 0 ? 'text-[#A43F3F]' : 'text-[#007FA8]'}`}
+                    >
+                      {diff > 0 ? '+' : ''}
+                      {`\u20A9${diff.toLocaleString()}`}
+                    </FinanceTable.Td>
                   </tr>
-                  {hasTotal && diff !== 0 && (
-                    <tr>
-                      <td colSpan={2} className="py-2 text-right font-medium">
-                        {t('dashboard.difference')}
-                      </td>
-                      <td
-                        className={`py-2 text-right font-bold ${diff > 0 ? 'text-[#A43F3F]' : 'text-[#007FA8]'}`}
-                      >
-                        {diff > 0 ? '+' : ''}
-                        {`\u20A9${diff.toLocaleString()}`}
-                      </td>
-                    </tr>
-                  )}
-                  {hasTotal && diff === 0 && (
-                    <tr>
-                      <td colSpan={2} className="py-2 text-right font-medium">
-                        {t('dashboard.difference')}
-                      </td>
-                      <td className="py-2 text-right font-bold text-[#007FA8]">{'\u20A9'}0</td>
-                    </tr>
-                  )}
-                </tfoot>
-              )
-            })()}
-          </table>
-        </div>
+                )}
+                {hasTotal && diff === 0 && (
+                  <tr>
+                    <FinanceTable.Td
+                      size="compact"
+                      colSpan={2}
+                      align="right"
+                      className="font-medium"
+                    >
+                      {t('dashboard.difference')}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td
+                      size="compact"
+                      align="right"
+                      className="font-bold text-[#007FA8]"
+                    >
+                      {'\u20A9'}0
+                    </FinanceTable.Td>
+                  </tr>
+                )}
+              </FinanceTable.Footer>
+            )
+          })()}
+        </FinanceTable>
       </div>
       <div className="finance-panel rounded-lg p-4 mt-6 sm:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">

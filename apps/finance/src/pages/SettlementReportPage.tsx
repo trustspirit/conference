@@ -19,6 +19,7 @@ import InfoGrid from '../components/InfoGrid'
 import ItemsTable from '../components/ItemsTable'
 import ReceiptGallery from '../components/ReceiptGallery'
 import BankBookPreview from '../components/BankBookPreview'
+import FinanceTable from '../components/table/FinanceTable'
 
 export default function SettlementReportPage() {
   const { t } = useTranslation()
@@ -194,7 +195,7 @@ export default function SettlementReportPage() {
                   type="checkbox"
                   checked={includeBankBooks}
                   onChange={(e) => setIncludeBankBooks(e.target.checked)}
-                  className="rounded border-gray-300 text-[#002C5F] focus:ring-[#002C5F]"
+                  className="finance-checkbox"
                 />
                 {t('settlement.includeBankBooks')}
               </label>
@@ -244,42 +245,40 @@ export default function SettlementReportPage() {
           <h3 className="text-sm font-semibold text-[#002C5F] mb-2">
             {t('settlement.budgetSummary')}
           </h3>
-          <div className="bg-[#F8FAFC] border border-[#D8DDE5] rounded overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-[#EEF1F5] border-b border-[#D8DDE5]">
-                <tr>
-                  <th className="text-left px-3 py-2 font-medium text-[#667085]">
-                    {t('field.budgetCode')}
-                  </th>
-                  <th className="text-left px-3 py-2 font-medium text-[#667085]">
-                    {t('field.comments')}
-                  </th>
-                  <th className="text-right px-3 py-2 font-medium text-[#667085]">
-                    {t('field.totalAmount')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EDF0F4]">
-                {budgetSummary.map(([code, { total }]) => (
-                  <tr key={code}>
-                    <td className="px-3 py-2">{code}</td>
-                    <td className="px-3 py-2 text-[#667085]">{t(`budgetCode.${code}`)}</td>
-                    <td className="px-3 py-2 text-right font-medium">₩{total.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t border-[#D8DDE5] bg-[#EEF1F5]">
-                <tr>
-                  <td colSpan={2} className="px-3 py-2 font-semibold text-right">
-                    {t('field.totalAmount')}
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold">
-                    ₩{totalAmount.toLocaleString()}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <FinanceTable variant="embedded">
+            <FinanceTable.Head tone="soft">
+              <tr>
+                <FinanceTable.Th size="compact">{t('field.budgetCode')}</FinanceTable.Th>
+                <FinanceTable.Th size="compact">{t('field.comments')}</FinanceTable.Th>
+                <FinanceTable.Th size="compact" align="right">
+                  {t('field.totalAmount')}
+                </FinanceTable.Th>
+              </tr>
+            </FinanceTable.Head>
+            <FinanceTable.Body>
+              {budgetSummary.map(([code, { total }]) => (
+                <FinanceTable.Row key={code} hover={false}>
+                  <FinanceTable.Td size="compact">{code}</FinanceTable.Td>
+                  <FinanceTable.Td size="compact" className="text-[#667085]">
+                    {t(`budgetCode.${code}`)}
+                  </FinanceTable.Td>
+                  <FinanceTable.Td size="compact" align="right" className="font-medium">
+                    ₩{total.toLocaleString()}
+                  </FinanceTable.Td>
+                </FinanceTable.Row>
+              ))}
+            </FinanceTable.Body>
+            <FinanceTable.Footer tone="soft">
+              <tr>
+                <FinanceTable.Td size="compact" colSpan={2} align="right" className="font-semibold">
+                  {t('field.totalAmount')}
+                </FinanceTable.Td>
+                <FinanceTable.Td size="compact" align="right" className="font-bold">
+                  ₩{totalAmount.toLocaleString()}
+                </FinanceTable.Td>
+              </tr>
+            </FinanceTable.Footer>
+          </FinanceTable>
         </div>
 
         {/* Payee summary (only when multiple payees) */}
@@ -288,61 +287,61 @@ export default function SettlementReportPage() {
             <h3 className="text-sm font-semibold text-[#002C5F] mb-2">
               {t('settlement.payeeSummary')}
             </h3>
-            <div className="bg-[#F8FAFC] border border-[#D8DDE5] rounded overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-[#EEF1F5] border-b border-[#D8DDE5]">
-                  <tr>
-                    <th className="text-left px-3 py-2 font-medium text-[#667085]">#</th>
-                    <th className="text-left px-3 py-2 font-medium text-[#667085]">
-                      {t('field.payee')}
-                    </th>
+            <FinanceTable variant="embedded">
+              <FinanceTable.Head tone="soft">
+                <tr>
+                  <FinanceTable.Th size="compact">#</FinanceTable.Th>
+                  <FinanceTable.Th size="compact">{t('field.payee')}</FinanceTable.Th>
+                  {!isCorporateCard && (
+                    <FinanceTable.Th size="compact">{t('field.bank')}</FinanceTable.Th>
+                  )}
+                  {!isCorporateCard && (
+                    <FinanceTable.Th size="compact">{t('field.bankAccount')}</FinanceTable.Th>
+                  )}
+                  <FinanceTable.Th size="compact" align="right">
+                    {t('field.totalAmount')}
+                  </FinanceTable.Th>
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body>
+                {settlements.map((s, i) => (
+                  <FinanceTable.Row key={s.id} hover={false}>
+                    <FinanceTable.Td size="compact" className="text-gray-500">
+                      {i + 1}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td size="compact">{s.payee}</FinanceTable.Td>
                     {!isCorporateCard && (
-                      <th className="text-left px-3 py-2 font-medium text-[#667085]">
-                        {t('field.bank')}
-                      </th>
+                      <FinanceTable.Td size="compact" className="text-gray-500">
+                        {s.bankName}
+                      </FinanceTable.Td>
                     )}
                     {!isCorporateCard && (
-                      <th className="text-left px-3 py-2 font-medium text-[#667085]">
-                        {t('field.bankAccount')}
-                      </th>
+                      <FinanceTable.Td size="compact" className="text-gray-500">
+                        {s.bankAccount}
+                      </FinanceTable.Td>
                     )}
-                    <th className="text-right px-3 py-2 font-medium text-[#667085]">
-                      {t('field.totalAmount')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EDF0F4]">
-                  {settlements.map((s, i) => (
-                    <tr key={s.id}>
-                      <td className="px-3 py-2 text-gray-500">{i + 1}</td>
-                      <td className="px-3 py-2">{s.payee}</td>
-                      {!isCorporateCard && (
-                        <td className="px-3 py-2 text-gray-500">{s.bankName}</td>
-                      )}
-                      {!isCorporateCard && (
-                        <td className="px-3 py-2 text-gray-500">{s.bankAccount}</td>
-                      )}
-                      <td className="px-3 py-2 text-right font-medium">
-                        ₩{s.totalAmount.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="border-t border-[#D8DDE5] bg-[#EEF1F5]">
-                  <tr>
-                    <td
-                      colSpan={isCorporateCard ? 2 : 4}
-                      className="px-3 py-2 font-semibold text-right"
-                    >
-                      {t('field.totalAmount')}
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold">
-                      ₩{totalAmount.toLocaleString()}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                    <FinanceTable.Td size="compact" align="right" className="font-medium">
+                      ₩{s.totalAmount.toLocaleString()}
+                    </FinanceTable.Td>
+                  </FinanceTable.Row>
+                ))}
+              </FinanceTable.Body>
+              <FinanceTable.Footer tone="soft">
+                <tr>
+                  <FinanceTable.Td
+                    size="compact"
+                    colSpan={isCorporateCard ? 2 : 4}
+                    align="right"
+                    className="font-semibold"
+                  >
+                    {t('field.totalAmount')}
+                  </FinanceTable.Td>
+                  <FinanceTable.Td size="compact" align="right" className="font-bold">
+                    ₩{totalAmount.toLocaleString()}
+                  </FinanceTable.Td>
+                </tr>
+              </FinanceTable.Footer>
+            </FinanceTable>
           </div>
         )}
 

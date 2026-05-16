@@ -23,6 +23,7 @@ export default function CommitteeSelect({ value, onChange, name = 'committee', l
             value="operations"
             checked={value === 'operations'}
             onChange={() => onChange('operations')}
+            className="finance-radio"
           />
           <span className="text-sm">{t('committee.operations')}</span>
         </label>
@@ -33,6 +34,7 @@ export default function CommitteeSelect({ value, onChange, name = 'committee', l
             value="preparation"
             checked={value === 'preparation'}
             onChange={() => onChange('preparation')}
+            className="finance-radio"
           />
           <span className="text-sm">{t('committee.preparation')}</span>
         </label>

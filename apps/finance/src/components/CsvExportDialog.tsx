@@ -52,7 +52,7 @@ export default function CsvExportDialog({
                     value={mode}
                     checked={exportMode === mode}
                     onChange={() => onExportModeChange(mode)}
-                    className="accent-[#002C5F]"
+                    className="finance-radio"
                   />
                   {t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
                 </label>
@@ -79,9 +79,7 @@ export default function CsvExportDialog({
                   key={key}
                   onClick={() => toggleOptional(key)}
                   className={`px-2.5 py-1 rounded text-sm border transition-colors ${
-                    selectedOptionals.has(key)
-                      ? 'bg-green-50 text-green-700 border-green-300'
-                      : 'bg-[#F8FAFC] text-[#667085] border-[#D8DDE5] hover:border-[#002C5F]'
+                    selectedOptionals.has(key) ? 'finance-chip-selected' : 'finance-chip'
                   }`}
                 >
                   {selectedOptionals.has(key) ? '✓ ' : ''}
@@ -93,10 +91,15 @@ export default function CsvExportDialog({
         )}
       </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" className="finance-secondary-button" onClick={onClose}>
           {t('common.cancel')}
         </Button>
-        <Button onClick={() => onExport(selectedOptionals)} disabled={isExporting}>
+        <Button
+          variant="primary"
+          className="finance-primary-button"
+          onClick={() => onExport(selectedOptionals)}
+          disabled={isExporting}
+        >
           {isExporting ? t('common.exporting') : t('common.exportCsv')}
         </Button>
       </Dialog.Actions>

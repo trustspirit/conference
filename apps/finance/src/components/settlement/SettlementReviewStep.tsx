@@ -159,13 +159,13 @@ export default function SettlementReviewStep({
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => onReject(req.id)}
-              className="flex-1 bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700"
+              className="finance-danger-button flex-1 px-4 py-2 rounded text-sm font-medium"
             >
               {t('approval.reject')}
             </button>
             <button
               onClick={onInclude}
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700"
+              className="finance-primary-button flex-1 px-4 py-2 rounded text-sm font-medium"
             >
               {t('settlement.confirmInclude')}
             </button>

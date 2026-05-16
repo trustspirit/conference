@@ -13,6 +13,7 @@ import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
+import FinanceTable from '../components/table/FinanceTable'
 import { Dialog, Button } from 'trust-ui-react'
 
 type MyFilter = 'all' | 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled'
@@ -107,79 +108,69 @@ export default function MyRequestsPage() {
         <>
           {/* Desktop table */}
           <div className="hidden sm:block">
-            <div className="finance-panel rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] border-b border-[#D8DDE5]">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.date')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.committee')}
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-[#667085]">
-                      {t('field.items')}
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-[#667085]">
-                      {t('field.totalAmount')}
-                    </th>
-                    <th className="text-center px-4 py-3 font-medium text-[#667085]">
-                      {t('status.label')}
-                    </th>
-                    <th className="text-center px-4 py-3 font-medium text-[#667085]"></th>
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y divide-[#EDF0F4] transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
-                >
-                  {requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-[#F8FAFC]">
-                      <td className="px-4 py-3">
-                        <Link to={`/request/${req.id}`} className="text-[#002C5F] hover:underline">
-                          {req.date}
-                        </Link>
-                        {formatFirestoreTime(req.createdAt) && (
-                          <span className="ml-1.5 text-xs text-gray-400">
-                            {formatFirestoreTime(req.createdAt)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">{t(`committee.${req.committee}Short`)}</td>
-                      <td className="px-4 py-3">
-                        {t('form.itemCount', { count: req.items.length })}
-                      </td>
-                      <td className="px-4 py-3 text-right">₩{req.totalAmount.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-center">
-                        <StatusBadge status={req.status} />
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {req.status === 'pending' && (
-                          <button
-                            onClick={(e) => handleCancel(e, req.id)}
-                            disabled={cancelMutation.isPending}
-                            className="px-3 py-1 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+            <FinanceTable>
+              <FinanceTable.Head>
+                <tr>
+                  <FinanceTable.Th>{t('field.date')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.committee')}</FinanceTable.Th>
+                  <FinanceTable.Th>{t('field.items')}</FinanceTable.Th>
+                  <FinanceTable.Th align="right">{t('field.totalAmount')}</FinanceTable.Th>
+                  <FinanceTable.Th align="center">{t('status.label')}</FinanceTable.Th>
+                  <FinanceTable.Th align="center"></FinanceTable.Th>
+                </tr>
+              </FinanceTable.Head>
+              <FinanceTable.Body
+                className={`transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
+              >
+                {requests.map((req) => (
+                  <FinanceTable.Row key={req.id}>
+                    <FinanceTable.Td>
+                      <Link to={`/request/${req.id}`} className="text-[#002C5F] hover:underline">
+                        {req.date}
+                      </Link>
+                      {formatFirestoreTime(req.createdAt) && (
+                        <span className="ml-1.5 text-xs text-gray-400">
+                          {formatFirestoreTime(req.createdAt)}
+                        </span>
+                      )}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td>{t(`committee.${req.committee}Short`)}</FinanceTable.Td>
+                    <FinanceTable.Td>
+                      {t('form.itemCount', { count: req.items.length })}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="right">
+                      ₩{req.totalAmount.toLocaleString()}
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="center">
+                      <StatusBadge status={req.status} />
+                    </FinanceTable.Td>
+                    <FinanceTable.Td align="center">
+                      {req.status === 'pending' && (
+                        <button
+                          onClick={(e) => handleCancel(e, req.id)}
+                          disabled={cancelMutation.isPending}
+                          className="px-3 py-1 rounded border border-red-200 bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                        >
+                          {t('approval.cancelRequest')}
+                        </button>
+                      )}
+                      {(req.status === 'cancelled' ||
+                        req.status === 'rejected' ||
+                        req.status === 'force_rejected') &&
+                        !resubmittedIds.has(req.id) && (
+                          <Link
+                            to={`/request/resubmit/${req.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-block px-3 py-1 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
                           >
-                            {t('approval.cancelRequest')}
-                          </button>
+                            {t('approval.resubmit')}
+                          </Link>
                         )}
-                        {(req.status === 'cancelled' ||
-                          req.status === 'rejected' ||
-                          req.status === 'force_rejected') &&
-                          !resubmittedIds.has(req.id) && (
-                            <Link
-                              to={`/request/resubmit/${req.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-block px-3 py-1 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
-                            >
-                              {t('approval.resubmit')}
-                            </Link>
-                          )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    </FinanceTable.Td>
+                  </FinanceTable.Row>
+                ))}
+              </FinanceTable.Body>
+            </FinanceTable>
           </div>
 
           {/* Mobile card list */}

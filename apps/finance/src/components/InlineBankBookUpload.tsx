@@ -37,7 +37,7 @@ export default function InlineBankBookUpload({ file, error, onFileChange, onErro
       />
       {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
       {file && (
-        <p className="text-xs text-green-600 mt-1">
+        <p className="finance-success-text text-xs mt-1">
           {file.name} ({(file.size / 1024).toFixed(0)}KB)
         </p>
       )}

@@ -177,7 +177,7 @@ export default function PersonalSettings() {
         {hasBankBook && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+              <span className="text-xs bg-[#E7F3F5] text-[#007FA8] px-2 py-0.5 rounded">
                 {t('settings.bankBookUploaded')}
               </span>
               <a
@@ -291,7 +291,7 @@ export default function PersonalSettings() {
         >
           {saving ? t('common.saving') : t('common.save')}
         </Button>
-        {saved && <span className="text-sm text-green-600">{t('common.saved')}</span>}
+        {saved && <span className="finance-success-text text-sm">{t('common.saved')}</span>}
       </div>
     </>
   )

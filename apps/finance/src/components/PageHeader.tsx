@@ -5,7 +5,7 @@ type ActionItem = {
   label: string
   to?: string
   onClick?: () => void
-  variant?: 'primary' | 'purple'
+  variant?: 'primary'
   disabled?: boolean
 }
 
