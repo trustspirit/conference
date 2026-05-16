@@ -4,7 +4,14 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useInfiniteSettlements, fetchRequestDatesByIds } from '../hooks/queries/useSettlements'
-import { exportSettlementsByBudgetCodeCsv } from '../lib/csvExport'
+import {
+  exportSettlementsByBudgetCodeCsv,
+  getSettlementCsvColumnLabel,
+  DEFAULT_SETTLEMENT_CSV_COLUMNS,
+  OPTIONAL_SETTLEMENT_CSV_COLUMNS,
+  type SettlementCsvColumnKey,
+} from '../lib/csvExport'
+import CsvExportDialog from '../components/CsvExportDialog'
 import { formatFirestoreDate } from '../lib/utils'
 import { Settlement, Committee } from '../types'
 import { canAccessSettlement } from '../lib/roles'
@@ -79,6 +86,7 @@ export default function SettlementListPage() {
   const batches = useMemo(() => groupByBatch(settlements), [settlements])
 
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set())
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
 
   // 무한스크롤로 새 배치가 로드될 때, 이전에 전체선택 상태였다면 새 배치도 선택에 포함
   const prevBatchLengthRef = useRef(0)
@@ -112,15 +120,20 @@ export default function SettlementListPage() {
 
   const [isExporting, setIsExporting] = useState(false)
 
-  const handleExportSettlements = async () => {
+  const handleExportSettlements = async (selectedOptionals: Set<string>) => {
     if (isExporting) return
     setIsExporting(true)
     try {
       const toExport = settlements.filter((s) => selectedBatchIds.has(s.batchId || s.id))
       const allRequestIds = [...new Set(toExport.flatMap((s) => s.requestIds))]
       const requestDateMap = await fetchRequestDatesByIds(allRequestIds)
-      exportSettlementsByBudgetCodeCsv(toExport, requestDateMap)
+      const columns = [
+        ...DEFAULT_SETTLEMENT_CSV_COLUMNS,
+        ...(selectedOptionals as Set<SettlementCsvColumnKey>),
+      ]
+      exportSettlementsByBudgetCodeCsv(toExport, requestDateMap, columns)
       setSelectedBatchIds(new Set())
+      setExportDialogOpen(false)
     } finally {
       setIsExporting(false)
     }
@@ -148,13 +161,11 @@ export default function SettlementListPage() {
         title={t('settlement.listTitle')}
         actions={[
           {
-            label: isExporting
-              ? t('common.exporting')
-              : selectedBatchIds.size > 0
-                ? `${t('common.exportCsv')} (${selectedBatchIds.size})`
-                : t('common.exportCsv'),
-            onClick: handleExportSettlements,
-            disabled: selectedBatchIds.size === 0 || isExporting,
+            label: selectedBatchIds.size > 0
+              ? `${t('common.exportCsv')} (${selectedBatchIds.size})`
+              : t('common.exportCsv'),
+            onClick: () => setExportDialogOpen(true),
+            disabled: selectedBatchIds.size === 0,
           },
           ...(canProcess
             ? [{ label: t('settlement.newSettlement'), to: '/admin/settlement/new', variant: 'purple' as const }]
@@ -308,6 +319,16 @@ export default function SettlementListPage() {
           />
         </>
       )}
+
+      <CsvExportDialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        defaultColumns={DEFAULT_SETTLEMENT_CSV_COLUMNS}
+        optionalColumns={OPTIONAL_SETTLEMENT_CSV_COLUMNS}
+        getColumnLabel={(key) => getSettlementCsvColumnLabel(key as SettlementCsvColumnKey)}
+        onExport={handleExportSettlements}
+        isExporting={isExporting}
+      />
     </Layout>
   )
 }

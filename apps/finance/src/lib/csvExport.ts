@@ -92,6 +92,13 @@ export const DEFAULT_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
   'date',
 ]
 
+export const OPTIONAL_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
+  'bank',
+  'bankAccount',
+  'itemDescriptions',
+  'approvedBy',
+]
+
 export function getSettlementCsvColumnLabel(key: SettlementCsvColumnKey): string {
   const labels: Record<SettlementCsvColumnKey, string> = {
     payee: i18n.t('field.payee'),

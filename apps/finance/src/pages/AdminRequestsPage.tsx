@@ -10,7 +10,7 @@ import Spinner from '../components/Spinner'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import Tooltip from '../components/Tooltip'
 import { useTranslation } from 'react-i18next'
-import { Select, Dialog, Button } from 'trust-ui-react'
+import { Select } from 'trust-ui-react'
 import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
 import { useInfiniteRequests, fetchAllRequests } from '../hooks/queries/useRequests'
 import {
@@ -21,6 +21,7 @@ import {
   getCsvColumnLabel,
   type CsvColumnKey
 } from '../lib/csvExport'
+import CsvExportDialog from '../components/CsvExportDialog'
 
 type SortKey = 'date' | 'payee' | 'totalAmount' | 'status'
 type SortDir = 'asc' | 'desc'
@@ -67,20 +68,8 @@ export default function AdminRequestsPage() {
 
   const [isExporting, setIsExporting] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
-  const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<Set<CsvColumnKey>>(
-    new Set()
-  )
   const [exportMode, setExportMode] = useState<'byRequest' | 'byBudgetCode'>('byRequest')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-
-  const toggleOptionalColumn = (key: CsvColumnKey) => {
-    setSelectedOptionalColumns((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
 
   const allRequests = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
@@ -122,7 +111,7 @@ export default function AdminRequestsPage() {
     })
   }, [allRequests, filter, committeeFilter, role, sortKey, sortDir, resubmittedIds])
 
-  const handleExportCsv = useCallback(async () => {
+  const handleExportCsv = useCallback(async (selectedOptionals: Set<string>) => {
     if (!currentProject?.id || isExporting) return
     setIsExporting(true)
     try {
@@ -135,7 +124,7 @@ export default function AdminRequestsPage() {
           (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
         )
       }
-      const columns = [...DEFAULT_CSV_COLUMNS, ...selectedOptionalColumns]
+      const columns = [...DEFAULT_CSV_COLUMNS, ...(selectedOptionals as Set<CsvColumnKey>)]
       if (exportMode === 'byBudgetCode') {
         exportRequestsByBudgetCodeCsv(toExport, columns)
       } else {
@@ -147,7 +136,7 @@ export default function AdminRequestsPage() {
     } finally {
       setIsExporting(false)
     }
-  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, isExporting, t])
+  }, [currentProject?.id, role, firestoreCommittee, exportMode, selectedIds, accessible, isExporting, t])
 
   // 무한스크롤로 새 항목이 로드될 때, 이전에 전체선택 상태였다면 새 항목도 선택에 포함
   const prevAccessibleLengthRef = useRef(0)
@@ -497,74 +486,17 @@ export default function AdminRequestsPage() {
         </>
       )}
 
-      <Dialog
+      <CsvExportDialog
         open={exportDialogOpen}
         onClose={() => setExportDialogOpen(false)}
-        size="sm"
-      >
-        <Dialog.Title onClose={() => setExportDialogOpen(false)}>
-          {t('common.exportColumns')}
-        </Dialog.Title>
-        <Dialog.Content>
-          <div className="mb-4">
-            <div className="flex gap-4">
-              {(['byRequest', 'byBudgetCode'] as const).map((mode) => (
-                <label key={mode} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                  <input
-                    type="radio"
-                    name="exportMode"
-                    value={mode}
-                    checked={exportMode === mode}
-                    onChange={() => setExportMode(mode)}
-                    className="accent-blue-600"
-                  />
-                  {t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-2 font-medium">{t('common.defaultColumns')}</p>
-            <div className="flex flex-wrap gap-2">
-              {DEFAULT_CSV_COLUMNS.map((key) => (
-                <span
-                  key={key}
-                  className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded text-sm"
-                >
-                  {getCsvColumnLabel(key)}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-2 font-medium">{t('common.optionalColumns')}</p>
-            <div className="flex flex-wrap gap-2">
-              {OPTIONAL_CSV_COLUMNS.map((key) => (
-                <button
-                  key={key}
-                  onClick={() => toggleOptionalColumn(key)}
-                  className={`px-2.5 py-1 rounded text-sm border transition-colors ${
-                    selectedOptionalColumns.has(key)
-                      ? 'bg-green-50 text-green-700 border-green-300'
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {selectedOptionalColumns.has(key) ? '✓ ' : ''}
-                  {getCsvColumnLabel(key)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={handleExportCsv} disabled={isExporting}>
-            {isExporting ? t('common.exporting') : t('common.exportCsv')}
-          </Button>
-        </Dialog.Actions>
-      </Dialog>
+        defaultColumns={DEFAULT_CSV_COLUMNS}
+        optionalColumns={OPTIONAL_CSV_COLUMNS}
+        getColumnLabel={(key) => getCsvColumnLabel(key as CsvColumnKey)}
+        onExport={handleExportCsv}
+        isExporting={isExporting}
+        exportMode={exportMode}
+        onExportModeChange={setExportMode}
+      />
     </Layout>
   )
 }
