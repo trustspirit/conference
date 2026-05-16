@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import { useInfiniteSettlements } from '../hooks/queries/useSettlements'
+import { useInfiniteSettlements, fetchRequestDatesByIds } from '../hooks/queries/useSettlements'
 import { exportSettlementsByBudgetCodeCsv } from '../lib/csvExport'
 import { formatFirestoreDate } from '../lib/utils'
 import { Settlement, Committee } from '../types'
@@ -110,10 +110,20 @@ export default function SettlementListPage() {
     })
   }
 
-  const handleExportSettlements = () => {
-    const toExport = settlements.filter((s) => selectedBatchIds.has(s.batchId || s.id))
-    exportSettlementsByBudgetCodeCsv(toExport)
-    setSelectedBatchIds(new Set())
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportSettlements = async () => {
+    if (isExporting) return
+    setIsExporting(true)
+    try {
+      const toExport = settlements.filter((s) => selectedBatchIds.has(s.batchId || s.id))
+      const allRequestIds = [...new Set(toExport.flatMap((s) => s.requestIds))]
+      const requestDateMap = await fetchRequestDatesByIds(allRequestIds)
+      exportSettlementsByBudgetCodeCsv(toExport, requestDateMap)
+      setSelectedBatchIds(new Set())
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
@@ -136,27 +146,21 @@ export default function SettlementListPage() {
     <Layout>
       <PageHeader
         title={t('settlement.listTitle')}
-        action={
-          canProcess
-            ? {
-                label: t('settlement.newSettlement'),
-                to: '/admin/settlement/new',
-                variant: 'purple'
-              }
-            : undefined
-        }
+        actions={[
+          {
+            label: isExporting
+              ? t('common.exporting')
+              : selectedBatchIds.size > 0
+                ? `${t('common.exportCsv')} (${selectedBatchIds.size})`
+                : t('common.exportCsv'),
+            onClick: handleExportSettlements,
+            disabled: selectedBatchIds.size === 0 || isExporting,
+          },
+          ...(canProcess
+            ? [{ label: t('settlement.newSettlement'), to: '/admin/settlement/new', variant: 'purple' as const }]
+            : []),
+        ]}
       />
-
-      {selectedBatchIds.size > 0 && (
-        <div className="flex justify-end mb-3">
-          <button
-            onClick={handleExportSettlements}
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded font-medium hover:bg-blue-700"
-          >
-            {t('common.exportCsv')} ({selectedBatchIds.size})
-          </button>
-        </div>
-      )}
 
       <div className="flex gap-2 mb-4">
         {FILTER_TABS.map((tab) => (

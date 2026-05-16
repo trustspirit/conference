@@ -97,6 +97,7 @@
   "field": {
     "payee": "신청자",
     "date": "날짜",
+    "requestDate": "신청일자",
     "phone": "전화번호",
     "session": "세션",
     "bank": "은행",

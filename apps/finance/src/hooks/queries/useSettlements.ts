@@ -92,6 +92,19 @@ export function useSettlementBatch(batchId: string | undefined) {
   })
 }
 
+/** Fetch request dates by IDs — returns a map of requestId → date string */
+export async function fetchRequestDatesByIds(ids: string[]): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map()
+  const results = await Promise.all(
+    ids.map(async (id) => {
+      const snap = await getDoc(doc(db, 'requests', id))
+      if (!snap.exists()) return null
+      return [id, (snap.data().date as string) ?? ''] as [string, string]
+    })
+  )
+  return new Map(results.filter((r): r is [string, string] => r !== null))
+}
+
 /** Load original requests by IDs (for settlement report individual forms) */
 export function useRequestsByIds(requestIds: string[]) {
   return useQuery({

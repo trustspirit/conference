@@ -76,6 +76,7 @@ export type SettlementCsvColumnKey =
   | 'committee'
   | 'budgetCode'
   | 'totalAmount'
+  | 'requestDate'
   | 'date'
   | 'bank'
   | 'bankAccount'
@@ -87,6 +88,7 @@ export const DEFAULT_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
   'committee',
   'budgetCode',
   'totalAmount',
+  'requestDate',
   'date',
 ]
 
@@ -96,6 +98,7 @@ export function getSettlementCsvColumnLabel(key: SettlementCsvColumnKey): string
     committee: i18n.t('field.committee'),
     budgetCode: i18n.t('field.budgetCode'),
     totalAmount: i18n.t('field.totalAmount'),
+    requestDate: i18n.t('field.requestDate'),
     date: i18n.t('settlement.settlementDate'),
     bank: i18n.t('field.bank'),
     bankAccount: i18n.t('field.bankAccount'),
@@ -249,26 +252,38 @@ type FlattenedSettlement = {
   item: RequestItem
 }
 
-function flattenSettlementsToBudgetCodeRows(settlements: Settlement[]): FlattenedSettlement[] {
+function getEarliestRequestDate(
+  settlement: Settlement,
+  requestDateMap: Map<string, string>
+): string {
+  return (
+    settlement.requestIds
+      .map((id) => requestDateMap.get(id) ?? '')
+      .filter(Boolean)
+      .sort()[0] ?? ''
+  )
+}
+
+function flattenSettlementsToBudgetCodeRows(
+  settlements: Settlement[],
+  requestDateMap: Map<string, string>
+): FlattenedSettlement[] {
   return settlements
     .flatMap((s) => s.items.map((item) => ({ settlement: s, item })))
     .sort((a, b) => {
       if (a.item.budgetCode !== b.item.budgetCode) {
         return a.item.budgetCode - b.item.budgetCode
       }
-      const getTime = (d: unknown): number => {
-        if (d instanceof Date) return d.getTime()
-        if (d && typeof d === 'object' && 'toDate' in d)
-          return (d as { toDate: () => Date }).toDate().getTime()
-        return 0
-      }
-      return getTime(a.settlement.createdAt) - getTime(b.settlement.createdAt)
+      const aDate = getEarliestRequestDate(a.settlement, requestDateMap)
+      const bDate = getEarliestRequestDate(b.settlement, requestDateMap)
+      return aDate.localeCompare(bDate)
     })
 }
 
 function getSettlementBudgetCodeCsvCellValue(
   flattened: FlattenedSettlement,
-  key: SettlementCsvColumnKey
+  key: SettlementCsvColumnKey,
+  requestDateMap: Map<string, string>
 ): string {
   const { settlement: s, item } = flattened
   switch (key) {
@@ -282,6 +297,8 @@ function getSettlementBudgetCodeCsvCellValue(
       return s.payee
     case 'committee':
       return getCommitteeLabel(s.committee)
+    case 'requestDate':
+      return getEarliestRequestDate(s, requestDateMap)
     case 'date':
       return formatFirestoreDate(s.createdAt)
     case 'bank':
@@ -297,7 +314,11 @@ function getSettlementBudgetCodeCsvCellValue(
   }
 }
 
-function getSettlementCsvCellValue(s: Settlement, key: SettlementCsvColumnKey): string {
+function getSettlementCsvCellValue(
+  s: Settlement,
+  key: SettlementCsvColumnKey,
+  requestDateMap?: Map<string, string>
+): string {
   switch (key) {
     case 'payee':
       return s.payee
@@ -307,6 +328,8 @@ function getSettlementCsvCellValue(s: Settlement, key: SettlementCsvColumnKey): 
       return [...new Set(s.items.map((i) => String(i.budgetCode)))].join('/')
     case 'totalAmount':
       return String(s.totalAmount)
+    case 'requestDate':
+      return requestDateMap ? getEarliestRequestDate(s, requestDateMap) : ''
     case 'date':
       return formatFirestoreDate(s.createdAt)
     case 'bank':
@@ -345,12 +368,13 @@ export function exportSettlementsCsv(
 
 export function exportSettlementsByBudgetCodeCsv(
   settlements: Settlement[],
+  requestDateMap: Map<string, string>,
   columns: SettlementCsvColumnKey[] = DEFAULT_SETTLEMENT_CSV_COLUMNS
 ) {
   const header = columns.map((key) => escapeCsvField(getSettlementCsvColumnLabel(key)))
-  const flattened = flattenSettlementsToBudgetCodeRows(settlements)
+  const flattened = flattenSettlementsToBudgetCodeRows(settlements, requestDateMap)
   const rows = flattened.map((f) =>
-    columns.map((key) => escapeCsvField(getSettlementBudgetCodeCsvCellValue(f, key))).join(',')
+    columns.map((key) => escapeCsvField(getSettlementBudgetCodeCsvCellValue(f, key, requestDateMap))).join(',')
   )
   const bom = '\uFEFF'
   const csv = bom + [header.join(','), ...rows].join('\n')
