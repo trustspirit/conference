@@ -93,8 +93,11 @@ export default function SettlementListPage() {
   useEffect(() => {
     const prev = prevBatchLengthRef.current
     prevBatchLengthRef.current = batches.length
-    if (prev > 0 && selectedBatchIds.size === prev && batches.length > prev) {
-      setSelectedBatchIds(new Set(batches.map((b) => b.batchId)))
+    if (prev > 0 && batches.length > prev) {
+      setSelectedBatchIds((current) => {
+        if (current.size !== prev) return current
+        return new Set(batches.map((b) => b.batchId))
+      })
     }
   }, [batches])
 

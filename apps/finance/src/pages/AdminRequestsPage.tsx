@@ -143,8 +143,11 @@ export default function AdminRequestsPage() {
   useEffect(() => {
     const prev = prevAccessibleLengthRef.current
     prevAccessibleLengthRef.current = accessible.length
-    if (prev > 0 && selectedIds.size === prev && accessible.length > prev) {
-      setSelectedIds(new Set(accessible.map((r) => r.id)))
+    if (prev > 0 && accessible.length > prev) {
+      setSelectedIds((current) => {
+        if (current.size !== prev) return current
+        return new Set(accessible.map((r) => r.id))
+      })
     }
   }, [accessible])
 

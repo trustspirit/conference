@@ -356,11 +356,12 @@ function getSettlementCsvCellValue(
 
 export function exportSettlementsCsv(
   settlements: Settlement[],
+  requestDateMap: Map<string, string>,
   columns: SettlementCsvColumnKey[] = DEFAULT_SETTLEMENT_CSV_COLUMNS
 ) {
   const header = columns.map((key) => escapeCsvField(getSettlementCsvColumnLabel(key)))
   const rows = settlements.map((s) =>
-    columns.map((key) => escapeCsvField(getSettlementCsvCellValue(s, key))).join(',')
+    columns.map((key) => escapeCsvField(getSettlementCsvCellValue(s, key, requestDateMap))).join(',')
   )
   const bom = '\uFEFF'
   const csv = bom + [header.join(','), ...rows].join('\n')
