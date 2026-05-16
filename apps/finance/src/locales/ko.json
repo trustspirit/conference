@@ -51,7 +51,9 @@
     "exporting": "내보내는 중...",
     "exportColumns": "내보낼 항목 선택",
     "defaultColumns": "기본 항목",
-    "optionalColumns": "추가 항목"
+    "optionalColumns": "추가 항목",
+    "exportByRequest": "신청 건별",
+    "exportByBudgetCode": "예산 코드별"
   },
   "role": {
     "label": "권한",

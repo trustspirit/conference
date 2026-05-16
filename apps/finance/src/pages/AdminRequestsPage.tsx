@@ -15,6 +15,7 @@ import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/role
 import { useInfiniteRequests, fetchAllRequests } from '../hooks/queries/useRequests'
 import {
   exportRequestsCsv,
+  exportRequestsByBudgetCodeCsv,
   DEFAULT_CSV_COLUMNS,
   OPTIONAL_CSV_COLUMNS,
   getCsvColumnLabel,
@@ -69,6 +70,7 @@ export default function AdminRequestsPage() {
   const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<Set<CsvColumnKey>>(
     new Set()
   )
+  const [exportMode, setExportMode] = useState<'byRequest' | 'byBudgetCode'>('byRequest')
 
   const toggleOptionalColumn = (key: CsvColumnKey) => {
     setSelectedOptionalColumns((prev) => {
@@ -88,14 +90,18 @@ export default function AdminRequestsPage() {
         (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
       )
       const columns = [...DEFAULT_CSV_COLUMNS, ...selectedOptionalColumns]
-      exportRequestsCsv(filtered, columns)
+      if (exportMode === 'byBudgetCode') {
+        exportRequestsByBudgetCodeCsv(filtered, columns)
+      } else {
+        exportRequestsCsv(filtered, columns)
+      }
       setExportDialogOpen(false)
     } catch {
       alert(t('common.loadError'))
     } finally {
       setIsExporting(false)
     }
-  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, t])
+  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, t])
 
   const allRequests = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
@@ -436,6 +442,23 @@ export default function AdminRequestsPage() {
           {t('common.exportColumns')}
         </Dialog.Title>
         <Dialog.Content>
+          <div className="mb-4">
+            <div className="flex gap-4">
+              {(['byRequest', 'byBudgetCode'] as const).map((mode) => (
+                <label key={mode} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="exportMode"
+                    value={mode}
+                    checked={exportMode === mode}
+                    onChange={() => setExportMode(mode)}
+                    className="accent-blue-600"
+                  />
+                  {t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className="mb-4">
             <p className="text-xs text-gray-500 mb-2 font-medium">{t('common.defaultColumns')}</p>
             <div className="flex flex-wrap gap-2">

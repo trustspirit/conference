@@ -1,5 +1,21 @@
-import type { PaymentRequest } from '../types'
+import type { PaymentRequest, RequestItem } from '../types'
 import i18n from 'i18next'
+
+type FlattenedItem = {
+  request: PaymentRequest
+  item: RequestItem
+}
+
+function flattenToBudgetCodeRows(requests: PaymentRequest[]): FlattenedItem[] {
+  return requests
+    .flatMap((req) => req.items.map((item) => ({ request: req, item })))
+    .sort((a, b) => {
+      if (a.item.budgetCode !== b.item.budgetCode) {
+        return a.item.budgetCode - b.item.budgetCode
+      }
+      return a.request.date.localeCompare(b.request.date)
+    })
+}
 
 function escapeCsvField(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -110,6 +126,46 @@ function getCsvCellValue(req: PaymentRequest, key: CsvColumnKey): string {
   }
 }
 
+function getBudgetCodeCsvCellValue(flattened: FlattenedItem, key: CsvColumnKey): string {
+  const { request: req, item } = flattened
+  switch (key) {
+    case 'budgetCode':
+      return String(item.budgetCode)
+    case 'totalAmount':
+      return String(item.amount)
+    case 'itemDescriptions':
+      return item.description
+    case 'payee':
+      return req.payee
+    case 'committee':
+      return getCommitteeLabel(req.committee)
+    case 'settlementStatus':
+      return getStatusLabel(req.status)
+    case 'date':
+      return req.date
+    case 'phone':
+      return req.phone
+    case 'bank':
+      return req.bankName
+    case 'bankAccount':
+      return req.bankAccount
+    case 'comments':
+      return req.comments || ''
+    case 'requestedBy':
+      return req.requestedBy?.name || ''
+    case 'reviewedBy':
+      return req.reviewedBy?.name || ''
+    case 'approvedBy':
+      return req.approvedBy?.name || ''
+    case 'rejectionReason':
+      return req.rejectionReason || ''
+    default: {
+      const _: never = key
+      return ''
+    }
+  }
+}
+
 export function exportRequestsCsv(requests: PaymentRequest[], columns?: CsvColumnKey[]) {
   const cols = columns ?? DEFAULT_CSV_COLUMNS
 
@@ -127,6 +183,24 @@ export function exportRequestsCsv(requests: PaymentRequest[], columns?: CsvColum
   const link = document.createElement('a')
   link.href = url
   link.download = `requests_${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+export function exportRequestsByBudgetCodeCsv(requests: PaymentRequest[], columns?: CsvColumnKey[]) {
+  const cols = columns ?? DEFAULT_CSV_COLUMNS
+  const header = cols.map((key) => escapeCsvField(getCsvColumnLabel(key)))
+  const flattened = flattenToBudgetCodeRows(requests)
+  const rows = flattened.map((f) =>
+    cols.map((key) => escapeCsvField(getBudgetCodeCsvCellValue(f, key))).join(',')
+  )
+  const bom = '\uFEFF'
+  const csv = bom + [header.join(','), ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `requests_by_budget_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }

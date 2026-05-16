@@ -51,7 +51,9 @@
     "exporting": "Exporting...",
     "exportColumns": "Select Export Columns",
     "defaultColumns": "Default Columns",
-    "optionalColumns": "Optional Columns"
+    "optionalColumns": "Optional Columns",
+    "exportByRequest": "By Request",
+    "exportByBudgetCode": "By Budget Code"
   },
   "role": {
     "label": "Role",
