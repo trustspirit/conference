@@ -445,13 +445,18 @@ export default function SettlementReportPage() {
               .flatMap((s) => s.items)
               .some((item) => item.transportDetail?.routeMapImage?.url) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-finance-primary mb-2">{t('field.routeMap')}</h3>
+                <h3 className="text-sm font-semibold text-finance-primary mb-2">
+                  {t('field.routeMap')}
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {settlements
                     .flatMap((s) => s.items)
                     .filter((item) => item.transportDetail?.routeMapImage?.url)
                     .map((item, idx) => (
-                      <div key={idx} className="border border-finance-border rounded-lg overflow-hidden">
+                      <div
+                        key={idx}
+                        className="border border-finance-border rounded-lg overflow-hidden"
+                      >
                         <a
                           href={item.transportDetail!.routeMapImage!.url}
                           target="_blank"
@@ -504,10 +509,15 @@ export default function SettlementReportPage() {
             if (bankBooks.length === 0) return null
             return (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-finance-primary mb-2">{t('field.bankBook')}</h3>
+                <h3 className="text-sm font-semibold text-finance-primary mb-2">
+                  {t('field.bankBook')}
+                </h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {bankBooks.map((bb) => (
-                    <div key={bb.payee} className="border border-finance-border rounded overflow-hidden">
+                    <div
+                      key={bb.payee}
+                      className="border border-finance-border rounded overflow-hidden"
+                    >
                       <BankBookPreview
                         url={bb.url}
                         alt={bb.payee}

@@ -71,7 +71,9 @@ export default function BudgetRingGauge({
         />
         <div>
           <p className="text-xs text-finance-muted">{t('dashboard.used')}</p>
-          <p className={`text-sm font-bold ${overBudget ? 'text-finance-danger' : 'text-finance-primary'}`}>
+          <p
+            className={`text-sm font-bold ${overBudget ? 'text-finance-danger' : 'text-finance-primary'}`}
+          >
             {'\u20A9'}
             {approvedAmount.toLocaleString()}
           </p>
@@ -118,7 +120,9 @@ export default function BudgetRingGauge({
   return (
     <div className="finance-panel rounded-lg p-4 sm:p-6">
       <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-semibold text-finance-primary">{t('dashboard.budgetOverview')}</h3>
+        <h3 className="text-sm font-semibold text-finance-primary">
+          {t('dashboard.budgetOverview')}
+        </h3>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs text-finance-muted">
             {t('dashboard.totalBudget')}{' '}

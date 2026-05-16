@@ -20,6 +20,14 @@ function getRemainingDays(deletedAt: unknown): number {
   return Math.max(0, 30 - Math.floor(elapsed / (1000 * 60 * 60 * 24)))
 }
 
+function getAutoDeleteLabel(
+  deletedAt: unknown,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
+  const days = getRemainingDays(deletedAt)
+  return days > 0 ? t('project.autoDeleteDays', { days }) : t('project.autoDeletePending')
+}
+
 export default function ProjectSelector() {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -143,14 +151,14 @@ export default function ProjectSelector() {
             {showDeletedSection && (
               <>
                 <div className="border-t border-finance-border-soft my-1" />
-                <p className="px-4 py-1 text-xs text-finance-muted">{t('project.recentlyDeleted')}</p>
+                <p className="px-4 py-1 text-xs text-finance-muted">
+                  {t('project.recentlyDeleted')}
+                </p>
                 {deletedProjects.map((p) => (
                   <div key={p.id} className="px-4 py-1.5 flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-400 line-through truncate">{p.name}</p>
-                      <p className="text-xs text-gray-300">
-                        {t('project.autoDeleteDays', { days: getRemainingDays(p.deletedAt) })}
-                      </p>
+                      <p className="text-xs text-gray-300">{getAutoDeleteLabel(p.deletedAt, t)}</p>
                     </div>
                     <button
                       onClick={() => handleRestore(p.id)}

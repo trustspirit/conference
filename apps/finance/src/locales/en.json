@@ -387,6 +387,7 @@
     "restoreFailed": "Failed to restore project.",
     "createFailed": "Failed to create project.",
     "autoDeleteDays": "Auto-delete in {{days}} days",
+    "autoDeletePending": "Auto-delete pending",
     "perKmRate": "Per-km Rate (Personal Car)",
     "perKmRateHint": "Rate applied per km when calculating personal car transportation costs.",
     "corporateCardReportTitle": "Corporate Card Report Title",

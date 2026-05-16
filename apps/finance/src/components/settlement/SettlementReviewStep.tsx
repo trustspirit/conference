@@ -55,7 +55,10 @@ export default function SettlementReviewStep({
         <div className="flex-1 min-w-0 max-w-3xl">
           {/* Progress header */}
           <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-center sm:justify-between">
-            <button onClick={onBack} className="text-sm text-finance-muted hover:text-finance-primary">
+            <button
+              onClick={onBack}
+              className="text-sm text-finance-muted hover:text-finance-primary"
+            >
               {t('settlement.backToSelect')}
             </button>
             <span className="text-sm font-medium text-finance-muted">
@@ -107,7 +110,9 @@ export default function SettlementReviewStep({
             {/* Bank Book */}
             {bankBookUrl && !req.isCorporateCard && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-finance-primary mb-3">{t('field.bankBook')}</h3>
+                <h3 className="text-sm font-medium text-finance-primary mb-3">
+                  {t('field.bankBook')}
+                </h3>
                 <div className="border border-finance-border rounded-lg overflow-hidden inline-block">
                   <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
                     <BankBookPreview

@@ -12,7 +12,9 @@ export default function ChatMessage({ message }: Props) {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-          isUser ? 'bg-finance-primary text-white' : 'bg-finance-primary-subtle text-finance-primary-hover'
+          isUser
+            ? 'bg-finance-primary text-white'
+            : 'bg-finance-primary-subtle text-finance-primary-hover'
         }`}
       >
         {isUser ? (

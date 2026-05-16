@@ -426,7 +426,9 @@ export default function RequestDetailPage() {
                 : requester?.bankBookUrl || requester?.bankBookDriveUrl
               return bankBookUrl ? (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-finance-primary mb-3">{t('field.bankBook')}</h3>
+                  <h3 className="text-sm font-medium text-finance-primary mb-3">
+                    {t('field.bankBook')}
+                  </h3>
                   <div className="border border-finance-border rounded-lg overflow-hidden inline-block">
                     <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
                       <BankBookPreview
@@ -453,7 +455,9 @@ export default function RequestDetailPage() {
 
             {request.comments && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-finance-primary mb-1">{t('field.comments')}</h3>
+                <h3 className="text-sm font-medium text-finance-primary mb-1">
+                  {t('field.comments')}
+                </h3>
                 <p className="text-sm text-finance-muted">{request.comments}</p>
               </div>
             )}

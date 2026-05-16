@@ -139,7 +139,9 @@ export default function SettingsPage() {
   return (
     <Layout>
       <div className="finance-panel rounded-lg p-4 max-w-lg mx-auto sm:p-6">
-        <h2 className="text-xl font-bold text-finance-primary mb-6">{t('project.projectSettings')}</h2>
+        <h2 className="text-xl font-bold text-finance-primary mb-6">
+          {t('project.projectSettings')}
+        </h2>
         <ProjectManagement />
       </div>
     </Layout>

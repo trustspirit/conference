@@ -125,7 +125,10 @@ export default function MyRequestsPage() {
                 {requests.map((req) => (
                   <FinanceTable.Row key={req.id}>
                     <FinanceTable.Td>
-                      <Link to={`/request/${req.id}`} className="text-finance-primary hover:underline">
+                      <Link
+                        to={`/request/${req.id}`}
+                        className="text-finance-primary hover:underline"
+                      >
                         {req.date}
                       </Link>
                       {formatFirestoreTime(req.createdAt) && (

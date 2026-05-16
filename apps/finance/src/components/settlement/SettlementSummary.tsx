@@ -25,7 +25,9 @@ export default function SettlementSummary({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold text-finance-primary mb-6">{t('settlement.reviewSummary')}</h2>
+      <h2 className="text-xl font-bold text-finance-primary mb-6">
+        {t('settlement.reviewSummary')}
+      </h2>
 
       <div className="finance-panel rounded-lg p-4 mb-6 space-y-4 sm:p-6">
         <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">

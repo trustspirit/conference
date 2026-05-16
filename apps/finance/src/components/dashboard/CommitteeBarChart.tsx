@@ -48,7 +48,12 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
           <YAxis tick={{ fontSize: 12 }} tickFormatter={formatYAxis} />
           <Tooltip formatter={(v) => `\u20A9${(Number(v) || 0).toLocaleString()}`} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="total" name={t('dashboard.amount')} fill="var(--finance-chart-muted)" radius={[4, 4, 0, 0]} />
+          <Bar
+            dataKey="total"
+            name={t('dashboard.amount')}
+            fill="var(--finance-chart-muted)"
+            radius={[4, 4, 0, 0]}
+          />
           <Bar
             dataKey="approved"
             name={t('dashboard.approvedAmount')}

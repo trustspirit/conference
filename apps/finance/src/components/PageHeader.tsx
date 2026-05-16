@@ -56,7 +56,10 @@ export default function PageHeader({
   return (
     <div className="mb-6">
       {backTo && (
-        <Link to={backTo} className="text-sm text-finance-muted hover:text-finance-primary mb-2 inline-block">
+        <Link
+          to={backTo}
+          className="text-sm text-finance-muted hover:text-finance-primary mb-2 inline-block"
+        >
           ← {backLabel || t('common.back')}
         </Link>
       )}

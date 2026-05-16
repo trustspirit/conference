@@ -387,6 +387,7 @@
     "restoreFailed": "프로젝트 복원에 실패했습니다.",
     "createFailed": "프로젝트 생성에 실패했습니다.",
     "autoDeleteDays": "{{days}}일 후 자동 삭제",
+    "autoDeletePending": "자동 삭제 대기 중",
     "perKmRate": "자차 km당 단가",
     "perKmRateHint": "자차 교통비 산정 시 km당 적용되는 금액입니다.",
     "corporateCardReportTitle": "법인카드 보고서 타이틀",

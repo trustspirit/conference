@@ -62,7 +62,9 @@ export default function BudgetSettingsSection({
     <>
       <div className="finance-panel rounded-lg p-4 sm:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold text-finance-primary">{t('dashboard.budgetSettings')}</h3>
+          <h3 className="text-sm font-semibold text-finance-primary">
+            {t('dashboard.budgetSettings')}
+          </h3>
           {!editingBudget ? (
             <button
               onClick={() => {
@@ -92,7 +94,9 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div className="mb-4">
-          <label className="block text-sm text-finance-muted mb-1">{t('dashboard.totalBudget')}</label>
+          <label className="block text-sm text-finance-muted mb-1">
+            {t('dashboard.totalBudget')}
+          </label>
           {editingBudget ? (
             <input
               type="number"
@@ -252,7 +256,9 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div>
-          <label className="block text-sm text-finance-muted mb-1">{t('dashboard.documentNo')}</label>
+          <label className="block text-sm text-finance-muted mb-1">
+            {t('dashboard.documentNo')}
+          </label>
           {editingDocNo ? (
             <input
               type="text"

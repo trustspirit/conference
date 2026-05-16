@@ -64,7 +64,10 @@ export default function CsvExportDialog({
           <p className="text-xs text-gray-500 mb-2 font-medium">{t('common.defaultColumns')}</p>
           <div className="flex flex-wrap gap-2">
             {defaultColumns.map((key) => (
-              <span key={key} className="px-2.5 py-1 bg-finance-primary-surface text-finance-primary rounded text-sm">
+              <span
+                key={key}
+                className="px-2.5 py-1 bg-finance-primary-surface text-finance-primary rounded text-sm"
+              >
                 {getColumnLabel(key)}
               </span>
             ))}

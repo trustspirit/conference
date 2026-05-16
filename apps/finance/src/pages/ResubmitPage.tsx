@@ -479,7 +479,9 @@ export default function ResubmitPage() {
         onSubmit={handlePreSubmit}
         className="finance-panel rounded-lg p-4 sm:p-6 max-w-4xl mx-auto"
       >
-        <h2 className="text-xl font-bold text-finance-primary mb-1">{t('approval.resubmitTitle')}</h2>
+        <h2 className="text-xl font-bold text-finance-primary mb-1">
+          {t('approval.resubmitTitle')}
+        </h2>
         <p className="text-sm text-finance-muted mb-6">{t('approval.resubmitDescription')}</p>
 
         {original?.isVendorRequest && (

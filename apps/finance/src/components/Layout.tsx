@@ -64,7 +64,9 @@ function NavDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-0.5 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
-          hasActive ? 'finance-nav-active font-semibold' : 'text-finance-body hover:bg-finance-primary-subtle'
+          hasActive
+            ? 'finance-nav-active font-semibold'
+            : 'text-finance-body hover:bg-finance-primary-subtle'
         }`}
       >
         {group.label}
