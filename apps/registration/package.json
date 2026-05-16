@@ -13,7 +13,7 @@
   "dependencies": {
     "@conference/firebase": "workspace:*",
     "chart.js": "^4.5.1",
-    "firebase": "^12.9.0",
+    "firebase": "^12.10.0",
     "i18next": "^25.8.13",
     "i18next-resources-to-backend": "^1.2.1",
     "jotai": "^2.18.0",
