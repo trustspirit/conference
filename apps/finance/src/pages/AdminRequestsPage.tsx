@@ -434,7 +434,9 @@ export default function AdminRequestsPage() {
             <div
               className={`space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
             >
-              {accessible.map((req) => (
+              {accessible.map((req) => {
+                const remarks = renderRemarks(req)
+                return (
                 <div key={req.id} className="flex items-start gap-3 bg-white rounded-lg shadow p-4">
                   <input
                     type="checkbox"
@@ -465,14 +467,15 @@ export default function AdminRequestsPage() {
                     <div className="text-right font-semibold text-gray-900">
                       ₩{req.totalAmount.toLocaleString()}
                     </div>
-                    {renderRemarks(req) && (
+                    {remarks && (
                       <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-                        {renderRemarks(req)}
+                        {remarks}
                       </div>
                     )}
                   </Link>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
