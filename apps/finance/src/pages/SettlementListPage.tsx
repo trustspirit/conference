@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useInfiniteSettlements } from '../hooks/queries/useSettlements'
+import { exportSettlementsCsv } from '../lib/csvExport'
 import { formatFirestoreDate } from '../lib/utils'
 import { Settlement, Committee } from '../types'
 import { canAccessSettlement } from '../lib/roles'
@@ -77,6 +78,34 @@ export default function SettlementListPage() {
   const settlements = data?.pages.flatMap((p) => p.items) ?? []
   const batches = useMemo(() => groupByBatch(settlements), [settlements])
 
+  const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set())
+
+  const allBatchesSelected =
+    batches.length > 0 && batches.every((b) => selectedBatchIds.has(b.batchId))
+
+  const toggleAllBatches = () => {
+    if (allBatchesSelected) {
+      setSelectedBatchIds(new Set())
+    } else {
+      setSelectedBatchIds(new Set(batches.map((b) => b.batchId)))
+    }
+  }
+
+  const toggleBatch = (batchId: string) => {
+    setSelectedBatchIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(batchId)) next.delete(batchId)
+      else next.add(batchId)
+      return next
+    })
+  }
+
+  const handleExportSettlements = () => {
+    const toExport = settlements.filter((s) => selectedBatchIds.has(s.batchId || s.id))
+    exportSettlementsCsv(toExport)
+    setSelectedBatchIds(new Set())
+  }
+
   const FILTER_TABS: { value: CommitteeFilter; label: string }[] = [
     { value: 'all', label: t('status.all') },
     { value: 'operations', label: t('committee.operationsShort') },
@@ -108,11 +137,22 @@ export default function SettlementListPage() {
         }
       />
 
+      {selectedBatchIds.size > 0 && (
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={handleExportSettlements}
+            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded font-medium hover:bg-blue-700"
+          >
+            {t('common.exportCsv')} ({selectedBatchIds.size})
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-2 mb-4">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setCommitteeFilter(tab.value)}
+            onClick={() => { setCommitteeFilter(tab.value); setSelectedBatchIds(new Set()) }}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               committeeFilter === tab.value
                 ? 'bg-purple-600 text-white'
@@ -141,6 +181,14 @@ export default function SettlementListPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
+                    <th className="w-10 px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={allBatchesSelected}
+                        onChange={toggleAllBatches}
+                        className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+                      />
+                    </th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">
                       {t('settlement.settlementDate')}
                     </th>
@@ -162,6 +210,14 @@ export default function SettlementListPage() {
                 <tbody className="divide-y">
                   {batches.map((b) => (
                     <tr key={b.batchId} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedBatchIds.has(b.batchId)}
+                          onChange={() => toggleBatch(b.batchId)}
+                          className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+                        />
+                      </td>
                       <td className="px-4 py-3">{b.date}</td>
                       <td className="px-4 py-3">
                         {payeeLabel(b)}
@@ -196,31 +252,38 @@ export default function SettlementListPage() {
           {/* Mobile */}
           <div className="sm:hidden space-y-3">
             {batches.map((b) => (
-              <Link
-                key={b.batchId}
-                to={`/admin/settlement/${b.firstId}`}
-                className="block bg-white rounded-lg shadow p-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium">{payeeLabel(b)}</span>
-                    {b.isCorporateCard && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
-                        {t('form.requestTypeCorporateCard')}
-                      </span>
-                    )}
+              <div key={b.batchId} className="flex items-start gap-3 bg-white rounded-lg shadow p-4">
+                <input
+                  type="checkbox"
+                  checked={selectedBatchIds.has(b.batchId)}
+                  onChange={() => toggleBatch(b.batchId)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-purple-600 flex-shrink-0"
+                />
+                <Link
+                  to={`/admin/settlement/${b.firstId}`}
+                  className="flex-1 min-w-0"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">{payeeLabel(b)}</span>
+                      {b.isCorporateCard && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                          {t('form.requestTypeCorporateCard')}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400">{b.date}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{b.date}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">
-                    {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
-                  </span>
-                  <span className="font-medium text-purple-700">
-                    ₩{b.totalAmount.toLocaleString()}
-                  </span>
-                </div>
-              </Link>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">
+                      {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
+                    </span>
+                    <span className="font-medium text-purple-700">
+                      ₩{b.totalAmount.toLocaleString()}
+                    </span>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
 

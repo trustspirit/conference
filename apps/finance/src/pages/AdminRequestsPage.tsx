@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import type { Committee, RequestStatus } from '../types'
+import type { Committee, RequestStatus, PaymentRequest } from '../types'
 import { formatFirestoreTime } from '../lib/utils'
 import Layout from '../components/Layout'
 import StatusBadge from '../components/StatusBadge'
@@ -71,6 +71,7 @@ export default function AdminRequestsPage() {
     new Set()
   )
   const [exportMode, setExportMode] = useState<'byRequest' | 'byBudgetCode'>('byRequest')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const toggleOptionalColumn = (key: CsvColumnKey) => {
     setSelectedOptionalColumns((prev) => {
@@ -85,15 +86,20 @@ export default function AdminRequestsPage() {
     if (!currentProject?.id || isExporting) return
     setIsExporting(true)
     try {
-      const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
-      const filtered = all.filter(
-        (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
-      )
+      let toExport: PaymentRequest[]
+      if (selectedIds.size > 0) {
+        toExport = accessible.filter((r) => selectedIds.has(r.id))
+      } else {
+        const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
+        toExport = all.filter(
+          (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+        )
+      }
       const columns = [...DEFAULT_CSV_COLUMNS, ...selectedOptionalColumns]
       if (exportMode === 'byBudgetCode') {
-        exportRequestsByBudgetCodeCsv(filtered, columns)
+        exportRequestsByBudgetCodeCsv(toExport, columns)
       } else {
-        exportRequestsCsv(filtered, columns)
+        exportRequestsCsv(toExport, columns)
       }
       setExportDialogOpen(false)
     } catch {
@@ -101,7 +107,7 @@ export default function AdminRequestsPage() {
     } finally {
       setIsExporting(false)
     }
-  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, t])
+  }, [currentProject?.id, role, firestoreCommittee, selectedOptionalColumns, exportMode, selectedIds, accessible, t])
 
   const allRequests = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data])
 
@@ -142,6 +148,26 @@ export default function AdminRequestsPage() {
         : toTime(a.createdAt) - toTime(b.createdAt)
     })
   }, [allRequests, filter, committeeFilter, role, sortKey, sortDir, resubmittedIds])
+
+  const allSelected =
+    accessible.length > 0 && accessible.every((r) => selectedIds.has(r.id))
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(accessible.map((r) => r.id)))
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -250,7 +276,7 @@ export default function AdminRequestsPage() {
             {committeeTabs?.map((c) => (
               <button
                 key={c}
-                onClick={() => setCommitteeFilter(c)}
+                onClick={() => { setCommitteeFilter(c); setSelectedIds(new Set()) }}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                   committeeFilter === c
                     ? 'bg-purple-600 text-white'
@@ -264,7 +290,9 @@ export default function AdminRequestsPage() {
               onClick={() => setExportDialogOpen(true)}
               className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded font-medium hover:bg-blue-700"
             >
-              {t('common.exportCsv')}
+              {selectedIds.size > 0
+                ? `${t('common.exportCsv')} (${selectedIds.size})`
+                : t('common.exportCsv')}
             </button>
           </div>
         </div>
@@ -274,7 +302,7 @@ export default function AdminRequestsPage() {
         {filterTabs.map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => { setFilter(f); setSelectedIds(new Set()) }}
             className={`px-4 py-2.5 rounded text-sm ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
           >
             {t(`status.${f}`, f)}
@@ -293,6 +321,14 @@ export default function AdminRequestsPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
+                      <th className="w-10 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                          className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                        />
+                      </th>
                       {(
                         [
                           { key: 'date' as SortKey, label: t('field.date'), align: 'text-left' },
@@ -333,6 +369,14 @@ export default function AdminRequestsPage() {
                   >
                     {accessible.map((req) => (
                       <tr key={req.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(req.id)}
+                            onChange={() => toggleOne(req.id)}
+                            className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <Link
                             to={`/request/${req.id}`}
@@ -391,36 +435,43 @@ export default function AdminRequestsPage() {
               className={`space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}
             >
               {accessible.map((req) => (
-                <Link
-                  key={req.id}
-                  to={`/request/${req.id}`}
-                  state={{ from: '/admin/requests' }}
-                  className="block bg-white rounded-lg shadow p-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">{req.payee}</span>
-                    <StatusBadge status={req.status} />
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
-                    <span>
-                      {req.date}
-                      {formatFirestoreTime(req.createdAt) && (
-                        <span className="ml-1 text-xs text-gray-400">
-                          {formatFirestoreTime(req.createdAt)}
-                        </span>
-                      )}
-                    </span>
-                    <span>{t(`committee.${req.committee}Short`)}</span>
-                  </div>
-                  <div className="text-right font-semibold text-gray-900">
-                    ₩{req.totalAmount.toLocaleString()}
-                  </div>
-                  {renderRemarks(req) && (
-                    <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-                      {renderRemarks(req)}
+                <div key={req.id} className="flex items-start gap-3 bg-white rounded-lg shadow p-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(req.id)}
+                    onChange={() => toggleOne(req.id)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-blue-600 flex-shrink-0"
+                  />
+                  <Link
+                    to={`/request/${req.id}`}
+                    state={{ from: '/admin/requests' }}
+                    className="flex-1 min-w-0"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900">{req.payee}</span>
+                      <StatusBadge status={req.status} />
                     </div>
-                  )}
-                </Link>
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
+                      <span>
+                        {req.date}
+                        {formatFirestoreTime(req.createdAt) && (
+                          <span className="ml-1 text-xs text-gray-400">
+                            {formatFirestoreTime(req.createdAt)}
+                          </span>
+                        )}
+                      </span>
+                      <span>{t(`committee.${req.committee}Short`)}</span>
+                    </div>
+                    <div className="text-right font-semibold text-gray-900">
+                      ₩{req.totalAmount.toLocaleString()}
+                    </div>
+                    {renderRemarks(req) && (
+                      <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
+                        {renderRemarks(req)}
+                      </div>
+                    )}
+                  </Link>
+                </div>
               ))}
             </div>
           </div>

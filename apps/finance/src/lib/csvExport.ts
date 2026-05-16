@@ -1,5 +1,6 @@
-import type { PaymentRequest, RequestItem } from '../types'
+import type { PaymentRequest, RequestItem, Settlement } from '../types'
 import i18n from 'i18next'
+import { formatFirestoreDate } from './utils'
 
 type FlattenedItem = {
   request: PaymentRequest
@@ -69,6 +70,40 @@ export const OPTIONAL_CSV_COLUMNS: CsvColumnKey[] = [
   'rejectionReason',
   'itemDescriptions'
 ]
+
+export type SettlementCsvColumnKey =
+  | 'payee'
+  | 'committee'
+  | 'budgetCode'
+  | 'totalAmount'
+  | 'date'
+  | 'bank'
+  | 'bankAccount'
+  | 'itemDescriptions'
+  | 'approvedBy'
+
+export const DEFAULT_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
+  'payee',
+  'committee',
+  'budgetCode',
+  'totalAmount',
+  'date',
+]
+
+export function getSettlementCsvColumnLabel(key: SettlementCsvColumnKey): string {
+  const labels: Record<SettlementCsvColumnKey, string> = {
+    payee: i18n.t('field.payee'),
+    committee: i18n.t('field.committee'),
+    budgetCode: i18n.t('field.budgetCode'),
+    totalAmount: i18n.t('field.totalAmount'),
+    date: i18n.t('settlement.settlementDate'),
+    bank: i18n.t('field.bank'),
+    bankAccount: i18n.t('field.bankAccount'),
+    itemDescriptions: i18n.t('field.items'),
+    approvedBy: i18n.t('field.approvedBy'),
+  }
+  return labels[key]
+}
 
 export function getCsvColumnLabel(key: CsvColumnKey): string {
   const labels: Record<CsvColumnKey, string> = {
@@ -201,6 +236,52 @@ export function exportRequestsByBudgetCodeCsv(requests: PaymentRequest[], column
   const link = document.createElement('a')
   link.href = url
   link.download = `requests_by_budget_${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function getSettlementCsvCellValue(s: Settlement, key: SettlementCsvColumnKey): string {
+  switch (key) {
+    case 'payee':
+      return s.payee
+    case 'committee':
+      return getCommitteeLabel(s.committee)
+    case 'budgetCode':
+      return [...new Set(s.items.map((i) => String(i.budgetCode)))].join('/')
+    case 'totalAmount':
+      return String(s.totalAmount)
+    case 'date':
+      return formatFirestoreDate(s.createdAt)
+    case 'bank':
+      return s.bankName || ''
+    case 'bankAccount':
+      return s.bankAccount || ''
+    case 'itemDescriptions':
+      return s.items.map((i) => i.description).join(', ')
+    case 'approvedBy':
+      return s.approvedBy?.name || ''
+    default: {
+      const _: never = key
+      return ''
+    }
+  }
+}
+
+export function exportSettlementsCsv(
+  settlements: Settlement[],
+  columns: SettlementCsvColumnKey[] = DEFAULT_SETTLEMENT_CSV_COLUMNS
+) {
+  const header = columns.map((key) => escapeCsvField(getSettlementCsvColumnLabel(key)))
+  const rows = settlements.map((s) =>
+    columns.map((key) => escapeCsvField(getSettlementCsvCellValue(s, key))).join(',')
+  )
+  const bom = '\uFEFF'
+  const csv = bom + [header.join(','), ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `settlements_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }
