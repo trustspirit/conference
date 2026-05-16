@@ -18,20 +18,39 @@ html {
   --tui-z-dropdown: 1100;
   --finance-primary: #002c5f;
   --finance-primary-hover: #001f43;
+  --finance-primary-active: #001832;
+  --finance-primary-surface: #e8eef5;
+  --finance-primary-surface-hover: #dce6f0;
+  --finance-primary-subtle: #f0f4f8;
+  --finance-primary-soft: #e7edf4;
   --finance-accent: #007fa8;
+  --finance-accent-hover: #006987;
   --finance-bg: #f6f7f9;
   --finance-panel: #ffffff;
+  --finance-surface: #f8fafc;
+  --finance-muted-surface: #eef1f5;
   --finance-border: #d8dde5;
   --finance-border-soft: #edf0f4;
+  --finance-border-hover: #b7c4d4;
   --finance-muted: #667085;
   --finance-text: #111827;
+  --finance-text-secondary: #374151;
+  --finance-body: #4b5563;
+  --finance-neutral: #6b7280;
+  --finance-neutral-subtle: #f3f4f6;
+  --finance-placeholder: #9aa4b2;
+  --finance-chart-muted: #d1d5db;
   --finance-warning: #9a6b00;
+  --finance-warning-hover: #7f5700;
   --finance-danger: #a43f3f;
   --finance-danger-hover: #8f3434;
+  --finance-danger-bg: #f8ecec;
+  --finance-danger-border: #e2b9b9;
   --finance-success-bg: #e7f3f5;
   --finance-success-border: #b8d8dd;
   --finance-warning-bg: #fff7e0;
   --finance-warning-border: #e6d3a0;
+  --finance-selected-ring: #7aa7c7;
   --finance-table-header: #f8fafc;
   --finance-table-header-soft: #eef1f5;
   --finance-table-border: #d8dde5;
@@ -41,38 +60,77 @@ html {
   --finance-table-muted: #667085;
 }
 
+@theme {
+  --color-finance-primary: var(--finance-primary);
+  --color-finance-primary-hover: var(--finance-primary-hover);
+  --color-finance-primary-active: var(--finance-primary-active);
+  --color-finance-primary-surface: var(--finance-primary-surface);
+  --color-finance-primary-surface-hover: var(--finance-primary-surface-hover);
+  --color-finance-primary-subtle: var(--finance-primary-subtle);
+  --color-finance-primary-soft: var(--finance-primary-soft);
+  --color-finance-accent: var(--finance-accent);
+  --color-finance-accent-hover: var(--finance-accent-hover);
+  --color-finance-bg: var(--finance-bg);
+  --color-finance-panel: var(--finance-panel);
+  --color-finance-surface: var(--finance-surface);
+  --color-finance-muted-surface: var(--finance-muted-surface);
+  --color-finance-border: var(--finance-border);
+  --color-finance-border-soft: var(--finance-border-soft);
+  --color-finance-border-hover: var(--finance-border-hover);
+  --color-finance-muted: var(--finance-muted);
+  --color-finance-text: var(--finance-text);
+  --color-finance-text-secondary: var(--finance-text-secondary);
+  --color-finance-body: var(--finance-body);
+  --color-finance-neutral: var(--finance-neutral);
+  --color-finance-neutral-subtle: var(--finance-neutral-subtle);
+  --color-finance-placeholder: var(--finance-placeholder);
+  --color-finance-chart-muted: var(--finance-chart-muted);
+  --color-finance-warning: var(--finance-warning);
+  --color-finance-warning-hover: var(--finance-warning-hover);
+  --color-finance-warning-bg: var(--finance-warning-bg);
+  --color-finance-warning-border: var(--finance-warning-border);
+  --color-finance-danger: var(--finance-danger);
+  --color-finance-danger-hover: var(--finance-danger-hover);
+  --color-finance-danger-bg: var(--finance-danger-bg);
+  --color-finance-danger-border: var(--finance-danger-border);
+  --color-finance-success: var(--finance-accent);
+  --color-finance-success-bg: var(--finance-success-bg);
+  --color-finance-success-border: var(--finance-success-border);
+  --color-finance-selected-ring: var(--finance-selected-ring);
+}
+
 :root,
 [data-theme='light'] {
   --tui-bg: var(--finance-panel);
-  --tui-bg-subtle: #f8fafc;
-  --tui-bg-muted: #eef1f5;
-  --tui-bg-hover: #f0f4f8;
+  --tui-bg-subtle: var(--finance-surface);
+  --tui-bg-muted: var(--finance-muted-surface);
+  --tui-bg-hover: var(--finance-primary-subtle);
   --tui-text: var(--finance-text);
-  --tui-text-secondary: #4b5563;
+  --tui-text-secondary: var(--finance-body);
   --tui-text-muted: var(--finance-muted);
   --tui-border: var(--finance-border);
-  --tui-border-hover: #b7c4d4;
+  --tui-border-hover: var(--finance-border-hover);
   --tui-border-focus: var(--finance-primary);
   --tui-primary: var(--finance-primary);
   --tui-primary-hover: var(--finance-primary-hover);
-  --tui-primary-active: #001832;
-  --tui-primary-subtle: #e8eef5;
-  --tui-secondary: #ffffff;
-  --tui-secondary-hover: #f0f4f8;
-  --tui-secondary-active: #e8eef5;
-  --tui-secondary-subtle: #f8fafc;
+  --tui-primary-active: var(--finance-primary-active);
+  --tui-primary-subtle: var(--finance-primary-surface);
+  --tui-secondary: var(--finance-panel);
+  --tui-secondary-hover: var(--finance-primary-subtle);
+  --tui-secondary-active: var(--finance-primary-surface);
+  --tui-secondary-subtle: var(--finance-surface);
   --tui-secondary-text: var(--finance-primary);
   --tui-success: var(--finance-accent);
-  --tui-success-hover: #006987;
+  --tui-success-hover: var(--finance-accent-hover);
   --tui-success-subtle: var(--finance-success-bg);
   --tui-danger: var(--finance-danger);
   --tui-danger-hover: var(--finance-danger-hover);
-  --tui-danger-subtle: #f8ecec;
+  --tui-danger-subtle: var(--finance-danger-bg);
   --tui-warning: var(--finance-warning);
-  --tui-warning-hover: #7f5700;
+  --tui-warning-hover: var(--finance-warning-hover);
   --tui-warning-subtle: var(--finance-warning-bg);
   --tui-info: var(--finance-accent);
-  --tui-info-hover: #006987;
+  --tui-info-hover: var(--finance-accent-hover);
   --tui-info-subtle: var(--finance-success-bg);
   --tui-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px rgba(0, 44, 95, 0.32);
 }
@@ -106,11 +164,11 @@ html {
 .finance-secondary-button {
   background-color: #ffffff;
   color: var(--finance-primary);
-  border: 1px solid #b7c4d4;
+  border: 1px solid var(--finance-border-hover);
 }
 
 .finance-secondary-button:hover {
-  background-color: #f0f4f8;
+  background-color: var(--finance-primary-subtle);
 }
 
 .finance-danger-button {
@@ -129,7 +187,7 @@ html {
 }
 
 .finance-ghost-button:hover {
-  background-color: #f0f4f8;
+  background-color: var(--finance-primary-subtle);
 }
 
 input[type='checkbox'],
@@ -176,7 +234,7 @@ input[type='radio'] {
 }
 
 .finance-nav-active {
-  background-color: #e8eef5;
+  background-color: var(--finance-primary-surface);
   color: var(--finance-primary);
 }
 
@@ -264,7 +322,7 @@ input[type='radio'] {
 }
 
 .finance-chip {
-  background-color: #f8fafc;
+  background-color: var(--finance-surface);
   border: 1px solid var(--finance-border);
   color: var(--finance-muted);
 }

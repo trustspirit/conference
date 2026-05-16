@@ -51,7 +51,7 @@ function ProjectManagement() {
         <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
           <span className="min-w-0 break-words">{selectedProject.name}</span>
           {isDefault && (
-            <span className="inline-flex items-center gap-1 text-xs bg-[#E7F3F5] text-[#007FA8] px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs bg-finance-success-bg text-finance-accent px-2 py-0.5 rounded-full">
               <CheckIcon className="w-3 h-3" />
               {t('project.isDefault')}
             </span>
@@ -68,7 +68,7 @@ function ProjectManagement() {
                 {!isDefault && (
                   <button
                     onClick={() => updateSettings.mutateAsync({ defaultProjectId: effectiveId })}
-                    className="inline-flex items-center gap-1 text-xs border border-[#D8DDE5] text-[#667085] px-2.5 py-1 rounded hover:bg-[#F0F4F8] hover:text-[#002C5F] transition-colors"
+                    className="inline-flex items-center gap-1 text-xs border border-finance-border text-finance-muted px-2.5 py-1 rounded hover:bg-finance-primary-subtle hover:text-finance-primary transition-colors"
                   >
                     <StarIcon className="w-3 h-3" />
                     {t('project.setDefault')}
@@ -99,7 +99,7 @@ function ProjectManagement() {
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   subTab === item.key
                     ? 'finance-nav-active font-medium'
-                    : 'text-[#667085] hover:bg-[#F0F4F8] hover:text-[#002C5F]'
+                    : 'text-finance-muted hover:bg-finance-primary-subtle hover:text-finance-primary'
                 }`}
               >
                 {item.label}
@@ -139,7 +139,7 @@ export default function SettingsPage() {
   return (
     <Layout>
       <div className="finance-panel rounded-lg p-4 max-w-lg mx-auto sm:p-6">
-        <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('project.projectSettings')}</h2>
+        <h2 className="text-xl font-bold text-finance-primary mb-6">{t('project.projectSettings')}</h2>
         <ProjectManagement />
       </div>
     </Layout>

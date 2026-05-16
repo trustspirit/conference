@@ -50,7 +50,7 @@ function PdfPreview({ url, alt, maxHeight, className }: Omit<Props, 'isPdf'>) {
   if (error) {
     return (
       <div
-        className={`flex items-center justify-center bg-[#EEF1F5] text-[#667085] text-xs ${maxHeight} aspect-3/4 ${className}`}
+        className={`flex items-center justify-center bg-finance-muted-surface text-finance-muted text-xs ${maxHeight} aspect-3/4 ${className}`}
       >
         PDF
       </div>
@@ -60,7 +60,7 @@ function PdfPreview({ url, alt, maxHeight, className }: Omit<Props, 'isPdf'>) {
   if (!blobUrl) {
     return (
       <div
-        className={`flex items-center justify-center bg-[#F8FAFC] text-[#9AA4B2] text-xs ${maxHeight} aspect-3/4 ${className}`}
+        className={`flex items-center justify-center bg-finance-surface text-finance-placeholder text-xs ${maxHeight} aspect-3/4 ${className}`}
       >
         …
       </div>

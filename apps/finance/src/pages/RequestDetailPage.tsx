@@ -314,7 +314,7 @@ export default function RequestDetailPage() {
           >
             <Link
               to={backPath}
-              className="inline-block text-sm text-[#002C5F] hover:underline mb-4"
+              className="inline-block text-sm text-finance-primary hover:underline mb-4"
             >
               {t('common.backToList')}
             </Link>
@@ -333,8 +333,8 @@ export default function RequestDetailPage() {
               request.status === 'cancelled' ||
               request.status === 'force_rejected') &&
               user?.uid === request.requestedBy.uid && (
-                <div className="mb-6 flex flex-col gap-3 rounded-lg border border-[#D8DDE5] bg-[#E8EEF5] p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-sm text-[#001F43]">
+                <div className="mb-6 flex flex-col gap-3 rounded-lg border border-finance-border bg-finance-primary-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-finance-primary-hover">
                     {t('approval.resubmitDescription').split('.')[0]}.
                   </span>
                   <Button
@@ -348,8 +348,8 @@ export default function RequestDetailPage() {
               )}
 
             {request.status === 'pending' && user?.uid === request.requestedBy.uid && (
-              <div className="mb-6 flex flex-col gap-3 rounded-lg border border-[#D8DDE5] bg-[#F8FAFC] p-4 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm text-[#667085]">{t('approval.cancelConfirm')}</span>
+              <div className="mb-6 flex flex-col gap-3 rounded-lg border border-finance-border bg-finance-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm text-finance-muted">{t('approval.cancelConfirm')}</span>
                 <Button
                   variant="danger"
                   onClick={() => {
@@ -381,7 +381,7 @@ export default function RequestDetailPage() {
                   </span>
                   <Link
                     to={`/request/${request.originalRequestId}`}
-                    className="text-xs text-[#002C5F] hover:underline"
+                    className="text-xs text-finance-primary hover:underline"
                   >
                     {t('approval.originalRequest')}
                   </Link>
@@ -426,22 +426,22 @@ export default function RequestDetailPage() {
                 : requester?.bankBookUrl || requester?.bankBookDriveUrl
               return bankBookUrl ? (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-[#002C5F] mb-3">{t('field.bankBook')}</h3>
-                  <div className="border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
+                  <h3 className="text-sm font-medium text-finance-primary mb-3">{t('field.bankBook')}</h3>
+                  <div className="border border-finance-border rounded-lg overflow-hidden inline-block">
                     <a href={bankBookUrl} target="_blank" rel="noopener noreferrer">
                       <BankBookPreview
                         url={bankBookUrl}
                         alt={t('field.bankBook')}
                         maxHeight="max-h-48"
-                        className="object-contain bg-[#F8FAFC]"
+                        className="object-contain bg-finance-surface"
                       />
                     </a>
-                    <div className="px-3 py-2 bg-[#F8FAFC] border-t border-[#D8DDE5]">
+                    <div className="px-3 py-2 bg-finance-surface border-t border-finance-border">
                       <a
                         href={bankBookUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-[#002C5F] hover:underline"
+                        className="text-xs text-finance-primary hover:underline"
                       >
                         {t('settings.bankBookViewDrive')}
                       </a>
@@ -453,8 +453,8 @@ export default function RequestDetailPage() {
 
             {request.comments && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-[#002C5F] mb-1">{t('field.comments')}</h3>
-                <p className="text-sm text-[#667085]">{request.comments}</p>
+                <h3 className="text-sm font-medium text-finance-primary mb-1">{t('field.comments')}</h3>
+                <p className="text-sm text-finance-muted">{request.comments}</p>
               </div>
             )}
 
@@ -510,7 +510,7 @@ export default function RequestDetailPage() {
                   </Button>
                 )}
                 {remainingCount > 0 && (
-                  <span className="ml-auto px-2.5 py-1 bg-[#E8EEF5] text-[#002C5F] rounded-full text-xs font-medium">
+                  <span className="ml-auto px-2.5 py-1 bg-finance-primary-surface text-finance-primary rounded-full text-xs font-medium">
                     {t('approval.remainingCount', { count: remainingCount })}
                   </span>
                 )}
@@ -559,7 +559,7 @@ export default function RequestDetailPage() {
                       {t('field.requestedBy')}
                     </h3>
                     {request.requestedBySignature || requester?.signature ? (
-                      <div className="border border-[#D8DDE5] rounded p-2 bg-[#F8FAFC] inline-block">
+                      <div className="border border-finance-border rounded p-2 bg-finance-surface inline-block">
                         <img
                           src={(request.requestedBySignature || requester?.signature)!}
                           alt={t('field.requestedBy')}
@@ -575,7 +575,7 @@ export default function RequestDetailPage() {
                       {t('approval.approvalSignature')}
                     </h3>
                     {request.approvalSignature ? (
-                      <div className="border border-[#D8DDE5] rounded p-2 bg-[#F8FAFC] inline-block">
+                      <div className="border border-finance-border rounded p-2 bg-finance-surface inline-block">
                         <img
                           src={request.approvalSignature}
                           alt={t('approval.approvalSignature')}
@@ -595,7 +595,7 @@ export default function RequestDetailPage() {
                 <span className="text-sm text-gray-500">{t('detail.settlementReport')}: </span>
                 <Link
                   to={`/admin/settlement/${request.settlementId}`}
-                  className="text-sm text-[#002C5F] hover:underline"
+                  className="text-sm text-finance-primary hover:underline"
                 >
                   {t('detail.viewReport')}
                 </Link>
@@ -624,7 +624,7 @@ export default function RequestDetailPage() {
           {t('checklist.confirmReview')}
         </Dialog.Title>
         <Dialog.Content>
-          <p className="text-sm text-[#667085]">{t('checklist.confirmReview')}</p>
+          <p className="text-sm text-finance-muted">{t('checklist.confirmReview')}</p>
         </Dialog.Content>
         <Dialog.Actions>
           <Button variant="outline" onClick={() => setShowReviewConfirm(false)}>

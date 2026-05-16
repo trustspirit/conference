@@ -80,7 +80,7 @@ export default function FloatingChatButton() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#002C5F] text-white shadow-lg transition-all hover:bg-[#001F43] hover:shadow-xl active:scale-95 animate-pulse-subtle"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-finance-primary text-white shadow-lg transition-all hover:bg-finance-primary-hover hover:shadow-xl active:scale-95 animate-pulse-subtle"
             aria-label="Open AI chat"
           >
             <svg

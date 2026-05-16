@@ -225,10 +225,10 @@ export default function ItemRow({
       </div>
 
       {isTransport && (
-        <div className="ml-0 sm:ml-8 p-3 bg-[#F8FAFC] border border-[#D8DDE5] rounded-lg space-y-3">
+        <div className="ml-0 sm:ml-8 p-3 bg-finance-surface border border-finance-border rounded-lg space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#667085] mb-1">
+              <label className="block text-xs font-medium text-finance-muted mb-1">
                 {t('field.transportType')} <span className="text-red-500">*</span>
               </label>
               <Select
@@ -242,7 +242,7 @@ export default function ItemRow({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#667085] mb-1">
+              <label className="block text-xs font-medium text-finance-muted mb-1">
                 {t('field.tripType')} <span className="text-red-500">*</span>
               </label>
               <Select
@@ -322,7 +322,7 @@ export default function ItemRow({
               <div className="space-y-2">
                 <div className="relative">
                   <div className="flex items-center gap-1 mb-1">
-                    <label className="text-xs font-medium text-[#667085]">
+                    <label className="text-xs font-medium text-finance-muted">
                       {t('field.distanceKm')} <span className="text-red-500">*</span>
                     </label>
                     <span className="relative">

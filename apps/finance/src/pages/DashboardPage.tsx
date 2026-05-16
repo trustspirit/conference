@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('dashboard.title')}</h2>
+      <h2 className="text-xl font-bold text-finance-primary mb-6">{t('dashboard.title')}</h2>
 
       <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-6" />
 
@@ -66,24 +66,24 @@ export default function DashboardPage() {
         />
         <div className="finance-panel rounded-lg p-4 overflow-hidden">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircleIcon className="w-4 h-4 text-[#007FA8]" />
-            <p className="text-xs text-[#667085]">{t('dashboard.approvedRequests')}</p>
+            <CheckCircleIcon className="w-4 h-4 text-finance-accent" />
+            <p className="text-xs text-finance-muted">{t('dashboard.approvedRequests')}</p>
           </div>
-          <p className="text-lg font-bold text-[#111827]">
+          <p className="text-lg font-bold text-finance-text">
             {t('form.itemCount', { count: approved })} ({'\u20A9'}
             {stats.approvedAmount.toLocaleString()})
           </p>
-          <div className="mt-2 pt-2 border-t border-[#EDF0F4] space-y-0.5">
-            <p className="text-xs text-[#667085]">
+          <div className="mt-2 pt-2 border-t border-finance-border-soft space-y-0.5">
+            <p className="text-xs text-finance-muted">
               {t('dashboard.settledCount', { count: stats.settled })} {'\u20A9'}
               {stats.settledAmount.toLocaleString()}
             </p>
-            <p className="text-xs text-[#667085]">
+            <p className="text-xs text-finance-muted">
               {t('dashboard.unsettledCount', { count: stats.approvedOnly })} {'\u20A9'}
               {stats.approvedOnlyAmount.toLocaleString()}
             </p>
           </div>
-          <div className="mt-3 h-0.5 w-full bg-[#007FA8]" />
+          <div className="mt-3 h-0.5 w-full bg-finance-accent" />
         </div>
         <StatCard
           label={t('dashboard.rejectedRequests')}

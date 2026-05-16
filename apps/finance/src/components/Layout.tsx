@@ -64,7 +64,7 @@ function NavDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-0.5 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
-          hasActive ? 'finance-nav-active font-semibold' : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+          hasActive ? 'finance-nav-active font-semibold' : 'text-finance-body hover:bg-finance-primary-subtle'
         }`}
       >
         {group.label}
@@ -82,7 +82,7 @@ function NavDropdown({
               className={`block px-4 py-2 text-sm transition-colors ${
                 isActive(item.to)
                   ? 'finance-nav-active font-semibold'
-                  : 'text-[#374151] hover:bg-[#F0F4F8]'
+                  : 'text-finance-text-secondary hover:bg-finance-primary-subtle'
               }`}
             >
               {item.label}
@@ -121,12 +121,12 @@ function UserMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm hover:bg-[#F0F4F8] transition-colors"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm hover:bg-finance-primary-subtle transition-colors"
       >
-        <span className="text-[#374151]">
+        <span className="text-finance-text-secondary">
           {userName}
           {role !== 'user' && (
-            <span className="ml-1.5 text-xs bg-[#E8EEF5] text-[#002C5F] px-1.5 py-0.5 rounded">
+            <span className="ml-1.5 text-xs bg-finance-primary-surface text-finance-primary px-1.5 py-0.5 rounded">
               {t(`role.${role}`)}
             </span>
           )}
@@ -143,12 +143,12 @@ function UserMenu({
             className={`block px-4 py-2 text-sm transition-colors ${
               isActive('/profile')
                 ? 'finance-nav-active font-semibold'
-                : 'text-[#374151] hover:bg-[#F0F4F8]'
+                : 'text-finance-text-secondary hover:bg-finance-primary-subtle'
             }`}
           >
             {t('project.personalSettings')}
           </Link>
-          <div className="border-t border-[#EDF0F4] my-1" />
+          <div className="border-t border-finance-border-soft my-1" />
           <button
             onClick={() => {
               setOpen(false)
@@ -220,11 +220,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen finance-app-bg">
-      <nav className="bg-white border-b border-[#D8DDE5] fixed top-0 left-0 right-0 z-40 print:hidden">
+      <nav className="bg-white border-b border-finance-border fixed top-0 left-0 right-0 z-40 print:hidden">
         <div className="max-w-6xl mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex min-w-0 items-center gap-3">
-              <Link to="/my-requests" className="truncate font-bold text-lg text-[#002C5F]">
+              <Link to="/my-requests" className="truncate font-bold text-lg text-finance-primary">
                 {t('app.title')}
               </Link>
               <div className="hidden sm:block">
@@ -241,7 +241,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                     isActive(item.to)
                       ? 'finance-nav-active font-semibold'
-                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                      : 'text-finance-body hover:bg-finance-primary-subtle'
                   }`}
                 >
                   {item.label}
@@ -257,7 +257,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       className={`px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors ${
                         isActive(item.to)
                           ? 'finance-nav-active font-semibold'
-                          : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                          : 'text-finance-body hover:bg-finance-primary-subtle'
                       }`}
                     >
                       {item.label}
@@ -275,10 +275,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   to="/settings"
                   aria-label={t('nav.settings')}
                   className={`p-2 rounded-md transition-colors ${
-                    isActive('/settings') ? 'finance-nav-active' : 'hover:bg-[#F0F4F8]'
+                    isActive('/settings') ? 'finance-nav-active' : 'hover:bg-finance-primary-subtle'
                   }`}
                 >
-                  <GearIcon className="w-4 h-4 text-[#667085]" />
+                  <GearIcon className="w-4 h-4 text-finance-muted" />
                 </Link>
               )}
               <UserMenu userName={userName} role={role} onLogout={logout} isActive={isActive} />
@@ -287,7 +287,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden ml-2 shrink-0 p-2 rounded-md text-[#002C5F] hover:bg-[#F0F4F8]"
+              className="lg:hidden ml-2 shrink-0 p-2 rounded-md text-finance-primary hover:bg-finance-primary-subtle"
               aria-label="Menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -301,7 +301,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-[#D8DDE5] px-2 py-2">
+            <div className="lg:hidden max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-finance-border px-2 py-2">
               <div className="px-3 py-2">
                 <ProjectSelector />
               </div>
@@ -316,7 +316,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   className={`block px-3 py-2.5 rounded-md text-sm ${
                     isActive(item.to)
                       ? 'finance-nav-active font-semibold'
-                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                      : 'text-finance-body hover:bg-finance-primary-subtle'
                   }`}
                 >
                   {item.label}
@@ -335,7 +335,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       className={`block px-3 py-2.5 rounded-md text-sm ${
                         isActive(item.to)
                           ? 'finance-nav-active font-semibold'
-                          : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                          : 'text-finance-body hover:bg-finance-primary-subtle'
                       }`}
                     >
                       {item.label}
@@ -343,7 +343,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   ))}
                 </>
               )}
-              <div className="border-t border-[#EDF0F4] mt-2 pt-2">
+              <div className="border-t border-finance-border-soft mt-2 pt-2">
                 {checkIsAdmin(role) && (
                   <Link
                     to="/settings"
@@ -351,7 +351,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className={`block px-3 py-2.5 text-sm rounded-md ${
                       isActive('/settings')
                         ? 'finance-nav-active font-semibold'
-                        : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                        : 'text-finance-body hover:bg-finance-primary-subtle'
                     }`}
                   >
                     {t('project.projectSettings')}
@@ -363,16 +363,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   className={`block px-3 py-2.5 text-sm rounded-md ${
                     isActive('/profile')
                       ? 'finance-nav-active font-semibold'
-                      : 'text-[#4B5563] hover:bg-[#F0F4F8]'
+                      : 'text-finance-body hover:bg-finance-primary-subtle'
                   }`}
                 >
                   {t('project.personalSettings')}
                 </Link>
                 <div className="px-3 py-2 flex items-center justify-between gap-3">
-                  <span className="min-w-0 truncate text-sm text-[#667085]">
+                  <span className="min-w-0 truncate text-sm text-finance-muted">
                     {userName}
                     {role !== 'user' && (
-                      <span className="ml-1.5 text-xs bg-[#E8EEF5] text-[#002C5F] px-1.5 py-0.5 rounded">
+                      <span className="ml-1.5 text-xs bg-finance-primary-surface text-finance-primary px-1.5 py-0.5 rounded">
                         {t(`role.${role}`)}
                       </span>
                     )}

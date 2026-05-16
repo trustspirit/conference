@@ -195,7 +195,7 @@ export default function SettlementListPage() {
             className={`shrink-0 px-4 py-1.5 rounded text-sm font-semibold border transition-colors ${
               committeeFilter === tab.value
                 ? 'finance-tab-active'
-                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+                : 'bg-white text-finance-muted border-finance-border hover:text-finance-primary hover:bg-finance-primary-subtle'
             }`}
           >
             {tab.label}
@@ -250,7 +250,7 @@ export default function SettlementListPage() {
                     <FinanceTable.Td>
                       {payeeLabel(b)}
                       {b.isCorporateCard && (
-                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-finance-primary-surface text-finance-primary">
                           {t('form.requestTypeCorporateCard')}
                         </span>
                       )}
@@ -265,7 +265,7 @@ export default function SettlementListPage() {
                     <FinanceTable.Td align="center">
                       <Link
                         to={`/admin/settlement/${b.firstId}`}
-                        className="text-[#002C5F] hover:underline text-sm"
+                        className="text-finance-primary hover:underline text-sm"
                       >
                         {t('settlement.report')}
                       </Link>
@@ -291,7 +291,7 @@ export default function SettlementListPage() {
                     <div className="min-w-0">
                       <span className="break-words text-sm font-medium">{payeeLabel(b)}</span>
                       {b.isCorporateCard && (
-                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EEF5] text-[#002C5F]">
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-finance-primary-surface text-finance-primary">
                           {t('form.requestTypeCorporateCard')}
                         </span>
                       )}
@@ -299,10 +299,10 @@ export default function SettlementListPage() {
                     <span className="shrink-0 text-xs text-gray-400">{b.date}</span>
                   </div>
                   <div className="flex items-start justify-between gap-3 text-sm">
-                    <span className="text-[#667085]">
+                    <span className="text-finance-muted">
                       {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
                     </span>
-                    <span className="shrink-0 font-medium text-[#002C5F]">
+                    <span className="shrink-0 font-medium text-finance-primary">
                       ₩{b.totalAmount.toLocaleString()}
                     </span>
                   </div>

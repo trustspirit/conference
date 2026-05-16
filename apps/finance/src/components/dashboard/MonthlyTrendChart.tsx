@@ -77,7 +77,7 @@ export default function MonthlyTrendChart({
     return (
       <>
         <ModeToggle mode={mode} setMode={setMode} t={t} />
-        <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
+        <div className="flex items-center justify-center h-[250px] text-finance-muted text-sm">
           {t('common.noData')}
         </div>
       </>
@@ -92,15 +92,15 @@ export default function MonthlyTrendChart({
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#002C5F" stopOpacity={0.28} />
-                <stop offset="95%" stopColor="#002C5F" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--finance-primary)" stopOpacity={0.28} />
+                <stop offset="95%" stopColor="var(--finance-primary)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#007FA8" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#007FA8" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--finance-accent)" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="var(--finance-accent)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--finance-neutral-subtle)" />
             <XAxis
               dataKey="label"
               tick={{ fontSize: 11 }}
@@ -135,7 +135,7 @@ export default function MonthlyTrendChart({
               type="monotone"
               dataKey="count"
               name="count"
-              stroke="#002C5F"
+              stroke="var(--finance-primary)"
               fill="url(#colorCount)"
               strokeWidth={2}
             />
@@ -144,7 +144,7 @@ export default function MonthlyTrendChart({
               type="monotone"
               dataKey="amount"
               name="amount"
-              stroke="#007FA8"
+              stroke="var(--finance-accent)"
               fill="url(#colorAmount)"
               strokeWidth={2}
             />
@@ -153,12 +153,12 @@ export default function MonthlyTrendChart({
       </div>
       <div className="flex justify-center gap-4 mt-2">
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="w-3 h-0.5 bg-[#002C5F] rounded" />
-          <span className="text-[#667085]">{t('dashboard.requestCount')}</span>
+          <span className="w-3 h-0.5 bg-finance-primary rounded" />
+          <span className="text-finance-muted">{t('dashboard.requestCount')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
-          <span className="w-3 h-0.5 bg-[#007FA8] rounded" />
-          <span className="text-[#667085]">{t('dashboard.requestAmount')}</span>
+          <span className="w-3 h-0.5 bg-finance-accent rounded" />
+          <span className="text-finance-muted">{t('dashboard.requestAmount')}</span>
         </div>
       </div>
     </>
@@ -176,13 +176,13 @@ function ModeToggle({
 }) {
   return (
     <div className="flex justify-end mb-2">
-      <div className="inline-flex rounded-md bg-[#EEF1F5] p-0.5">
+      <div className="inline-flex rounded-md bg-finance-muted-surface p-0.5">
         <button
           onClick={() => setMode('daily')}
           className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'daily'
-              ? 'bg-white text-[#002C5F] shadow-sm'
-              : 'text-[#667085] hover:text-[#002C5F]'
+              ? 'bg-white text-finance-primary shadow-sm'
+              : 'text-finance-muted hover:text-finance-primary'
           }`}
         >
           {t('dashboard.dailyTrend')}
@@ -191,8 +191,8 @@ function ModeToggle({
           onClick={() => setMode('monthly')}
           className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
             mode === 'monthly'
-              ? 'bg-white text-[#002C5F] shadow-sm'
-              : 'text-[#667085] hover:text-[#002C5F]'
+              ? 'bg-white text-finance-primary shadow-sm'
+              : 'text-finance-muted hover:text-finance-primary'
           }`}
         >
           {t('dashboard.monthlyTrend')}

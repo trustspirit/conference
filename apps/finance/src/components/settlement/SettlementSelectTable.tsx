@@ -32,8 +32,8 @@ export default function SettlementSelectTable({
     <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#002C5F]">{t('settlement.title')}</h2>
-          <p className="text-sm text-[#667085] mt-1">{t('settlement.description')}</p>
+          <h2 className="text-xl font-bold text-finance-primary">{t('settlement.title')}</h2>
+          <p className="text-sm text-finance-muted mt-1">{t('settlement.description')}</p>
         </div>
         <button
           onClick={onStartReview}
@@ -47,7 +47,7 @@ export default function SettlementSelectTable({
       <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-4" />
 
       {selectedSummary && (
-        <div className="bg-[#E8EEF5] border border-[#D8DDE5] rounded-lg p-4 mb-4 text-sm">
+        <div className="bg-finance-primary-surface border border-finance-border rounded-lg p-4 mb-4 text-sm">
           {t('settlement.selectedSummary', selectedSummary)}
         </div>
       )}
@@ -55,7 +55,7 @@ export default function SettlementSelectTable({
       {loading ? (
         <Spinner />
       ) : requests.length === 0 ? (
-        <p className="text-[#667085]">{t('settlement.noApproved')}</p>
+        <p className="text-finance-muted">{t('settlement.noApproved')}</p>
       ) : (
         <div className="finance-panel rounded-lg overflow-hidden">
           <FinanceTable variant="plain" minWidthClassName="min-w-[720px]">
@@ -109,7 +109,7 @@ export default function SettlementSelectTable({
               ))}
             </FinanceTable.Body>
           </FinanceTable>
-          <div className="hidden sm:block px-4 py-2 bg-[#F8FAFC] border-t border-[#D8DDE5] text-xs text-[#667085]">
+          <div className="hidden sm:block px-4 py-2 bg-finance-surface border-t border-finance-border text-xs text-finance-muted">
             Shift+Click: {t('settlement.shiftSelectHint')}
           </div>
         </div>

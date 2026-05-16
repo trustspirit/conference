@@ -54,12 +54,12 @@ export function ApprovalModal({
       </Dialog.Title>
       <Dialog.Content>
         {request && (
-          <div className="mb-4 p-3 bg-[#F8FAFC] border border-[#D8DDE5] rounded-lg">
-            <p className="text-xs font-medium text-[#667085] mb-1">
+          <div className="mb-4 p-3 bg-finance-surface border border-finance-border rounded-lg">
+            <p className="text-xs font-medium text-finance-muted mb-1">
               {t('field.payee')}: {request.payee}
             </p>
             {!request.isCorporateCard && (
-              <p className="text-xs text-[#667085] mb-2">
+              <p className="text-xs text-finance-muted mb-2">
                 {t('field.bankAndAccount')}: {request.bankName} {request.bankAccount}
               </p>
             )}
@@ -69,7 +69,7 @@ export function ApprovalModal({
                   <BankBookPreview
                     url={bankBookUrl}
                     alt={t('field.bankBook')}
-                    className="object-contain rounded border border-[#D8DDE5] bg-white"
+                    className="object-contain rounded border border-finance-border bg-white"
                   />
                 </a>
               ) : (
@@ -80,7 +80,7 @@ export function ApprovalModal({
 
         <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-4" />
 
-        <p className="text-sm text-[#667085] mb-4">{t('approval.signDescription')}</p>
+        <p className="text-sm text-finance-muted mb-4">{t('approval.signDescription')}</p>
 
         {savedSignature && (
           <div className="mb-3">
@@ -90,7 +90,7 @@ export function ApprovalModal({
               label={t('approval.useSavedSignature')}
             />
             {signatureData === savedSignature && (
-              <div className="mt-2 border border-[#D8DDE5] rounded p-2 bg-[#F8FAFC]">
+              <div className="mt-2 border border-finance-border rounded p-2 bg-finance-surface">
                 <img src={savedSignature} alt="Saved signature" className="max-h-24 mx-auto" />
               </div>
             )}

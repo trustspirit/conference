@@ -40,7 +40,7 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
       }
     >
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between bg-[#002C5F] px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between bg-finance-primary px-4 py-3">
         <h3 className="text-sm font-semibold text-white">{t('chat.title')}</h3>
         <button
           onClick={onClose}
@@ -61,7 +61,7 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
       {/* Messages */}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
         <div className="flex justify-start">
-          <div className="max-w-[85%] rounded-lg bg-[#F0F4F8] px-3 py-2 text-sm text-[#001F43]">
+          <div className="max-w-[85%] rounded-lg bg-finance-primary-subtle px-3 py-2 text-sm text-finance-primary-hover">
             {t('chat.welcome')}
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function ChatPanel({ onClose, chat, fullScreen }: Props) {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="rounded-lg bg-[#F0F4F8] px-3 py-2">
+            <div className="rounded-lg bg-finance-primary-subtle px-3 py-2">
               <span className="inline-flex gap-1">
                 <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" />
                 <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:0.15s]" />

@@ -91,7 +91,7 @@ export default function ProjectSelector() {
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(!open)}
-          className="flex max-w-full items-center gap-1.5 rounded-lg bg-[#E8EEF5] px-3 py-1.5 text-sm font-semibold text-[#002C5F] transition-colors hover:bg-[#DCE6F0] sm:max-w-[200px]"
+          className="flex max-w-full items-center gap-1.5 rounded-lg bg-finance-primary-surface px-3 py-1.5 text-sm font-semibold text-finance-primary transition-colors hover:bg-finance-primary-surface-hover sm:max-w-[200px]"
         >
           <FolderIcon className="w-4 h-4 shrink-0" />
           <span className="truncate">{currentProject?.name || t('project.select')}</span>
@@ -117,10 +117,10 @@ export default function ProjectSelector() {
                     }
                   }
                 }}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-[#F0F4F8] transition-colors ${
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-finance-primary-subtle transition-colors ${
                   currentProject?.id === p.id
                     ? 'finance-nav-active font-semibold'
-                    : 'text-[#374151]'
+                    : 'text-finance-text-secondary'
                 }`}
               >
                 {p.name}
@@ -128,13 +128,13 @@ export default function ProjectSelector() {
             ))}
             {isAdmin && (
               <>
-                <div className="border-t border-[#EDF0F4] my-1" />
+                <div className="border-t border-finance-border-soft my-1" />
                 <button
                   onClick={() => {
                     setOpen(false)
                     setShowCreateModal(true)
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#002C5F] hover:bg-[#F0F4F8] transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-finance-primary hover:bg-finance-primary-subtle transition-colors"
                 >
                   + {t('project.create')}
                 </button>
@@ -142,8 +142,8 @@ export default function ProjectSelector() {
             )}
             {showDeletedSection && (
               <>
-                <div className="border-t border-[#EDF0F4] my-1" />
-                <p className="px-4 py-1 text-xs text-[#667085]">{t('project.recentlyDeleted')}</p>
+                <div className="border-t border-finance-border-soft my-1" />
+                <p className="px-4 py-1 text-xs text-finance-muted">{t('project.recentlyDeleted')}</p>
                 {deletedProjects.map((p) => (
                   <div key={p.id} className="px-4 py-1.5 flex items-center justify-between">
                     <div className="min-w-0">
@@ -155,7 +155,7 @@ export default function ProjectSelector() {
                     <button
                       onClick={() => handleRestore(p.id)}
                       disabled={restoreProject.isPending}
-                      className="shrink-0 inline-flex items-center gap-1 text-xs text-[#002C5F] hover:text-[#001F43] disabled:text-gray-400 transition-colors ml-2"
+                      className="shrink-0 inline-flex items-center gap-1 text-xs text-finance-primary hover:text-finance-primary-hover disabled:text-gray-400 transition-colors ml-2"
                     >
                       <RestoreIcon className="w-3.5 h-3.5" />
                       {t('project.restore')}
@@ -180,10 +180,10 @@ export default function ProjectSelector() {
             className="finance-panel relative rounded-xl w-full max-w-md mx-4 p-4 sm:p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-[#002C5F]">{t('project.create')}</h3>
+              <h3 className="text-lg font-bold text-finance-primary">{t('project.create')}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 rounded-md hover:bg-[#F0F4F8] transition-colors"
+                className="p-1 rounded-md hover:bg-finance-primary-subtle transition-colors"
               >
                 <CloseIcon className="w-5 h-5 text-gray-400" />
               </button>

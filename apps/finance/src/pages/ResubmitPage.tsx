@@ -479,8 +479,8 @@ export default function ResubmitPage() {
         onSubmit={handlePreSubmit}
         className="finance-panel rounded-lg p-4 sm:p-6 max-w-4xl mx-auto"
       >
-        <h2 className="text-xl font-bold text-[#002C5F] mb-1">{t('approval.resubmitTitle')}</h2>
-        <p className="text-sm text-[#667085] mb-6">{t('approval.resubmitDescription')}</p>
+        <h2 className="text-xl font-bold text-finance-primary mb-1">{t('approval.resubmitTitle')}</h2>
+        <p className="text-sm text-finance-muted mb-6">{t('approval.resubmitDescription')}</p>
 
         {original?.isVendorRequest && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
@@ -500,14 +500,14 @@ export default function ResubmitPage() {
             fullWidth
           />
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-finance-text-secondary mb-1">
               {t('field.date')} <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-[#D8DDE5] rounded px-3 py-2 text-sm focus:border-[#002C5F] focus:outline-none"
+              className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
             />
           </div>
           <TextField
@@ -555,7 +555,7 @@ export default function ResubmitPage() {
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-[#002C5F]">
+            <h3 className="text-sm font-medium text-finance-primary">
               {t('field.items')} <span className="text-red-500">*</span>
             </h3>
             <Button
@@ -612,7 +612,7 @@ export default function ResubmitPage() {
 
         {isVendorRequest && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-finance-text-secondary mb-1">
               {t('form.vendorBankBook')} <span className="text-red-500">*</span>
             </label>
             {original?.vendorBankBookUrl && !vendorBankBookFile && (
@@ -637,7 +637,7 @@ export default function ResubmitPage() {
                 setVendorBankBookError(null)
                 setVendorBankBookFile(f)
               }}
-              className="w-full text-sm text-[#667085] file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#DCE6F0]"
+              className="w-full text-sm text-finance-muted file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover"
             />
             {vendorBankBookError && (
               <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>
@@ -648,27 +648,27 @@ export default function ResubmitPage() {
                   {vendorBankBookFile.name} ({(vendorBankBookFile.size / 1024).toFixed(0)}KB)
                 </p>
                 {vendorBankBookFile.type.startsWith('image/') && (
-                  <div className="mt-2 border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
+                  <div className="mt-2 border border-finance-border rounded-lg overflow-hidden inline-block">
                     <img
                       src={URL.createObjectURL(vendorBankBookFile)}
                       alt={t('form.vendorBankBook')}
-                      className="max-h-48 object-contain bg-[#F8FAFC]"
+                      className="max-h-48 object-contain bg-finance-surface"
                     />
                   </div>
                 )}
               </>
             ) : (
               original?.vendorBankBookUrl && (
-                <div className="mt-2 border border-[#D8DDE5] rounded-lg overflow-hidden inline-block">
+                <div className="mt-2 border border-finance-border rounded-lg overflow-hidden inline-block">
                   <img
                     src={original.vendorBankBookUrl}
                     alt={t('form.vendorBankBook')}
-                    className="max-h-48 object-contain bg-[#F8FAFC]"
+                    className="max-h-48 object-contain bg-finance-surface"
                   />
                 </div>
               )
             )}
-            <p className="text-xs text-[#667085] mt-1">{t('form.vendorBankBookHint')}</p>
+            <p className="text-xs text-finance-muted mt-1">{t('form.vendorBankBookHint')}</p>
           </div>
         )}
 
@@ -697,7 +697,7 @@ export default function ResubmitPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             to={`/request/${original.id}`}
-            className="text-sm text-[#667085] hover:text-[#002C5F] hover:underline"
+            className="text-sm text-finance-muted hover:text-finance-primary hover:underline"
           >
             {t('approval.originalRequest')}
           </Link>

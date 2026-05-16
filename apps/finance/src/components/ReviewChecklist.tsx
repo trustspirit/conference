@@ -14,24 +14,24 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
 
   const titleColor =
     stage === 'submission'
-      ? 'text-[#002C5F]'
+      ? 'text-finance-primary'
       : stage === 'approval'
-        ? 'text-[#007FA8]'
-        : 'text-[#9A6B00]'
+        ? 'text-finance-accent'
+        : 'text-finance-warning'
 
   const bgColor =
     stage === 'submission'
-      ? 'bg-[#E8EEF5]/80 border-[#D8DDE5]'
+      ? 'bg-finance-primary-surface/80 border-finance-border'
       : stage === 'approval'
-        ? 'bg-[#E7F3F5]/80 border-[#B8D8DD]'
-        : 'bg-[#FFF7E0]/80 border-[#E6D3A0]'
+        ? 'bg-finance-success-bg/80 border-finance-success-border'
+        : 'bg-finance-warning-bg/80 border-finance-warning-border'
 
   const bulletColor =
     stage === 'submission'
-      ? 'text-[#7AA7C7]'
+      ? 'text-finance-selected-ring'
       : stage === 'approval'
-        ? 'text-[#007FA8]'
-        : 'text-[#9A6B00]'
+        ? 'text-finance-accent'
+        : 'text-finance-warning'
 
   const filteredItems = excludeKeys?.length
     ? items.filter((item) => !excludeKeys.includes(item.key))
@@ -61,7 +61,7 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
           {filteredItems.map((item) => (
             <li
               key={item.key}
-              className="flex items-start gap-1.5 text-xs text-[#667085] leading-relaxed"
+              className="flex items-start gap-1.5 text-xs text-finance-muted leading-relaxed"
             >
               <span className={`mt-0.5 ${bulletColor}`}>&#8226;</span>
               {t(`checklist.${item.key}`)}
@@ -101,7 +101,7 @@ export default function ReviewChecklist({ items, stage, excludeKeys }: Props) {
             {filteredItems.map((item) => (
               <li
                 key={item.key}
-                className="flex items-start gap-1.5 text-xs text-[#667085] leading-relaxed"
+                className="flex items-start gap-1.5 text-xs text-finance-muted leading-relaxed"
               >
                 <span className={`mt-0.5 ${bulletColor}`}>&#8226;</span>
                 {t(`checklist.${item.key}`)}

@@ -36,24 +36,24 @@ export default function BudgetRingGauge({
   if (totalBudget === 0) {
     return (
       <div className="finance-panel rounded-lg p-4 sm:p-6">
-        <h3 className="text-sm font-semibold text-[#002C5F] mb-4">
+        <h3 className="text-sm font-semibold text-finance-primary mb-4">
           {t('dashboard.budgetOverview')}
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs text-[#667085]">{t('dashboard.totalBudget')}</p>
+            <p className="text-xs text-finance-muted">{t('dashboard.totalBudget')}</p>
             <p className="text-lg font-bold text-gray-400">{t('dashboard.notSet')}</p>
           </div>
           <div>
-            <p className="text-xs text-[#667085]">{t('dashboard.used')}</p>
-            <p className="text-lg font-bold text-[#002C5F]">
+            <p className="text-xs text-finance-muted">{t('dashboard.used')}</p>
+            <p className="text-lg font-bold text-finance-primary">
               {'\u20A9'}
               {approvedAmount.toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[#667085]">{t('dashboard.pendingAmount')}</p>
-            <p className="text-lg font-bold text-[#6B7280]">
+            <p className="text-xs text-finance-muted">{t('dashboard.pendingAmount')}</p>
+            <p className="text-lg font-bold text-finance-neutral">
               {'\u20A9'}
               {pendingAmount.toLocaleString()}
             </p>
@@ -67,11 +67,11 @@ export default function BudgetRingGauge({
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
       <div className="flex items-start gap-2">
         <span
-          className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${overBudget ? 'bg-[#A43F3F]' : 'bg-[#002C5F]'}`}
+          className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${overBudget ? 'bg-finance-danger' : 'bg-finance-primary'}`}
         />
         <div>
-          <p className="text-xs text-[#667085]">{t('dashboard.used')}</p>
-          <p className={`text-sm font-bold ${overBudget ? 'text-[#A43F3F]' : 'text-[#002C5F]'}`}>
+          <p className="text-xs text-finance-muted">{t('dashboard.used')}</p>
+          <p className={`text-sm font-bold ${overBudget ? 'text-finance-danger' : 'text-finance-primary'}`}>
             {'\u20A9'}
             {approvedAmount.toLocaleString()}
           </p>
@@ -79,10 +79,10 @@ export default function BudgetRingGauge({
         </div>
       </div>
       <div className="flex items-start gap-2">
-        <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-[#6B7280] shrink-0" />
+        <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-finance-neutral shrink-0" />
         <div>
-          <p className="text-xs text-[#667085]">{t('dashboard.pendingAmount')}</p>
-          <p className="text-sm font-bold text-[#4B5563]">
+          <p className="text-xs text-finance-muted">{t('dashboard.pendingAmount')}</p>
+          <p className="text-sm font-bold text-finance-body">
             {'\u20A9'}
             {pendingAmount.toLocaleString()}
           </p>
@@ -92,9 +92,9 @@ export default function BudgetRingGauge({
       <div className="flex items-start gap-2">
         <span className="mt-1.5 w-2.5 h-2.5 rounded-full bg-gray-200 shrink-0" />
         <div>
-          <p className="text-xs text-[#667085]">{t('dashboard.remaining')}</p>
+          <p className="text-xs text-finance-muted">{t('dashboard.remaining')}</p>
           <p
-            className={`text-sm font-bold ${remaining <= 0 ? 'text-[#A43F3F]' : 'text-[#007FA8]'}`}
+            className={`text-sm font-bold ${remaining <= 0 ? 'text-finance-danger' : 'text-finance-accent'}`}
           >
             {'\u20A9'}
             {(totalBudget - approvedAmount).toLocaleString()}
@@ -118,19 +118,19 @@ export default function BudgetRingGauge({
   return (
     <div className="finance-panel rounded-lg p-4 sm:p-6">
       <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-semibold text-[#002C5F]">{t('dashboard.budgetOverview')}</h3>
+        <h3 className="text-sm font-semibold text-finance-primary">{t('dashboard.budgetOverview')}</h3>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs text-[#667085]">
+          <span className="text-xs text-finance-muted">
             {t('dashboard.totalBudget')}{' '}
             <span className="font-bold text-gray-900">
               {'\u20A9'}
               {totalBudget.toLocaleString()}
             </span>
           </span>
-          <div className="flex border border-[#D8DDE5] rounded overflow-hidden">
+          <div className="flex border border-finance-border rounded overflow-hidden">
             <button
               onClick={() => setView('bar')}
-              className={`px-2 py-1 ${view === 'bar' ? 'bg-[#E8EEF5] text-[#002C5F]' : 'text-[#667085] hover:text-[#002C5F]'}`}
+              className={`px-2 py-1 ${view === 'bar' ? 'bg-finance-primary-surface text-finance-primary' : 'text-finance-muted hover:text-finance-primary'}`}
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
                 <rect x="1" y="8" width="4" height="7" rx="0.5" />
@@ -140,7 +140,7 @@ export default function BudgetRingGauge({
             </button>
             <button
               onClick={() => setView('chart')}
-              className={`px-2 py-1 ${view === 'chart' ? 'bg-[#E8EEF5] text-[#002C5F]' : 'text-[#667085] hover:text-[#002C5F]'}`}
+              className={`px-2 py-1 ${view === 'chart' ? 'bg-finance-primary-surface text-finance-primary' : 'text-finance-muted hover:text-finance-primary'}`}
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -159,16 +159,16 @@ export default function BudgetRingGauge({
       {view === 'bar' ? (
         <>
           <div className="mb-4">
-            <div className="w-full h-5 bg-[#EEF1F5] rounded-full overflow-hidden flex">
+            <div className="w-full h-5 bg-finance-muted-surface rounded-full overflow-hidden flex">
               {usagePercent > 0 && (
                 <div
-                  className={`h-full transition-all ${overBudget ? 'bg-[#A43F3F]' : 'bg-[#002C5F]'}`}
+                  className={`h-full transition-all ${overBudget ? 'bg-finance-danger' : 'bg-finance-primary'}`}
                   style={{ width: `${Math.min(usagePercent, 100)}%` }}
                 />
               )}
               {pendingPercent > 0 && (
                 <div
-                  className="h-full bg-[#6B7280] transition-all"
+                  className="h-full bg-finance-neutral transition-all"
                   style={{
                     width: `${Math.min(pendingPercent, 100 - Math.min(usagePercent, 100))}%`
                   }}
@@ -177,7 +177,7 @@ export default function BudgetRingGauge({
             </div>
             <div className="flex justify-between mt-1">
               <span
-                className={`text-xs font-medium ${overBudget ? 'text-[#A43F3F]' : 'text-[#002C5F]'}`}
+                className={`text-xs font-medium ${overBudget ? 'text-finance-danger' : 'text-finance-primary'}`}
               >
                 {combinedPercent}%
               </span>
@@ -262,7 +262,7 @@ function BudgetTimeChart({
 
   if (chartData.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-[#667085] text-sm">
+      <div className="flex items-center justify-center h-[200px] text-finance-muted text-sm">
         {t('common.noData')}
       </div>
     )
@@ -271,7 +271,7 @@ function BudgetTimeChart({
   return (
     <div>
       {isZoomedIn && (
-        <p className="text-xs text-[#667085] mb-1 text-right">
+        <p className="text-xs text-finance-muted mb-1 text-right">
           {t('dashboard.totalBudget')} {'\u20A9'}
           {totalBudget.toLocaleString()} ({t('dashboard.usage', { percent: usagePercent })})
         </p>
@@ -281,15 +281,15 @@ function BudgetTimeChart({
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="budgetUsedFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#002C5F" stopOpacity={0.22} />
-                <stop offset="95%" stopColor="#002C5F" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="var(--finance-primary)" stopOpacity={0.22} />
+                <stop offset="95%" stopColor="var(--finance-primary)" stopOpacity={0.02} />
               </linearGradient>
               <linearGradient id="budgetCombinedFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6B7280" stopOpacity={0.18} />
-                <stop offset="95%" stopColor="#6B7280" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="var(--finance-neutral)" stopOpacity={0.18} />
+                <stop offset="95%" stopColor="var(--finance-neutral)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--finance-neutral-subtle)" />
             <XAxis dataKey="label" tick={{ fontSize: 11 }} />
             <YAxis
               domain={(() => {
@@ -325,10 +325,11 @@ function BudgetTimeChart({
                 const lastPoint = chartData[chartData.length - 1]
                 const used = lastPoint?.used ?? 0
                 const combined = lastPoint?.combined ?? 0
-                let fill = '#9CA3AF'
-                if (payload.value === used && used > 0) fill = '#002C5F'
-                else if (payload.value === combined && combined !== used) fill = '#6B7280'
-                else if (payload.value === totalBudget) fill = '#6B7280'
+                let fill = 'var(--finance-placeholder)'
+                if (payload.value === used && used > 0) fill = 'var(--finance-primary)'
+                else if (payload.value === combined && combined !== used)
+                  fill = 'var(--finance-neutral)'
+                else if (payload.value === totalBudget) fill = 'var(--finance-neutral)'
                 return (
                   <text
                     x={x}
@@ -359,7 +360,7 @@ function BudgetTimeChart({
               type="monotone"
               dataKey="combined"
               name="combined"
-              stroke="#6B7280"
+              stroke="var(--finance-neutral)"
               strokeWidth={2}
               fill="url(#budgetCombinedFill)"
             />
@@ -367,21 +368,21 @@ function BudgetTimeChart({
               type="monotone"
               dataKey="used"
               name="used"
-              stroke="#002C5F"
+              stroke="var(--finance-primary)"
               strokeWidth={2}
               fill="url(#budgetUsedFill)"
             />
             {!isZoomedIn && (
               <ReferenceLine
                 y={totalBudget}
-                stroke="#9CA3AF"
+                stroke="var(--finance-placeholder)"
                 strokeWidth={1.5}
                 strokeDasharray="6 3"
                 label={{
                   value: t('dashboard.totalBudget'),
                   position: 'insideTopLeft',
                   fontSize: 11,
-                  fill: '#6B7280',
+                  fill: 'var(--finance-neutral)',
                   offset: 6
                 }}
               />

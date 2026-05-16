@@ -53,9 +53,9 @@ export default function StatusProgress({ status, hasReview }: StatusProgressProp
                     isFailed
                       ? 'border-red-500 bg-red-50 text-red-500'
                       : isCompleted
-                        ? 'border-[#002C5F] bg-[#002C5F] text-white'
+                        ? 'border-finance-primary bg-finance-primary text-white'
                         : isCurrent
-                          ? 'border-[#002C5F] bg-white text-[#002C5F]'
+                          ? 'border-finance-primary bg-white text-finance-primary'
                           : 'border-gray-300 bg-white text-gray-300'
                   }`}
                 >
@@ -66,9 +66,9 @@ export default function StatusProgress({ status, hasReview }: StatusProgressProp
                     isFailed
                       ? 'text-red-500 font-medium'
                       : isCompleted
-                        ? 'text-[#002C5F] font-medium'
+                        ? 'text-finance-primary font-medium'
                         : isCurrent
-                          ? 'text-[#002C5F] font-medium'
+                          ? 'text-finance-primary font-medium'
                           : 'text-gray-400'
                   }`}
                 >
@@ -85,9 +85,9 @@ export default function StatusProgress({ status, hasReview }: StatusProgressProp
                 <div
                   className={`flex-1 h-0.5 mt-3.5 mx-1 ${
                     i < activeStep - 1
-                      ? 'bg-[#002C5F]'
+                      ? 'bg-finance-primary'
                       : i === activeStep - 1 && !isTerminal
-                        ? 'bg-[#002C5F]'
+                        ? 'bg-finance-primary'
                         : i === activeStep - 1 && isTerminal
                           ? 'bg-red-300'
                           : 'bg-gray-200'

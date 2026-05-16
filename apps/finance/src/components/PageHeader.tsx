@@ -56,14 +56,14 @@ export default function PageHeader({
   return (
     <div className="mb-6">
       {backTo && (
-        <Link to={backTo} className="text-sm text-[#667085] hover:text-[#002C5F] mb-2 inline-block">
+        <Link to={backTo} className="text-sm text-finance-muted hover:text-finance-primary mb-2 inline-block">
           ← {backLabel || t('common.back')}
         </Link>
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-[#002C5F]">{title}</h2>
-          {description && <p className="text-sm text-[#667085] mt-1">{description}</p>}
+          <h2 className="text-xl font-bold text-finance-primary">{title}</h2>
+          {description && <p className="text-sm text-finance-muted mt-1">{description}</p>}
         </div>
         {allActions.length > 0 && (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">

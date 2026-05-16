@@ -185,12 +185,12 @@ export default function SettlementReportPage() {
     <Layout>
       <div className="finance-panel rounded-lg p-4 sm:p-6 max-w-4xl mx-auto">
         <div className="mb-4 flex flex-col gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
-          <Link to="/admin/settlements" className="text-sm text-[#002C5F] hover:underline">
+          <Link to="/admin/settlements" className="text-sm text-finance-primary hover:underline">
             {t('settlement.backToList')}
           </Link>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             {!isCorporateCard && (
-              <label className="flex items-center gap-1.5 text-xs text-[#667085] cursor-pointer whitespace-nowrap">
+              <label className="flex items-center gap-1.5 text-xs text-finance-muted cursor-pointer whitespace-nowrap">
                 <input
                   type="checkbox"
                   checked={includeBankBooks}
@@ -242,7 +242,7 @@ export default function SettlementReportPage() {
 
         {/* Budget Code Summary */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-[#002C5F] mb-2">
+          <h3 className="text-sm font-semibold text-finance-primary mb-2">
             {t('settlement.budgetSummary')}
           </h3>
           <FinanceTable variant="embedded">
@@ -259,7 +259,7 @@ export default function SettlementReportPage() {
               {budgetSummary.map(([code, { total }]) => (
                 <FinanceTable.Row key={code} hover={false}>
                   <FinanceTable.Td size="compact">{code}</FinanceTable.Td>
-                  <FinanceTable.Td size="compact" className="text-[#667085]">
+                  <FinanceTable.Td size="compact" className="text-finance-muted">
                     {t(`budgetCode.${code}`)}
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" align="right" className="font-medium">
@@ -284,7 +284,7 @@ export default function SettlementReportPage() {
         {/* Payee summary (only when multiple payees) */}
         {uniquePayees.length > 1 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-[#002C5F] mb-2">
+            <h3 className="text-sm font-semibold text-finance-primary mb-2">
               {t('settlement.payeeSummary')}
             </h3>
             <FinanceTable variant="embedded">
@@ -348,10 +348,10 @@ export default function SettlementReportPage() {
         {needsIndividualForms ? (
           /* Per-request individual forms (only when info differs) */
           (originalRequests || []).map((req, idx) => (
-            <div key={req.id} className="mb-6 border border-[#D8DDE5] rounded-lg p-4">
+            <div key={req.id} className="mb-6 border border-finance-border rounded-lg p-4">
               <div className="flex flex-col gap-1 mb-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-sm font-bold">
-                  <span className="text-[#002C5F] mr-1">#{idx + 1}</span>
+                  <span className="text-finance-primary mr-1">#{idx + 1}</span>
                   {t('settlement.individualForm')} — {req.payee}
                 </h3>
                 <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
@@ -377,7 +377,7 @@ export default function SettlementReportPage() {
 
               <ItemsTable items={req.items} totalAmount={req.totalAmount} />
 
-              <div className="flex justify-between gap-4 items-end mt-4 pt-4 border-t border-[#D8DDE5]">
+              <div className="flex justify-between gap-4 items-end mt-4 pt-4 border-t border-finance-border">
                 <div>
                   <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
                   {settlements.find((s) => s.requestIds.includes(req.id))?.requestedBySignature && (
@@ -390,7 +390,7 @@ export default function SettlementReportPage() {
                       className="h-10 mb-1"
                     />
                   )}
-                  <div className="border-t border-[#D8DDE5] w-40 pt-0.5 text-[10px] text-[#667085]">
+                  <div className="border-t border-finance-border w-40 pt-0.5 text-[10px] text-finance-muted">
                     {req.payee}
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function SettlementReportPage() {
                       className="h-10 mb-1 mx-auto"
                     />
                   )}
-                  <div className="border-t border-[#D8DDE5] w-40 pt-0.5 text-[10px] text-[#667085] mx-auto">
+                  <div className="border-t border-finance-border w-40 pt-0.5 text-[10px] text-finance-muted mx-auto">
                     {req.approvedBy?.name || '\u00A0'}
                   </div>
                 </div>
@@ -415,13 +415,13 @@ export default function SettlementReportPage() {
         ) : (
           /* Unified — signatures + receipts only (budget summary above is sufficient) */
           <>
-            <div className="flex justify-between gap-4 items-end mb-6 pt-4 border-t border-[#D8DDE5]">
+            <div className="flex justify-between gap-4 items-end mb-6 pt-4 border-t border-finance-border">
               <div>
                 <p className="text-[10px] text-gray-400 mb-1">Requested by</p>
                 {creatorSignature && (
                   <img src={creatorSignature} alt="creator signature" className="h-10 mb-1" />
                 )}
-                <div className="border-t border-[#D8DDE5] w-40 pt-0.5 text-[10px] text-[#667085]">
+                <div className="border-t border-finance-border w-40 pt-0.5 text-[10px] text-finance-muted">
                   {creatorName || '\u00A0'}
                 </div>
               </div>
@@ -434,7 +434,7 @@ export default function SettlementReportPage() {
                     className="h-10 mb-1 mx-auto"
                   />
                 )}
-                <div className="border-t border-[#D8DDE5] w-40 pt-0.5 text-[10px] text-[#667085] mx-auto">
+                <div className="border-t border-finance-border w-40 pt-0.5 text-[10px] text-finance-muted mx-auto">
                   {settlements[0]?.approvedBy?.name || '\u00A0'}
                 </div>
               </div>
@@ -445,13 +445,13 @@ export default function SettlementReportPage() {
               .flatMap((s) => s.items)
               .some((item) => item.transportDetail?.routeMapImage?.url) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#002C5F] mb-2">{t('field.routeMap')}</h3>
+                <h3 className="text-sm font-semibold text-finance-primary mb-2">{t('field.routeMap')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {settlements
                     .flatMap((s) => s.items)
                     .filter((item) => item.transportDetail?.routeMapImage?.url)
                     .map((item, idx) => (
-                      <div key={idx} className="border border-[#D8DDE5] rounded-lg overflow-hidden">
+                      <div key={idx} className="border border-finance-border rounded-lg overflow-hidden">
                         <a
                           href={item.transportDetail!.routeMapImage!.url}
                           target="_blank"
@@ -464,10 +464,10 @@ export default function SettlementReportPage() {
                               item.transportDetail!.routeMapImage!.url
                             }
                             alt={`${item.transportDetail!.departure} → ${item.transportDetail!.destination}`}
-                            className="w-full max-h-[160px] object-contain bg-[#F8FAFC]"
+                            className="w-full max-h-[160px] object-contain bg-finance-surface"
                           />
                         </a>
-                        <div className="px-3 py-1.5 bg-[#F8FAFC] border-t border-[#D8DDE5] text-xs text-[#667085]">
+                        <div className="px-3 py-1.5 bg-finance-surface border-t border-finance-border text-xs text-finance-muted">
                           {item.transportDetail!.departure} → {item.transportDetail!.destination}
                           {item.transportDetail!.distanceKm &&
                             ` · ${item.transportDetail!.distanceKm}km`}
@@ -504,17 +504,17 @@ export default function SettlementReportPage() {
             if (bankBooks.length === 0) return null
             return (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-[#002C5F] mb-2">{t('field.bankBook')}</h3>
+                <h3 className="text-sm font-semibold text-finance-primary mb-2">{t('field.bankBook')}</h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {bankBooks.map((bb) => (
-                    <div key={bb.payee} className="border border-[#D8DDE5] rounded overflow-hidden">
+                    <div key={bb.payee} className="border border-finance-border rounded overflow-hidden">
                       <BankBookPreview
                         url={bb.url}
                         alt={bb.payee}
                         maxHeight="max-h-60"
-                        className="w-full object-contain bg-[#F8FAFC]"
+                        className="w-full object-contain bg-finance-surface"
                       />
-                      <p className="text-xs text-[#667085] px-2 py-1 bg-[#F8FAFC] border-t border-[#D8DDE5]">
+                      <p className="text-xs text-finance-muted px-2 py-1 bg-finance-surface border-t border-finance-border">
                         {bb.payee}
                       </p>
                     </div>

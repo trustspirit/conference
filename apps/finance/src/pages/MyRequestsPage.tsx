@@ -85,7 +85,7 @@ export default function MyRequestsPage() {
             className={`shrink-0 px-4 py-2.5 rounded text-sm font-semibold border transition-colors ${
               filter === f
                 ? 'finance-tab-active'
-                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+                : 'bg-white text-finance-muted border-finance-border hover:text-finance-primary hover:bg-finance-primary-subtle'
             }`}
           >
             {t(`status.${f}`, f)}
@@ -125,7 +125,7 @@ export default function MyRequestsPage() {
                 {requests.map((req) => (
                   <FinanceTable.Row key={req.id}>
                     <FinanceTable.Td>
-                      <Link to={`/request/${req.id}`} className="text-[#002C5F] hover:underline">
+                      <Link to={`/request/${req.id}`} className="text-finance-primary hover:underline">
                         {req.date}
                       </Link>
                       {formatFirestoreTime(req.createdAt) && (
@@ -161,7 +161,7 @@ export default function MyRequestsPage() {
                           <Link
                             to={`/request/resubmit/${req.id}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-block px-3 py-1 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
+                            className="inline-block px-3 py-1 rounded border border-finance-border bg-finance-primary-surface text-finance-primary text-xs font-medium hover:bg-finance-primary-surface-hover transition-colors"
                           >
                             {t('approval.resubmit')}
                           </Link>
@@ -184,7 +184,7 @@ export default function MyRequestsPage() {
                 className="finance-panel block rounded-lg p-4"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="text-sm font-medium text-[#002C5F]">
+                  <span className="text-sm font-medium text-finance-primary">
                     {req.date}
                     {formatFirestoreTime(req.createdAt) && (
                       <span className="ml-1 text-xs text-gray-400 font-normal">
@@ -194,11 +194,11 @@ export default function MyRequestsPage() {
                   </span>
                   <StatusBadge status={req.status} />
                 </div>
-                <div className="text-sm text-[#667085] mb-1">
+                <div className="text-sm text-finance-muted mb-1">
                   {t(`committee.${req.committee}Short`)}
                 </div>
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-[#667085]">
+                  <span className="text-finance-muted">
                     {t('form.itemCount', { count: req.items.length })}
                   </span>
                   <span className="font-medium">₩{req.totalAmount.toLocaleString()}</span>
@@ -222,7 +222,7 @@ export default function MyRequestsPage() {
                         e.stopPropagation()
                         navigate(`/request/resubmit/${req.id}`)
                       }}
-                      className="mt-3 w-full text-center px-3 py-1.5 rounded border border-[#D8DDE5] bg-[#E8EEF5] text-[#002C5F] text-xs font-medium hover:bg-[#DCE6F0] transition-colors"
+                      className="mt-3 w-full text-center px-3 py-1.5 rounded border border-finance-border bg-finance-primary-surface text-finance-primary text-xs font-medium hover:bg-finance-primary-surface-hover transition-colors"
                     >
                       {t('approval.resubmit')}
                     </button>

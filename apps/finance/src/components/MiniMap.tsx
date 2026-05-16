@@ -76,11 +76,14 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
         // routePath is [lng, lat, lng, lat, ...]
         path.push(new kakao.maps.LatLng(routePath[i + 1], routePath[i]))
       }
+      const routeColor =
+        getComputedStyle(document.documentElement).getPropertyValue('--finance-accent').trim() ||
+        'rgb(0, 127, 168)'
       polylineRef.current = new kakao.maps.Polyline({
         map,
         path,
         strokeWeight: 4,
-        strokeColor: '#3B82F6',
+        strokeColor: routeColor,
         strokeOpacity: 0.8,
         strokeStyle: 'solid'
       })
@@ -104,7 +107,7 @@ export default function MiniMap({ departure, destination, routePath, ref }: Prop
   return (
     <div
       ref={setRefs}
-      className={`w-full rounded-lg border border-[#D8DDE5] overflow-hidden ${hasRoute ? 'h-[200px]' : 'h-[150px]'}`}
+      className={`w-full rounded-lg border border-finance-border overflow-hidden ${hasRoute ? 'h-[200px]' : 'h-[150px]'}`}
     />
   )
 }

@@ -25,7 +25,7 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
+      <div className="flex items-center justify-center h-[250px] text-finance-muted text-sm">
         {t('common.noData')}
       </div>
     )
@@ -43,16 +43,16 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
     <div className="h-[250px]">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--finance-neutral-subtle)" />
           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} tickFormatter={formatYAxis} />
           <Tooltip formatter={(v) => `\u20A9${(Number(v) || 0).toLocaleString()}`} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="total" name={t('dashboard.amount')} fill="#D1D5DB" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="total" name={t('dashboard.amount')} fill="var(--finance-chart-muted)" radius={[4, 4, 0, 0]} />
           <Bar
             dataKey="approved"
             name={t('dashboard.approvedAmount')}
-            fill="#002C5F"
+            fill="var(--finance-primary)"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

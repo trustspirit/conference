@@ -53,29 +53,29 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh finance-app-bg px-4 py-6 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="finance-panel w-full max-w-5xl rounded-lg overflow-hidden grid grid-cols-1 lg:min-h-[560px] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="bg-gradient-to-br from-[#F6F7F9] to-[#E7EDF4] p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
+        <div className="bg-gradient-to-br from-finance-bg to-finance-primary-soft p-5 sm:p-10 lg:p-12 flex flex-col justify-between">
           <div>
-            <p className="text-xl font-bold text-[#002C5F]">{t('app.title')}</p>
-            <h1 className="mt-6 max-w-sm text-2xl sm:mt-16 sm:text-5xl font-bold leading-tight text-[#002C5F]">
+            <p className="text-xl font-bold text-finance-primary">{t('app.title')}</p>
+            <h1 className="mt-6 max-w-sm text-2xl sm:mt-16 sm:text-5xl font-bold leading-tight text-finance-primary">
               Conference finance operations
             </h1>
-            <div className="mt-4 h-1.5 w-28 sm:w-40 bg-[#002C5F]" />
+            <div className="mt-4 h-1.5 w-28 sm:w-40 bg-finance-primary" />
           </div>
-          <p className="mt-6 hidden text-sm text-[#667085] sm:mt-12 sm:block">
+          <p className="mt-6 hidden text-sm text-finance-muted sm:mt-12 sm:block">
             Budget requests · settlements · reports
           </p>
         </div>
         <div className="bg-white p-6 sm:p-10 lg:p-14 flex items-center">
           <div className="w-full">
             <div className="mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#002C5F] mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-finance-primary mb-2">
                 {t('auth.loginTitle')}
               </h2>
-              <p className="text-[#667085] text-sm">{t('auth.loginSubtitle')}</p>
+              <p className="text-finance-muted text-sm">{t('auth.loginSubtitle')}</p>
             </div>
             <button
               onClick={handleSignIn}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-[#D8DDE5] rounded-lg px-6 py-3 text-[#111827] hover:bg-[#F0F4F8] hover:border-[#B7C4D4] transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-finance-border rounded-lg px-6 py-3 text-finance-text hover:bg-finance-primary-subtle hover:border-finance-border-hover transition-all active:scale-[0.98]"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                 <path

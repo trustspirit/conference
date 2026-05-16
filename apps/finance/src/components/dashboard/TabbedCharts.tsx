@@ -36,15 +36,15 @@ export default function TabbedCharts({
 
   return (
     <div className="finance-panel rounded-lg mb-6">
-      <div className="border-b border-[#D8DDE5] px-4 flex gap-1 overflow-x-auto">
+      <div className="border-b border-finance-border px-4 flex gap-1 overflow-x-auto">
         {tabs.map((item) => (
           <button
             key={item.key}
             onClick={() => setTab(item.key)}
             className={`px-3 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
               tab === item.key
-                ? 'border-[#002C5F] text-[#002C5F] font-semibold'
-                : 'border-transparent text-[#667085] hover:text-[#002C5F]'
+                ? 'border-finance-primary text-finance-primary font-semibold'
+                : 'border-transparent text-finance-muted hover:text-finance-primary'
             }`}
           >
             {item.label}

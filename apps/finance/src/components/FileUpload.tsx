@@ -57,11 +57,11 @@ export default function FileUpload({
 
   return (
     <div className="mb-6">
-      <label className="block text-sm font-medium text-[#002C5F] mb-1">
+      <label className="block text-sm font-medium text-finance-primary mb-1">
         {label ?? t('field.receipts')} {required && <span className="text-red-500">*</span>}
       </label>
       {existingCount && existingCount > 0 && files.length === 0 && existingLabel && (
-        <div className="mb-2 p-2 bg-[#F8FAFC] border border-[#D8DDE5] rounded text-sm text-[#667085]">
+        <div className="mb-2 p-2 bg-finance-surface border border-finance-border rounded text-sm text-finance-muted">
           {existingLabel}
         </div>
       )}
@@ -72,7 +72,7 @@ export default function FileUpload({
             return (
               <div
                 key={i}
-                className="border border-[#D8DDE5] rounded-lg overflow-hidden bg-[#F8FAFC]"
+                className="border border-finance-border rounded-lg overflow-hidden bg-finance-surface"
               >
                 {isImage ? (
                   <img
@@ -82,11 +82,11 @@ export default function FileUpload({
                   />
                 ) : (
                   <div className="w-full h-32 bg-white flex items-center justify-center">
-                    <span className="text-xs text-[#9AA4B2]">PDF</span>
+                    <span className="text-xs text-finance-placeholder">PDF</span>
                   </div>
                 )}
-                <div className="px-2 py-1.5 border-t border-[#D8DDE5]">
-                  <span className="text-xs text-[#667085] truncate block">{ef.fileName}</span>
+                <div className="px-2 py-1.5 border-t border-finance-border">
+                  <span className="text-xs text-finance-muted truncate block">{ef.fileName}</span>
                 </div>
               </div>
             )
@@ -99,9 +99,9 @@ export default function FileUpload({
         accept="image/*,.pdf"
         onChange={handleChange}
         disabled={disabled}
-        className={`w-full text-sm text-[#667085] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold ${disabled ? 'file:bg-gray-100 file:text-gray-400 opacity-50 cursor-not-allowed' : 'file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#DCE6F0]'}`}
+        className={`w-full text-sm text-finance-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold ${disabled ? 'file:bg-gray-100 file:text-gray-400 opacity-50 cursor-not-allowed' : 'file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover'}`}
       />
-      <p className="text-xs text-[#667085] mt-1">
+      <p className="text-xs text-finance-muted mt-1">
         {disabled ? t('form.receiptNotRequired') : t('form.receiptHint')}
       </p>
       {errors.length > 0 && (
@@ -116,7 +116,7 @@ export default function FileUpload({
           {files.map((f, i) => (
             <div
               key={i}
-              className="border border-[#D8DDE5] rounded-lg overflow-hidden bg-[#F8FAFC]"
+              className="border border-finance-border rounded-lg overflow-hidden bg-finance-surface"
             >
               {previews[i].isImage ? (
                 <img
@@ -134,12 +134,12 @@ export default function FileUpload({
                     >
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 8V3l5 5h-5zm-2 8.5c0 .28-.22.5-.5.5h-2c-.28 0-.5-.22-.5-.5v-4c0-.28.22-.5.5-.5h2c.28 0 .5.22.5.5v4z" />
                     </svg>
-                    <span className="text-sm text-[#667085] truncate">{f.name}</span>
+                    <span className="text-sm text-finance-muted truncate">{f.name}</span>
                   </div>
                 </div>
               )}
-              <div className="px-2 py-1.5 border-t border-[#D8DDE5] flex items-center justify-between gap-1">
-                <span className="text-xs text-[#667085] truncate">{f.name}</span>
+              <div className="px-2 py-1.5 border-t border-finance-border flex items-center justify-between gap-1">
+                <span className="text-xs text-finance-muted truncate">{f.name}</span>
                 <button
                   type="button"
                   onClick={() => onFilesChange(files.filter((_, j) => j !== i))}

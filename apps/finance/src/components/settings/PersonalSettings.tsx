@@ -105,8 +105,8 @@ export default function PersonalSettings() {
 
   return (
     <>
-      <div className="mb-6 p-4 border border-[#D8DDE5] rounded-lg">
-        <label className="block text-sm font-medium text-[#002C5F] mb-2">
+      <div className="mb-6 p-4 border border-finance-border rounded-lg">
+        <label className="block text-sm font-medium text-finance-primary mb-2">
           {i18n.language.startsWith('ko') ? '언어' : 'Language'}
         </label>
         <div className="flex gap-2">
@@ -170,21 +170,21 @@ export default function PersonalSettings() {
           fullWidth
         />
       </div>
-      <div className="mb-4 p-4 border border-[#D8DDE5] rounded-lg">
-        <label className="block text-sm font-medium text-[#002C5F] mb-2">
+      <div className="mb-4 p-4 border border-finance-border rounded-lg">
+        <label className="block text-sm font-medium text-finance-primary mb-2">
           {t('field.bankBook')} <span className="text-red-500">*</span>
         </label>
         {hasBankBook && (
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs bg-[#E7F3F5] text-[#007FA8] px-2 py-0.5 rounded">
+              <span className="text-xs bg-finance-success-bg text-finance-accent px-2 py-0.5 rounded">
                 {t('settings.bankBookUploaded')}
               </span>
               <a
                 href={appUser?.bankBookUrl || appUser?.bankBookDriveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-[#002C5F] hover:underline"
+                className="text-xs text-finance-primary hover:underline"
               >
                 {t('settings.bankBookViewDrive')}
               </a>
@@ -193,7 +193,7 @@ export default function PersonalSettings() {
               <BankBookPreview
                 url={(appUser.bankBookUrl || appUser.bankBookDriveUrl)!}
                 alt={t('field.bankBook')}
-                className="border border-[#D8DDE5] rounded"
+                className="border border-finance-border rounded"
               />
             )}
           </div>
@@ -216,7 +216,7 @@ export default function PersonalSettings() {
               setBankBookError(null)
               setBankBookFile(f)
             }}
-            className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-[#E8EEF5] file:text-[#002C5F] hover:file:bg-[#E8EEF5]"
+            className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface"
           />
           {bankBookError && <p className="text-xs text-red-600 mt-1">{bankBookError}</p>}
           {bankBookFile && (
@@ -247,7 +247,7 @@ export default function PersonalSettings() {
       </div>
       <div className="mb-6">
         <div className="flex items-center gap-1.5 mb-1">
-          <label className="text-sm font-medium text-[#002C5F]">{t('field.signature')}</label>
+          <label className="text-sm font-medium text-finance-primary">{t('field.signature')}</label>
           {signature && (
             <button
               type="button"

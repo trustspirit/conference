@@ -25,7 +25,7 @@ export default function SettlementSummary({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold text-[#002C5F] mb-6">{t('settlement.reviewSummary')}</h2>
+      <h2 className="text-xl font-bold text-finance-primary mb-6">{t('settlement.reviewSummary')}</h2>
 
       <div className="finance-panel rounded-lg p-4 mb-6 space-y-4 sm:p-6">
         <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
@@ -45,9 +45,9 @@ export default function SettlementSummary({
           const first = reqs[0]
           const subtotal = reqs.reduce((sum, r) => sum + r.totalAmount, 0)
           return (
-            <div key={key} className="border-t border-[#D8DDE5] pt-4">
+            <div key={key} className="border-t border-finance-border pt-4">
               <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-baseline sm:justify-between">
-                <h3 className="text-sm font-medium text-[#001F43]">
+                <h3 className="text-sm font-medium text-finance-primary-hover">
                   {first.payee}
                   {!first.isCorporateCard && (
                     <span className="ml-2 text-xs text-gray-400">
@@ -57,7 +57,7 @@ export default function SettlementSummary({
                 </h3>
                 <span className="text-sm font-semibold">₩{subtotal.toLocaleString()}</span>
               </div>
-              <ul className="text-sm text-[#667085] space-y-0.5 pl-2">
+              <ul className="text-sm text-finance-muted space-y-0.5 pl-2">
                 {reqs.map((r) => (
                   <li key={r.id} className="flex justify-between gap-3">
                     <span className="min-w-0">

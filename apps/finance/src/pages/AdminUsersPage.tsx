@@ -49,7 +49,7 @@ function BankInfoTooltip({ user, onClose }: { user: AppUser; onClose: () => void
             url={bankBookImg}
             alt={t('field.bankBook')}
             maxHeight="max-h-40"
-            className="w-full object-contain bg-[#F8FAFC] rounded border border-[#D8DDE5]"
+            className="w-full object-contain bg-finance-surface rounded border border-finance-border"
           />
         </a>
       ) : (
@@ -98,7 +98,7 @@ function UserNameWithTooltip({
     <>
       <span
         ref={anchorRef}
-        className="cursor-pointer hover:text-[#002C5F] underline decoration-dotted underline-offset-2"
+        className="cursor-pointer hover:text-finance-primary underline decoration-dotted underline-offset-2"
         onMouseEnter={openTooltip}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={openTooltip}
@@ -109,7 +109,7 @@ function UserNameWithTooltip({
         <span className="ml-1 text-xs text-gray-400">({user.name})</span>
       )}
       {user.uid === currentUser?.uid && (
-        <span className="ml-2 text-xs text-[#002C5F]">{t('users.me')}</span>
+        <span className="ml-2 text-xs text-finance-primary">{t('users.me')}</span>
       )}
       {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
       {showTooltip && (
@@ -155,7 +155,7 @@ function MobileUserCard({
       <div className="mb-3">
         <p className="font-medium text-gray-900">
           <span
-            className="cursor-pointer underline decoration-dotted underline-offset-2 text-[#002C5F]"
+            className="cursor-pointer underline decoration-dotted underline-offset-2 text-finance-primary"
             onClick={() => setShowBank((v) => !v)}
           >
             {u.displayName || u.name || '-'}
@@ -164,14 +164,14 @@ function MobileUserCard({
             <span className="ml-1 text-xs text-gray-400">({u.name})</span>
           )}
           {u.uid === currentUser?.uid && (
-            <span className="ml-2 text-xs text-[#002C5F]">{t('users.me')}</span>
+            <span className="ml-2 text-xs text-finance-primary">{t('users.me')}</span>
           )}
           {!isAdmin && <span className="ml-2 text-xs text-gray-400">{roleLabel}</span>}
         </p>
         <p className="text-sm text-gray-500 mt-1">{u.email}</p>
         <p className="text-sm text-gray-500">{u.phone || '-'}</p>
         {showBank && (
-          <div className="mt-2 p-3 bg-[#F8FAFC] rounded-lg border border-[#D8DDE5]">
+          <div className="mt-2 p-3 bg-finance-surface rounded-lg border border-finance-border">
             <p className="text-xs font-medium text-gray-500 mb-1">{t('field.bankAndAccount')}</p>
             <p className="text-sm text-gray-900 mb-2">
               {u.bankName ? `${u.bankName} ${u.bankAccount}` : '-'}
@@ -183,7 +183,7 @@ function MobileUserCard({
                   url={bankBookImg}
                   alt={t('field.bankBook')}
                   maxHeight="max-h-40"
-                  className="w-full object-contain bg-white rounded border border-[#D8DDE5]"
+                  className="w-full object-contain bg-white rounded border border-finance-border"
                 />
               </a>
             ) : (

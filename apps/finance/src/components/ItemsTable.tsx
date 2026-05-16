@@ -31,7 +31,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
             <FinanceTable.Td size="compact">
               <div>{item.description}</div>
               {item.transportDetail && (
-                <div className="mt-1 text-xs text-[#002C5F] bg-[#E8EEF5] rounded px-2 py-1.5 space-y-0.5">
+                <div className="mt-1 text-xs text-finance-primary bg-finance-primary-surface rounded px-2 py-1.5 space-y-0.5">
                   <div>
                     <span className="font-medium">{t('field.transportType')}:</span>{' '}
                     {item.transportDetail.transportType === 'car'
@@ -60,7 +60,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
                         <img
                           src={item.transportDetail.routeMapImage.url}
                           alt={`${item.transportDetail.departure} → ${item.transportDetail.destination}`}
-                          className="max-w-[200px] max-h-[120px] rounded border border-[#D8DDE5] object-contain bg-[#F8FAFC]"
+                          className="max-w-[200px] max-h-[120px] rounded border border-finance-border object-contain bg-finance-surface"
                         />
                       </a>
                     </div>

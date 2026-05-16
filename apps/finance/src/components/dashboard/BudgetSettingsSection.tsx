@@ -62,14 +62,14 @@ export default function BudgetSettingsSection({
     <>
       <div className="finance-panel rounded-lg p-4 sm:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold text-[#002C5F]">{t('dashboard.budgetSettings')}</h3>
+          <h3 className="text-sm font-semibold text-finance-primary">{t('dashboard.budgetSettings')}</h3>
           {!editingBudget ? (
             <button
               onClick={() => {
                 setTempBudget(budget)
                 setEditingBudget(true)
               }}
-              className="text-sm text-[#002C5F] hover:text-[#001F43]"
+              className="text-sm text-finance-primary hover:text-finance-primary-hover"
             >
               {t('common.edit')}
             </button>
@@ -77,7 +77,7 @@ export default function BudgetSettingsSection({
             <div className="flex gap-2">
               <button
                 onClick={() => setEditingBudget(false)}
-                className="text-sm text-[#667085] hover:text-[#111827]"
+                className="text-sm text-finance-muted hover:text-finance-text"
               >
                 {t('common.cancel')}
               </button>
@@ -92,7 +92,7 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div className="mb-4">
-          <label className="block text-sm text-[#667085] mb-1">{t('dashboard.totalBudget')}</label>
+          <label className="block text-sm text-finance-muted mb-1">{t('dashboard.totalBudget')}</label>
           {editingBudget ? (
             <input
               type="number"
@@ -103,7 +103,7 @@ export default function BudgetSettingsSection({
                   totalBudget: parseInt(e.target.value) || 0
                 })
               }
-              className="border border-[#D8DDE5] rounded px-3 py-2 text-sm w-full sm:w-48 focus:border-[#002C5F] focus:outline-none"
+              className="border border-finance-border rounded px-3 py-2 text-sm w-full sm:w-48 focus:border-finance-primary focus:outline-none"
               placeholder="0"
             />
           ) : (
@@ -129,7 +129,7 @@ export default function BudgetSettingsSection({
                 <FinanceTable.Td size="compact" className="font-mono">
                   {code}
                 </FinanceTable.Td>
-                <FinanceTable.Td size="compact" className="text-[#667085]">
+                <FinanceTable.Td size="compact" className="text-finance-muted">
                   {t(`budgetCode.${code}`)}
                 </FinanceTable.Td>
                 <FinanceTable.Td size="compact" align="right">
@@ -146,7 +146,7 @@ export default function BudgetSettingsSection({
                           }
                         })
                       }
-                      className="border border-[#D8DDE5] rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-[#002C5F] focus:outline-none"
+                      className="border border-finance-border rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-finance-primary focus:outline-none"
                       placeholder="0"
                     />
                   ) : (
@@ -187,7 +187,7 @@ export default function BudgetSettingsSection({
                     <FinanceTable.Td
                       size="compact"
                       align="right"
-                      className={`font-bold ${diff > 0 ? 'text-[#A43F3F]' : 'text-[#007FA8]'}`}
+                      className={`font-bold ${diff > 0 ? 'text-finance-danger' : 'text-finance-accent'}`}
                     >
                       {diff > 0 ? '+' : ''}
                       {`\u20A9${diff.toLocaleString()}`}
@@ -207,7 +207,7 @@ export default function BudgetSettingsSection({
                     <FinanceTable.Td
                       size="compact"
                       align="right"
-                      className="font-bold text-[#007FA8]"
+                      className="font-bold text-finance-accent"
                     >
                       {'\u20A9'}0
                     </FinanceTable.Td>
@@ -220,7 +220,7 @@ export default function BudgetSettingsSection({
       </div>
       <div className="finance-panel rounded-lg p-4 mt-6 sm:p-6">
         <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold text-[#002C5F]">
+          <h3 className="text-sm font-semibold text-finance-primary">
             {t('dashboard.documentNoSettings')}
           </h3>
           {!editingDocNo ? (
@@ -229,7 +229,7 @@ export default function BudgetSettingsSection({
                 setTempDocNo(docNo)
                 setEditingDocNo(true)
               }}
-              className="text-sm text-[#002C5F] hover:text-[#001F43]"
+              className="text-sm text-finance-primary hover:text-finance-primary-hover"
             >
               {t('common.edit')}
             </button>
@@ -237,7 +237,7 @@ export default function BudgetSettingsSection({
             <div className="flex gap-2">
               <button
                 onClick={() => setEditingDocNo(false)}
-                className="text-sm text-[#667085] hover:text-[#111827]"
+                className="text-sm text-finance-muted hover:text-finance-text"
               >
                 {t('common.cancel')}
               </button>
@@ -252,19 +252,19 @@ export default function BudgetSettingsSection({
           )}
         </div>
         <div>
-          <label className="block text-sm text-[#667085] mb-1">{t('dashboard.documentNo')}</label>
+          <label className="block text-sm text-finance-muted mb-1">{t('dashboard.documentNo')}</label>
           {editingDocNo ? (
             <input
               type="text"
               value={tempDocNo}
               onChange={(e) => setTempDocNo(e.target.value)}
-              className="border border-[#D8DDE5] rounded px-3 py-2 text-sm w-full font-mono focus:border-[#002C5F] focus:outline-none"
+              className="border border-finance-border rounded px-3 py-2 text-sm w-full font-mono focus:border-finance-primary focus:outline-none"
               placeholder="KOR01-6762808-5xxx-KYSA2025KOR"
             />
           ) : (
             <p className="text-sm font-mono font-medium">{docNo || t('dashboard.notSet')}</p>
           )}
-          <p className="text-xs text-[#667085] mt-1">{t('dashboard.documentNoHint')}</p>
+          <p className="text-xs text-finance-muted mt-1">{t('dashboard.documentNoHint')}</p>
         </div>
       </div>
     </>

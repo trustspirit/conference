@@ -39,7 +39,7 @@ function SortIcon({
   if (sortKey !== columnKey) return null
   return (
     <svg
-      className="inline-block w-3 h-3 ml-1 text-[#002C5F]"
+      className="inline-block w-3 h-3 ml-1 text-finance-primary"
       viewBox="0 0 12 12"
       fill="currentColor"
     >
@@ -285,7 +285,7 @@ export default function AdminRequestsPage() {
     <Layout>
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-xl font-bold text-[#002C5F]">{t('nav.adminRequests')}</h2>
+          <h2 className="text-xl font-bold text-finance-primary">{t('nav.adminRequests')}</h2>
           <div className="flex flex-wrap items-center gap-2">
             {committeeTabs?.map((c) => (
               <button
@@ -297,7 +297,7 @@ export default function AdminRequestsPage() {
                 className={`px-3 py-1.5 rounded text-sm font-semibold border transition-colors ${
                   committeeFilter === c
                     ? 'finance-tab-active'
-                    : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+                    : 'bg-white text-finance-muted border-finance-border hover:text-finance-primary hover:bg-finance-primary-subtle'
                 }`}
               >
                 {c === 'all' ? t('status.all') : t(`committee.${c}Short`)}
@@ -326,7 +326,7 @@ export default function AdminRequestsPage() {
             className={`shrink-0 px-4 py-2.5 rounded text-sm font-semibold border transition-colors ${
               filter === f
                 ? 'finance-tab-active'
-                : 'bg-white text-[#667085] border-[#D8DDE5] hover:text-[#002C5F] hover:bg-[#F0F4F8]'
+                : 'bg-white text-finance-muted border-finance-border hover:text-finance-primary hover:bg-finance-primary-subtle'
             }`}
           >
             {t(`status.${f}`, f)}
@@ -404,7 +404,7 @@ export default function AdminRequestsPage() {
                       <Link
                         to={`/request/${req.id}`}
                         state={{ from: '/admin/requests' }}
-                        className="text-[#002C5F] hover:underline"
+                        className="text-finance-primary hover:underline"
                       >
                         {req.date}
                       </Link>
@@ -422,7 +422,7 @@ export default function AdminRequestsPage() {
                     <FinanceTable.Td align="center">
                       <StatusBadge status={req.status} />
                     </FinanceTable.Td>
-                    <FinanceTable.Td className="text-xs text-[#667085]">
+                    <FinanceTable.Td className="text-xs text-finance-muted">
                       {renderRemarks(req)}
                     </FinanceTable.Td>
                   </FinanceTable.Row>
@@ -473,12 +473,12 @@ export default function AdminRequestsPage() {
                       className="flex-1 min-w-0"
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="min-w-0 break-words font-medium text-[#111827]">
+                        <span className="min-w-0 break-words font-medium text-finance-text">
                           {req.payee}
                         </span>
                         <StatusBadge status={req.status} />
                       </div>
-                      <div className="flex items-start justify-between gap-3 text-sm text-[#667085] mb-1">
+                      <div className="flex items-start justify-between gap-3 text-sm text-finance-muted mb-1">
                         <span className="min-w-0">
                           {req.date}
                           {formatFirestoreTime(req.createdAt) && (
@@ -489,11 +489,11 @@ export default function AdminRequestsPage() {
                         </span>
                         <span className="shrink-0">{t(`committee.${req.committee}Short`)}</span>
                       </div>
-                      <div className="text-right font-semibold text-[#111827]">
+                      <div className="text-right font-semibold text-finance-text">
                         ₩{req.totalAmount.toLocaleString()}
                       </div>
                       {remarks && (
-                        <div className="mt-2 pt-2 border-t border-[#EDF0F4] text-xs text-[#667085]">
+                        <div className="mt-2 pt-2 border-t border-finance-border-soft text-xs text-finance-muted">
                           {remarks}
                         </div>
                       )}

@@ -36,7 +36,7 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[250px] text-[#667085] text-sm">
+      <div className="flex items-center justify-center h-[250px] text-finance-muted text-sm">
         {t('common.noData')}
       </div>
     )
@@ -54,7 +54,7 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
     <div className="h-[250px]">
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={data} layout="vertical">
-          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--finance-neutral-subtle)" />
           <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={formatAxis} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
           <Tooltip formatter={(v) => `\u20A9${(Number(v) || 0).toLocaleString()}`} />
@@ -63,13 +63,16 @@ export default function BudgetCodeBarChart({ byBudgetCode, budgetByCode, hasBudg
             <Bar
               dataKey="allocated"
               name={t('dashboard.allocatedBudget')}
-              fill="#D1D5DB"
+              fill="var(--finance-chart-muted)"
               radius={[0, 4, 4, 0]}
             />
           )}
           <Bar dataKey="approved" name={t('dashboard.approvedAmount')} radius={[0, 4, 4, 0]}>
             {data.map((entry) => (
-              <Cell key={entry.code} fill={entry.over ? '#A43F3F' : '#002C5F'} />
+              <Cell
+                key={entry.code}
+                fill={entry.over ? 'var(--finance-danger)' : 'var(--finance-primary)'}
+              />
             ))}
           </Bar>
         </BarChart>
