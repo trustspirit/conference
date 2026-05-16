@@ -244,6 +244,59 @@ export function exportRequestsByBudgetCodeCsv(requests: PaymentRequest[], column
   URL.revokeObjectURL(url)
 }
 
+type FlattenedSettlement = {
+  settlement: Settlement
+  item: RequestItem
+}
+
+function flattenSettlementsToBudgetCodeRows(settlements: Settlement[]): FlattenedSettlement[] {
+  return settlements
+    .flatMap((s) => s.items.map((item) => ({ settlement: s, item })))
+    .sort((a, b) => {
+      if (a.item.budgetCode !== b.item.budgetCode) {
+        return a.item.budgetCode - b.item.budgetCode
+      }
+      const getTime = (d: unknown): number => {
+        if (d instanceof Date) return d.getTime()
+        if (d && typeof d === 'object' && 'toDate' in d)
+          return (d as { toDate: () => Date }).toDate().getTime()
+        return 0
+      }
+      return getTime(a.settlement.createdAt) - getTime(b.settlement.createdAt)
+    })
+}
+
+function getSettlementBudgetCodeCsvCellValue(
+  flattened: FlattenedSettlement,
+  key: SettlementCsvColumnKey
+): string {
+  const { settlement: s, item } = flattened
+  switch (key) {
+    case 'budgetCode':
+      return String(item.budgetCode)
+    case 'totalAmount':
+      return String(item.amount)
+    case 'itemDescriptions':
+      return item.description
+    case 'payee':
+      return s.payee
+    case 'committee':
+      return getCommitteeLabel(s.committee)
+    case 'date':
+      return formatFirestoreDate(s.createdAt)
+    case 'bank':
+      return s.bankName || ''
+    case 'bankAccount':
+      return s.bankAccount || ''
+    case 'approvedBy':
+      return s.approvedBy?.name || ''
+    default: {
+      const _exhaustive: never = key
+      return _exhaustive
+    }
+  }
+}
+
 function getSettlementCsvCellValue(s: Settlement, key: SettlementCsvColumnKey): string {
   switch (key) {
     case 'payee':
@@ -286,6 +339,26 @@ export function exportSettlementsCsv(
   const link = document.createElement('a')
   link.href = url
   link.download = `settlements_${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+export function exportSettlementsByBudgetCodeCsv(
+  settlements: Settlement[],
+  columns: SettlementCsvColumnKey[] = DEFAULT_SETTLEMENT_CSV_COLUMNS
+) {
+  const header = columns.map((key) => escapeCsvField(getSettlementCsvColumnLabel(key)))
+  const flattened = flattenSettlementsToBudgetCodeRows(settlements)
+  const rows = flattened.map((f) =>
+    columns.map((key) => escapeCsvField(getSettlementBudgetCodeCsvCellValue(f, key))).join(',')
+  )
+  const bom = '\uFEFF'
+  const csv = bom + [header.join(','), ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `settlements_by_budget_${new Date().toISOString().slice(0, 10)}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }

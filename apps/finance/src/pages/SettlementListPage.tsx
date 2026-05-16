@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useInfiniteSettlements } from '../hooks/queries/useSettlements'
-import { exportSettlementsCsv } from '../lib/csvExport'
+import { exportSettlementsByBudgetCodeCsv } from '../lib/csvExport'
 import { formatFirestoreDate } from '../lib/utils'
 import { Settlement, Committee } from '../types'
 import { canAccessSettlement } from '../lib/roles'
@@ -112,7 +112,7 @@ export default function SettlementListPage() {
 
   const handleExportSettlements = () => {
     const toExport = settlements.filter((s) => selectedBatchIds.has(s.batchId || s.id))
-    exportSettlementsCsv(toExport)
+    exportSettlementsByBudgetCodeCsv(toExport)
     setSelectedBatchIds(new Set())
   }
 
