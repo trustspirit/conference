@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RequestItem, TransportDetail, TransportType, TripType } from '../types'
+import { Currency, RequestItem, TransportDetail, TransportType, TripType } from '../types'
 import { BUDGET_CODES } from '../constants/budgetCodes'
 import { Select, Button, TextField } from 'trust-ui-react'
 import PlaceSearchInput from './PlaceSearchInput'
 import MiniMap from './MiniMap'
 import { loadKakaoSDK } from '../lib/kakaoLoader'
+import { CURRENCY_SYMBOL, formatAmount, getItemCurrency } from '../lib/currency'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
 
@@ -76,6 +77,8 @@ export default function ItemRow({
   const detail = item.transportDetail || emptyTransportDetail()
 
   const isAmountDisabled = isTransport && detail.transportType === 'car'
+  // Car transport amount is computed from a KRW per-km rate, so we force KRW for those items.
+  const itemCurrency: Currency = isAmountDisabled ? 'KRW' : getItemCurrency(item)
 
   const updateTransportDetail = (patch: Partial<TransportDetail>) => {
     const updated = { ...detail, ...patch }
@@ -197,6 +200,10 @@ export default function ItemRow({
                 if (!isTransportItem) {
                   delete updated.transportDetail
                 }
+                // Car transport uses a KRW per-km rate; normalize currency to KRW for transport items.
+                if (isTransportItem) {
+                  updated.currency = 'KRW'
+                }
                 onChange(index, updated)
               }}
               placeholder={t('budgetCode.select')}
@@ -204,16 +211,53 @@ export default function ItemRow({
               searchable
             />
           </div>
-          <div className="sm:w-32 sm:shrink-0">
+          <div className="sm:w-40 sm:shrink-0">
             <TextField
               type="number"
               placeholder={
-                isAmountDisabled ? t('field.carAmountAutoCalc') : t('field.amountPlaceholder')
+                isAmountDisabled
+                  ? t('field.carAmountAutoCalc')
+                  : t(
+                      itemCurrency === 'USD'
+                        ? 'field.amountPlaceholderUsd'
+                        : 'field.amountPlaceholderKrw'
+                    )
               }
               value={item.amount || ''}
-              onChange={(e) => onChange(index, { ...item, amount: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                onChange(index, {
+                  ...item,
+                  amount:
+                    itemCurrency === 'USD'
+                      ? parseFloat(e.target.value) || 0
+                      : parseInt(e.target.value) || 0
+                })
+              }
               disabled={isAmountDisabled}
               fullWidth
+              prefix={
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isAmountDisabled) return
+                    const next: Currency = itemCurrency === 'KRW' ? 'USD' : 'KRW'
+                    // Reset amount so a KRW value like 50000 isn't silently re-read as $50,000
+                    onChange(index, { ...item, currency: next, amount: 0 })
+                  }}
+                  disabled={isAmountDisabled}
+                  title={
+                    isAmountDisabled
+                      ? t('field.currencyLockedKrw')
+                      : itemCurrency === 'KRW'
+                        ? t('field.currencyToggleToUsd')
+                        : t('field.currencyToggleToKrw')
+                  }
+                  aria-label={t('field.currency')}
+                  className="-mx-1 px-1.5 py-0.5 rounded text-sm font-semibold text-finance-primary hover:bg-finance-primary-surface disabled:text-finance-muted disabled:cursor-not-allowed transition-colors"
+                >
+                  {CURRENCY_SYMBOL[itemCurrency]}
+                </button>
+              }
             />
           </div>
         </div>
@@ -356,10 +400,10 @@ export default function ItemRow({
                 {calcFailed && <p className="text-xs text-red-500">{calcError}</p>}
                 {detail.distanceKm && (
                   <p className="text-xs text-gray-500">
-                    = {detail.distanceKm}km × ₩{perKmRate} ×{' '}
+                    = {detail.distanceKm}km × {formatAmount(perKmRate, 'KRW')} ×{' '}
                     {detail.tripType === 'round' ? '2' : '1'} ={' '}
                     <span className="font-medium">
-                      ₩{calcCarTransportAmount(detail, perKmRate).toLocaleString()}
+                      {formatAmount(calcCarTransportAmount(detail, perKmRate), 'KRW')}
                     </span>
                   </p>
                 )}

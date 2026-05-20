@@ -103,7 +103,11 @@ export default function SettlementReviewStep({
               ]}
             />
 
-            <ItemsTable items={req.items} totalAmount={req.totalAmount} />
+            <ItemsTable
+              items={req.items}
+              totalAmount={req.totalAmount}
+              totalAmountUsd={req.totalAmountUsd}
+            />
 
             <ReceiptGallery receipts={req.receipts} />
 

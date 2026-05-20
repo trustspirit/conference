@@ -145,7 +145,13 @@ export default function RequestDetailPage() {
   const canDoApprove =
     request?.status === 'reviewed' &&
     !isSelf &&
-    canFinalApproveRequest(role, request.committee, request.totalAmount, threshold) &&
+    canFinalApproveRequest(
+      role,
+      request.committee,
+      request.totalAmount,
+      threshold,
+      request.totalAmountUsd
+    ) &&
     (!isDirectorRequest || canApproveDirectorRequest(role))
 
   // Reject action (pending or reviewed) — rejection doesn't require amount threshold
@@ -191,8 +197,16 @@ export default function RequestDetailPage() {
       toast({ variant: 'danger', message: t('approval.selfApproveError') })
       return
     }
-    if (!canFinalApproveRequest(role, request.committee, request.totalAmount, threshold)) {
-      if (request.totalAmount > threshold)
+    if (
+      !canFinalApproveRequest(
+        role,
+        request.committee,
+        request.totalAmount,
+        threshold,
+        request.totalAmountUsd
+      )
+    ) {
+      if (request.totalAmount > threshold || (request.totalAmountUsd || 0) > 0)
         toast({ variant: 'info', message: t('approval.directorRequired') })
       return
     }
@@ -414,7 +428,11 @@ export default function RequestDetailPage() {
               ]}
             />
 
-            <ItemsTable items={request.items} totalAmount={request.totalAmount} />
+            <ItemsTable
+              items={request.items}
+              totalAmount={request.totalAmount}
+              totalAmountUsd={request.totalAmountUsd}
+            />
 
             <ReceiptGallery receipts={request.receipts} />
 
@@ -521,10 +539,10 @@ export default function RequestDetailPage() {
               </div>
             )}
 
-            {/* Director required hint */}
+            {/* Director required hint — also fires for any USD-containing request */}
             {request.status === 'reviewed' &&
               !canDoApprove &&
-              request.totalAmount > threshold &&
+              (request.totalAmount > threshold || (request.totalAmountUsd || 0) > 0) &&
               !isSelf && (
                 <p className="text-xs text-orange-600 mb-6">{t('approval.directorRequired')}</p>
               )}

@@ -16,6 +16,7 @@ import Layout from '../components/Layout'
 import SettlementSelectTable from '../components/settlement/SettlementSelectTable'
 import SettlementReviewStep from '../components/settlement/SettlementReviewStep'
 import SettlementSummary from '../components/settlement/SettlementSummary'
+import { formatTotals, sumByCurrency } from '../lib/currency'
 
 type ReviewPhase = 'select' | 'review' | 'summary'
 
@@ -248,7 +249,7 @@ export default function SettlementPage() {
         const first = reqs[0]
         const allItems = reqs.flatMap((r) => r.items)
         const allReceipts = reqs.flatMap((r) => r.receipts)
-        const totalAmount = allItems.reduce((sum, item) => sum + item.amount, 0)
+        const totals = sumByCurrency(allItems)
         const userData = userDataMap.get(first.requestedBy.uid)
 
         return {
@@ -268,7 +269,8 @@ export default function SettlementPage() {
           session: first.session,
           committee: first.committee,
           items: allItems,
-          totalAmount,
+          totalAmount: totals.krw,
+          ...(totals.usd > 0 ? { totalAmountUsd: totals.usd } : {}),
           receipts: allReceipts,
           requestIds: reqs.map((r) => r.id),
           requestedBySignature: userData?.signature || null,
@@ -318,11 +320,15 @@ export default function SettlementPage() {
       ? {
           count: selected.size,
           payeeCount: new Set(selectedRequests.map(payeeKey)).size,
-          amount: selectedRequests.reduce((sum, r) => sum + r.totalAmount, 0).toLocaleString()
+          amount: formatTotals(
+            selectedRequests.reduce((sum, r) => sum + r.totalAmount, 0),
+            selectedRequests.reduce((sum, r) => sum + (r.totalAmountUsd || 0), 0)
+          )
         }
       : null
 
   const includedTotal = includedRequests.reduce((sum, r) => sum + r.totalAmount, 0)
+  const includedTotalUsd = includedRequests.reduce((sum, r) => sum + (r.totalAmountUsd || 0), 0)
 
   const confirmDialogJsx = (
     <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
@@ -350,6 +356,7 @@ export default function SettlementPage() {
           reviewedCount={reviewedIds.size}
           rejectedCount={rejectedIds.size}
           includedTotal={includedTotal}
+          includedTotalUsd={includedTotalUsd}
           processing={processing}
           onSettle={handleFinalSettle}
           onBack={backToSelect}

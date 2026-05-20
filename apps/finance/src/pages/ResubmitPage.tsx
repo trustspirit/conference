@@ -14,6 +14,7 @@ import FileUpload from '../components/FileUpload'
 import CommitteeSelect from '../components/CommitteeSelect'
 import ConfirmModal from '../components/ConfirmModal'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
+import { sumByCurrency, formatTotals } from '../lib/currency'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import BankSelect from '../components/BankSelect'
 import ErrorAlert from '../components/ErrorAlert'
@@ -92,8 +93,9 @@ export default function ResubmitPage() {
     !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
   const needsSignature = !isVendorRequest && !appUser?.signature
 
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
+  const totals = sumByCurrency(items)
+  const validTotals = sumByCurrency(validItems)
   const onlyCarTransport =
     items.some((item) => item.transportDetail?.transportType === 'car') &&
     items
@@ -118,6 +120,7 @@ export default function ResubmitPage() {
         curr.description !== orig.description ||
         curr.budgetCode !== orig.budgetCode ||
         curr.amount !== orig.amount ||
+        (curr.currency || 'KRW') !== (orig.currency || 'KRW') ||
         JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
       )
     })
@@ -146,6 +149,7 @@ export default function ResubmitPage() {
         curr.description !== orig.description ||
         curr.budgetCode !== orig.budgetCode ||
         curr.amount !== orig.amount ||
+        (curr.currency || 'KRW') !== (orig.currency || 'KRW') ||
         JSON.stringify(curr.transportDetail) !== JSON.stringify(orig.transportDetail)
       )
     })
@@ -392,7 +396,10 @@ export default function ResubmitPage() {
         session,
         committee,
         items: finalItems,
-        totalAmount: finalItems.reduce((sum, item) => sum + item.amount, 0),
+        totalAmount: sumByCurrency(finalItems).krw,
+        ...(sumByCurrency(finalItems).usd > 0
+          ? { totalAmountUsd: sumByCurrency(finalItems).usd }
+          : {}),
         receipts,
         requestedBy: {
           uid: user.uid,
@@ -570,6 +577,7 @@ export default function ResubmitPage() {
               {t('form.addItem')}
             </Button>
           </div>
+          <p className="text-xs text-finance-muted mb-3">({t('form.currencyToggleHint')}.)</p>
           <div className="space-y-2">
             {items.map((item, i) => (
               <ItemRow
@@ -593,7 +601,7 @@ export default function ResubmitPage() {
           </div>
           <div className="flex justify-end mt-3 pt-3 border-t">
             <span className="text-sm font-medium">
-              {t('field.totalAmount')}: ₩{totalAmount.toLocaleString()}
+              {t('field.totalAmount')}: {formatTotals(totals.krw, totals.usd)}
             </span>
           </div>
         </div>
@@ -723,7 +731,8 @@ export default function ResubmitPage() {
         onConfirm={handleSubmit}
         title={t('approval.resubmitTitle')}
         items={[{ label: t('field.payee'), value: payee }]}
-        totalAmount={validItems.reduce((sum, item) => sum + item.amount, 0)}
+        totalAmount={validTotals.krw}
+        totalAmountUsd={validTotals.usd}
         confirmLabel={t('approval.resubmitConfirm')}
         requestItems={validItems}
         receiptFiles={files.length > 0 ? files : undefined}

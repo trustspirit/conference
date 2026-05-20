@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, Button } from 'trust-ui-react'
 import { RequestItem } from '../types'
+import { formatAmount, formatTotals, getItemCurrency } from '../lib/currency'
 
 interface SummaryItem {
   label: string
@@ -15,6 +16,8 @@ interface Props {
   title?: string
   items: SummaryItem[]
   totalAmount?: number
+  /** Optional USD total (shown alongside KRW totalAmount when > 0) */
+  totalAmountUsd?: number
   totalLabel?: string
   confirmLabel?: string
   cancelLabel?: string
@@ -31,6 +34,7 @@ export default function ConfirmModal({
   title,
   items,
   totalAmount,
+  totalAmountUsd,
   totalLabel,
   confirmLabel,
   cancelLabel,
@@ -71,15 +75,16 @@ export default function ConfirmModal({
 
         {totalAmount !== undefined && (
           <div className="bg-finance-primary-surface border border-finance-border rounded p-3 mb-4">
-            <div className="flex justify-between text-sm font-medium">
+            <div className="flex justify-between text-sm font-medium gap-2">
               <span>{resolvedTotalLabel}</span>
-              <span>
-                {'\u20A9'}
-                {totalAmount.toLocaleString()}
+              <span className="text-right">
+                {formatTotals(totalAmount, totalAmountUsd || 0)}
               </span>
             </div>
             <p className="text-xs text-finance-primary mt-2">
-              {t('form.totalAmountCheck', { amount: totalAmount.toLocaleString() })}
+              {t('form.totalAmountCheck', {
+                amount: formatTotals(totalAmount, totalAmountUsd || 0)
+              })}
             </p>
           </div>
         )}
@@ -116,8 +121,7 @@ export default function ConfirmModal({
                           )}
                         </td>
                         <td className="py-0.5 text-right text-gray-900 font-medium">
-                          {'\u20A9'}
-                          {item.amount.toLocaleString()}
+                          {formatAmount(item.amount, getItemCurrency(item))}
                         </td>
                       </tr>
                     ))}

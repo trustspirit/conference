@@ -13,6 +13,7 @@ import {
 } from '../hooks/queries/useSettlements'
 import { useUser } from '../hooks/queries/useUsers'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
+import { formatTotals, getItemCurrency } from '../lib/currency'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import InfoGrid from '../components/InfoGrid'
@@ -167,14 +168,17 @@ export default function SettlementReportPage() {
   const uniqueCommittees = [...new Set(settlements.map((s) => s.committee))]
   const committeeLabel = uniqueCommittees.map((c) => t(`committee.${c}`)).join(' / ')
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
+  const totalAmountUsd = settlements.reduce((sum, s) => sum + (s.totalAmountUsd || 0), 0)
   const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
 
   // Budget code summary (use stored item.amount — already calculated at submission time)
-  const budgetMap = new Map<number, { total: number; count: number }>()
+  // Track KRW/USD per budget code separately so the report shows correct currency.
+  const budgetMap = new Map<number, { totalKrw: number; totalUsd: number; count: number }>()
   for (const s of settlements) {
     for (const item of s.items) {
-      const existing = budgetMap.get(item.budgetCode) || { total: 0, count: 0 }
-      existing.total += item.amount
+      const existing = budgetMap.get(item.budgetCode) || { totalKrw: 0, totalUsd: 0, count: 0 }
+      if (getItemCurrency(item) === 'USD') existing.totalUsd += item.amount
+      else existing.totalKrw += item.amount
       existing.count += 1
       budgetMap.set(item.budgetCode, existing)
     }
@@ -256,14 +260,14 @@ export default function SettlementReportPage() {
               </tr>
             </FinanceTable.Head>
             <FinanceTable.Body>
-              {budgetSummary.map(([code, { total }]) => (
+              {budgetSummary.map(([code, { totalKrw, totalUsd }]) => (
                 <FinanceTable.Row key={code} hover={false}>
                   <FinanceTable.Td size="compact">{code}</FinanceTable.Td>
                   <FinanceTable.Td size="compact" className="text-finance-muted">
                     {t(`budgetCode.${code}`)}
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" align="right" className="font-medium">
-                    ₩{total.toLocaleString()}
+                    {formatTotals(totalKrw, totalUsd)}
                   </FinanceTable.Td>
                 </FinanceTable.Row>
               ))}
@@ -274,7 +278,7 @@ export default function SettlementReportPage() {
                   {t('field.totalAmount')}
                 </FinanceTable.Td>
                 <FinanceTable.Td size="compact" align="right" className="font-bold">
-                  ₩{totalAmount.toLocaleString()}
+                  {formatTotals(totalAmount, totalAmountUsd)}
                 </FinanceTable.Td>
               </tr>
             </FinanceTable.Footer>
@@ -321,7 +325,7 @@ export default function SettlementReportPage() {
                       </FinanceTable.Td>
                     )}
                     <FinanceTable.Td size="compact" align="right" className="font-medium">
-                      ₩{s.totalAmount.toLocaleString()}
+                      {formatTotals(s.totalAmount, s.totalAmountUsd || 0)}
                     </FinanceTable.Td>
                   </FinanceTable.Row>
                 ))}
@@ -337,7 +341,7 @@ export default function SettlementReportPage() {
                     {t('field.totalAmount')}
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" align="right" className="font-bold">
-                    ₩{totalAmount.toLocaleString()}
+                    {formatTotals(totalAmount, totalAmountUsd)}
                   </FinanceTable.Td>
                 </tr>
               </FinanceTable.Footer>
@@ -354,7 +358,9 @@ export default function SettlementReportPage() {
                   <span className="text-finance-primary mr-1">#{idx + 1}</span>
                   {t('settlement.individualForm')} — {req.payee}
                 </h3>
-                <span className="text-xs text-gray-500">₩{req.totalAmount.toLocaleString()}</span>
+                <span className="text-xs text-gray-500">
+                  {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
+                </span>
               </div>
 
               <InfoGrid
@@ -375,7 +381,11 @@ export default function SettlementReportPage() {
                 ]}
               />
 
-              <ItemsTable items={req.items} totalAmount={req.totalAmount} />
+              <ItemsTable
+                items={req.items}
+                totalAmount={req.totalAmount}
+                totalAmountUsd={req.totalAmountUsd}
+              />
 
               <div className="flex justify-between gap-4 items-end mt-4 pt-4 border-t border-finance-border">
                 <div>

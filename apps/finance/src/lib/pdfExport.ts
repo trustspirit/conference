@@ -1,11 +1,12 @@
 import { httpsCallable } from 'firebase/functions'
 import * as pdfjsLib from 'pdfjs-dist'
-import { Settlement, PaymentRequest, Receipt, AppUser } from '../types'
+import { Settlement, PaymentRequest, Receipt, AppUser, Currency } from '../types'
 import { functions } from '@conference/firebase'
 import i18n from './i18n'
 import { formatFirestoreDate } from './utils'
 import { UNIQUE_BUDGET_CODES } from '../constants/budgetCodes'
 import { calcCarTransportAmount, DEFAULT_PER_KM_RATE } from '../components/ItemRow'
+import { formatAmount, formatTotals, getItemCurrency } from './currency'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
@@ -153,6 +154,7 @@ interface ReimbursementRow {
   transportInfo: string
   transportCost: string
   amount: number
+  currency: Currency
   settlementId: string
 }
 
@@ -224,7 +226,7 @@ export async function exportBatchSettlementPdf(
         transportInfo = `${escapeHtml(d.departure)}→${escapeHtml(d.destination)}<br/>${typeLabel} (${tripLabel})`
         if (d.transportType === 'car' && d.distanceKm) {
           const cost = calcCarTransportAmount(d, perKmRate)
-          transportCost = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+          transportCost = `${d.distanceKm}km × ${formatAmount(perKmRate, 'KRW')} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ${formatAmount(cost, 'KRW')}`
           if (d.routeMapImage?.url) {
             transportCost += `<br/><img src="${escapeHtml(d.routeMapImage.url)}" style="max-width:200px; max-height:120px; margin-top:4px; border:1px solid #ddd; border-radius:3px;" onerror="this.style.display='none'" />`
           }
@@ -242,24 +244,31 @@ export async function exportBatchSettlementPdf(
         transportInfo,
         transportCost,
         amount: item.amount,
+        currency: getItemCurrency(item),
         settlementId: settlement.id
       })
     }
   }
 
-  // Budget code summary
-  const budgetSummary = new Map<number, { code: number; total: number; count: number }>()
+  // Budget code summary — track KRW/USD separately
+  const budgetSummary = new Map<
+    number,
+    { code: number; totalKrw: number; totalUsd: number; count: number }
+  >()
   for (const row of rows) {
     const existing = budgetSummary.get(row.budgetCode) || {
       code: row.budgetCode,
-      total: 0,
+      totalKrw: 0,
+      totalUsd: 0,
       count: 0
     }
-    existing.total += row.amount
+    if (row.currency === 'USD') existing.totalUsd += row.amount
+    else existing.totalKrw += row.amount
     existing.count += 1
     budgetSummary.set(row.budgetCode, existing)
   }
-  const grandTotal = rows.reduce((sum, r) => sum + r.amount, 0)
+  const grandTotalKrw = rows.filter((r) => r.currency === 'KRW').reduce((s, r) => s + r.amount, 0)
+  const grandTotalUsd = rows.filter((r) => r.currency === 'USD').reduce((s, r) => s + r.amount, 0)
 
   // Determine individual form sources: original requests if available, otherwise settlements
   const useOriginalRequests = originalRequests.length > 0
@@ -360,12 +369,12 @@ export async function exportBatchSettlementPdf(
         return `<tr>
           <td>${code}</td>
           <td>${t(`budgetCode.${code}`)} <span style="color:#999;">${tEn(`budgetCode.${code}`)}</span></td>
-          <td class="text-right">₩${entry.total.toLocaleString()}</td>
+          <td class="text-right">${formatTotals(entry.totalKrw, entry.totalUsd)}</td>
         </tr>`
       }).join('')}
       <tr class="total-row">
         <td colspan="2" class="text-right">${t('field.totalAmount')}</td>
-        <td class="text-right">₩${grandTotal.toLocaleString()}</td>
+        <td class="text-right">${formatTotals(grandTotalKrw, grandTotalUsd)}</td>
       </tr>
     </tbody>
   </table>
@@ -422,14 +431,14 @@ export async function exportBatchSettlementPdf(
               <td>${escapeHtml(s.payee)}</td>
               ${!isCorporateCard ? `<td>${escapeHtml(s.bankName || '')}</td>
               <td>${escapeHtml(s.bankAccount || '')}</td>` : ''}
-              <td class="text-right">₩${s.totalAmount.toLocaleString()}</td>
+              <td class="text-right">${formatTotals(s.totalAmount, s.totalAmountUsd || 0)}</td>
             </tr>
           `
             )
             .join('')}
           <tr class="total-row">
             <td colspan="${isCorporateCard ? 2 : 4}" class="text-right">${t('field.totalAmount')}</td>
-            <td class="text-right">₩${grandTotal.toLocaleString()}</td>
+            <td class="text-right">${formatTotals(grandTotalKrw, grandTotalUsd)}</td>
           </tr>
         </tbody>
       </table>
@@ -454,7 +463,7 @@ export async function exportBatchSettlementPdf(
           ti = `${escapeHtml(d.departure)}→${escapeHtml(d.destination)}<br/>${typeLabel} (${tripLabel})`
           if (d.transportType === 'car' && d.distanceKm) {
             const cost = calcCarTransportAmount(d, perKmRate)
-            tc = `${d.distanceKm}km × ₩${perKmRate} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ₩${cost.toLocaleString()}`
+            tc = `${d.distanceKm}km × ${formatAmount(perKmRate, 'KRW')} × ${d.tripType === 'round' ? '2' : '1'}<br/>= ${formatAmount(cost, 'KRW')}`
             if (d.routeMapImage?.url) {
               tc += `<br/><img src="${escapeHtml(d.routeMapImage.url)}" style="max-width:200px; max-height:120px; margin-top:4px; border:1px solid #ddd; border-radius:3px;" onerror="this.style.display='none'" />`
             }
@@ -471,10 +480,16 @@ export async function exportBatchSettlementPdf(
           transportInfo: ti,
           transportCost: tc,
           amount: item.amount,
+          currency: getItemCurrency(item),
           settlementId: source.id
         })
       }
-      const formTotal = formItems.reduce((sum, r) => sum + r.amount, 0)
+      const formTotalKrw = formItems
+        .filter((r) => r.currency === 'KRW')
+        .reduce((s, r) => s + r.amount, 0)
+      const formTotalUsd = formItems
+        .filter((r) => r.currency === 'USD')
+        .reduce((s, r) => s + r.amount, 0)
 
       // Determine signature sources
       const isRequest =
@@ -523,14 +538,14 @@ export async function exportBatchSettlementPdf(
                 <td>${escapeHtml(row.description)}</td>
                 <td>${row.transportInfo || '-'}</td>
                 <td>${row.transportCost || '-'}</td>
-                <td class="text-right">₩${row.amount.toLocaleString()}</td>
+                <td class="text-right">${formatAmount(row.amount, row.currency)}</td>
               </tr>
             `
               )
               .join('')}
             <tr class="total-row">
               <td colspan="5" class="text-right">${t('field.totalAmount')}</td>
-              <td class="text-right">₩${formTotal.toLocaleString()}</td>
+              <td class="text-right">${formatTotals(formTotalKrw, formTotalUsd)}</td>
             </tr>
           </tbody>
         </table>

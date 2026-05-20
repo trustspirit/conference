@@ -43,15 +43,21 @@ export function canFinalApproveCommittee(role: UserRole, committee: Committee): 
   return false
 }
 
-/** Can final-approve a specific request considering both committee and amount */
+/**
+ * Can final-approve a specific request considering both committee and amount.
+ * `amountUsd > 0` is treated as above-threshold (the KRW threshold cannot evaluate USD safely),
+ * so any USD-containing request requires director/executive approval.
+ */
 export function canFinalApproveRequest(
   role: UserRole,
   committee: Committee,
   amount: number,
-  threshold = DEFAULT_APPROVAL_THRESHOLD
+  threshold = DEFAULT_APPROVAL_THRESHOLD,
+  amountUsd = 0
 ): boolean {
   if (!canFinalApproveCommittee(role, committee)) return false
-  if (threshold > 0 && amount > threshold) {
+  const aboveKrwThreshold = threshold > 0 && amount > threshold
+  if (aboveKrwThreshold || amountUsd > 0) {
     return (
       isAdmin(role) ||
       role === 'executive' ||

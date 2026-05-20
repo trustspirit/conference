@@ -1,6 +1,7 @@
 import type { PaymentRequest, RequestItem, Settlement } from '../types'
 import i18n from 'i18next'
 import { formatFirestoreDate } from './utils'
+import { getItemCurrency } from './currency'
 
 type FlattenedItem = {
   request: PaymentRequest
@@ -38,6 +39,8 @@ export type CsvColumnKey =
   | 'committee'
   | 'budgetCode'
   | 'totalAmount'
+  | 'totalAmountUsd'
+  | 'currency'
   | 'settlementStatus'
   | 'date'
   | 'phone'
@@ -59,6 +62,8 @@ export const DEFAULT_CSV_COLUMNS: CsvColumnKey[] = [
 ]
 
 export const OPTIONAL_CSV_COLUMNS: CsvColumnKey[] = [
+  'totalAmountUsd',
+  'currency',
   'date',
   'phone',
   'bank',
@@ -76,6 +81,8 @@ export type SettlementCsvColumnKey =
   | 'committee'
   | 'budgetCode'
   | 'totalAmount'
+  | 'totalAmountUsd'
+  | 'currency'
   | 'requestDate'
   | 'date'
   | 'bank'
@@ -93,6 +100,8 @@ export const DEFAULT_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
 ]
 
 export const OPTIONAL_SETTLEMENT_CSV_COLUMNS: SettlementCsvColumnKey[] = [
+  'totalAmountUsd',
+  'currency',
   'bank',
   'bankAccount',
   'itemDescriptions',
@@ -104,7 +113,9 @@ export function getSettlementCsvColumnLabel(key: SettlementCsvColumnKey): string
     payee: i18n.t('field.payee'),
     committee: i18n.t('field.committee'),
     budgetCode: i18n.t('field.budgetCode'),
-    totalAmount: i18n.t('field.totalAmount'),
+    totalAmount: i18n.t('field.totalAmount') + ' (KRW)',
+    totalAmountUsd: i18n.t('field.totalAmount') + ' (USD)',
+    currency: i18n.t('field.currency'),
     requestDate: i18n.t('field.requestDate'),
     date: i18n.t('settlement.settlementDate'),
     bank: i18n.t('field.bank'),
@@ -120,7 +131,9 @@ export function getCsvColumnLabel(key: CsvColumnKey): string {
     payee: i18n.t('field.payee'),
     committee: i18n.t('field.committee'),
     budgetCode: i18n.t('field.budgetCode'),
-    totalAmount: i18n.t('field.totalAmount'),
+    totalAmount: i18n.t('field.totalAmount') + ' (KRW)',
+    totalAmountUsd: i18n.t('field.totalAmount') + ' (USD)',
+    currency: i18n.t('field.currency'),
     settlementStatus: i18n.t('field.settlementStatus'),
     date: i18n.t('field.date'),
     phone: i18n.t('field.phone'),
@@ -146,6 +159,10 @@ function getCsvCellValue(req: PaymentRequest, key: CsvColumnKey): string {
       return [...new Set(req.items.map((item) => String(item.budgetCode)))].join('/')
     case 'totalAmount':
       return String(req.totalAmount)
+    case 'totalAmountUsd':
+      return req.totalAmountUsd ? String(req.totalAmountUsd) : ''
+    case 'currency':
+      return [...new Set(req.items.map(getItemCurrency))].sort().join('/')
     case 'settlementStatus':
       return getStatusLabel(req.status)
     case 'date':
@@ -181,7 +198,11 @@ function getBudgetCodeCsvCellValue(flattened: FlattenedItem, key: CsvColumnKey):
     case 'budgetCode':
       return String(item.budgetCode)
     case 'totalAmount':
-      return String(item.amount)
+      return getItemCurrency(item) === 'KRW' ? String(item.amount) : ''
+    case 'totalAmountUsd':
+      return getItemCurrency(item) === 'USD' ? String(item.amount) : ''
+    case 'currency':
+      return getItemCurrency(item)
     case 'itemDescriptions':
       return item.description
     case 'payee':
@@ -297,7 +318,11 @@ function getSettlementBudgetCodeCsvCellValue(
     case 'budgetCode':
       return String(item.budgetCode)
     case 'totalAmount':
-      return String(item.amount)
+      return getItemCurrency(item) === 'KRW' ? String(item.amount) : ''
+    case 'totalAmountUsd':
+      return getItemCurrency(item) === 'USD' ? String(item.amount) : ''
+    case 'currency':
+      return getItemCurrency(item)
     case 'itemDescriptions':
       return item.description
     case 'payee':
@@ -335,6 +360,10 @@ function getSettlementCsvCellValue(
       return [...new Set(s.items.map((i) => String(i.budgetCode)))].join('/')
     case 'totalAmount':
       return String(s.totalAmount)
+    case 'totalAmountUsd':
+      return s.totalAmountUsd ? String(s.totalAmountUsd) : ''
+    case 'currency':
+      return [...new Set(s.items.map(getItemCurrency))].sort().join('/')
     case 'requestDate':
       return requestDateMap ? getEarliestRequestDate(s, requestDateMap) : ''
     case 'date':

@@ -21,6 +21,7 @@ import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import FinanceTable from '../components/table/FinanceTable'
+import { formatTotals } from '../lib/currency'
 
 type CommitteeFilter = 'all' | Committee
 
@@ -31,6 +32,7 @@ interface BatchGroup {
   payees: string[]
   committees: string[]
   totalAmount: number
+  totalAmountUsd: number
   totalRequests: number
   date: string
   settlementCount: number
@@ -46,6 +48,7 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
       if (!existing.payees.includes(s.payee)) existing.payees.push(s.payee)
       if (!existing.committees.includes(s.committee)) existing.committees.push(s.committee)
       existing.totalAmount += s.totalAmount
+      existing.totalAmountUsd += s.totalAmountUsd || 0
       existing.totalRequests += s.requestIds.length
       existing.settlementCount += 1
       existing.isCorporateCard = existing.isCorporateCard || !!s.isCorporateCard
@@ -56,6 +59,7 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
         payees: [s.payee],
         committees: [s.committee],
         totalAmount: s.totalAmount,
+        totalAmountUsd: s.totalAmountUsd || 0,
         totalRequests: s.requestIds.length,
         date: formatFirestoreDate(s.createdAt),
         settlementCount: 1,
@@ -257,7 +261,7 @@ export default function SettlementListPage() {
                     </FinanceTable.Td>
                     <FinanceTable.Td>{committeeLabel(b)}</FinanceTable.Td>
                     <FinanceTable.Td align="right" className="font-medium">
-                      ₩{b.totalAmount.toLocaleString()}
+                      {formatTotals(b.totalAmount, b.totalAmountUsd)}
                     </FinanceTable.Td>
                     <FinanceTable.Td align="center">
                       {t('form.itemCount', { count: b.totalRequests })}
@@ -303,7 +307,7 @@ export default function SettlementListPage() {
                       {committeeLabel(b)} | {t('form.itemCount', { count: b.totalRequests })}
                     </span>
                     <span className="shrink-0 font-medium text-finance-primary">
-                      ₩{b.totalAmount.toLocaleString()}
+                      {formatTotals(b.totalAmount, b.totalAmountUsd)}
                     </span>
                   </div>
                 </Link>

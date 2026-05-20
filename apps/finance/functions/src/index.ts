@@ -457,8 +457,17 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
 }
 
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString('ko-KR') + '원'
+function formatCurrency(amount: number, amountUsd?: number): string {
+  const parts: string[] = []
+  if (amount > 0) parts.push(amount.toLocaleString('ko-KR') + '원')
+  if (amountUsd && amountUsd > 0) {
+    parts.push(
+      '$' +
+        amountUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    )
+  }
+  if (parts.length === 0) return '0원'
+  return parts.join(' + ')
 }
 
 function formatDate(date: Date | admin.firestore.Timestamp | null): string {
@@ -485,6 +494,7 @@ export const onRequestCreated = onDocumentCreated(
 
     const committee = data.committee as string
     const totalAmount = data.totalAmount as number
+    const totalAmountUsd = data.totalAmountUsd as number | undefined
     const requestedBy = data.requestedBy as { name: string; email: string }
     const payee = data.payee as string
 
@@ -519,7 +529,7 @@ export const onRequestCreated = onDocumentCreated(
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
                 <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)} (${escapeHtml(requestedBy.name)})</td></tr>
-                <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
               </table>
               <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 검토하기</a></p>
             </div>
@@ -539,6 +549,7 @@ function buildStatusChangeEmail(
   requestId?: string
 ): { subject: string; html: string } {
   const totalAmount = data.totalAmount as number
+  const totalAmountUsd = data.totalAmountUsd as number | undefined
   const approvedBy = data.approvedBy as { name: string } | null
   const rejectionReason = data.rejectionReason as string | null
   const approvedAt = data.approvedAt as admin.firestore.Timestamp | null
@@ -550,7 +561,7 @@ function buildStatusChangeEmail(
         <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #16a34a; margin-bottom: 16px;">신청서가 승인되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">승인자</td><td style="padding: 8px 0;">${approvedBy ? escapeHtml(approvedBy.name) : '-'}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">승인 일시</td><td style="padding: 8px 0;">${formatDate(approvedAt)}</td></tr>
           </table>
@@ -567,7 +578,7 @@ function buildStatusChangeEmail(
         <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #dc2626; margin-bottom: 16px;">신청서가 반려되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #dc2626;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
@@ -583,7 +594,7 @@ function buildStatusChangeEmail(
       <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #ea580c; margin-bottom: 16px;">승인된 신청서가 반려되었습니다</h2>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
           <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #ea580c;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
         </table>
         <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #ea580c; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
@@ -613,6 +624,7 @@ export const onRequestStatusChange = onDocumentUpdated(
     if (oldStatus === 'pending' && newStatus === 'reviewed') {
       const committee = after.committee as string
       const totalAmount = after.totalAmount as number
+      const totalAmountUsd = after.totalAmountUsd as number | undefined
       const payee = after.payee as string
       const requestedByUid = (after.requestedBy as { uid: string }).uid
       const committeeLabel = COMMITTEE_LABELS[committee] || committee
@@ -653,7 +665,7 @@ export const onRequestStatusChange = onDocumentUpdated(
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                   <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
                   <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
                 </table>
                 <p style="margin-top: 20px;"><a href="${APP_URL}/request/${reqId}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 승인하기</a></p>
               </div>
@@ -875,9 +887,11 @@ export const getDashboardStats = onCall(async (request) => {
   snap.forEach((doc) => {
     const d = doc.data()
     const status = d.status as string
+    // KRW-only by design — totalAmount excludes USD items (USD is tracked separately in
+    // totalAmountUsd and not aggregated into dashboard/budget statistics).
     const amount = (d.totalAmount as number) || 0
     const committee = (d.committee as string) || 'operations'
-    const items = (d.items as { budgetCode: number; amount: number }[]) || []
+    const items = (d.items as { budgetCode: number; amount: number; currency?: string }[]) || []
     const date = (d.date as string) || ''
 
     total++
@@ -901,8 +915,11 @@ export const getDashboardStats = onCall(async (request) => {
       const code = item.budgetCode
       if (!byBudgetCode[code]) byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 }
       byBudgetCode[code].count++
-      byBudgetCode[code].amount += item.amount
-      if (isApproved) byBudgetCode[code].approvedAmount += item.amount
+      // Aggregate KRW only — project budgets and dashboards are KRW-based; USD is tracked separately.
+      if ((item.currency || 'KRW') !== 'USD') {
+        byBudgetCode[code].amount += item.amount
+        if (isApproved) byBudgetCode[code].approvedAmount += item.amount
+      }
     }
 
     if (date) {

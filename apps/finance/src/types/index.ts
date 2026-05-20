@@ -95,11 +95,15 @@ export interface TransportDetail {
   routeMapImage?: RouteMapImage
 }
 
+export type Currency = 'KRW' | 'USD'
+
 export interface RequestItem {
   description: string
   budgetCode: number
   budgetDescKey?: string
   amount: number
+  /** Optional — undefined treated as 'KRW' for backwards compatibility with legacy items */
+  currency?: Currency
   transportDetail?: TransportDetail
 }
 
@@ -127,6 +131,8 @@ export interface PaymentRequest {
   committee: Committee
   items: RequestItem[]
   totalAmount: number
+  /** Optional USD sum — undefined treated as 0 for backwards compatibility */
+  totalAmountUsd?: number
   receipts: Receipt[]
   requestedBy: { uid: string; name: string; email: string }
   reviewedBy: { uid: string; name: string; email: string } | null
@@ -160,6 +166,8 @@ export interface Settlement {
   committee: Committee
   items: RequestItem[]
   totalAmount: number
+  /** Optional USD sum — undefined treated as 0 for backwards compatibility */
+  totalAmountUsd?: number
   receipts: Receipt[]
   requestIds: string[]
   requestedBySignature: string | null

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiChat = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -150,6 +150,19 @@ exports.uploadRouteMap = (0, https_1.onCall)(async (request) => {
     }
     const storagePath = `routemaps/${projectId || 'default'}/${committee}/${Date.now()}_route.png`;
     return await uploadFileToStorage(file, storagePath);
+});
+// Delete storage files by paths (used to clean up old route maps on resubmit)
+exports.deleteStorageFiles = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    }
+    const { paths } = request.data;
+    if (!paths || paths.length === 0)
+        return { deleted: 0 };
+    // Only allow deleting routemap files for safety
+    const safePaths = paths.filter((p) => p.startsWith('routemaps/'));
+    await Promise.all(safePaths.map((p) => bucket.file(p).delete().catch(() => { })));
+    return { deleted: safePaths.length };
 });
 // 파일 다운로드 프록시 (CORS 우회)
 exports.downloadFileV2 = (0, https_1.onCall)(async (request) => {
@@ -377,8 +390,17 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
-function formatCurrency(amount) {
-    return amount.toLocaleString('ko-KR') + '원';
+function formatCurrency(amount, amountUsd) {
+    const parts = [];
+    if (amount > 0)
+        parts.push(amount.toLocaleString('ko-KR') + '원');
+    if (amountUsd && amountUsd > 0) {
+        parts.push('$' +
+            amountUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+    if (parts.length === 0)
+        return '0원';
+    return parts.join(' + ');
 }
 function formatDate(date) {
     if (!date)
@@ -402,6 +424,7 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
         return;
     const committee = data.committee;
     const totalAmount = data.totalAmount;
+    const totalAmountUsd = data.totalAmountUsd;
     const requestedBy = data.requestedBy;
     const payee = data.payee;
     // Find finance reviewers for this committee
@@ -430,7 +453,7 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
                 <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)} (${escapeHtml(requestedBy.name)})</td></tr>
-                <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
               </table>
               <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 검토하기</a></p>
             </div>
@@ -445,6 +468,7 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
 });
 function buildStatusChangeEmail(data, newStatus, requestId) {
     const totalAmount = data.totalAmount;
+    const totalAmountUsd = data.totalAmountUsd;
     const approvedBy = data.approvedBy;
     const rejectionReason = data.rejectionReason;
     const approvedAt = data.approvedAt;
@@ -455,7 +479,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
         <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #16a34a; margin-bottom: 16px;">신청서가 승인되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">승인자</td><td style="padding: 8px 0;">${approvedBy ? escapeHtml(approvedBy.name) : '-'}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">승인 일시</td><td style="padding: 8px 0;">${formatDate(approvedAt)}</td></tr>
           </table>
@@ -471,7 +495,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
         <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #dc2626; margin-bottom: 16px;">신청서가 반려되었습니다</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
             <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #dc2626;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
           </table>
           <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
@@ -486,7 +510,7 @@ function buildStatusChangeEmail(data, newStatus, requestId) {
       <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #ea580c; margin-bottom: 16px;">승인된 신청서가 반려되었습니다</h2>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
           <tr><td style="padding: 8px 0; color: #6b7280;">반려 사유</td><td style="padding: 8px 0; color: #ea580c;">${rejectionReason ? escapeHtml(rejectionReason) : '-'}</td></tr>
         </table>
         <p style="margin-top: 20px;"><a href="${APP_URL}/request/${requestId || ''}" style="display: inline-block; padding: 10px 20px; background-color: #ea580c; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">상세 내역 확인하기</a></p>
@@ -511,6 +535,7 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
     if (oldStatus === 'pending' && newStatus === 'reviewed') {
         const committee = after.committee;
         const totalAmount = after.totalAmount;
+        const totalAmountUsd = after.totalAmountUsd;
         const payee = after.payee;
         const requestedByUid = after.requestedBy.uid;
         const committeeLabel = COMMITTEE_LABELS[committee] || committee;
@@ -547,7 +572,7 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                   <tr><td style="padding: 8px 0; color: #6b7280;">위원회</td><td style="padding: 8px 0;">${committeeLabel}</td></tr>
                   <tr><td style="padding: 8px 0; color: #6b7280;">신청자</td><td style="padding: 8px 0;">${escapeHtml(payee)}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount)}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #6b7280;">신청 금액</td><td style="padding: 8px 0; font-weight: 600;">${formatCurrency(totalAmount, totalAmountUsd)}</td></tr>
                 </table>
                 <p style="margin-top: 20px;"><a href="${APP_URL}/request/${reqId}" style="display: inline-block; padding: 10px 20px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">신청서 승인하기</a></p>
               </div>
@@ -561,29 +586,8 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
         }
         return;
     }
-    // Clean up Storage files when request is cancelled
-    if (newStatus === 'cancelled') {
-        const items = (after.items || []);
-        const receipts = (after.receipts || []);
-        const vendorBankBookPath = after.vendorBankBookPath;
-        const pathsToDelete = [];
-        for (const item of items) {
-            const mapPath = item.transportDetail?.routeMapImage?.storagePath;
-            if (mapPath)
-                pathsToDelete.push(mapPath);
-        }
-        for (const receipt of receipts) {
-            if (receipt.storagePath)
-                pathsToDelete.push(receipt.storagePath);
-        }
-        if (vendorBankBookPath)
-            pathsToDelete.push(vendorBankBookPath);
-        if (pathsToDelete.length > 0) {
-            await Promise.all(pathsToDelete.map((p) => bucket.file(p).delete().catch(() => { })));
-            console.log(`Cancelled request ${event.params?.requestId}: deleted ${pathsToDelete.length} files`);
-        }
+    if (newStatus === 'cancelled')
         return;
-    }
     // 2) 신청자에게 알림: reviewed→approved, pending|reviewed→rejected, approved→force_rejected
     const shouldNotifyRequester = (oldStatus === 'reviewed' && newStatus === 'approved') ||
         ((oldStatus === 'pending' || oldStatus === 'reviewed') && newStatus === 'rejected') ||
@@ -732,6 +736,118 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
             console.error(`Failed to send weekly digest to ${email}:`, error);
         }
     }
+});
+// --- Dashboard Stats ---
+exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    }
+    const { projectId } = request.data;
+    if (!projectId) {
+        throw new https_1.HttpsError('invalid-argument', 'projectId is required');
+    }
+    const db = admin.firestore();
+    const snap = await db
+        .collection('requests')
+        .where('projectId', '==', projectId)
+        .select('status', 'totalAmount', 'committee', 'items', 'date', 'createdAt')
+        .get();
+    let total = 0;
+    let pending = 0;
+    let reviewed = 0;
+    let approvedOnly = 0;
+    let settled = 0;
+    let rejected = 0;
+    let totalAmount = 0;
+    let approvedAmount = 0;
+    let approvedOnlyAmount = 0;
+    let settledAmount = 0;
+    let pendingAmount = 0;
+    let reviewedAmount = 0;
+    const byCommittee = {};
+    const byBudgetCode = {};
+    const monthlyTrend = {};
+    const monthlyCount = {};
+    const dailyTrend = {};
+    const dailyCount = {};
+    snap.forEach((doc) => {
+        const d = doc.data();
+        const status = d.status;
+        // KRW-only by design — totalAmount excludes USD items (USD is tracked separately in
+        // totalAmountUsd and not aggregated into dashboard/budget statistics).
+        const amount = d.totalAmount || 0;
+        const committee = d.committee || 'operations';
+        const items = d.items || [];
+        const date = d.date || '';
+        total++;
+        totalAmount += amount;
+        if (status === 'pending') {
+            pending++;
+            pendingAmount += amount;
+        }
+        else if (status === 'reviewed') {
+            reviewed++;
+            reviewedAmount += amount;
+        }
+        else if (status === 'approved') {
+            approvedOnly++;
+            approvedOnlyAmount += amount;
+        }
+        else if (status === 'settled') {
+            settled++;
+            settledAmount += amount;
+        }
+        else if (status === 'rejected' || status === 'force_rejected') {
+            rejected++;
+        }
+        const isApproved = status === 'approved' || status === 'settled';
+        approvedAmount = approvedOnlyAmount + settledAmount;
+        if (!byCommittee[committee])
+            byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 };
+        byCommittee[committee].count++;
+        byCommittee[committee].amount += amount;
+        if (isApproved)
+            byCommittee[committee].approvedAmount += amount;
+        for (const item of items) {
+            const code = item.budgetCode;
+            if (!byBudgetCode[code])
+                byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 };
+            byBudgetCode[code].count++;
+            // Aggregate KRW only — project budgets and dashboards are KRW-based; USD is tracked separately.
+            if ((item.currency || 'KRW') !== 'USD') {
+                byBudgetCode[code].amount += item.amount;
+                if (isApproved)
+                    byBudgetCode[code].approvedAmount += item.amount;
+            }
+        }
+        if (date) {
+            const month = date.substring(0, 7);
+            monthlyTrend[month] = (monthlyTrend[month] || 0) + amount;
+            dailyTrend[date] = (dailyTrend[date] || 0) + amount;
+            dailyCount[date] = (dailyCount[date] || 0) + 1;
+            monthlyCount[month] = (monthlyCount[month] || 0) + 1;
+        }
+    });
+    return {
+        total,
+        pending,
+        reviewed,
+        approvedOnly,
+        settled,
+        rejected,
+        totalAmount,
+        approvedAmount,
+        approvedOnlyAmount,
+        settledAmount,
+        pendingAmount,
+        reviewedAmount,
+        byCommittee,
+        byBudgetCode,
+        monthlyTrend,
+        monthlyCount,
+        dailyTrend,
+        dailyCount
+    };
 });
 // --- AI Chatbot ---
 const chatHandler_1 = require("./ai/chatHandler");

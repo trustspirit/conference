@@ -1,13 +1,19 @@
 import { useTranslation } from 'react-i18next'
 import { RequestItem } from '../types'
 import FinanceTable from './table/FinanceTable'
+import { formatAmount, formatTotals, getItemCurrency, sumByCurrency } from '../lib/currency'
 
 interface Props {
   items: RequestItem[]
+  /** Legacy KRW total (kept for backwards compatibility; USD is derived from items) */
   totalAmount: number
+  /** Optional USD total. If omitted, derived from items. */
+  totalAmountUsd?: number
 }
 
-export default function ItemsTable({ items, totalAmount }: Props) {
+export default function ItemsTable({ items, totalAmount, totalAmountUsd }: Props) {
+  const derived = sumByCurrency(items)
+  const usdTotal = totalAmountUsd ?? derived.usd
   const { t } = useTranslation()
 
   return (
@@ -75,7 +81,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
               </span>
             </FinanceTable.Td>
             <FinanceTable.Td size="compact" align="right" className="align-top">
-              ₩{item.amount.toLocaleString()}
+              {formatAmount(item.amount, getItemCurrency(item))}
             </FinanceTable.Td>
           </FinanceTable.Row>
         ))}
@@ -86,7 +92,7 @@ export default function ItemsTable({ items, totalAmount }: Props) {
             {t('field.totalAmount')}
           </FinanceTable.Td>
           <FinanceTable.Td size="compact" align="right">
-            ₩{totalAmount.toLocaleString()}
+            {formatTotals(totalAmount, usdTotal)}
           </FinanceTable.Td>
         </tr>
       </FinanceTable.Footer>

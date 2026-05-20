@@ -17,6 +17,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useTranslation } from 'react-i18next'
 import { TextField, Button, Dialog, Select, useToast } from 'trust-ui-react'
 import { formatPhone, formatBankAccount, fileToBase64 } from '../lib/utils'
+import { sumByCurrency, formatTotals } from '../lib/currency'
 import { validateBankBookFile } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import { canCreateVendorRequest } from '../lib/roles'
@@ -141,8 +142,9 @@ export default function RequestFormPage() {
     if (bankName && bankAccount) setBankAccount(formatBankAccount(bankAccount, bankName))
   }, [bankName]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0)
   const validItems = items.filter((item) => item.description && item.amount > 0)
+  const totals = sumByCurrency(items)
+  const validTotals = sumByCurrency(validItems)
   const onlyCarTransport =
     items.some((item) => item.transportDetail?.transportType === 'car') &&
     items
@@ -348,16 +350,18 @@ export default function RequestFormPage() {
     }
     setErrors([])
 
-    // Check for duplicate amount in active requests
-    const currentTotal = validItems.reduce((sum, item) => sum + item.amount, 0)
+    // Check for duplicate amount in active requests (compare KRW + USD totals together)
     const duplicate = myRequests.find(
-      (r) => r.totalAmount === currentTotal && (r.status === 'pending' || r.status === 'approved')
+      (r) =>
+        r.totalAmount === validTotals.krw &&
+        (r.totalAmountUsd || 0) === validTotals.usd &&
+        (r.status === 'pending' || r.status === 'approved')
     )
     if (duplicate) {
       setConfirmDialog({
         open: true,
         message: t('validation.duplicateAmount', {
-          amount: currentTotal.toLocaleString(),
+          amount: formatTotals(validTotals.krw, validTotals.usd),
           date: duplicate.date
         }),
         onConfirm: () => {
@@ -464,6 +468,7 @@ export default function RequestFormPage() {
         }
       }
 
+      const finalTotals = sumByCurrency(finalItems)
       await createRequest.mutateAsync({
         projectId: currentProject!.id,
         status: 'pending',
@@ -475,7 +480,8 @@ export default function RequestFormPage() {
         session,
         committee,
         items: finalItems,
-        totalAmount: finalItems.reduce((sum, item) => sum + item.amount, 0),
+        totalAmount: finalTotals.krw,
+        ...(finalTotals.usd > 0 ? { totalAmountUsd: finalTotals.usd } : {}),
         receipts,
         requestedBy: {
           uid: user.uid,
@@ -652,7 +658,9 @@ export default function RequestFormPage() {
                 {t('form.addItem')}
               </Button>
             </div>
-            <p className="text-xs text-finance-muted mb-3">{t('form.itemsHint')}</p>
+            <p className="text-xs text-finance-muted mb-3">
+              {t('form.itemsHint')}. ({t('form.currencyToggleHint')}.)
+            </p>
             <div className="space-y-2">
               {items.map((item, i) => (
                 <ItemRow
@@ -674,9 +682,9 @@ export default function RequestFormPage() {
                 />
               ))}
             </div>
-            <div className="flex justify-end mt-3 pt-3 border-t border-finance-border-soft">
+            <div className="flex flex-col items-end gap-1 mt-3 pt-3 border-t border-finance-border-soft sm:flex-row sm:justify-end sm:gap-3">
               <span className="text-sm font-semibold text-finance-text">
-                {t('field.totalAmount')}: ₩{totalAmount.toLocaleString()}
+                {t('field.totalAmount')}: {formatTotals(totals.krw, totals.usd)}
               </span>
             </div>
           </div>
@@ -795,7 +803,8 @@ export default function RequestFormPage() {
             : []),
           { label: t('field.committee'), value: t(`committee.${committee}`) }
         ]}
-        totalAmount={validItems.reduce((sum, item) => sum + item.amount, 0)}
+        totalAmount={validTotals.krw}
+        totalAmountUsd={validTotals.usd}
         confirmLabel={t('form.confirmSubmit')}
         requestItems={validItems}
         receiptFiles={files}

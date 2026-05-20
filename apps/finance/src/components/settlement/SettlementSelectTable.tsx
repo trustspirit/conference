@@ -4,6 +4,7 @@ import Spinner from '../Spinner'
 import BudgetWarningBanner from '../BudgetWarningBanner'
 import { BudgetUsage } from '../../hooks/useBudgetUsage'
 import FinanceTable from '../table/FinanceTable'
+import { formatTotals } from '../../lib/currency'
 
 interface Props {
   requests: PaymentRequest[]
@@ -103,7 +104,7 @@ export default function SettlementSelectTable({
                     {t('form.itemCount', { count: req.items.length })}
                   </FinanceTable.Td>
                   <FinanceTable.Td align="right">
-                    ₩{req.totalAmount.toLocaleString()}
+                    {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
                   </FinanceTable.Td>
                 </FinanceTable.Row>
               ))}

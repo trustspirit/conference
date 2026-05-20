@@ -23,6 +23,7 @@ import {
   type CsvColumnKey
 } from '../lib/csvExport'
 import CsvExportDialog from '../components/CsvExportDialog'
+import { formatTotals } from '../lib/currency'
 
 type SortKey = 'date' | 'payee' | 'totalAmount' | 'status'
 type SortDir = 'asc' | 'desc'
@@ -265,7 +266,10 @@ export default function AdminRequestsPage() {
         />
       )
     }
-    if ((req.status === 'reviewed' || req.status === 'pending') && req.totalAmount > threshold) {
+    if (
+      (req.status === 'reviewed' || req.status === 'pending') &&
+      (req.totalAmount > threshold || (req.totalAmountUsd || 0) > 0)
+    ) {
       parts.push(
         <Tooltip
           key="director"
@@ -417,7 +421,7 @@ export default function AdminRequestsPage() {
                     <FinanceTable.Td>{req.payee}</FinanceTable.Td>
                     <FinanceTable.Td>{t(`committee.${req.committee}Short`)}</FinanceTable.Td>
                     <FinanceTable.Td align="right">
-                      ₩{req.totalAmount.toLocaleString()}
+                      {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
                     </FinanceTable.Td>
                     <FinanceTable.Td align="center">
                       <StatusBadge status={req.status} />
@@ -490,7 +494,7 @@ export default function AdminRequestsPage() {
                         <span className="shrink-0">{t(`committee.${req.committee}Short`)}</span>
                       </div>
                       <div className="text-right font-semibold text-finance-text">
-                        ₩{req.totalAmount.toLocaleString()}
+                        {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
                       </div>
                       {remarks && (
                         <div className="mt-2 pt-2 border-t border-finance-border-soft text-xs text-finance-muted">

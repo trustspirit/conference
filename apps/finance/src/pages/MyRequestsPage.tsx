@@ -15,6 +15,7 @@ import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import FinanceTable from '../components/table/FinanceTable'
 import { Dialog, Button } from 'trust-ui-react'
+import { formatTotals } from '../lib/currency'
 
 type MyFilter = 'all' | 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled'
 
@@ -142,7 +143,7 @@ export default function MyRequestsPage() {
                       {t('form.itemCount', { count: req.items.length })}
                     </FinanceTable.Td>
                     <FinanceTable.Td align="right">
-                      ₩{req.totalAmount.toLocaleString()}
+                      {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
                     </FinanceTable.Td>
                     <FinanceTable.Td align="center">
                       <StatusBadge status={req.status} />
@@ -204,7 +205,9 @@ export default function MyRequestsPage() {
                   <span className="text-finance-muted">
                     {t('form.itemCount', { count: req.items.length })}
                   </span>
-                  <span className="font-medium">₩{req.totalAmount.toLocaleString()}</span>
+                  <span className="font-medium">
+                    {formatTotals(req.totalAmount, req.totalAmountUsd || 0)}
+                  </span>
                 </div>
                 {req.status === 'pending' && (
                   <button

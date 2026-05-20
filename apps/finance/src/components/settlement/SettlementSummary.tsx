@@ -1,12 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import { PaymentRequest } from '../../types'
 import ProcessingOverlay from '../ProcessingOverlay'
+import { formatTotals } from '../../lib/currency'
 
 interface Props {
   groupedByPayee: Record<string, PaymentRequest[]>
   reviewedCount: number
   rejectedCount: number
   includedTotal: number
+  /** Optional USD total — shown alongside KRW when > 0 */
+  includedTotalUsd?: number
   processing: boolean
   onSettle: () => void
   onBack: () => void
@@ -17,6 +20,7 @@ export default function SettlementSummary({
   reviewedCount,
   rejectedCount,
   includedTotal,
+  includedTotalUsd = 0,
   processing,
   onSettle,
   onBack
@@ -39,13 +43,14 @@ export default function SettlementSummary({
           </span>
         </div>
         <div className="text-left text-lg font-bold sm:text-right">
-          {t('field.totalAmount')}: ₩{includedTotal.toLocaleString()}
+          {t('field.totalAmount')}: {formatTotals(includedTotal, includedTotalUsd)}
         </div>
 
         {/* Per-payee grouped summary */}
         {Object.entries(groupedByPayee).map(([key, reqs]) => {
           const first = reqs[0]
-          const subtotal = reqs.reduce((sum, r) => sum + r.totalAmount, 0)
+          const subtotalKrw = reqs.reduce((sum, r) => sum + r.totalAmount, 0)
+          const subtotalUsd = reqs.reduce((sum, r) => sum + (r.totalAmountUsd || 0), 0)
           return (
             <div key={key} className="border-t border-finance-border pt-4">
               <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-baseline sm:justify-between">
@@ -57,7 +62,9 @@ export default function SettlementSummary({
                     </span>
                   )}
                 </h3>
-                <span className="text-sm font-semibold">₩{subtotal.toLocaleString()}</span>
+                <span className="text-sm font-semibold">
+                  {formatTotals(subtotalKrw, subtotalUsd)}
+                </span>
               </div>
               <ul className="text-sm text-finance-muted space-y-0.5 pl-2">
                 {reqs.map((r) => (
@@ -65,7 +72,9 @@ export default function SettlementSummary({
                     <span className="min-w-0">
                       {r.date} — {t('form.itemCount', { count: r.items.length })}
                     </span>
-                    <span className="shrink-0">₩{r.totalAmount.toLocaleString()}</span>
+                    <span className="shrink-0">
+                      {formatTotals(r.totalAmount, r.totalAmountUsd || 0)}
+                    </span>
                   </li>
                 ))}
               </ul>
