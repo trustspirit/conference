@@ -15,7 +15,7 @@ export default function StatusBadge({ status }: { status: RequestStatus }) {
   const { t } = useTranslation()
   return (
     <span
-      className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-semibold ${statusClass[status]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded border px-2 py-0.5 text-xs font-semibold ${statusClass[status]}`}
     >
       {t(`status.${status}`)}
     </span>
