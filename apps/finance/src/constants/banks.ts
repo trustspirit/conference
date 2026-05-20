@@ -26,5 +26,6 @@ export const BANKS: BankInfo[] = [
   { code: 'post', name: '우체국', format: [6, 2, 6], maxDigits: 14 },
   { code: 'kdb', name: 'KDB산업은행', format: [3, 7, 4], maxDigits: 14 },
   { code: 'kyongnam', name: '경남은행', format: [3, 2, 8], maxDigits: 13 },
-  { code: 'kfcc', name: '산림조합', format: [3, 3, 7], maxDigits: 13 }
+  { code: 'kfcc', name: '산림조합', format: [3, 3, 7], maxDigits: 13 },
+  { code: 'dbs_hk', name: 'DBS BANK (HONG KONG) LIMITED', format: [], maxDigits: 16 }
 ]

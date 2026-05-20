@@ -12,7 +12,7 @@ export function formatPhone(value: string): string {
 export function formatBankAccount(value: string, bankName: string): string {
   const bank = BANKS.find((b) => b.name === bankName)
   const digits = value.replace(/\D/g, '').slice(0, bank?.maxDigits ?? 16)
-  if (!bank) return digits
+  if (!bank || bank.format.length === 0) return digits
 
   let result = ''
   let pos = 0
