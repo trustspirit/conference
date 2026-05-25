@@ -1,6 +1,7 @@
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { AppUser, Project, ProjectRole, SystemRole } from '../types'
+import { Action, can } from '../lib/permissions'
 
 export function effectiveSystemRole(appUser: AppUser | null | undefined): SystemRole | null {
   if (!appUser) return null
@@ -34,4 +35,9 @@ export function useProjectRole(): ProjectRole | null {
   const { appUser } = useAuth()
   const { currentProject } = useProject()
   return effectiveProjectRole(appUser, currentProject)
+}
+
+export function useCan(action: Action): boolean {
+  const role = useProjectRole()
+  return can(role, action)
 }
