@@ -439,8 +439,8 @@ export const deleteUserAccount = onCall(async (request) => {
   // 호출자가 admin 또는 super_admin인지 확인
   const callerDoc = await admin.firestore().doc(`users/${request.auth.uid}`).get()
   const callerRole = getSystemRole(callerDoc.data())
-  if (callerRole !== 'admin' && callerRole !== 'super_admin') {
-    throw new HttpsError('permission-denied', 'Only admin can delete users')
+  if (callerRole !== 'super_admin') {
+    throw new HttpsError('permission-denied', 'Only super_admin can delete users')
   }
 
   const { uid } = request.data as { uid: string }
@@ -1030,11 +1030,23 @@ export const getDashboardStats = onCall(async (request) => {
   }
 
   const { projectId } = request.data as { projectId: string }
-  if (!projectId) {
+  if (!projectId || typeof projectId !== 'string') {
     throw new HttpsError('invalid-argument', 'projectId is required')
   }
 
   const db = admin.firestore()
+  const callerUid = request.auth.uid
+  const [callerSnap, projSnap] = await Promise.all([
+    db.doc(`users/${callerUid}`).get(),
+    db.doc(`projects/${projectId}`).get()
+  ])
+  const callerSystemRole = getSystemRole(callerSnap.data())
+  const isSuperAdmin = callerSystemRole === 'super_admin'
+  const isMember = projSnap.data()?.memberRoles?.[callerUid] != null
+  if (!isSuperAdmin && !isMember) {
+    throw new HttpsError('permission-denied', 'Not a member of this project')
+  }
+
   const snap = await db
     .collection('requests')
     .where('projectId', '==', projectId)
