@@ -101,7 +101,7 @@ export function canAccessReceipts(role: UserRole): boolean {
 
 /** Can view user directory */
 export function canManageUsers(role: UserRole): boolean {
-  return isAdmin(role) || role === 'finance_prep'
+  return isAdmin(role)
 }
 
 /** Can process settlements (create, settle) */
