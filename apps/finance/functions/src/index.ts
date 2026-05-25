@@ -236,6 +236,46 @@ async function getCallerRole(uid: string): Promise<string | null> {
   return getSystemRole(snap.data())
 }
 
+/**
+ * Returns uids that have one of the given roles in the project, plus all super_admins.
+ * Reads from `memberRoles` if present, otherwise falls back to legacy `memberUids` + user `role`.
+ * Always returns each uid only once.
+ */
+async function uidsWithProjectRoles(projectId: string, roles: string[]): Promise<{ uid: string; role: string }[]> {
+  const db = admin.firestore()
+  const projDoc = await db.doc(`projects/${projectId}`).get()
+  const data = projDoc.data() ?? {}
+  const result = new Map<string, string>()  // uid -> role
+
+  if (data.memberRoles) {
+    for (const [uid, r] of Object.entries(data.memberRoles as Record<string, string>)) {
+      if (roles.includes(r)) result.set(uid, r)
+    }
+  } else if (Array.isArray(data.memberUids)) {
+    const userDocs = await Promise.all(
+      data.memberUids.map((uid: string) => db.doc(`users/${uid}`).get())
+    )
+    for (const userDoc of userDocs) {
+      const role = userDoc.data()?.role
+      if (typeof role === 'string' && roles.includes(role)) {
+        result.set(userDoc.id, role)
+      }
+    }
+  }
+
+  // Always include super_admins (regardless of project membership)
+  const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get()
+  for (const d of superSnap.docs) {
+    if (!result.has(d.id)) result.set(d.id, 'admin')   // effective role for super_admin
+  }
+  const legacySuperSnap = await db.collection('users').where('role', '==', 'super_admin').get()
+  for (const d of legacySuperSnap.docs) {
+    if (!result.has(d.id)) result.set(d.id, 'admin')
+  }
+
+  return [...result.entries()].map(([uid, role]) => ({ uid, role }))
+}
+
 function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | null {
   if (!d) return null
   if (d.systemRole) return d.systemRole
@@ -616,15 +656,16 @@ export const onRequestCreated = onDocumentCreated(
     const totalAmountUsd = data.totalAmountUsd as number | undefined
     const requestedBy = data.requestedBy as { name: string; email: string }
     const payee = data.payee as string
+    const projectId = data.projectId as string
 
-    // Find finance reviewers for this committee
+    // Find finance reviewers for this committee (project-scoped)
     const db = admin.firestore()
     const reviewerRoles =
       committee === 'operations' ? ['finance_ops', 'finance_prep'] : ['finance_prep']
 
-    const usersSnapshot = await db.collection('users').where('role', 'in', reviewerRoles).get()
+    const recipients = await uidsWithProjectRoles(projectId, reviewerRoles)
 
-    if (usersSnapshot.empty) {
+    if (recipients.length === 0) {
       console.log('No finance reviewers found for committee:', committee)
       return
     }
@@ -632,9 +673,10 @@ export const onRequestCreated = onDocumentCreated(
     const transporter = createTransporter()
     const committeeLabel = COMMITTEE_LABELS[committee] || committee
 
-    for (const userDoc of usersSnapshot.docs) {
+    const recipientDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()))
+    for (const userDoc of recipientDocs) {
       const user = userDoc.data()
-      const email = user.email as string
+      const email = user?.email as string | undefined
       if (!email) continue
 
       try {
@@ -748,6 +790,7 @@ export const onRequestStatusChange = onDocumentUpdated(
       const requestedByUid = (after.requestedBy as { uid: string }).uid
       const committeeLabel = COMMITTEE_LABELS[committee] || committee
       const reqId = event.params?.requestId || ''
+      const projectId = after.projectId as string
 
       // 신청자의 역할 확인 (위원장이 신청한 건은 executive만 승인 가능)
       const requesterSnap = await db.doc(`users/${requestedByUid}`).get()
@@ -766,11 +809,12 @@ export const onRequestStatusChange = onDocumentUpdated(
             : ['approver_prep', 'logistic_admin', 'executive']
       }
 
-      const usersSnapshot = await db.collection('users').where('role', 'in', approverRoles).get()
+      const recipients = await uidsWithProjectRoles(projectId, approverRoles)
+      const recipientDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()))
 
-      for (const userDoc of usersSnapshot.docs) {
+      for (const userDoc of recipientDocs) {
         const user = userDoc.data()
-        const email = user.email as string
+        const email = user?.email as string | undefined
         if (!email) continue
 
         try {
@@ -865,7 +909,7 @@ export const weeklyApproverDigest = onSchedule(
   async () => {
     const db = admin.firestore()
 
-    // 관련 역할 사용자 조회
+    // 관련 역할 사용자 조회 (프로젝트 범위: 모든 프로젝트에서 집계)
     const relevantRoles = [
       'finance_ops',
       'finance_prep',
@@ -875,9 +919,18 @@ export const weeklyApproverDigest = onSchedule(
       'logistic_admin',
       'executive'
     ]
-    const usersSnapshot = await db.collection('users').where('role', 'in', relevantRoles).get()
 
-    if (usersSnapshot.empty) {
+    // Collect recipients across all projects (uid -> project-scoped role, first match wins)
+    const projectsSnap = await db.collection('projects').get()
+    const recipientMap = new Map<string, string>()  // uid -> role
+    for (const projDoc of projectsSnap.docs) {
+      const perProject = await uidsWithProjectRoles(projDoc.id, relevantRoles)
+      for (const { uid, role } of perProject) {
+        if (!recipientMap.has(uid)) recipientMap.set(uid, role)
+      }
+    }
+
+    if (recipientMap.size === 0) {
       console.log('No relevant users found')
       return
     }
@@ -912,11 +965,16 @@ export const weeklyApproverDigest = onSchedule(
 
     const transporter = createTransporter()
 
-    for (const userDoc of usersSnapshot.docs) {
+    const recipients = [...recipientMap.entries()].map(([uid, role]) => ({ uid, role }))
+    const recipientUserDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()))
+
+    for (let i = 0; i < recipients.length; i++) {
+      const r = recipients[i]
+      const role = r.role
+      const userDoc = recipientUserDocs[i]
       const user = userDoc.data()
-      const role = user.role as string
-      const email = user.email as string
-      const name = (user.displayName || user.name || '') as string
+      const email = user?.email as string | undefined
+      const name = ((user?.displayName || user?.name || '') as string)
 
       if (!email) continue
 
@@ -941,8 +999,8 @@ export const weeklyApproverDigest = onSchedule(
       } else if (role === 'logistic_admin') {
         // 준비 위원장: 준비위 승인 대기
         sections.push({ label: '준비위 승인 대기', count: prepReviewedCount })
-      } else if (role === 'executive') {
-        // 대회장: 전체 승인 대기 + 미정산
+      } else if (role === 'executive' || role === 'admin') {
+        // 대회장 / super_admin: 전체 승인 대기 + 미정산
         sections.push({ label: '승인 대기', count: totalReviewedCount })
         sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount })
       }
