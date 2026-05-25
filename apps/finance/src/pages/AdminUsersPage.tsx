@@ -1,13 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useInfiniteUsers, useUpdateUserRole, useDeleteUser } from '../hooks/queries/useUsers'
-import { AppUser, UserRole } from '../types'
+import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
+import { useProjectMembers, ProjectMember } from '../hooks/queries/useProjectMembers'
+import {
+  useUpdateProjectMemberRole,
+  useRemoveProjectMember
+} from '../hooks/queries/useUsers'
+import { AppUser, ProjectRole } from '../types'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
-import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import { Select, Button, Dialog, useToast } from 'trust-ui-react'
 import { TrashIcon } from '../components/Icons'
 import ProcessingOverlay from '../components/ProcessingOverlay'
@@ -136,15 +142,15 @@ function MobileUserCard({
   roleLabel,
   successUid,
   onRoleChange,
-  onDelete
+  onRemove
 }: {
-  user: AppUser
+  user: ProjectMember
   currentUser: AppUser | null
   isAdmin: boolean
   roleLabel: string
   successUid: string | null
-  onRoleChange: (uid: string, role: UserRole) => void
-  onDelete: (uid: string) => void
+  onRoleChange: (uid: string, role: ProjectRole) => void
+  onRemove: (uid: string) => void
 }) {
   const { t } = useTranslation()
   const [showBank, setShowBank] = useState(false)
@@ -194,34 +200,28 @@ function MobileUserCard({
       </div>
       {isAdmin ? (
         <div>
-          {u.role === 'super_admin' ? (
-            <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
-          ) : (
-            <>
-              <Select
-                options={[
-                  { value: 'user', label: t('role.user') },
-                  { value: 'finance_ops', label: t('role.finance_ops') },
-                  { value: 'approver_ops', label: t('role.approver_ops') },
-                  { value: 'finance_prep', label: t('role.finance_prep') },
-                  { value: 'approver_prep', label: t('role.approver_prep') },
-                  { value: 'session_director', label: t('role.session_director') },
-                  { value: 'logistic_admin', label: t('role.logistic_admin') },
-                  { value: 'executive', label: t('role.executive') },
-                  { value: 'admin', label: t('role.admin') }
-                ]}
-                value={u.role}
-                disabled={u.uid === currentUser?.uid}
-                onChange={(v) => onRoleChange(u.uid, v as UserRole)}
-                fullWidth
-              />
-              {successUid === u.uid && (
-                <p className="finance-success-text text-xs mt-1">{t('users.roleChanged')}</p>
-              )}
-            </>
+          <Select
+            options={[
+              { value: 'user', label: t('role.user') },
+              { value: 'finance_ops', label: t('role.finance_ops') },
+              { value: 'approver_ops', label: t('role.approver_ops') },
+              { value: 'finance_prep', label: t('role.finance_prep') },
+              { value: 'approver_prep', label: t('role.approver_prep') },
+              { value: 'session_director', label: t('role.session_director') },
+              { value: 'logistic_admin', label: t('role.logistic_admin') },
+              { value: 'executive', label: t('role.executive') },
+              { value: 'admin', label: t('role.admin') }
+            ]}
+            value={u.projectRole}
+            disabled={u.uid === currentUser?.uid}
+            onChange={(v) => onRoleChange(u.uid, v as ProjectRole)}
+            fullWidth
+          />
+          {successUid === u.uid && (
+            <p className="finance-success-text text-xs mt-1">{t('users.roleChanged')}</p>
           )}
-          {u.uid !== currentUser?.uid && u.role !== 'super_admin' && (
-            <Button variant="ghost" size="sm" onClick={() => onDelete(u.uid)}>
+          {u.uid !== currentUser?.uid && (
+            <Button variant="ghost" size="sm" onClick={() => onRemove(u.uid)}>
               <TrashIcon className="w-4 h-4" />
             </Button>
           )}
@@ -237,16 +237,11 @@ export default function AdminUsersPage() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { appUser: currentUser } = useAuth()
-  const {
-    data,
-    isLoading: loading,
-    error,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage
-  } = useInfiniteUsers()
-  const updateRole = useUpdateUserRole()
-  const deleteUser = useDeleteUser()
+  const { currentProject } = useProject()
+  const projectRole = useProjectRole()
+  const { data: members = [], isLoading: loading, error } = useProjectMembers()
+  const updateProjectMemberRole = useUpdateProjectMemberRole()
+  const removeProjectMember = useRemoveProjectMember()
   const [successUid, setSuccessUid] = useState<string | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
@@ -255,8 +250,12 @@ export default function AdminUsersPage() {
   }>({ open: false, onConfirm: () => {}, message: '' })
   const closeConfirm = () => setConfirmDialog((prev) => ({ ...prev, open: false }))
 
-  const ROLE_PRIORITY: Record<UserRole, number> = {
-    super_admin: -1,
+  // Guard: only project admins can access this page
+  if (projectRole !== 'admin') {
+    return <Navigate to="/" replace />
+  }
+
+  const ROLE_PRIORITY: Record<ProjectRole, number> = {
     admin: 0,
     executive: 1,
     finance_prep: 2,
@@ -268,15 +267,15 @@ export default function AdminUsersPage() {
     user: 8
   }
 
-  const users = (data?.pages.flatMap((p) => p.items) ?? []).slice().sort((a, b) => {
-    const roleDiff = (ROLE_PRIORITY[a.role] ?? 99) - (ROLE_PRIORITY[b.role] ?? 99)
+  const users = members.slice().sort((a, b) => {
+    const roleDiff = (ROLE_PRIORITY[a.projectRole] ?? 99) - (ROLE_PRIORITY[b.projectRole] ?? 99)
     if (roleDiff !== 0) return roleDiff
     return (a.displayName || a.name || '').localeCompare(b.displayName || b.name || '', 'ko')
   })
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin'
+  const isAdmin = projectRole === 'admin'
 
-  const ROLE_LABELS: Record<UserRole, string> = {
+  const ROLE_LABELS: Record<ProjectRole, string> = {
     user: t('role.user'),
     finance_ops: t('role.finance_ops'),
     approver_ops: t('role.approver_ops'),
@@ -285,11 +284,10 @@ export default function AdminUsersPage() {
     session_director: t('role.session_director'),
     logistic_admin: t('role.logistic_admin'),
     executive: t('role.executive'),
-    admin: t('role.admin'),
-    super_admin: t('role.super_admin')
+    admin: t('role.admin')
   }
 
-  const handleRoleChange = (uid: string, newRole: UserRole) => {
+  const handleRoleChange = (uid: string, newRole: ProjectRole) => {
     if (uid === currentUser?.uid) {
       toast({ variant: 'danger', message: t('users.selfChangeError') })
       return
@@ -299,8 +297,8 @@ export default function AdminUsersPage() {
       message: t('users.roleChangeConfirm', { role: ROLE_LABELS[newRole] }),
       onConfirm: () => {
         closeConfirm()
-        updateRole.mutate(
-          { uid, role: newRole },
+        updateProjectMemberRole.mutate(
+          { projectId: currentProject!.id, uid, role: newRole },
           {
             onSuccess: () => {
               setSuccessUid(uid)
@@ -315,21 +313,28 @@ export default function AdminUsersPage() {
     })
   }
 
-  const handleDeleteUser = (uid: string) => {
+  const handleRemoveMember = (uid: string) => {
     if (uid === currentUser?.uid) return
     setConfirmDialog({
       open: true,
-      message: t('users.deleteConfirm'),
+      message: t('users.removeFromProjectConfirm', '프로젝트에서 해당 멤버를 제거하시겠습니까?'),
       onConfirm: () => {
         closeConfirm()
-        deleteUser.mutate(uid)
+        removeProjectMember.mutate(
+          { projectId: currentProject!.id, uid },
+          {
+            onError: () => {
+              toast({ variant: 'danger', message: t('users.removeFromProjectFailed', '멤버 제거에 실패했습니다.') })
+            }
+          }
+        )
       }
     })
   }
 
   return (
     <Layout>
-      <ProcessingOverlay open={deleteUser.isPending} text={t('users.deletingUser')} />
+      <ProcessingOverlay open={removeProjectMember.isPending} text={t('users.removingMember', '멤버를 제거하는 중...')} />
       <PageHeader title={t('users.title')} />
       {loading ? (
         <Spinner />
@@ -363,40 +368,34 @@ export default function AdminUsersPage() {
                         user={u}
                         currentUser={currentUser}
                         isAdmin={isAdmin}
-                        roleLabel={ROLE_LABELS[u.role]}
+                        roleLabel={ROLE_LABELS[u.projectRole]}
                       />
                     </FinanceTable.Td>
                     <FinanceTable.Td className="text-gray-500">{u.email}</FinanceTable.Td>
                     <FinanceTable.Td className="text-gray-500">{u.phone || '-'}</FinanceTable.Td>
                     {isAdmin && (
                       <FinanceTable.Td align="center">
-                        {u.role === 'super_admin' ? (
-                          <span className="text-xs text-gray-400">{t('role.super_admin')}</span>
-                        ) : (
-                          <>
-                            <Select
-                              options={[
-                                { value: 'user', label: t('role.user') },
-                                { value: 'finance_ops', label: t('role.finance_ops') },
-                                { value: 'approver_ops', label: t('role.approver_ops') },
-                                { value: 'finance_prep', label: t('role.finance_prep') },
-                                { value: 'approver_prep', label: t('role.approver_prep') },
-                                { value: 'session_director', label: t('role.session_director') },
-                                { value: 'logistic_admin', label: t('role.logistic_admin') },
-                                { value: 'executive', label: t('role.executive') },
-                                { value: 'admin', label: t('role.admin') }
-                              ]}
-                              value={u.role}
-                              disabled={u.uid === currentUser?.uid}
-                              onChange={(v) => handleRoleChange(u.uid, v as UserRole)}
-                              fullWidth
-                            />
-                            {successUid === u.uid && (
-                              <p className="finance-success-text text-xs mt-1">
-                                {t('users.roleChanged')}
-                              </p>
-                            )}
-                          </>
+                        <Select
+                          options={[
+                            { value: 'user', label: t('role.user') },
+                            { value: 'finance_ops', label: t('role.finance_ops') },
+                            { value: 'approver_ops', label: t('role.approver_ops') },
+                            { value: 'finance_prep', label: t('role.finance_prep') },
+                            { value: 'approver_prep', label: t('role.approver_prep') },
+                            { value: 'session_director', label: t('role.session_director') },
+                            { value: 'logistic_admin', label: t('role.logistic_admin') },
+                            { value: 'executive', label: t('role.executive') },
+                            { value: 'admin', label: t('role.admin') }
+                          ]}
+                          value={u.projectRole}
+                          disabled={u.uid === currentUser?.uid}
+                          onChange={(v) => handleRoleChange(u.uid, v as ProjectRole)}
+                          fullWidth
+                        />
+                        {successUid === u.uid && (
+                          <p className="finance-success-text text-xs mt-1">
+                            {t('users.roleChanged')}
+                          </p>
                         )}
                       </FinanceTable.Td>
                     )}
@@ -405,8 +404,8 @@ export default function AdminUsersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteUser(u.uid)}
-                          disabled={u.uid === currentUser?.uid || u.role === 'super_admin'}
+                          onClick={() => handleRemoveMember(u.uid)}
+                          disabled={u.uid === currentUser?.uid}
                         >
                           <TrashIcon className="w-4 h-4" />
                         </Button>
@@ -426,19 +425,13 @@ export default function AdminUsersPage() {
                 user={u}
                 currentUser={currentUser}
                 isAdmin={isAdmin}
-                roleLabel={ROLE_LABELS[u.role]}
+                roleLabel={ROLE_LABELS[u.projectRole]}
                 successUid={successUid}
                 onRoleChange={handleRoleChange}
-                onDelete={handleDeleteUser}
+                onRemove={handleRemoveMember}
               />
             ))}
           </div>
-
-          <InfiniteScrollSentinel
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            fetchNextPage={fetchNextPage}
-          />
         </>
       )}
 

@@ -5,6 +5,7 @@ import {
   getDoc,
   doc,
   updateDoc,
+  deleteField,
   query,
   orderBy,
   limit,
@@ -15,7 +16,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
-import type { AppUser, UserRole } from '../../types'
+import type { AppUser, UserRole, ProjectRole, SystemRole } from '../../types'
 
 const PAGE_SIZE = 20
 
@@ -86,6 +87,44 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
+    }
+  })
+}
+
+export function useUpdateProjectMemberRole() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ projectId, uid, role }: { projectId: string; uid: string; role: ProjectRole }) => {
+      await updateDoc(doc(db, 'projects', projectId), { [`memberRoles.${uid}`]: role })
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
+    }
+  })
+}
+
+export function useRemoveProjectMember() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ projectId, uid }: { projectId: string; uid: string }) => {
+      await updateDoc(doc(db, 'projects', projectId), { [`memberRoles.${uid}`]: deleteField() })
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
+    }
+  })
+}
+
+export function useUpdateSystemRole() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ uid, systemRole }: { uid: string; systemRole: SystemRole }) => {
+      await updateDoc(doc(db, 'users', uid), { systemRole })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
     }
   })
 }
