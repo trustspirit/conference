@@ -1,4 +1,4 @@
-import { UserRole, Committee } from '../types'
+import { UserRole, Committee, RequestStatus } from '../types'
 
 /** Default amount threshold: requests above this require director/executive/admin approval */
 export const DEFAULT_APPROVAL_THRESHOLD = 600000
@@ -145,16 +145,30 @@ export const ALL_ROLES: UserRole[] = [
 export function canCreateVendorRequest(role: UserRole, committee?: Committee): boolean {
   if (isAdmin(role)) return true
   if (
-    [
-      'finance_prep',
-      'approver_prep',
-      'logistic_admin',
-      'finance_ops',
-      'approver_ops'
-    ].includes(role)
+    ['finance_prep', 'approver_prep', 'logistic_admin', 'finance_ops', 'approver_ops'].includes(
+      role
+    )
   )
     return true
   // General users in preparation committee can also create vendor requests
   if (role === 'user' && committee === 'preparation') return true
   return false
+}
+
+/** Statuses a super_admin may permanently delete (initial/terminal states only) */
+export const DELETABLE_STATUSES: readonly RequestStatus[] = [
+  'pending',
+  'rejected',
+  'cancelled',
+  'force_rejected'
+] as const
+
+/** Can roll back an approved request to reviewed (super_admin only) */
+export function canRollbackApproval(role: UserRole): boolean {
+  return role === 'super_admin'
+}
+
+/** Can permanently delete a request (super_admin only, status must be deletable) */
+export function canDeleteRequest(role: UserRole, status: RequestStatus): boolean {
+  return role === 'super_admin' && DELETABLE_STATUSES.includes(status)
 }

@@ -22,7 +22,9 @@ import {
   DocumentData,
   QueryConstraint
 } from 'firebase/firestore'
-import { db } from '@conference/firebase'
+import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
+import { db, app } from '@conference/firebase'
+import { DELETABLE_STATUSES } from '../../lib/roles'
 import { queryKeys } from './queryKeys'
 import type { PaymentRequest, RequestStatus } from '../../types'
 
@@ -388,6 +390,125 @@ export function useCancelRequest() {
       })
       queryClient.invalidateQueries({
         queryKey: queryKeys.requests.detail(variables.requestId)
+      })
+    }
+  })
+}
+
+/** Super-admin only: roll back an approved request to reviewed (clears approval fields) */
+export function useRollbackApproval() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: { requestId: string; projectId: string }) => {
+      const ref = doc(db, 'requests', params.requestId)
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref)
+        if (!snap.exists() || snap.data().status !== 'approved') {
+          throw new Error('already_processed')
+        }
+        tx.update(ref, {
+          status: 'reviewed',
+          approvedBy: null,
+          approvalSignature: null,
+          approvedAt: null
+        })
+      })
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.all(variables.projectId)
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.detail(variables.requestId)
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.approved(variables.projectId)
+      })
+    }
+  })
+}
+
+/** Best-effort delete of a list of Storage paths. Logs and swallows individual failures. */
+async function deleteStoragePaths(paths: string[]): Promise<void> {
+  if (paths.length === 0) return
+  const storage = getStorage(app)
+  await Promise.allSettled(
+    paths.map(async (path) => {
+      try {
+        await deleteObject(storageRef(storage, path))
+      } catch (err) {
+        console.warn(`[deleteRequest] storage delete failed: ${path}`, err)
+      }
+    })
+  )
+}
+
+/** Super-admin only: permanently delete a request in a deletable status.
+ *  Runs the Firestore transaction first (atomic delete + clears `originalRequestId`
+ *  on resubmissions that reference this request), then best-effort deletes the
+ *  associated Storage assets. Reordered so a race-aborted transaction never
+ *  leaves the doc behind with already-deleted receipt files.
+ */
+export function useDeleteRequest() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: { request: PaymentRequest; projectId: string }) => {
+      const { request } = params
+
+      // ── Phase A: Pre-query resubmissions that reference this request ──
+      const resubQuery = query(
+        collection(db, 'requests'),
+        where('originalRequestId', '==', request.id)
+      )
+      const resubSnap = await getDocs(resubQuery)
+      const resubIds = resubSnap.docs.map((d) => d.id)
+
+      // ── Phase B: Firestore transaction (atomic delete + cascade) ──
+      // Run before Storage cleanup so a status-changed race aborts cleanly without
+      // touching files. If the transaction fails, no Storage paths are deleted.
+      const targetRef = doc(db, 'requests', request.id)
+      await runTransaction(db, async (tx) => {
+        const targetSnap = await tx.get(targetRef)
+        if (!targetSnap.exists()) throw new Error('not_found')
+        const status = targetSnap.data().status as PaymentRequest['status']
+        if (!DELETABLE_STATUSES.includes(status)) {
+          throw new Error('not_deletable')
+        }
+        for (const childId of resubIds) {
+          const childRef = doc(db, 'requests', childId)
+          const childSnap = await tx.get(childRef)
+          if (!childSnap.exists()) continue
+          if (childSnap.data().originalRequestId === request.id) {
+            tx.update(childRef, { originalRequestId: null })
+          }
+        }
+        tx.delete(targetRef)
+      })
+
+      // ── Phase C: Storage cleanup (best-effort, after successful delete) ──
+      // Failures here leave orphan files but the doc is already gone, so future
+      // references are impossible. A janitor job can reap orphans later.
+      const storagePaths: string[] = []
+      for (const r of request.receipts) {
+        if (r.storagePath) storagePaths.push(r.storagePath)
+      }
+      for (const item of request.items) {
+        const p = item.transportDetail?.routeMapImage?.storagePath
+        if (p) storagePaths.push(p)
+      }
+      await deleteStoragePaths(storagePaths)
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.all(variables.projectId)
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.detail(variables.request.id)
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requests.approved(variables.projectId)
       })
     }
   })

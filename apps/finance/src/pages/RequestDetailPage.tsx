@@ -9,7 +9,9 @@ import {
   useReviewRequest,
   useApproveRequest,
   useRejectRequest,
-  useForceRejectRequest
+  useForceRejectRequest,
+  useRollbackApproval,
+  useDeleteRequest
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
 import { useUser } from '../hooks/queries/useUsers'
@@ -21,6 +23,8 @@ import {
   canFinalApproveRequest,
   canApproveDirectorRequest,
   canForceReject,
+  canRollbackApproval,
+  canDeleteRequest,
   DEFAULT_APPROVAL_THRESHOLD
 } from '../lib/roles'
 import Layout from '../components/Layout'
@@ -32,7 +36,9 @@ import ReceiptGallery from '../components/ReceiptGallery'
 import {
   ApprovalModal,
   RejectionModal,
-  ForceRejectionModal
+  ForceRejectionModal,
+  RollbackConfirmModal,
+  DeleteConfirmModal
 } from '../components/AdminRequestModals'
 import StatusProgress from '../components/StatusProgress'
 import ReviewChecklist from '../components/ReviewChecklist'
@@ -57,6 +63,8 @@ export default function RequestDetailPage() {
   const approveMutation = useApproveRequest()
   const rejectMutation = useRejectRequest()
   const forceRejectMutation = useForceRejectRequest()
+  const rollbackMutation = useRollbackApproval()
+  const deleteMutation = useDeleteRequest()
   const budgetUsage = useBudgetUsage()
 
   const { data: request, isLoading: requestLoading } = useRequest(id)
@@ -67,6 +75,8 @@ export default function RequestDetailPage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
   const [showForceRejectionModal, setShowForceRejectionModal] = useState(false)
+  const [showRollbackModal, setShowRollbackModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showReviewConfirm, setShowReviewConfirm] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
@@ -164,6 +174,18 @@ export default function RequestDetailPage() {
 
   // Force reject action (approved → force_rejected) — finance_prep/admin only
   const canDoForceReject = request?.status === 'approved' && canForceReject(role)
+
+  // Super-admin only: rollback approved → reviewed
+  const canDoRollback = request?.status === 'approved' && canRollbackApproval(role)
+
+  // Super-admin only: delete request in initial/terminal status
+  const canDoDelete = !!request && canDeleteRequest(role, request.status)
+
+  // Resubmissions referencing this request (cleaned up on delete)
+  const resubmissionCount = useMemo(
+    () => (request ? allRequests.filter((r) => r.originalRequestId === request.id).length : 0),
+    [allRequests, request]
+  )
 
   const showChecklist = canDoReview || canDoApprove
   const checklistItems = canDoReview ? REVIEW_CHECKLIST : APPROVAL_CHECKLIST
@@ -282,6 +304,39 @@ export default function RequestDetailPage() {
         },
         onError: () => {
           toast({ variant: 'danger', message: t('approval.forceRejectFailed') })
+        }
+      }
+    )
+  }
+
+  const handleRollbackConfirm = () => {
+    if (!request || !currentProject) return
+    rollbackMutation.mutate(
+      { requestId: request.id, projectId: currentProject.id },
+      {
+        onSuccess: () => {
+          setShowRollbackModal(false)
+          toast({ variant: 'success', message: t('admin.rollbackSuccess') })
+        },
+        onError: () => {
+          toast({ variant: 'danger', message: t('admin.rollbackFailed') })
+        }
+      }
+    )
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!request || !currentProject) return
+    deleteMutation.mutate(
+      { request, projectId: currentProject.id },
+      {
+        onSuccess: () => {
+          setShowDeleteModal(false)
+          toast({ variant: 'success', message: t('admin.deleteSuccess') })
+          navigate(backPath)
+        },
+        onError: () => {
+          toast({ variant: 'danger', message: t('admin.deleteFailed') })
         }
       }
     )
@@ -499,7 +554,12 @@ export default function RequestDetailPage() {
             )}
 
             {/* Action buttons: review / approve / reject / force-reject */}
-            {(canDoReview || canDoApprove || canDoReject || canDoForceReject) && (
+            {(canDoReview ||
+              canDoApprove ||
+              canDoReject ||
+              canDoForceReject ||
+              canDoRollback ||
+              canDoDelete) && (
               <div className="mb-6 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 {canDoReview && (
                   <Button
@@ -529,6 +589,16 @@ export default function RequestDetailPage() {
                 {canDoForceReject && (
                   <Button variant="danger" onClick={handleForceRejectOpen}>
                     {t('approval.forceReject')}
+                  </Button>
+                )}
+                {canDoRollback && (
+                  <Button variant="outline" onClick={() => setShowRollbackModal(true)}>
+                    {t('admin.rollbackTitle')}
+                  </Button>
+                )}
+                {canDoDelete && (
+                  <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
+                    {t('admin.deleteTitle')}
                   </Button>
                 )}
                 {remainingCount > 0 && (
@@ -699,6 +769,29 @@ export default function RequestDetailPage() {
         onClose={() => setShowForceRejectionModal(false)}
         onConfirm={handleForceRejectConfirm}
         isPending={forceRejectMutation.isPending}
+      />
+
+      <RollbackConfirmModal
+        key={showRollbackModal ? 'rollback-open' : 'rollback-closed'}
+        open={showRollbackModal}
+        onClose={() => setShowRollbackModal(false)}
+        onConfirm={handleRollbackConfirm}
+        isPending={rollbackMutation.isPending}
+        payee={request.payee}
+      />
+
+      <DeleteConfirmModal
+        key={showDeleteModal ? 'delete-open' : 'delete-closed'}
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        isPending={deleteMutation.isPending}
+        payee={request.payee}
+        receiptCount={request.receipts.length}
+        routeMapCount={
+          request.items.filter((i) => i.transportDetail?.routeMapImage?.storagePath).length
+        }
+        resubmissionCount={resubmissionCount}
       />
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">

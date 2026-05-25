@@ -478,5 +478,22 @@
     "downloadFailed": "Download failed.",
     "partialDownload": "Failed to download {{failed}} of {{total}} files.",
     "viewRequest": "View request"
+  },
+  "admin": {
+    "rollbackTitle": "Roll back to reviewed",
+    "rollbackWarning": "Revert {{payee}}'s request from approved back to reviewed.",
+    "rollbackFieldsCleared": "The previous approver, approval signature, and approval time will be cleared.",
+    "rollbackConfirm": "Roll back",
+    "rollbackSuccess": "Request rolled back to reviewed.",
+    "rollbackFailed": "Failed to change status.",
+    "deleteTitle": "Delete request",
+    "deleteWarning": "Permanently delete {{payee}}'s request.",
+    "deleteReceiptCount": "{{count}} receipt file(s) will be deleted.",
+    "deleteRouteMapCount": "{{count}} route map image(s) will be deleted.",
+    "deleteResubmissionCount": "{{count}} resubmission link(s) will be unlinked.",
+    "deleteIrreversible": "This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "deleteSuccess": "Request deleted.",
+    "deleteFailed": "Failed to delete."
   }
 }

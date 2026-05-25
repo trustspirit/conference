@@ -104,7 +104,31 @@ service cloud.firestore {
             && request.resource.data.status == 'cancelled'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
           )
+          // --- Super admin rollback: approved → reviewed (clears approval fields) ---
+          || (
+            resource.data.status == 'approved'
+            && request.resource.data.status == 'reviewed'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature'])
+            && request.resource.data.approvedBy == null
+            && request.resource.data.approvedAt == null
+            && request.resource.data.approvalSignature == null
+            && userRole() == 'super_admin'
+          )
+          // --- Super admin cascade cleanup: clear originalRequestId only ---
+          // Needed so the deleteRequest mutation can unlink resubmissions inside its
+          // transaction. The rule cannot know which request is being deleted, so it
+          // accepts any super_admin write that ONLY sets originalRequestId to null.
+          // Risk is limited because super_admin is a highly trusted, Firestore-only role.
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['originalRequestId'])
+            && request.resource.data.originalRequestId == null
+            && userRole() == 'super_admin'
+          )
         );
+      allow delete: if request.auth != null
+        && userRole() == 'super_admin'
+        && resource.data.status in ['pending', 'rejected', 'cancelled', 'force_rejected'];
     }
     // AI chatbot settings — server-only access via Admin SDK
     match /ai-settings/{docId} {

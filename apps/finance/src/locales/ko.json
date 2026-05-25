@@ -478,5 +478,22 @@
     "downloadFailed": "다운로드에 실패했습니다.",
     "partialDownload": "{{total}}건 중 {{failed}}건을 다운로드하지 못했습니다.",
     "viewRequest": "신청서 보기"
+  },
+  "admin": {
+    "rollbackTitle": "검토완료로 되돌리기",
+    "rollbackWarning": "{{payee}} 신청서의 승인을 취소하고 검토완료 상태로 되돌립니다.",
+    "rollbackFieldsCleared": "기존 승인자, 승인 서명, 승인 시각 정보가 모두 삭제됩니다.",
+    "rollbackConfirm": "되돌리기",
+    "rollbackSuccess": "검토완료 상태로 되돌렸습니다.",
+    "rollbackFailed": "상태 변경에 실패했습니다.",
+    "deleteTitle": "신청서 삭제",
+    "deleteWarning": "{{payee}} 신청서를 영구 삭제합니다.",
+    "deleteReceiptCount": "영수증 파일 {{count}}개가 함께 삭제됩니다.",
+    "deleteRouteMapCount": "교통 경로 이미지 {{count}}개가 함께 삭제됩니다.",
+    "deleteResubmissionCount": "재제출 연결 {{count}}건의 참조가 해제됩니다.",
+    "deleteIrreversible": "이 작업은 되돌릴 수 없습니다.",
+    "deleteConfirm": "삭제",
+    "deleteSuccess": "신청서를 삭제했습니다.",
+    "deleteFailed": "삭제에 실패했습니다."
   }
 }
