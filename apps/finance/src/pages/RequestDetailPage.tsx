@@ -15,7 +15,7 @@ import {
   useUpdateRequestReceiptDisplaySizes
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
-import { useProjectRole } from '../hooks/useProjectRole'
+import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { useTranslation } from 'react-i18next'
@@ -26,8 +26,7 @@ import {
   canApproveDirectorRequest,
   isStaff,
   canForceReject,
-  canRollbackApproval,
-  canDeleteRequest,
+  DELETABLE_STATUSES,
   DEFAULT_APPROVAL_THRESHOLD
 } from '../lib/roles'
 import Layout from '../components/Layout'
@@ -57,6 +56,7 @@ export default function RequestDetailPage() {
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
   const role = useProjectRole() ?? 'user'
+  const isSuperAdmin = effectiveSystemRole(appUser) === 'super_admin'
   const navigate = useNavigate()
   const location = useLocation()
   const backPath = (location.state as { from?: string })?.from || '/my-requests'
@@ -191,10 +191,10 @@ export default function RequestDetailPage() {
   const canDoForceReject = request?.status === 'approved' && canForceReject(role)
 
   // Super-admin only: rollback approved → reviewed
-  const canDoRollback = request?.status === 'approved' && canRollbackApproval(role)
+  const canDoRollback = request?.status === 'approved' && isSuperAdmin
 
   // Super-admin only: delete request in initial/terminal status
-  const canDoDelete = !!request && canDeleteRequest(role, request.status)
+  const canDoDelete = !!request && isSuperAdmin && DELETABLE_STATUSES.includes(request.status)
 
   // Resubmissions referencing this request (cleaned up on delete)
   const resubmissionCount = useMemo(

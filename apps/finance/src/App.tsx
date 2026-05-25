@@ -170,7 +170,7 @@ const router = createBrowserRouter([
       {
         path: '/admin/users',
         element: (
-          <ProtectedRoute requiredRoles={['admin', 'finance_prep']}>
+          <ProtectedRoute requiredRoles={['admin']}>
             <AdminUsersPage />
           </ProtectedRoute>
         )
