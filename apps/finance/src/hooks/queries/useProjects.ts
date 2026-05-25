@@ -3,11 +3,10 @@ import {
   collection,
   getDocs,
   doc,
-  getDoc,
   setDoc,
+  updateDoc,
   query,
   where,
-  writeBatch,
   serverTimestamp,
   deleteField
 } from 'firebase/firestore'
@@ -88,29 +87,11 @@ export function useSoftDeleteProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      const projectSnap = await getDoc(doc(db, 'projects', projectId))
-      const memberUids: string[] = projectSnap.exists() ? projectSnap.data().memberUids || [] : []
-
-      const batch = writeBatch(db)
-      batch.set(
+      await setDoc(
         doc(db, 'projects', projectId),
-        {
-          isActive: false,
-          deletedAt: serverTimestamp()
-        },
+        { isActive: false, deletedAt: serverTimestamp() },
         { merge: true }
       )
-
-      // Remove projectId from all members' projectIds
-      const memberSnaps = await Promise.all(memberUids.map((uid) => getDoc(doc(db, 'users', uid))))
-      memberSnaps.forEach((snap) => {
-        if (snap.exists()) {
-          const projectIds = (snap.data().projectIds || []).filter((id: string) => id !== projectId)
-          batch.update(snap.ref, { projectIds })
-        }
-      })
-
-      await batch.commit()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
@@ -124,31 +105,11 @@ export function useRestoreProject() {
 
   return useMutation({
     mutationFn: async (projectId: string) => {
-      const projectSnap = await getDoc(doc(db, 'projects', projectId))
-      const memberUids: string[] = projectSnap.exists() ? projectSnap.data().memberUids || [] : []
-
-      const batch = writeBatch(db)
-      batch.set(
+      await setDoc(
         doc(db, 'projects', projectId),
-        {
-          isActive: true,
-          deletedAt: deleteField()
-        },
+        { isActive: true, deletedAt: deleteField() },
         { merge: true }
       )
-
-      // Re-add projectId to all members' projectIds
-      const memberSnaps = await Promise.all(memberUids.map((uid) => getDoc(doc(db, 'users', uid))))
-      memberSnaps.forEach((snap) => {
-        if (snap.exists()) {
-          const projectIds: string[] = snap.data().projectIds || []
-          if (!projectIds.includes(projectId)) {
-            batch.update(snap.ref, { projectIds: [...projectIds, projectId] })
-          }
-        }
-      })
-
-      await batch.commit()
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
@@ -167,47 +128,16 @@ export function useUpdateProjectMembers() {
       removeUids: string[]
       currentMemberUids: string[]
     }) => {
-      const batch = writeBatch(db)
-      const newMemberUids = [
-        ...params.currentMemberUids.filter((uid) => !params.removeUids.includes(uid)),
-        ...params.addUids
-      ]
-
-      // Project doc: keep memberUids in sync AND update memberRoles
-      const projectUpdate: Record<string, unknown> = { memberUids: newMemberUids }
+      const projectUpdate: Record<string, unknown> = {}
       for (const uid of params.addUids) {
-        projectUpdate[`memberRoles.${uid}`] = 'user'   // default role; admins can change later
+        projectUpdate[`memberRoles.${uid}`] = 'user' // default role; admins can change later
       }
       for (const uid of params.removeUids) {
         projectUpdate[`memberRoles.${uid}`] = deleteField()
       }
-      batch.update(doc(db, 'projects', params.projectId), projectUpdate)
-
-      // Maintain legacy projectIds on user docs (unchanged behavior)
-      const allUids = [...params.addUids, ...params.removeUids]
-      const userSnaps = await Promise.all(allUids.map((uid) => getDoc(doc(db, 'users', uid))))
-
-      params.addUids.forEach((uid, i) => {
-        const userSnap = userSnaps[i]
-        if (userSnap.exists()) {
-          const projectIds = userSnap.data().projectIds || []
-          if (!projectIds.includes(params.projectId)) {
-            batch.update(doc(db, 'users', uid), { projectIds: [...projectIds, params.projectId] })
-          }
-        }
-      })
-
-      params.removeUids.forEach((uid, i) => {
-        const userSnap = userSnaps[params.addUids.length + i]
-        if (userSnap.exists()) {
-          const projectIds = (userSnap.data().projectIds || []).filter(
-            (id: string) => id !== params.projectId
-          )
-          batch.update(doc(db, 'users', uid), { projectIds })
-        }
-      })
-
-      await batch.commit()
+      if (Object.keys(projectUpdate).length > 0) {
+        await updateDoc(doc(db, 'projects', params.projectId), projectUpdate)
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })

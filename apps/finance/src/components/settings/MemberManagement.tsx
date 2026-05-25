@@ -18,7 +18,7 @@ export default function MemberManagement({ project }: { project: Project }) {
   const updateMembersMutation = useUpdateProjectMembers()
   const membersContainerRef = useRef<HTMLDivElement>(null)
 
-  const memberUids = new Set(project.memberUids || [])
+  const memberUids = new Set(Object.keys(project.memberRoles ?? {}))
 
   const handleToggle = async (uid: string, add: boolean) => {
     try {
@@ -26,7 +26,7 @@ export default function MemberManagement({ project }: { project: Project }) {
         projectId: project.id,
         addUids: add ? [uid] : [],
         removeUids: add ? [] : [uid],
-        currentMemberUids: project.memberUids || []
+        currentMemberUids: Object.keys(project.memberRoles ?? {})
       })
     } catch (err) {
       console.error('Failed to toggle member:', err)

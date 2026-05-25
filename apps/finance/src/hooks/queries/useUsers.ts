@@ -6,8 +6,6 @@ import {
   doc,
   updateDoc,
   deleteField,
-  arrayRemove,
-  arrayUnion,
   query,
   orderBy,
   limit,
@@ -18,7 +16,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
-import type { AppUser, UserRole, ProjectRole, SystemRole } from '../../types'
+import type { AppUser, ProjectRole, SystemRole } from '../../types'
 
 const PAGE_SIZE = 20
 
@@ -63,19 +61,6 @@ export function useUser(uid: string | undefined) {
   })
 }
 
-export function useUpdateUserRole() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (params: { uid: string; role: UserRole }) => {
-      await updateDoc(doc(db, 'users', params.uid), { role: params.role })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all() })
-    }
-  })
-}
-
 export function useDeleteUser() {
   const queryClient = useQueryClient()
 
@@ -98,8 +83,7 @@ export function useUpdateProjectMemberRole() {
   return useMutation({
     mutationFn: async ({ projectId, uid, role }: { projectId: string; uid: string; role: ProjectRole }) => {
       await updateDoc(doc(db, 'projects', projectId), {
-        [`memberRoles.${uid}`]: role,
-        memberUids: arrayUnion(uid)
+        [`memberRoles.${uid}`]: role
       })
     },
     onSuccess: (_d, vars) => {
@@ -114,8 +98,7 @@ export function useRemoveProjectMember() {
   return useMutation({
     mutationFn: async ({ projectId, uid }: { projectId: string; uid: string }) => {
       await updateDoc(doc(db, 'projects', projectId), {
-        [`memberRoles.${uid}`]: deleteField(),
-        memberUids: arrayRemove(uid)
+        [`memberRoles.${uid}`]: deleteField()
       })
     },
     onSuccess: (_d, vars) => {

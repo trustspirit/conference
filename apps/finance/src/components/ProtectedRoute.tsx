@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useProject } from '../contexts/ProjectContext'
 import { useProjectRole } from '../hooks/useProjectRole'
 import { ProjectRole } from '../types'
 import Spinner from './Spinner'
@@ -15,26 +16,22 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children, requiredRoles }: Props) {
-  const { user, appUser, loading } = useAuth()
+  const { user, appUser, loading: authLoading } = useAuth()
+  const { currentProject } = useProject()
   const projectRole = useProjectRole()
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner />
-      </div>
-    )
-  }
+  if (authLoading) return <div className="flex items-center justify-center min-h-screen"><Spinner /></div>
   if (!user) return <Navigate to="/login" replace />
 
   if (requiredRoles) {
-    if (!appUser) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <Spinner />
-        </div>
-      )
+    if (!appUser) return <div className="flex items-center justify-center min-h-screen"><Spinner /></div>
+
+    // If projects are still loading (no projects array yet AND user is supposed to have some),
+    // show spinner instead of redirecting. The AssignmentGuard handles the truly-unassigned case.
+    if (appUser.assignedProjectCount && appUser.assignedProjectCount > 0 && !currentProject) {
+      return <div className="flex items-center justify-center min-h-screen"><Spinner /></div>
     }
+
     if (projectRole == null || !requiredRoles.includes(projectRole)) {
       return <Navigate to="/my-requests" replace />
     }
