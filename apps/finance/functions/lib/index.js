@@ -219,7 +219,7 @@ const STAFF_ROLES = new Set([
 ]);
 async function getCallerRole(uid) {
     const snap = await admin.firestore().doc(`users/${uid}`).get();
-    return getSystemRole(snap.data());
+    return snap.exists ? (snap.data()?.role ?? null) : null;
 }
 /**
  * Returns uids that have one of the given roles in the project, plus all super_admins.
@@ -227,6 +227,8 @@ async function getCallerRole(uid) {
  * Always returns each uid only once.
  */
 async function uidsWithProjectRoles(projectId, roles) {
+    if (!projectId)
+        return [];
     const db = admin.firestore();
     const projDoc = await db.doc(`projects/${projectId}`).get();
     const data = projDoc.data() ?? {};
@@ -293,8 +295,10 @@ async function assertCanReadStoragePath(uid, storagePath) {
             return;
         const projectId = projectMatch[1];
         const proj = await admin.firestore().doc(`projects/${projectId}`).get();
-        const members = proj.data()?.memberUids ?? [];
-        if (!members.includes(uid)) {
+        const data = proj.data() ?? {};
+        const inMemberRoles = data.memberRoles && data.memberRoles[uid] !== undefined;
+        const inMemberUids = Array.isArray(data.memberUids) && data.memberUids.includes(uid);
+        if (!inMemberRoles && !inMemberUids) {
             throw new https_1.HttpsError('permission-denied', 'Not authorized to read this file');
         }
         return;
