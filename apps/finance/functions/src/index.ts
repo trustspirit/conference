@@ -790,8 +790,9 @@ export const onRequestStatusChange = onDocumentUpdated(
       const projectId = after.projectId as string
 
       // 신청자의 역할 확인 (위원장이 신청한 건은 executive만 승인 가능)
-      const requesterSnap = await db.doc(`users/${requestedByUid}`).get()
-      const requesterRole = requesterSnap.exists ? (requesterSnap.data()?.role as string) : 'user'
+      const projectSnap = await db.doc(`projects/${projectId}`).get()
+      const requesterRole =
+        (projectSnap.data()?.memberRoles?.[requestedByUid] as string | undefined) ?? 'user'
       const isDirectorRequest =
         requesterRole === 'session_director' || requesterRole === 'logistic_admin'
 

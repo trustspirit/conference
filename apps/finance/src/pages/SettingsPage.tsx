@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useProject } from '../contexts/ProjectContext'
+import { useAuth } from '../contexts/AuthContext'
 import Layout from '../components/Layout'
 import { CheckIcon, StarIcon, TrashIcon } from '../components/Icons'
 import { Dialog, Button } from 'trust-ui-react'
@@ -8,6 +10,7 @@ import ProjectGeneralSettings from '../components/settings/ProjectGeneralSetting
 import MemberManagement from '../components/settings/MemberManagement'
 import { useGlobalSettings, useUpdateGlobalSettings } from '../hooks/queries/useSettings'
 import { useSoftDeleteProject } from '../hooks/queries/useProjects'
+import { effectiveSystemRole } from '../hooks/useProjectRole'
 
 function ProjectManagement() {
   const { t } = useTranslation()
@@ -135,6 +138,12 @@ function ProjectManagement() {
 
 export default function SettingsPage() {
   const { t } = useTranslation()
+  const { appUser } = useAuth()
+  const sys = effectiveSystemRole(appUser)
+
+  if (sys !== 'admin' && sys !== 'super_admin') {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <Layout>

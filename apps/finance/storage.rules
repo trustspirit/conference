@@ -1,13 +1,19 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    function userRole() {
+    function userDoc() {
       return request.auth != null
-        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data
         : null;
     }
+    function systemRole() {
+      let u = userDoc();
+      return u == null ? null : u.systemRole;
+    }
     function isStaff() {
-      return request.auth != null && userRole() != 'user';
+      // Bankbook access: any authenticated user
+      // (matches firestore /users read trust model — internal-tool trust).
+      return request.auth != null;
     }
 
     match /receipts/{allPaths=**} {

@@ -50,10 +50,10 @@ export async function handleChat(
     throw new HttpsError('unavailable', 'AI chatbot is currently unavailable')
   }
 
-  // Lookup user role from Firestore for role-based context filtering
+  // Lookup user systemRole from Firestore for role-based context filtering
   const uid = request.auth.uid
   const userDoc = await admin.firestore().collection('users').doc(uid).get()
-  const userRole: string = userDoc.exists ? (userDoc.data()?.role ?? 'user') : 'user'
+  const userRole: string = userDoc.exists ? ((userDoc.data()?.systemRole as string | undefined) ?? 'user') : 'user'
 
   const systemPrompt = await buildSystemPrompt(settings, userRole)
 
