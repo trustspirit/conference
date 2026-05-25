@@ -10,7 +10,7 @@ import ProjectGeneralSettings from '../components/settings/ProjectGeneralSetting
 import MemberManagement from '../components/settings/MemberManagement'
 import { useGlobalSettings, useUpdateGlobalSettings } from '../hooks/queries/useSettings'
 import { useSoftDeleteProject } from '../hooks/queries/useProjects'
-import { effectiveSystemRole } from '../hooks/useProjectRole'
+import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 
 function ProjectManagement() {
   const { t } = useTranslation()
@@ -140,8 +140,14 @@ export default function SettingsPage() {
   const { t } = useTranslation()
   const { appUser } = useAuth()
   const sys = effectiveSystemRole(appUser)
+  const projectRole = useProjectRole()
+  const canEditCurrentProject = projectRole === 'admin'
 
   if (sys !== 'admin' && sys !== 'super_admin') {
+    return <Navigate to="/" replace />
+  }
+
+  if (!canEditCurrentProject) {
     return <Navigate to="/" replace />
   }
 
