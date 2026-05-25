@@ -1058,6 +1058,8 @@ export const getDashboardStats = onCall(async (request) => {
   }
 })
 
+export { onProjectMembersWrite } from './onProjectMembersWrite'
+
 // --- AI Chatbot ---
 import { handleChat } from './ai/chatHandler'
 
