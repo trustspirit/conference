@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { can, ACTION_PERMISSIONS } from './permissions'
+import { can } from './permissions'
 
 describe('ACTION_PERMISSIONS', () => {
   it('user can submit own request', () => {
