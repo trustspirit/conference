@@ -81,14 +81,29 @@ async function main() {
     return
   }
 
+  // Phase 1: write everything EXCEPT assignedProjectCount.
+  // (The onProjectMembersWrite trigger will increment counts as memberRoles writes land.)
   const writer = db.bulkWriter()
   for (const [uid, u] of userUpdates) {
-    writer.set(db.doc(`users/${uid}`), u, { merge: true })
+    writer.set(db.doc(`users/${uid}`), { systemRole: u.systemRole }, { merge: true })
   }
   for (const [pid, map] of projectUpdates) {
     writer.set(db.doc(`projects/${pid}`), { memberRoles: map }, { merge: true })
   }
   await writer.close()
+
+  // Phase 2: wait briefly for trigger fan-out, then reconcile counts deterministically.
+  // This overwrites any trigger output and makes the script idempotent — re-runs always
+  // land on the correct count regardless of prior trigger fires.
+  console.log('Waiting 10s for onProjectMembersWrite trigger fan-out…')
+  await new Promise((r) => setTimeout(r, 10_000))
+
+  console.log('Reconciling assignedProjectCount from memberRoles…')
+  const reconciler = db.bulkWriter()
+  for (const [uid, u] of userUpdates) {
+    reconciler.set(db.doc(`users/${uid}`), { assignedProjectCount: u.assignedProjectCount }, { merge: true })
+  }
+  await reconciler.close()
   console.log('Commit complete.')
 }
 
