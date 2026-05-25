@@ -241,7 +241,8 @@ async function getCallerRole(uid: string): Promise<string | null> {
  * Reads from `memberRoles` if present, otherwise falls back to legacy `memberUids` + user `role`.
  * Always returns each uid only once.
  */
-async function uidsWithProjectRoles(projectId: string, roles: string[]): Promise<{ uid: string; role: string }[]> {
+async function uidsWithProjectRoles(projectId: string | undefined | null, roles: string[]): Promise<{ uid: string; role: string }[]> {
+  if (!projectId) return []
   const db = admin.firestore()
   const projDoc = await db.doc(`projects/${projectId}`).get()
   const data = projDoc.data() ?? {}
