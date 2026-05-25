@@ -69,10 +69,10 @@ async function handleChat(request, secrets) {
     if (!settings.enabled) {
         throw new https_1.HttpsError('unavailable', 'AI chatbot is currently unavailable');
     }
-    // Lookup user role from Firestore for role-based context filtering
+    // Lookup user systemRole from Firestore for role-based context filtering
     const uid = request.auth.uid;
     const userDoc = await admin.firestore().collection('users').doc(uid).get();
-    const userRole = userDoc.exists ? (userDoc.data()?.role ?? 'user') : 'user';
+    const userRole = userDoc.exists ? (userDoc.data()?.systemRole ?? 'user') : 'user';
     const systemPrompt = await (0, promptBuilder_1.buildSystemPrompt)(settings, userRole);
     console.log('User role:', userRole);
     console.log('System prompt length:', systemPrompt.length);
