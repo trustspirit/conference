@@ -17,23 +17,16 @@ import { effectiveSystemRole } from '../useProjectRole'
 
 async function fetchProjects(appUser: AppUser): Promise<Project[]> {
   const sys = effectiveSystemRole(appUser)
-  // super_admin and admin systemRole see all active projects.
-  // (admin systemRole = "can create projects + may be admin in some projects"; we show
-  //  all so they can switch between projects they've been assigned to + ones to manage.)
-  if (sys === 'super_admin' || sys === 'admin') {
-    const q = query(collection(db, 'projects'), where('isActive', '==', true))
-    const snap = await getDocs(q)
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Project).filter((p) => p.isActive)
-  }
-
-  // Regular members: only projects where they appear in memberRoles.
-  // Firestore can't query map keys dynamically across the collection, so we fetch all
-  // active projects then filter client-side. N is small in this app (typically <10).
   const q = query(collection(db, 'projects'), where('isActive', '==', true))
   const snap = await getDocs(q)
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Project)
-    .filter((p) => p.isActive && p.memberRoles && appUser.uid in p.memberRoles)
+  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Project)
+
+  // super_admin: system operator sees every active project for oversight.
+  if (sys === 'super_admin') return all
+
+  // Everyone else (including systemRole=admin) only sees projects they belong to.
+  // Firestore can't query map keys dynamically across the collection, so filter client-side.
+  return all.filter((p) => p.memberRoles && appUser.uid in p.memberRoles)
 }
 
 export function useProjects(appUser: AppUser | null) {
