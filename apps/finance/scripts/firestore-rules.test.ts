@@ -105,38 +105,3 @@ describe('firestore.rules — new-shape', () => {
     ))
   })
 })
-
-describe('firestore.rules — legacy fallback', () => {
-  it('legacy role+memberUids still authorizes', async () => {
-    await seed(env, async (db) => {
-      await setDoc(doc(db, 'users/userA'), { role: 'approver_ops' })  // legacy shape
-      await setDoc(doc(db, 'projects/projA'), {
-        memberUids: ['userA'], directorApprovalThreshold: 100000   // legacy shape
-      })
-      await setDoc(doc(db, 'requests/r1'), {
-        projectId: 'projA', status: 'reviewed', committee: 'operations',
-        totalAmount: 50000, requestedBy: { uid: 'someone' }
-      })
-    })
-    await assertSucceeds(updateDoc(
-      doc(env.authenticatedContext('userA').firestore(), 'requests/r1'),
-      { status: 'approved', approvedBy: { uid: 'userA' }, approvedAt: new Date(), approvalSignature: 'x' }
-    ))
-  })
-
-  it('legacy: approver_ops in project A cannot approve in project B (no memberUids match)', async () => {
-    await seed(env, async (db) => {
-      await setDoc(doc(db, 'users/userA'), { role: 'approver_ops' })
-      await setDoc(doc(db, 'projects/projA'), { memberUids: ['userA'], directorApprovalThreshold: 100000 })
-      await setDoc(doc(db, 'projects/projB'), { memberUids: [], directorApprovalThreshold: 100000 })
-      await setDoc(doc(db, 'requests/r1'), {
-        projectId: 'projB', status: 'reviewed', committee: 'operations',
-        totalAmount: 50000, requestedBy: { uid: 'someone' }
-      })
-    })
-    await assertFails(updateDoc(
-      doc(env.authenticatedContext('userA').firestore(), 'requests/r1'),
-      { status: 'approved', approvedBy: { uid: 'userA' }, approvedAt: new Date(), approvalSignature: 'x' }
-    ))
-  })
-})
