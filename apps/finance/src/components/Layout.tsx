@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  isAdmin as checkIsAdmin,
   isStaff,
   canAccessDashboard,
   canManageUsers,
@@ -175,7 +174,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const projectRole = useProjectRole() ?? 'user'
   // Display label uses systemRole when super_admin (so the badge reads "최고 관리자"
   // rather than the promoted ProjectRole 'admin').
-  const displayRole = effectiveSystemRole(appUser) === 'super_admin' ? 'super_admin' : projectRole
+  const sys = effectiveSystemRole(appUser)
+  const displayRole = sys === 'super_admin' ? 'super_admin' : projectRole
+  const canAccessSettings = sys === 'admin' || sys === 'super_admin'
   const userName = appUser?.displayName || appUser?.name || appUser?.email
 
   const isActive = (path: string) => location.pathname === path
@@ -276,7 +277,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Desktop Right */}
             <div className="hidden md:flex items-center gap-2">
-              {checkIsAdmin(projectRole) && (
+              {canAccessSettings && (
                 <Link
                   to="/settings"
                   aria-label={t('nav.settings')}
@@ -350,7 +351,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               )}
               <div className="border-t border-finance-border-soft mt-2 pt-2">
-                {checkIsAdmin(projectRole) && (
+                {canAccessSettings && (
                   <Link
                     to="/settings"
                     onClick={() => setMobileMenuOpen(false)}
