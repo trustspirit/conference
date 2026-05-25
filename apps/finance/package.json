@@ -19,7 +19,10 @@
     "migrate:projects:emulator": "npx tsx scripts/migrate-projects.ts --emulator",
     "deploy": "pnpm build && firebase deploy --only hosting --project finance-96f46",
     "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions --project finance-96f46",
-    "deploy:all": "pnpm build && cd functions && npm run build && cd .. && firebase deploy --project finance-96f46"
+    "deploy:all": "pnpm build && cd functions && npm run build && cd .. && firebase deploy --project finance-96f46",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rules": "vitest run scripts/firestore-rules.test.ts"
   },
   "dependencies": {
     "@conference/firebase": "workspace:*",
@@ -39,16 +42,22 @@
   },
   "devDependencies": {
     "@conference/config": "workspace:*",
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
+    "@vitest/ui": "^4.1.7",
     "firebase-admin": "^13.7.0",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.7"
   }
 }
