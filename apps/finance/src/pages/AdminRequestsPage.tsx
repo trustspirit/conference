@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
 import type { Committee, RequestStatus, PaymentRequest } from '../types'
 import { formatFirestoreTime } from '../lib/utils'
 import Layout from '../components/Layout'
@@ -52,9 +52,8 @@ function SortIcon({
 export default function AdminRequestsPage() {
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { appUser } = useAuth()
   const { currentProject } = useProject()
-  const role = appUser?.role || 'user'
+  const role = useProjectRole() ?? 'user'
 
   // Filters + sort live in the URL so back/forward and shared links restore the view.
   const [searchParams, setSearchParams] = useSearchParams()

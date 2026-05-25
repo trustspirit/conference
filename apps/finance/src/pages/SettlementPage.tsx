@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
 import { PaymentRequest, AppUser } from '../types'
 import { canSeeCommitteeRequests } from '../lib/roles'
 import { useApprovedRequests, useForceRejectRequest } from '../hooks/queries/useRequests'
@@ -35,7 +36,7 @@ export default function SettlementPage() {
   const { toast } = useToast()
   const { user, appUser } = useAuth()
   const { currentProject } = useProject()
-  const role = appUser?.role || 'user'
+  const projectRole = useProjectRole() ?? 'user'
   const navigate = useNavigate()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [processing, setProcessing] = useState(false)
@@ -61,8 +62,8 @@ export default function SettlementPage() {
   const budgetUsage = useBudgetUsage()
 
   const requests = useMemo(
-    () => allRequests.filter((r) => canSeeCommitteeRequests(role, r.committee)),
-    [allRequests, role]
+    () => allRequests.filter((r) => canSeeCommitteeRequests(projectRole, r.committee)),
+    [allRequests, projectRole]
   )
 
   const selectedRequests = useMemo(

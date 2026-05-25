@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import StatCard from '../components/StatCard'
@@ -15,15 +15,14 @@ import { formatAmount } from '../lib/currency'
 
 export default function DashboardPage() {
   const { t } = useTranslation()
-  const { appUser } = useAuth()
   const { currentProject } = useProject()
   const budget = currentProject?.budgetConfig ?? { totalBudget: 0, byCode: {} }
+  const projectRole = useProjectRole()
 
   const { data: stats, isLoading: loading, error } = useDashboardStats(currentProject?.id)
   const budgetUsage = useBudgetUsage()
 
-  const canEditBudget =
-    appUser?.role === 'admin' || appUser?.role === 'super_admin' || appUser?.role === 'finance_prep'
+  const canEditBudget = projectRole === 'admin' || projectRole === 'finance_prep'
 
   if (loading)
     return (

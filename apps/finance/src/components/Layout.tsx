@@ -10,6 +10,7 @@ import {
   canAccessReceipts,
   canAccessSettlementRead
 } from '../lib/roles'
+import { useProjectRole } from '../hooks/useProjectRole'
 import ProjectSelector from './ProjectSelector'
 import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from './Icons'
 import FloatingChatButton from './chat/FloatingChatButton'
@@ -171,7 +172,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const role = appUser?.role || 'user'
+  const projectRole = useProjectRole() ?? 'user'
   const userName = appUser?.displayName || appUser?.name || appUser?.email
 
   const isActive = (path: string) => location.pathname === path
@@ -182,22 +183,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ]
 
   const adminSingleItems: NavItem[] = [
-    ...(isStaff(role) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
-    ...(canAccessSettlementRead(role)
+    ...(isStaff(projectRole) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
+    ...(canAccessSettlementRead(projectRole)
       ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessDashboard(role) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : [])
+    ...(canAccessDashboard(projectRole) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : [])
   ]
 
   const managementGroup: NavGroup | null =
-    canAccessReceipts(role) || canManageUsers(role)
+    canAccessReceipts(projectRole) || canManageUsers(projectRole)
       ? {
           label: t('nav.management'),
           items: [
-            ...(canAccessReceipts(role)
+            ...(canAccessReceipts(projectRole)
               ? [{ to: '/admin/receipts', label: t('nav.receipts') }]
               : []),
-            ...(canManageUsers(role)
+            ...(canManageUsers(projectRole)
               ? [{ to: '/admin/users', label: t('nav.userManagement') }]
               : [])
           ]
@@ -211,13 +212,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ]
 
   const mobileAdminItems: NavItem[] = [
-    ...(isStaff(role) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
-    ...(canAccessSettlementRead(role)
+    ...(isStaff(projectRole) ? [{ to: '/admin/requests', label: t('nav.adminRequests') }] : []),
+    ...(canAccessSettlementRead(projectRole)
       ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessReceipts(role) ? [{ to: '/admin/receipts', label: t('nav.receipts') }] : []),
-    ...(canAccessDashboard(role) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : []),
-    ...(canManageUsers(role) ? [{ to: '/admin/users', label: t('nav.userManagement') }] : [])
+    ...(canAccessReceipts(projectRole) ? [{ to: '/admin/receipts', label: t('nav.receipts') }] : []),
+    ...(canAccessDashboard(projectRole) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : []),
+    ...(canManageUsers(projectRole) ? [{ to: '/admin/users', label: t('nav.userManagement') }] : [])
   ]
 
   return (
@@ -272,7 +273,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Desktop Right */}
             <div className="hidden md:flex items-center gap-2">
-              {checkIsAdmin(role) && (
+              {checkIsAdmin(projectRole) && (
                 <Link
                   to="/settings"
                   aria-label={t('nav.settings')}
@@ -283,7 +284,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <GearIcon className="w-4 h-4 text-finance-muted" />
                 </Link>
               )}
-              <UserMenu userName={userName} role={role} onLogout={logout} isActive={isActive} />
+              <UserMenu userName={userName} role={projectRole} onLogout={logout} isActive={isActive} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -346,7 +347,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               )}
               <div className="border-t border-finance-border-soft mt-2 pt-2">
-                {checkIsAdmin(role) && (
+                {checkIsAdmin(projectRole) && (
                   <Link
                     to="/settings"
                     onClick={() => setMobileMenuOpen(false)}
@@ -373,9 +374,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="px-3 py-2 flex items-center justify-between gap-3">
                   <span className="min-w-0 truncate text-sm text-finance-muted">
                     {userName}
-                    {role !== 'user' && (
+                    {projectRole !== 'user' && (
                       <span className="ml-1.5 text-xs bg-finance-primary-surface text-finance-primary px-1.5 py-0.5 rounded">
-                        {t(`role.${role}`)}
+                        {t(`role.${projectRole}`)}
                       </span>
                     )}
                   </span>

@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
 import { useInfiniteSettlements, fetchRequestDatesByIds } from '../hooks/queries/useSettlements'
 import {
   exportSettlementsByBudgetCodeCsv,
@@ -72,9 +72,9 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
 
 export default function SettlementListPage() {
   const { t } = useTranslation()
-  const { appUser } = useAuth()
   const { currentProject } = useProject()
-  const canProcess = canAccessSettlement(appUser?.role || 'user')
+  const projectRole = useProjectRole() ?? 'user'
+  const canProcess = canAccessSettlement(projectRole)
   const [searchParams, setSearchParams] = useSearchParams()
   const committeeFilter = (searchParams.get('committee') as CommitteeFilter | null) ?? 'all'
   const setCommitteeFilter = (next: CommitteeFilter) => {

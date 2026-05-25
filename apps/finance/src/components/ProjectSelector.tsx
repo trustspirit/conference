@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from 'trust-ui-react'
 import { useProject } from '../contexts/ProjectContext'
 import { useAuth } from '../contexts/AuthContext'
-import { isAdmin as checkIsAdmin } from '../lib/roles'
+import { effectiveSystemRole } from '../hooks/useProjectRole'
 import { useTranslation } from 'react-i18next'
 import { FolderIcon, ChevronDownIcon, CloseIcon, RestoreIcon } from './Icons'
 import ProjectCreateForm from './settings/ProjectCreateForm'
@@ -36,8 +36,8 @@ export default function ProjectSelector() {
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
-  const role = appUser?.role || 'user'
-  const isAdmin = checkIsAdmin(role)
+  const sys = effectiveSystemRole(appUser)
+  const isAdmin = sys === 'admin' || sys === 'super_admin'
   const [open, setOpen] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

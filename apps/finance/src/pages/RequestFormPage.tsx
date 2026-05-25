@@ -21,6 +21,7 @@ import { sumByCurrency, formatTotals } from '../lib/currency'
 import { validateBankBookFile } from '../lib/utils'
 import { captureAndUploadRouteMaps } from '../lib/captureRouteMap'
 import { canCreateVendorRequest } from '../lib/roles'
+import { useProjectRole } from '../hooks/useProjectRole'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
 import InlineSignaturePad from '../components/InlineSignaturePad'
@@ -71,6 +72,7 @@ export default function RequestFormPage() {
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
   const navigate = useNavigate()
+  const projectRole = useProjectRole()
 
   const queryClient = useQueryClient()
   const createRequest = useCreateRequest()
@@ -116,7 +118,7 @@ export default function RequestFormPage() {
     }
   }, [vendorBankBookPreviewUrl])
 
-  const showRequestTypeDropdown = appUser ? canCreateVendorRequest(appUser.role, committee) : false
+  const showRequestTypeDropdown = projectRole ? canCreateVendorRequest(projectRole, committee) : false
 
   const needsBankBook =
     !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl

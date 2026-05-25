@@ -15,6 +15,7 @@ import {
   useUpdateRequestReceiptDisplaySizes
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
+import { useProjectRole } from '../hooks/useProjectRole'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { useTranslation } from 'react-i18next'
@@ -55,10 +56,10 @@ export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
+  const role = useProjectRole() ?? 'user'
   const navigate = useNavigate()
   const location = useLocation()
   const backPath = (location.state as { from?: string })?.from || '/my-requests'
-  const role = appUser?.role || 'user'
   const threshold = currentProject?.directorApprovalThreshold ?? DEFAULT_APPROVAL_THRESHOLD
 
   const cancelMutation = useCancelRequest()
@@ -157,8 +158,9 @@ export default function RequestDetailPage() {
   const isSelf = request?.requestedBy.uid === user?.uid
 
   // Director-filed request: only executive/admin can approve
+  const requesterProjectRole = requester && currentProject?.memberRoles?.[requester.uid]
   const isDirectorRequest =
-    requester?.role === 'session_director' || requester?.role === 'logistic_admin'
+    requesterProjectRole === 'session_director' || requesterProjectRole === 'logistic_admin'
 
   // Review action (pending → reviewed)
   const canDoReview =
