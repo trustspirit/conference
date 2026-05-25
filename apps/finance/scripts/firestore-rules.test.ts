@@ -104,4 +104,59 @@ describe('firestore.rules — new-shape', () => {
       { systemRole: 'admin' }
     ))
   })
+
+  it('non-member CANNOT create a request in a project they do not belong to', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/userX'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/projA'), {
+        memberRoles: {},   // userX not in
+        directorApprovalThreshold: 100000
+      })
+    })
+    const ctx = env.authenticatedContext('userX')
+    await assertFails(setDoc(doc(ctx.firestore(), 'requests/r-new'), {
+      projectId: 'projA', status: 'pending', committee: 'operations',
+      totalAmount: 1000, requestedBy: { uid: 'userX' },
+      approvedBy: null, approvalSignature: null, reviewedBy: null
+    }))
+  })
+
+  it('non-executive director CANNOT approve another director\'s request', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/dirA'), { systemRole: 'member' })
+      await setDoc(doc(db, 'users/dirB'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { dirA: 'session_director', dirB: 'session_director' },
+        directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'dirA' }
+      })
+    })
+    // dirB (also session_director) tries to approve dirA's request → should DENY
+    const ctx = env.authenticatedContext('dirB')
+    await assertFails(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'approved', approvedBy: { uid: 'dirB' }, approvedAt: new Date(), approvalSignature: 'x'
+    }))
+  })
+
+  it('executive CAN approve a director\'s request', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/dirA'), { systemRole: 'member' })
+      await setDoc(doc(db, 'users/exec'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { dirA: 'session_director', exec: 'executive' },
+        directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'dirA' }
+      })
+    })
+    const ctx = env.authenticatedContext('exec')
+    await assertSucceeds(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'approved', approvedBy: { uid: 'exec' }, approvedAt: new Date(), approvalSignature: 'x'
+    }))
+  })
 })

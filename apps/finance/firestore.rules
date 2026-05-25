@@ -61,6 +61,7 @@ service cloud.firestore {
         );
       allow create: if request.auth != null
         && request.resource.data.requestedBy.uid == request.auth.uid
+        && callerProjectRole(request.resource.data.projectId) != null
         && request.resource.data.status == 'pending'
         && request.resource.data.approvedBy == null
         && request.resource.data.approvalSignature == null
@@ -92,6 +93,14 @@ service cloud.firestore {
             && request.resource.data.status == 'rejected'
             && request.auth.uid != resource.data.requestedBy.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature', 'rejectionReason'])
+            // Director-filed request: only executive/admin may reject
+            && (
+              !(
+                resource.data.requestedBy.uid in projectDoc(resource.data.projectId).memberRoles
+                && projectDoc(resource.data.projectId).memberRoles[resource.data.requestedBy.uid] in ['session_director', 'logistic_admin']
+              )
+              || callerProjectRole(resource.data.projectId) in ['executive', 'admin']
+            )
             && (
               (callerProjectRole(resource.data.projectId) == 'approver_ops' && resource.data.committee == 'operations')
               || (callerProjectRole(resource.data.projectId) == 'approver_prep' && resource.data.committee == 'preparation')
@@ -106,6 +115,14 @@ service cloud.firestore {
             && request.resource.data.status == 'approved'
             && request.auth.uid != resource.data.requestedBy.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature', 'rejectionReason'])
+            // Director-filed request: only executive/admin may approve
+            && (
+              !(
+                resource.data.requestedBy.uid in projectDoc(resource.data.projectId).memberRoles
+                && projectDoc(resource.data.projectId).memberRoles[resource.data.requestedBy.uid] in ['session_director', 'logistic_admin']
+              )
+              || callerProjectRole(resource.data.projectId) in ['executive', 'admin']
+            )
             && (
               // Basic approvers: enforce amount threshold from project settings
               (
@@ -114,7 +131,7 @@ service cloud.firestore {
                   (callerProjectRole(resource.data.projectId) == 'approver_ops' && resource.data.committee == 'operations')
                   || (callerProjectRole(resource.data.projectId) == 'approver_prep' && resource.data.committee == 'preparation')
                 )
-                && resource.data.totalAmount <= get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.directorApprovalThreshold
+                && resource.data.totalAmount <= projectDoc(resource.data.projectId).directorApprovalThreshold
               )
               // Directors, executive, admins: no amount limit
               || (callerProjectRole(resource.data.projectId) == 'session_director' && resource.data.committee == 'operations')
