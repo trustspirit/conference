@@ -10,6 +10,19 @@ export type UserRole =
   | 'admin'
   | 'super_admin'
 
+export type SystemRole = 'super_admin' | 'admin' | 'member'
+
+export type ProjectRole =
+  | 'admin'
+  | 'finance_ops'
+  | 'approver_ops'
+  | 'finance_prep'
+  | 'approver_prep'
+  | 'session_director'
+  | 'logistic_admin'
+  | 'executive'
+  | 'user'
+
 export interface ProjectBudgetConfig {
   totalBudget: number
   byCode: Record<number, number>
@@ -28,6 +41,8 @@ export interface Project {
   perKmRate?: number
   corporateCardReportTitle?: string
   memberUids: string[]
+  /** New per-project role map. Optional during migration; once cleanup is done, `memberUids` is removed. */
+  memberRoles?: Record<string /* uid */, ProjectRole>
   isActive: boolean
   deletedAt?: Date | null
 }
@@ -53,6 +68,10 @@ export interface AppUser {
   bankBookDriveId?: string
   /** @deprecated legacy Drive field — kept for existing data compatibility */
   bankBookDriveUrl?: string
+  /** New per-project model. Optional during migration; once cleanup is done, `role` is removed. */
+  systemRole?: SystemRole
+  /** Counter maintained by onProjectMembersWrite trigger; absent before backfill. */
+  assignedProjectCount?: number
   role: UserRole
   projectIds: string[]
   consentAgreedAt?: string
