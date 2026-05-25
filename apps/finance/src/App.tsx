@@ -119,7 +119,7 @@ const router = createBrowserRouter([
       {
         path: '/settings',
         element: (
-          <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
+          <ProtectedRoute requiredRoles={['admin']}>
             <SettingsPage />
           </ProtectedRoute>
         )
@@ -137,7 +137,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             requiredRoles={[
-              'super_admin',
               'admin',
               'executive',
               'session_director',
@@ -157,7 +156,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             requiredRoles={[
-              'super_admin',
               'admin',
               'executive',
               'session_director',
@@ -172,7 +170,7 @@ const router = createBrowserRouter([
       {
         path: '/admin/users',
         element: (
-          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+          <ProtectedRoute requiredRoles={['admin', 'finance_prep']}>
             <AdminUsersPage />
           </ProtectedRoute>
         )
@@ -180,7 +178,7 @@ const router = createBrowserRouter([
       {
         path: '/admin/receipts',
         element: (
-          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+          <ProtectedRoute requiredRoles={['admin', 'finance_prep']}>
             <ReceiptsPage />
           </ProtectedRoute>
         )
@@ -188,7 +186,7 @@ const router = createBrowserRouter([
       {
         path: '/admin/settlement/new',
         element: (
-          <ProtectedRoute requiredRoles={['super_admin', 'admin', 'finance_prep']}>
+          <ProtectedRoute requiredRoles={['admin', 'finance_prep']}>
             <SettlementPage />
           </ProtectedRoute>
         )
@@ -198,7 +196,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             requiredRoles={[
-              'super_admin',
               'admin',
               'finance_prep',
               'executive',
@@ -217,7 +214,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute
             requiredRoles={[
-              'super_admin',
               'admin',
               'finance_prep',
               'executive',
