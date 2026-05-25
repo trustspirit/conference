@@ -233,7 +233,7 @@ const STAFF_ROLES = new Set([
 
 async function getCallerRole(uid: string): Promise<string | null> {
   const snap = await admin.firestore().doc(`users/${uid}`).get()
-  return getSystemRole(snap.data())
+  return snap.exists ? ((snap.data()?.role as string) ?? null) : null
 }
 
 /**
@@ -308,8 +308,10 @@ async function assertCanReadStoragePath(uid: string, storagePath: string): Promi
     if (isStaff) return
     const projectId = projectMatch[1]
     const proj = await admin.firestore().doc(`projects/${projectId}`).get()
-    const members = (proj.data()?.memberUids as string[] | undefined) ?? []
-    if (!members.includes(uid)) {
+    const data = proj.data() ?? {}
+    const inMemberRoles = data.memberRoles && data.memberRoles[uid] !== undefined
+    const inMemberUids = Array.isArray(data.memberUids) && data.memberUids.includes(uid)
+    if (!inMemberRoles && !inMemberUids) {
       throw new HttpsError('permission-denied', 'Not authorized to read this file')
     }
     return
