@@ -33,12 +33,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiChat = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.onProjectMembersWrite = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const params_1 = require("firebase-functions/params");
 const admin = __importStar(require("firebase-admin"));
+const firestore_2 = require("firebase-admin/firestore");
 const nodemailer = __importStar(require("nodemailer"));
 const node_crypto_1 = require("node:crypto");
 admin.initializeApp();
@@ -60,18 +61,58 @@ function createTransporter() {
 const APP_URL = process.env.APP_URL;
 const STORAGE_BUCKET = process.env.STORAGE_BUCKET;
 const bucket = admin.storage().bucket(STORAGE_BUCKET);
-async function uploadFileToStorage(file, storagePath) {
-    if (!file.data.includes(',')) {
-        throw new Error('File data must be a base64 data URI');
+const MAX_UPLOAD_BYTES = 750 * 1024;
+const ALLOWED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'application/pdf']);
+// Verify file content matches its declared MIME using magic bytes — prevents a
+// client from uploading an arbitrary blob (e.g. an executable) labeled as image/png.
+function detectMimeFromMagic(buffer) {
+    if (buffer.length >= 8 &&
+        buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47 &&
+        buffer[4] === 0x0d && buffer[5] === 0x0a && buffer[6] === 0x1a && buffer[7] === 0x0a) {
+        return 'image/png';
     }
-    const base64Data = file.data.split(',')[1];
+    if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+        return 'image/jpeg';
+    }
+    if (buffer.length >= 4 && buffer.subarray(0, 4).toString() === '%PDF') {
+        return 'application/pdf';
+    }
+    return null;
+}
+// Strip directory separators / NUL / control chars to keep storagePath predictable.
+function sanitizeFilename(name) {
+    return name.replace(/[\x00-\x1f/\\]/g, '_').slice(0, 200) || 'file';
+}
+async function uploadFileToStorage(file, storagePath) {
+    if (!file?.data || typeof file.data !== 'string' || !file.data.startsWith('data:')) {
+        throw new https_1.HttpsError('invalid-argument', 'File data must be a base64 data URI');
+    }
+    const commaIdx = file.data.indexOf(',');
+    if (commaIdx < 0) {
+        throw new https_1.HttpsError('invalid-argument', 'Malformed data URI');
+    }
+    const header = file.data.slice(0, commaIdx); // e.g. "data:image/png;base64"
+    const declaredMime = header.split(';')[0].split(':')[1];
+    if (!ALLOWED_MIME_TYPES.has(declaredMime)) {
+        throw new https_1.HttpsError('invalid-argument', `Disallowed file type: ${declaredMime}`);
+    }
+    const base64Data = file.data.slice(commaIdx + 1);
     const buffer = Buffer.from(base64Data, 'base64');
-    const mimeType = file.data.split(';')[0].split(':')[1];
+    if (buffer.length === 0) {
+        throw new https_1.HttpsError('invalid-argument', 'Empty file');
+    }
+    if (buffer.length > MAX_UPLOAD_BYTES) {
+        throw new https_1.HttpsError('invalid-argument', `File exceeds ${Math.floor(MAX_UPLOAD_BYTES / 1024)}KB limit`);
+    }
+    const actualMime = detectMimeFromMagic(buffer);
+    if (actualMime !== declaredMime) {
+        throw new https_1.HttpsError('invalid-argument', 'File contents do not match declared type');
+    }
     const downloadToken = (0, node_crypto_1.randomUUID)();
     const fileRef = bucket.file(storagePath);
     await fileRef.save(buffer, {
         metadata: {
-            contentType: mimeType,
+            contentType: actualMime,
             metadata: {
                 firebaseStorageDownloadTokens: downloadToken
             }
@@ -96,7 +137,8 @@ exports.uploadReceiptsV2 = (0, https_1.onCall)(async (request) => {
     }
     const results = [];
     for (const file of files) {
-        const storagePath = `receipts/${projectId || 'default'}/${committee}/${Date.now()}_${file.name}`;
+        const safeName = sanitizeFilename(file.name);
+        const storagePath = `receipts/${projectId || 'default'}/${committee}/${Date.now()}_${safeName}`;
         results.push(await uploadFileToStorage(file, storagePath));
     }
     return results;
@@ -123,7 +165,7 @@ exports.uploadBankBookV2 = (0, https_1.onCall)(async (request) => {
             }
         }
     }
-    const storagePath = `bankbook/${request.auth.uid}/${Date.now()}_${file.name}`;
+    const storagePath = `bankbook/${request.auth.uid}/${Date.now()}_${sanitizeFilename(file.name)}`;
     return await uploadFileToStorage(file, storagePath);
 });
 // 업체 통장사본 업로드
@@ -136,7 +178,7 @@ exports.uploadVendorBankBook = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError('invalid-argument', 'No file provided');
     }
     // No old-file deletion — vendor bank books are per-request, not per-user
-    const storagePath = `vendor-bankbook/${request.auth.uid}/${Date.now()}_${file.name}`;
+    const storagePath = `vendor-bankbook/${request.auth.uid}/${Date.now()}_${sanitizeFilename(file.name)}`;
     return await uploadFileToStorage(file, storagePath);
 });
 // 경로맵 업로드
@@ -164,15 +206,112 @@ exports.deleteStorageFiles = (0, https_1.onCall)(async (request) => {
     await Promise.all(safePaths.map((p) => bucket.file(p).delete().catch(() => { })));
     return { deleted: safePaths.length };
 });
+const STAFF_ROLES = new Set([
+    'admin',
+    'super_admin',
+    'executive',
+    'session_director',
+    'logistic_admin',
+    'finance_prep',
+    'finance_ops',
+    'approver_ops',
+    'approver_prep'
+]);
+async function getCallerRole(uid) {
+    const snap = await admin.firestore().doc(`users/${uid}`).get();
+    return getSystemRole(snap.data());
+}
+/**
+ * Returns uids that have one of the given roles in the project, plus all super_admins.
+ * Reads from `memberRoles` if present, otherwise falls back to legacy `memberUids` + user `role`.
+ * Always returns each uid only once.
+ */
+async function uidsWithProjectRoles(projectId, roles) {
+    const db = admin.firestore();
+    const projDoc = await db.doc(`projects/${projectId}`).get();
+    const data = projDoc.data() ?? {};
+    const result = new Map(); // uid -> role
+    if (data.memberRoles) {
+        for (const [uid, r] of Object.entries(data.memberRoles)) {
+            if (roles.includes(r))
+                result.set(uid, r);
+        }
+    }
+    else if (Array.isArray(data.memberUids)) {
+        const userDocs = await Promise.all(data.memberUids.map((uid) => db.doc(`users/${uid}`).get()));
+        for (const userDoc of userDocs) {
+            const role = userDoc.data()?.role;
+            if (typeof role === 'string' && roles.includes(role)) {
+                result.set(userDoc.id, role);
+            }
+        }
+    }
+    // Always include super_admins (regardless of project membership)
+    const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get();
+    for (const d of superSnap.docs) {
+        if (!result.has(d.id))
+            result.set(d.id, 'admin'); // effective role for super_admin
+    }
+    const legacySuperSnap = await db.collection('users').where('role', '==', 'super_admin').get();
+    for (const d of legacySuperSnap.docs) {
+        if (!result.has(d.id))
+            result.set(d.id, 'admin');
+    }
+    return [...result.entries()].map(([uid, role]) => ({ uid, role }));
+}
+function getSystemRole(d) {
+    if (!d)
+        return null;
+    if (d.systemRole)
+        return d.systemRole;
+    if (d.role === 'super_admin')
+        return 'super_admin';
+    if (d.role === 'admin')
+        return 'admin';
+    return 'member';
+}
+async function assertCanReadStoragePath(uid, storagePath) {
+    // Reject path traversal and absolute paths up front.
+    if (storagePath.includes('..') || storagePath.startsWith('/')) {
+        throw new https_1.HttpsError('invalid-argument', 'Invalid storage path');
+    }
+    const role = await getCallerRole(uid);
+    const isStaff = role !== null && STAFF_ROLES.has(role);
+    // bankbook/{ownerUid}/... and vendor-bankbook/{ownerUid}/...
+    const bankMatch = storagePath.match(/^(?:vendor-)?bankbook\/([^/]+)\//);
+    if (bankMatch) {
+        const ownerUid = bankMatch[1];
+        if (ownerUid !== uid && !isStaff) {
+            throw new https_1.HttpsError('permission-denied', 'Not authorized to read this file');
+        }
+        return;
+    }
+    // receipts/{projectId}/... and routemaps/{projectId}/... — staff or project member
+    const projectMatch = storagePath.match(/^(?:receipts|routemaps)\/([^/]+)\//);
+    if (projectMatch) {
+        if (isStaff)
+            return;
+        const projectId = projectMatch[1];
+        const proj = await admin.firestore().doc(`projects/${projectId}`).get();
+        const members = proj.data()?.memberUids ?? [];
+        if (!members.includes(uid)) {
+            throw new https_1.HttpsError('permission-denied', 'Not authorized to read this file');
+        }
+        return;
+    }
+    // Unknown path prefix — deny by default.
+    throw new https_1.HttpsError('permission-denied', 'Not authorized to read this file');
+}
 // 파일 다운로드 프록시 (CORS 우회)
 exports.downloadFileV2 = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
     }
     const { storagePath } = request.data;
-    if (!storagePath) {
+    if (!storagePath || typeof storagePath !== 'string') {
         throw new https_1.HttpsError('invalid-argument', 'No storage path provided');
     }
+    await assertCanReadStoragePath(request.auth.uid, storagePath);
     const fileRef = bucket.file(storagePath);
     const [exists] = await fileRef.exists();
     if (!exists) {
@@ -256,7 +395,7 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     }
     // 호출자가 admin 또는 super_admin인지 확인
     const callerDoc = await admin.firestore().doc(`users/${request.auth.uid}`).get();
-    const callerRole = callerDoc.exists ? callerDoc.data()?.role : null;
+    const callerRole = getSystemRole(callerDoc.data());
     if (callerRole !== 'admin' && callerRole !== 'super_admin') {
         throw new https_1.HttpsError('permission-denied', 'Only admin can delete users');
     }
@@ -266,7 +405,7 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     }
     // super_admin은 삭제 불가
     const targetDoc = await admin.firestore().doc(`users/${uid}`).get();
-    if (targetDoc.exists && targetDoc.data()?.role === 'super_admin') {
+    if (targetDoc.exists && getSystemRole(targetDoc.data()) === 'super_admin') {
         throw new https_1.HttpsError('permission-denied', 'Cannot delete super_admin');
     }
     // 본인 삭제 불가
@@ -282,15 +421,21 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     catch (error) {
         console.warn(`Auth account deletion failed for ${uid}:`, error);
     }
-    // 프로젝트 memberUids에서 제거
-    const projectsSnap = await admin
-        .firestore()
-        .collection('projects')
-        .where('memberUids', 'array-contains', uid)
-        .get();
-    for (const projectDoc of projectsSnap.docs) {
-        const memberUids = (projectDoc.data().memberUids || []).filter((id) => id !== uid);
-        await projectDoc.ref.update({ memberUids });
+    // 프로젝트 memberRoles 및 legacy memberUids에서 제거
+    const projectsSnapshot = await admin.firestore().collection('projects').get();
+    for (const projectDoc of projectsSnapshot.docs) {
+        const data = projectDoc.data() ?? {};
+        const updates = {};
+        if (data.memberRoles && data.memberRoles[uid] !== undefined) {
+            updates[`memberRoles.${uid}`] = firestore_2.FieldValue.delete();
+        }
+        const legacyUids = data.memberUids;
+        if (Array.isArray(legacyUids) && legacyUids.includes(uid)) {
+            updates.memberUids = legacyUids.filter((id) => id !== uid);
+        }
+        if (Object.keys(updates).length > 0) {
+            await projectDoc.ref.update(updates);
+        }
     }
     console.log(`User ${uid} deleted by ${request.auth.uid}`);
     return { success: true };
@@ -427,19 +572,21 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
     const totalAmountUsd = data.totalAmountUsd;
     const requestedBy = data.requestedBy;
     const payee = data.payee;
-    // Find finance reviewers for this committee
+    const projectId = data.projectId;
+    // Find finance reviewers for this committee (project-scoped)
     const db = admin.firestore();
     const reviewerRoles = committee === 'operations' ? ['finance_ops', 'finance_prep'] : ['finance_prep'];
-    const usersSnapshot = await db.collection('users').where('role', 'in', reviewerRoles).get();
-    if (usersSnapshot.empty) {
+    const recipients = await uidsWithProjectRoles(projectId, reviewerRoles);
+    if (recipients.length === 0) {
         console.log('No finance reviewers found for committee:', committee);
         return;
     }
     const transporter = createTransporter();
     const committeeLabel = COMMITTEE_LABELS[committee] || committee;
-    for (const userDoc of usersSnapshot.docs) {
+    const recipientDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()));
+    for (const userDoc of recipientDocs) {
         const user = userDoc.data();
-        const email = user.email;
+        const email = user?.email;
         if (!email)
             continue;
         try {
@@ -540,6 +687,7 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
         const requestedByUid = after.requestedBy.uid;
         const committeeLabel = COMMITTEE_LABELS[committee] || committee;
         const reqId = event.params?.requestId || '';
+        const projectId = after.projectId;
         // 신청자의 역할 확인 (위원장이 신청한 건은 executive만 승인 가능)
         const requesterSnap = await db.doc(`users/${requestedByUid}`).get();
         const requesterRole = requesterSnap.exists ? requesterSnap.data()?.role : 'user';
@@ -555,10 +703,11 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
                     ? ['approver_ops', 'session_director', 'executive']
                     : ['approver_prep', 'logistic_admin', 'executive'];
         }
-        const usersSnapshot = await db.collection('users').where('role', 'in', approverRoles).get();
-        for (const userDoc of usersSnapshot.docs) {
+        const recipients = await uidsWithProjectRoles(projectId, approverRoles);
+        const recipientDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()));
+        for (const userDoc of recipientDocs) {
             const user = userDoc.data();
-            const email = user.email;
+            const email = user?.email;
             if (!email)
                 continue;
             try {
@@ -634,12 +783,13 @@ function buildWeeklyDigestEmail(userName, sections) {
 }
 // 매주 일요일 09:00 KST 처리 대기 알림
 exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
+    // UTC 일요일 00:00 = KST 일요일 09:00 (한국은 DST 없음).
     schedule: 'every sunday 00:00',
     timeZone: 'UTC',
     secrets: [gmailUser, gmailAppPassword]
 }, async () => {
     const db = admin.firestore();
-    // 관련 역할 사용자 조회
+    // 관련 역할 사용자 조회 (프로젝트 범위: 모든 프로젝트에서 집계)
     const relevantRoles = [
         'finance_ops',
         'finance_prep',
@@ -649,8 +799,17 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
         'logistic_admin',
         'executive'
     ];
-    const usersSnapshot = await db.collection('users').where('role', 'in', relevantRoles).get();
-    if (usersSnapshot.empty) {
+    // Collect recipients across all projects (uid -> project-scoped role, first match wins)
+    const projectsSnap = await db.collection('projects').get();
+    const recipientMap = new Map(); // uid -> role
+    for (const projDoc of projectsSnap.docs) {
+        const perProject = await uidsWithProjectRoles(projDoc.id, relevantRoles);
+        for (const { uid, role } of perProject) {
+            if (!recipientMap.has(uid))
+                recipientMap.set(uid, role);
+        }
+    }
+    if (recipientMap.size === 0) {
         console.log('No relevant users found');
         return;
     }
@@ -681,11 +840,15 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
     const approvedSnapshot = await db.collection('requests').where('status', '==', 'approved').get();
     const totalApprovedUnsettledCount = approvedSnapshot.size;
     const transporter = createTransporter();
-    for (const userDoc of usersSnapshot.docs) {
+    const recipients = [...recipientMap.entries()].map(([uid, role]) => ({ uid, role }));
+    const recipientUserDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()));
+    for (let i = 0; i < recipients.length; i++) {
+        const r = recipients[i];
+        const role = r.role;
+        const userDoc = recipientUserDocs[i];
         const user = userDoc.data();
-        const role = user.role;
-        const email = user.email;
-        const name = (user.displayName || user.name || '');
+        const email = user?.email;
+        const name = (user?.displayName || user?.name || '');
         if (!email)
             continue;
         const sections = [];
@@ -714,8 +877,8 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
             // 준비 위원장: 준비위 승인 대기
             sections.push({ label: '준비위 승인 대기', count: prepReviewedCount });
         }
-        else if (role === 'executive') {
-            // 대회장: 전체 승인 대기 + 미정산
+        else if (role === 'executive' || role === 'admin') {
+            // 대회장 / super_admin: 전체 승인 대기 + 미정산
             sections.push({ label: '승인 대기', count: totalReviewedCount });
             sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount });
         }
@@ -849,6 +1012,8 @@ exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
         dailyCount
     };
 });
+var onProjectMembersWrite_1 = require("./onProjectMembersWrite");
+Object.defineProperty(exports, "onProjectMembersWrite", { enumerable: true, get: function () { return onProjectMembersWrite_1.onProjectMembersWrite; } });
 // --- AI Chatbot ---
 const chatHandler_1 = require("./ai/chatHandler");
 exports.aiChat = (0, https_1.onCall)({
