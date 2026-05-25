@@ -3,6 +3,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { onDocumentUpdated, onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { defineSecret } from 'firebase-functions/params'
 import * as admin from 'firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
 import * as nodemailer from 'nodemailer'
 import { randomUUID } from 'node:crypto'
 
@@ -232,7 +233,15 @@ const STAFF_ROLES = new Set([
 
 async function getCallerRole(uid: string): Promise<string | null> {
   const snap = await admin.firestore().doc(`users/${uid}`).get()
-  return snap.exists ? ((snap.data()?.role as string) ?? null) : null
+  return getSystemRole(snap.data())
+}
+
+function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | null {
+  if (!d) return null
+  if (d.systemRole) return d.systemRole
+  if (d.role === 'super_admin') return 'super_admin'
+  if (d.role === 'admin') return 'admin'
+  return 'member'
 }
 
 async function assertCanReadStoragePath(uid: string, storagePath: string): Promise<void> {
@@ -392,7 +401,7 @@ export const deleteUserAccount = onCall(async (request) => {
 
   // 호출자가 admin 또는 super_admin인지 확인
   const callerDoc = await admin.firestore().doc(`users/${request.auth.uid}`).get()
-  const callerRole = callerDoc.exists ? callerDoc.data()?.role : null
+  const callerRole = getSystemRole(callerDoc.data())
   if (callerRole !== 'admin' && callerRole !== 'super_admin') {
     throw new HttpsError('permission-denied', 'Only admin can delete users')
   }
@@ -404,7 +413,7 @@ export const deleteUserAccount = onCall(async (request) => {
 
   // super_admin은 삭제 불가
   const targetDoc = await admin.firestore().doc(`users/${uid}`).get()
-  if (targetDoc.exists && targetDoc.data()?.role === 'super_admin') {
+  if (targetDoc.exists && getSystemRole(targetDoc.data()) === 'super_admin') {
     throw new HttpsError('permission-denied', 'Cannot delete super_admin')
   }
 
@@ -423,15 +432,21 @@ export const deleteUserAccount = onCall(async (request) => {
     console.warn(`Auth account deletion failed for ${uid}:`, error)
   }
 
-  // 프로젝트 memberUids에서 제거
-  const projectsSnap = await admin
-    .firestore()
-    .collection('projects')
-    .where('memberUids', 'array-contains', uid)
-    .get()
-  for (const projectDoc of projectsSnap.docs) {
-    const memberUids = (projectDoc.data().memberUids || []).filter((id: string) => id !== uid)
-    await projectDoc.ref.update({ memberUids })
+  // 프로젝트 memberRoles 및 legacy memberUids에서 제거
+  const projectsSnapshot = await admin.firestore().collection('projects').get()
+  for (const projectDoc of projectsSnapshot.docs) {
+    const data = projectDoc.data() ?? {}
+    const updates: Record<string, unknown> = {}
+    if (data.memberRoles && data.memberRoles[uid] !== undefined) {
+      updates[`memberRoles.${uid}`] = FieldValue.delete()
+    }
+    const legacyUids: string[] | undefined = data.memberUids
+    if (Array.isArray(legacyUids) && legacyUids.includes(uid)) {
+      updates.memberUids = legacyUids.filter((id) => id !== uid)
+    }
+    if (Object.keys(updates).length > 0) {
+      await projectDoc.ref.update(updates)
+    }
   }
 
   console.log(`User ${uid} deleted by ${request.auth.uid}`)
