@@ -59,30 +59,4 @@ describe('useProjectRole', () => {
     expect(result.current).toBeNull()
   })
 
-  it('falls back to legacy role+memberUids when memberRoles absent', () => {
-    mock(
-      { uid: 'u1', role: 'approver_ops' } as any,
-      { id: 'p1', memberUids: ['u1'] } as any
-    )
-    const { result } = renderHook(() => useProjectRole())
-    expect(result.current).toBe('approver_ops')
-  })
-
-  it('legacy fallback returns null when user not in memberUids', () => {
-    mock(
-      { uid: 'u1', role: 'approver_ops' } as any,
-      { id: 'p1', memberUids: ['u2'] } as any
-    )
-    const { result } = renderHook(() => useProjectRole())
-    expect(result.current).toBeNull()
-  })
-
-  it('legacy fallback treats admin/super_admin role as systemRole', () => {
-    mock(
-      { uid: 'u1', role: 'super_admin' } as any,
-      { id: 'p1', memberUids: [] } as any
-    )
-    const { result } = renderHook(() => useProjectRole())
-    expect(result.current).toBe('admin')
-  })
 })

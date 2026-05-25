@@ -46,9 +46,7 @@ function AssignmentGuard({ children }: { children: React.ReactNode }) {
   const sys = effectiveSystemRole(appUser)
   if (sys === 'super_admin') return <>{children}</>
 
-  // assignedProjectCount fallback: count from legacy projectIds during transition
-  const count = appUser.assignedProjectCount
-    ?? ((appUser as unknown as { projectIds?: string[] }).projectIds?.length ?? 0)
+  const count = appUser.assignedProjectCount ?? 0
 
   if (count === 0) {
     return sys === 'admin' ? <NoProjectsPage /> : <AwaitingAssignmentPage />
