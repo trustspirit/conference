@@ -45,6 +45,10 @@ export default function ProjectSelector() {
 
   const { data: deletedProjects = [] } = useDeletedProjects({ enabled: isAdmin })
   const restoreProject = useRestoreProject()
+  const visibleDeleted =
+    sys === 'super_admin'
+      ? deletedProjects
+      : deletedProjects.filter((p) => p.memberRoles?.[appUser?.uid ?? ''] === 'admin')
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -92,7 +96,7 @@ export default function ProjectSelector() {
   // Hide if only 1 project and not admin
   if (projects.length <= 1 && !isAdmin) return null
 
-  const showDeletedSection = isAdmin && deletedProjects.length > 0
+  const showDeletedSection = isAdmin && visibleDeleted.length > 0
 
   return (
     <>
@@ -154,7 +158,7 @@ export default function ProjectSelector() {
                 <p className="px-4 py-1 text-xs text-finance-muted">
                   {t('project.recentlyDeleted')}
                 </p>
-                {deletedProjects.map((p) => (
+                {visibleDeleted.map((p) => (
                   <div key={p.id} className="px-4 py-1.5 flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="text-sm text-gray-400 line-through truncate">{p.name}</p>
