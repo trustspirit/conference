@@ -183,8 +183,18 @@ export function useUpdateProjectMembers() {
         ...params.currentMemberUids.filter((uid) => !params.removeUids.includes(uid)),
         ...params.addUids
       ]
-      batch.update(doc(db, 'projects', params.projectId), { memberUids: newMemberUids })
 
+      // Project doc: keep memberUids in sync AND update memberRoles
+      const projectUpdate: Record<string, unknown> = { memberUids: newMemberUids }
+      for (const uid of params.addUids) {
+        projectUpdate[`memberRoles.${uid}`] = 'user'   // default role; admins can change later
+      }
+      for (const uid of params.removeUids) {
+        projectUpdate[`memberRoles.${uid}`] = deleteField()
+      }
+      batch.update(doc(db, 'projects', params.projectId), projectUpdate)
+
+      // Maintain legacy projectIds on user docs (unchanged behavior)
       const allUids = [...params.addUids, ...params.removeUids]
       const userSnaps = await Promise.all(allUids.map((uid) => getDoc(doc(db, 'users', uid))))
 
