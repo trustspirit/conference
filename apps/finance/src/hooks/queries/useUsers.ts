@@ -6,6 +6,8 @@ import {
   doc,
   updateDoc,
   deleteField,
+  arrayRemove,
+  arrayUnion,
   query,
   orderBy,
   limit,
@@ -95,7 +97,10 @@ export function useUpdateProjectMemberRole() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ projectId, uid, role }: { projectId: string; uid: string; role: ProjectRole }) => {
-      await updateDoc(doc(db, 'projects', projectId), { [`memberRoles.${uid}`]: role })
+      await updateDoc(doc(db, 'projects', projectId), {
+        [`memberRoles.${uid}`]: role,
+        memberUids: arrayUnion(uid)
+      })
     },
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
@@ -108,7 +113,10 @@ export function useRemoveProjectMember() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ projectId, uid }: { projectId: string; uid: string }) => {
-      await updateDoc(doc(db, 'projects', projectId), { [`memberRoles.${uid}`]: deleteField() })
+      await updateDoc(doc(db, 'projects', projectId), {
+        [`memberRoles.${uid}`]: deleteField(),
+        memberUids: arrayRemove(uid)
+      })
     },
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
