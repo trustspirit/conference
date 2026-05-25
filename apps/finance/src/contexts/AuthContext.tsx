@@ -7,7 +7,7 @@ import {
   getRedirectResult,
   User
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@conference/firebase'
 import { useToast } from 'trust-ui-react'
 import i18n from '../lib/i18n'
@@ -78,18 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             )
           } else {
-            // Get default project ID
-            let defaultProjectIds: string[] = []
-            try {
-              const globalSnap = await getDoc(doc(db, 'settings', 'global'))
-              if (globalSnap.exists()) {
-                const defaultPid = globalSnap.data().defaultProjectId
-                if (defaultPid) defaultProjectIds = [defaultPid]
-              }
-            } catch {
-              /* ignore */
-            }
-
             const newUser: AppUser = {
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
@@ -103,21 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               bankBookImage: '',
               bankBookPath: '',
               bankBookUrl: '',
-              role: 'user',
-              projectIds: defaultProjectIds
+              systemRole: 'member',
+              assignedProjectCount: 0,
+              role: 'user',          // legacy field, kept until phase H
+              projectIds: []         // legacy field, kept until phase H — empty so legacy path doesn't auto-grant access
             }
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser)
-
-            // Add user to default project's memberUids
-            if (defaultProjectIds[0]) {
-              try {
-                await updateDoc(doc(db, 'projects', defaultProjectIds[0]), {
-                  memberUids: arrayUnion(firebaseUser.uid)
-                })
-              } catch {
-                /* project may not exist yet */
-              }
-            }
+            // No auto-add to default project — super_admin will assign explicitly.
             setAppUser(newUser)
             setNeedsDisplayName(true)
             setNeedsConsent(false)
