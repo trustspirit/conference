@@ -25,6 +25,8 @@ interface Props {
   requestItems?: RequestItem[]
   /** Receipt files for preview */
   receiptFiles?: File[]
+  /** Disable the confirm button (e.g. while the underlying mutation is in flight) */
+  isPending?: boolean
 }
 
 export default function ConfirmModal({
@@ -39,7 +41,8 @@ export default function ConfirmModal({
   confirmLabel,
   cancelLabel,
   requestItems,
-  receiptFiles
+  receiptFiles,
+  isPending = false
 }: Props) {
   const { t } = useTranslation()
   const resolvedTitle = title ?? t('form.confirmTitle')
@@ -169,11 +172,16 @@ export default function ConfirmModal({
         )}
       </Dialog.Content>
       <Dialog.Actions>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={isPending}>
           {resolvedCancel}
         </Button>
-        <Button variant="primary" className="finance-primary-button" onClick={onConfirm}>
-          {resolvedConfirm}
+        <Button
+          variant="primary"
+          className="finance-primary-button"
+          onClick={onConfirm}
+          disabled={isPending}
+        >
+          {isPending ? t('common.submitting') : resolvedConfirm}
         </Button>
       </Dialog.Actions>
     </Dialog>

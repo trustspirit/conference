@@ -144,6 +144,8 @@ export default function FileUpload({
                   type="button"
                   onClick={() => onFilesChange(files.filter((_, j) => j !== i))}
                   className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                  aria-label={`${t('common.delete')} ${f.name}`}
+                  title={t('common.delete')}
                 >
                   ✕
                 </button>

@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import DisplayNameModal from './components/DisplayNameModal'
 import ConsentDialog from './components/ConsentDialog'
 import Spinner from './components/Spinner'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('./pages/LoginPage'))
@@ -31,17 +32,19 @@ function AppLayout() {
   const { needsDisplayName, needsConsent, user } = useAuth()
   return (
     <ProjectProvider>
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <Spinner />
-          </div>
-        }
-      >
-        {user && needsDisplayName && <DisplayNameModal />}
-        {user && !needsDisplayName && needsConsent && <ConsentDialog />}
-        <Outlet />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <Spinner />
+            </div>
+          }
+        >
+          {user && needsDisplayName && <DisplayNameModal />}
+          {user && !needsDisplayName && needsConsent && <ConsentDialog />}
+          <Outlet />
+        </Suspense>
+      </ErrorBoundary>
     </ProjectProvider>
   )
 }

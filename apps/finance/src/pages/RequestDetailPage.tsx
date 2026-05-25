@@ -11,7 +11,8 @@ import {
   useRejectRequest,
   useForceRejectRequest,
   useRollbackApproval,
-  useDeleteRequest
+  useDeleteRequest,
+  useUpdateRequestReceiptDisplaySizes
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
 import { useUser } from '../hooks/queries/useUsers'
@@ -22,6 +23,7 @@ import {
   canFinalApproveCommittee,
   canFinalApproveRequest,
   canApproveDirectorRequest,
+  isStaff,
   canForceReject,
   canRollbackApproval,
   canDeleteRequest,
@@ -42,6 +44,7 @@ import {
 } from '../components/AdminRequestModals'
 import StatusProgress from '../components/StatusProgress'
 import ReviewChecklist from '../components/ReviewChecklist'
+import { formatTotals } from '../lib/currency'
 import { Dialog, Button, useToast } from 'trust-ui-react'
 import { REVIEW_CHECKLIST, APPROVAL_CHECKLIST } from '../constants/reviewChecklist'
 import BankBookPreview from '../components/BankBookPreview'
@@ -65,6 +68,7 @@ export default function RequestDetailPage() {
   const forceRejectMutation = useForceRejectRequest()
   const rollbackMutation = useRollbackApproval()
   const deleteMutation = useDeleteRequest()
+  const updateReceiptSizesMutation = useUpdateRequestReceiptDisplaySizes()
   const budgetUsage = useBudgetUsage()
 
   const { data: request, isLoading: requestLoading } = useRequest(id)
@@ -112,17 +116,26 @@ export default function RequestDetailPage() {
     nextIdRef.current = nextId
   }, [nextId])
 
-  const navigateToNext = useCallback(() => {
-    setSlideState('out')
-    setTimeout(() => {
-      window.scrollTo({ top: 0 })
-      if (nextIdRef.current) {
-        navigate(`/request/${nextIdRef.current}`, { state: { from: backPath } })
-      } else {
-        navigate(backPath)
-      }
-    }, 300)
-  }, [navigate, backPath])
+  const navigateToNext = useCallback(
+    (preCapturedNextId?: string | null) => {
+      // Caller can pass a snapshot of `nextId` captured BEFORE the mutation fired.
+      // This matters because mutation success invalidates the requests cache, which
+      // removes the just-acted-on item from `actionableRequests` and resets
+      // `nextIdRef.current` to null in the brief window before the 300ms slide-out
+      // setTimeout runs — otherwise approval/review always falls back to the list.
+      const target = preCapturedNextId !== undefined ? preCapturedNextId : nextIdRef.current
+      setSlideState('out')
+      setTimeout(() => {
+        window.scrollTo({ top: 0 })
+        if (target) {
+          navigate(`/request/${target}`, { state: { from: backPath } })
+        } else {
+          navigate(backPath)
+        }
+      }, 300)
+    },
+    [navigate, backPath]
+  )
 
   // Slide-in animation on route change
   useEffect(() => {
@@ -203,13 +216,14 @@ export default function RequestDetailPage() {
     if (!user || !appUser || !request) return
     setShowReviewConfirm(false)
     const name = appUser.displayName || appUser.name
+    const capturedNext = nextId
     reviewMutation.mutate(
       {
         requestId: request.id,
         projectId: currentProject!.id,
         reviewer: { uid: user.uid, name, email: appUser.email }
       },
-      { onSuccess: navigateToNext }
+      { onSuccess: () => navigateToNext(capturedNext) }
     )
   }
 
@@ -238,6 +252,7 @@ export default function RequestDetailPage() {
   const handleApproveConfirm = (signature: string) => {
     if (!user || !appUser || !request) return
     const name = appUser.displayName || appUser.name
+    const capturedNext = nextId
     approveMutation.mutate(
       {
         requestId: request.id,
@@ -248,7 +263,7 @@ export default function RequestDetailPage() {
       {
         onSuccess: () => {
           setShowApprovalModal(false)
-          navigateToNext()
+          navigateToNext(capturedNext)
         }
       }
     )
@@ -266,6 +281,7 @@ export default function RequestDetailPage() {
   const handleRejectConfirm = (reason: string) => {
     if (!user || !appUser || !request) return
     const name = appUser.displayName || appUser.name
+    const capturedNext = nextId
     rejectMutation.mutate(
       {
         requestId: request.id,
@@ -276,7 +292,7 @@ export default function RequestDetailPage() {
       {
         onSuccess: () => {
           setShowRejectionModal(false)
-          navigateToNext()
+          navigateToNext(capturedNext)
         }
       }
     )
@@ -290,6 +306,7 @@ export default function RequestDetailPage() {
   const handleForceRejectConfirm = (reason: string) => {
     if (!user || !appUser || !request) return
     const name = appUser.displayName || appUser.name
+    const capturedNext = nextId
     forceRejectMutation.mutate(
       {
         requestId: request.id,
@@ -300,7 +317,7 @@ export default function RequestDetailPage() {
       {
         onSuccess: () => {
           setShowForceRejectionModal(false)
-          navigateToNext()
+          navigateToNext(capturedNext)
         },
         onError: () => {
           toast({ variant: 'danger', message: t('approval.forceRejectFailed') })
@@ -489,7 +506,32 @@ export default function RequestDetailPage() {
               totalAmountUsd={request.totalAmountUsd}
             />
 
-            <ReceiptGallery receipts={request.receipts} />
+            <ReceiptGallery
+              receipts={request.receipts}
+              displaySizes={request.receiptDisplaySizes}
+              onToggleDisplaySize={
+                isStaff(role)
+                  ? async (storagePath, next) => {
+                      // Toggle: 'large' is stored explicitly; reverting to 'normal'
+                      // removes the entry so the absence-equals-default semantic holds.
+                      const map: Record<string, 'large'> = {
+                        ...(request.receiptDisplaySizes ?? {})
+                      }
+                      if (next === 'large') map[storagePath] = 'large'
+                      else delete map[storagePath]
+                      try {
+                        await updateReceiptSizesMutation.mutateAsync({
+                          requestId: request.id,
+                          projectId: currentProject!.id,
+                          receiptDisplaySizes: map
+                        })
+                      } catch {
+                        toast({ variant: 'danger', message: t('receipts.sizeUpdateFailed') })
+                      }
+                    }
+                  : undefined
+              }
+            />
 
             {/* Bank Book — vendor requests use vendor bank book, otherwise user profile (skip for corporate card) */}
             {(() => {
@@ -716,7 +758,14 @@ export default function RequestDetailPage() {
           {t('checklist.confirmReview')}
         </Dialog.Title>
         <Dialog.Content>
-          <p className="text-sm text-finance-muted">{t('checklist.confirmReview')}</p>
+          <p className="text-sm text-finance-muted">
+            {request
+              ? t('checklist.confirmReviewBody', {
+                  payee: request.payee,
+                  amount: formatTotals(request.totalAmount, request.totalAmountUsd || 0)
+                })
+              : t('checklist.confirmReview')}
+          </p>
         </Dialog.Content>
         <Dialog.Actions>
           <Button variant="outline" onClick={() => setShowReviewConfirm(false)}>

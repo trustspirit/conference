@@ -13,16 +13,19 @@ export function getItemCurrency(item: Pick<RequestItem, 'currency'>): Currency {
   return item.currency ?? DEFAULT_CURRENCY
 }
 
-/** Format a single amount with its currency symbol. KRW: ₩1,000  USD: $10.50 */
+/** Format a single amount with its currency symbol. KRW: ₩1,000  USD: $10.50
+ *  Locale is fixed to 'en-US' so number separators (`,` thousands, `.` decimal)
+ *  stay consistent across browsers and CSV exports regardless of user locale.
+ */
 export function formatAmount(amount: number, currency: Currency = DEFAULT_CURRENCY): string {
   const symbol = CURRENCY_SYMBOL[currency]
   if (currency === 'USD') {
-    return `${symbol}${amount.toLocaleString(undefined, {
+    return `${symbol}${amount.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     })}`
   }
-  return `${symbol}${amount.toLocaleString()}`
+  return `${symbol}${Math.round(amount).toLocaleString('en-US')}`
 }
 
 /** Split items into per-currency sums. Items without currency are treated as KRW. */

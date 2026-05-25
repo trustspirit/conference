@@ -235,7 +235,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1">
               {userItems.map((item) => (
                 <Link
                   key={item.to}
@@ -271,7 +271,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop Right */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               {checkIsAdmin(role) && (
                 <Link
                   to="/settings"
@@ -289,7 +289,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden ml-2 shrink-0 p-2 rounded-md text-finance-primary hover:bg-finance-primary-subtle"
+              className="md:hidden ml-2 shrink-0 p-2 rounded-md text-finance-primary hover:bg-finance-primary-subtle"
               aria-label="Menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -303,7 +303,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-finance-border px-2 py-2">
+            <div className="md:hidden max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-t border-finance-border px-2 py-2">
               <div className="px-3 py-2">
                 <ProjectSelector />
               </div>

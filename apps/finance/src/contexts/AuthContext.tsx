@@ -7,7 +7,7 @@ import {
   getRedirectResult,
   User
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore'
 import { auth, googleProvider, db } from '@conference/firebase'
 import { useToast } from 'trust-ui-react'
 import i18n from '../lib/i18n'
@@ -45,7 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    let unsubscribeUserDoc: (() => void) | null = null
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Tear down any prior user-doc subscription when the auth user changes.
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc()
+        unsubscribeUserDoc = null
+      }
       try {
         setUser(firebaseUser)
         if (firebaseUser) {
@@ -55,6 +62,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setAppUser(data)
             setNeedsDisplayName(!data.displayName)
             setNeedsConsent(!!data.displayName && !data.consentAgreedAt)
+
+            // Live-subscribe to role / profile changes so admin updates land
+            // without requiring a refresh. Keep needs-* flags in sync too, otherwise
+            // the displayName / consent modals can stay open after the underlying
+            // field is populated by an admin or via a parallel tab.
+            unsubscribeUserDoc = onSnapshot(
+              doc(db, 'users', firebaseUser.uid),
+              (snap) => {
+                if (!snap.exists()) return
+                const next = snap.data() as AppUser
+                setAppUser(next)
+                setNeedsDisplayName(!next.displayName)
+                setNeedsConsent(!!next.displayName && !next.consentAgreedAt)
+              }
+            )
           } else {
             // Get default project ID
             let defaultProjectIds: string[] = []
@@ -114,7 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
       }
     })
-    return unsubscribe
+    return () => {
+      unsubscribe()
+      if (unsubscribeUserDoc) unsubscribeUserDoc()
+    }
   }, [])
 
   const signInWithGoogle = async () => {

@@ -53,7 +53,11 @@
     "defaultColumns": "Default Columns",
     "optionalColumns": "Optional Columns",
     "exportByRequest": "By Request",
-    "exportByBudgetCode": "By Budget Code"
+    "exportByBudgetCode": "By Budget Code",
+    "errorBoundaryTitle": "Something went wrong",
+    "errorBoundaryDescription": "Please try again, or contact an administrator if the issue persists.",
+    "reload": "Reload",
+    "goHome": "Home"
   },
   "role": {
     "label": "Role",
@@ -251,6 +255,8 @@
     "directorRequired": "Over ₩600,000 — Director/Executive approval required",
     "cancelRequest": "Cancel Request",
     "cancelConfirm": "Are you sure you want to cancel this request?",
+    "cancelSuccess": "Request cancelled.",
+    "cancelFailed": "Failed to cancel the request.",
     "remainingCount": "{{count}} remaining",
     "viewOriginal": "View Original"
   },
@@ -271,6 +277,8 @@
     "noSettlements": "No settlements yet.",
     "settleConfirm": "Settle {{count}} requests?\n{{payeeCount}} consolidated reports will be generated.",
     "settleFailed": "Settlement failed.",
+    "missingApprovalSignature": "{{payee}} - missing approval signature.",
+    "tooManyOperations": "Too many operations. Please select fewer requests.",
     "report": "Report",
     "selectedSummary": "{{count}} selected | {{payeeCount}} payees | Total {{amount}}",
     "settlementDate": "Settlement Date",
@@ -465,6 +473,7 @@
     "bankBookNameMatches": "Name, bank, and account number on bank book match the request",
     "bankBookCorrect": "Bank book copy is up to date",
     "confirmReview": "Have you reviewed all items?",
+    "confirmReviewBody": "Mark request from {{payee}} ({{amount}}) as reviewed. Continue?",
     "expand": "Expand",
     "collapse": "Collapse"
   },
@@ -477,7 +486,11 @@
     "downloading": "Downloading...",
     "downloadFailed": "Download failed.",
     "partialDownload": "Failed to download {{failed}} of {{total}} files.",
-    "viewRequest": "View request"
+    "viewRequest": "View request",
+    "markLarge": "Show large in PDF",
+    "markNormal": "Show normal size in PDF",
+    "sizeLargeBadge": "Large",
+    "sizeUpdateFailed": "Failed to update receipt display size."
   },
   "admin": {
     "rollbackTitle": "Roll back to reviewed",

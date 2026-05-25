@@ -3,7 +3,8 @@ import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
-  keepPreviousData
+  keepPreviousData,
+  QueryClient
 } from '@tanstack/react-query'
 import {
   collection,
@@ -11,6 +12,7 @@ import {
   getDoc,
   doc,
   addDoc,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -26,9 +28,28 @@ import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { db, app } from '@conference/firebase'
 import { DELETABLE_STATUSES } from '../../lib/roles'
 import { queryKeys } from './queryKeys'
-import type { PaymentRequest, RequestStatus } from '../../types'
+import type { PaymentRequest, ReceiptDisplaySizes, RequestStatus } from '../../types'
 
 const PAGE_SIZE = 20
+
+/**
+ * Invalidate every cache that depends on the requests collection for a project.
+ * Covers `requests.all`, `requests.byUser`, `requests.approved`, `requests.infinite*`
+ * (all share the `['requests', projectId]` prefix) plus the derived dashboard stats
+ * and budget usage queries. Call from every request mutation's onSuccess.
+ */
+function invalidateRequestCaches(
+  queryClient: QueryClient,
+  projectId: string,
+  requestId?: string
+) {
+  queryClient.invalidateQueries({ queryKey: ['requests', projectId] })
+  if (requestId) {
+    queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(requestId) })
+  }
+  queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(projectId) })
+  queryClient.invalidateQueries({ queryKey: queryKeys.budget.usage(projectId) })
+}
 
 /** Recursively strip undefined values from an object (Firestore rejects undefined) */
 function stripUndefined<T>(obj: T): T {
@@ -206,12 +227,7 @@ export function useCreateRequest() {
       return ref.id
     },
     onSuccess: (id, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(id)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, id)
     }
   })
 }
@@ -240,12 +256,7 @@ export function useReviewRequest() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -276,12 +287,7 @@ export function useApproveRequest() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -324,12 +330,7 @@ export function useRejectRequest() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -360,12 +361,7 @@ export function useForceRejectRequest() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -385,12 +381,7 @@ export function useCancelRequest() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -416,15 +407,7 @@ export function useRollbackApproval() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.requestId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.approved(variables.projectId)
-      })
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }
@@ -501,15 +484,29 @@ export function useDeleteRequest() {
       await deleteStoragePaths(storagePaths)
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
+      invalidateRequestCaches(queryClient, variables.projectId, variables.request.id)
+    }
+  })
+}
+
+/** Update the per-receipt PDF display-size map (e.g. flip storagePath → 'large').
+ *  Staff-only at the Firestore rule level. Pass an empty object to clear all overrides.
+ *  Storing only `large` entries (no explicit `normal`) keeps the document small and
+ *  makes the absence-equals-default semantic explicit. */
+export function useUpdateRequestReceiptDisplaySizes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: {
+      requestId: string
+      projectId: string
+      receiptDisplaySizes: ReceiptDisplaySizes
+    }) => {
+      await updateDoc(doc(db, 'requests', params.requestId), {
+        receiptDisplaySizes: params.receiptDisplaySizes
       })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.detail(variables.request.id)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.approved(variables.projectId)
-      })
+    },
+    onSuccess: (_data, variables) => {
+      invalidateRequestCaches(queryClient, variables.projectId, variables.requestId)
     }
   })
 }

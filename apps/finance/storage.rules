@@ -1,11 +1,32 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function userRole() {
+      return request.auth != null
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+    function isStaff() {
+      return request.auth != null && userRole() != 'user';
+    }
+
     match /receipts/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if false; // Cloud Functions만 쓰기
     }
-    match /bankbook/{allPaths=**} {
+    // Bank book images contain sensitive PII (account holder, signature) —
+    // only the owner or staff (reviewers/admins) may read them.
+    match /bankbook/{userId}/{allPaths=**} {
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isStaff());
+      allow write: if false;
+    }
+    match /vendor-bankbook/{userId}/{allPaths=**} {
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isStaff());
+      allow write: if false;
+    }
+    match /routemaps/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if false;
     }

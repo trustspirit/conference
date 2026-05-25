@@ -117,6 +117,12 @@ export interface Receipt {
   driveUrl?: string
 }
 
+/** Storage-path → display-size override for PDF rendering. Only `large` is stored
+ *  explicitly; absence implies the default `normal` size. Kept as a top-level map so
+ *  staff can flip a flag without ever gaining write access to receipt identity fields
+ *  (`storagePath`, `url`, `fileName`). */
+export type ReceiptDisplaySizes = Record<string, 'large'>
+
 export interface PaymentRequest {
   id: string
   projectId: string
@@ -134,6 +140,8 @@ export interface PaymentRequest {
   /** Optional USD sum — undefined treated as 0 for backwards compatibility */
   totalAmountUsd?: number
   receipts: Receipt[]
+  /** Per-receipt PDF display-size override, keyed by `storagePath`. */
+  receiptDisplaySizes?: ReceiptDisplaySizes
   requestedBy: { uid: string; name: string; email: string }
   reviewedBy: { uid: string; name: string; email: string } | null
   reviewedAt: Date | null
@@ -169,6 +177,8 @@ export interface Settlement {
   /** Optional USD sum — undefined treated as 0 for backwards compatibility */
   totalAmountUsd?: number
   receipts: Receipt[]
+  /** Inherited from the source request(s) at settlement creation time. */
+  receiptDisplaySizes?: ReceiptDisplaySizes
   requestIds: string[]
   requestedBySignature: string | null
   approvedBy: { uid: string; name: string; email: string } | null

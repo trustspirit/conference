@@ -31,6 +31,9 @@ export const queryKeys = {
   dashboard: {
     stats: (projectId: string) => ['dashboard', projectId, 'stats'] as const
   },
+  budget: {
+    usage: (projectId: string) => ['budget', projectId, 'usage'] as const
+  },
   settings: {
     global: () => ['settings', 'global'] as const
   }

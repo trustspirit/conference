@@ -203,11 +203,7 @@ export default function SettlementPage() {
       if (missingApproval) {
         toast({
           variant: 'danger',
-          message:
-            t('settlement.settleFailed') +
-            ': ' +
-            missingApproval.payee +
-            ' - missing approval signature'
+          message: `${t('settlement.settleFailed')}: ${t('settlement.missingApprovalSignature', { payee: missingApproval.payee })}`
         })
         setProcessing(false)
         return
@@ -219,8 +215,7 @@ export default function SettlementPage() {
       if (totalOps > 500) {
         toast({
           variant: 'danger',
-          message:
-            t('settlement.settleFailed') + ': Too many operations. Please select fewer requests.'
+          message: `${t('settlement.settleFailed')}: ${t('settlement.tooManyOperations')}`
         })
         setProcessing(false)
         return

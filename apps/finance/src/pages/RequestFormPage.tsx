@@ -66,7 +66,7 @@ function clearDraft() {
 }
 
 export default function RequestFormPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { toast } = useToast()
   const { user, appUser, updateAppUser } = useAuth()
   const { currentProject } = useProject()
@@ -530,7 +530,7 @@ export default function RequestFormPage() {
             {t('form.draftRestored')}
             {draft?.savedAt && (
               <span className="text-finance-muted ml-1">
-                ({new Date(draft.savedAt).toLocaleString('ko-KR')})
+                ({new Date(draft.savedAt).toLocaleString(i18n.language)})
               </span>
             )}
           </p>
@@ -808,6 +808,7 @@ export default function RequestFormPage() {
         confirmLabel={t('form.confirmSubmit')}
         requestItems={validItems}
         receiptFiles={files}
+        isPending={submitting}
       />
 
       <ProcessingOverlay open={submitting} text={t('common.processingMessage')} />

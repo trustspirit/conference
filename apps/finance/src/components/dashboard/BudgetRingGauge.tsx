@@ -48,14 +48,14 @@ export default function BudgetRingGauge({
             <p className="text-xs text-finance-muted">{t('dashboard.used')}</p>
             <p className="text-lg font-bold text-finance-primary">
               {'\u20A9'}
-              {approvedAmount.toLocaleString()}
+              {approvedAmount.toLocaleString('en-US')}
             </p>
           </div>
           <div>
             <p className="text-xs text-finance-muted">{t('dashboard.pendingAmount')}</p>
             <p className="text-lg font-bold text-finance-neutral">
               {'\u20A9'}
-              {pendingAmount.toLocaleString()}
+              {pendingAmount.toLocaleString('en-US')}
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function BudgetRingGauge({
             className={`text-sm font-bold ${overBudget ? 'text-finance-danger' : 'text-finance-primary'}`}
           >
             {'\u20A9'}
-            {approvedAmount.toLocaleString()}
+            {approvedAmount.toLocaleString('en-US')}
           </p>
           <p className="text-xs text-gray-400">{usagePercent}%</p>
         </div>
@@ -86,7 +86,7 @@ export default function BudgetRingGauge({
           <p className="text-xs text-finance-muted">{t('dashboard.pendingAmount')}</p>
           <p className="text-sm font-bold text-finance-body">
             {'\u20A9'}
-            {pendingAmount.toLocaleString()}
+            {pendingAmount.toLocaleString('en-US')}
           </p>
           <p className="text-xs text-gray-400">{pendingPercent}%</p>
         </div>
@@ -99,7 +99,7 @@ export default function BudgetRingGauge({
             className={`text-sm font-bold ${remaining <= 0 ? 'text-finance-danger' : 'text-finance-accent'}`}
           >
             {'\u20A9'}
-            {(totalBudget - approvedAmount).toLocaleString()}
+            {(totalBudget - approvedAmount).toLocaleString('en-US')}
           </p>
           {remaining > 0 && (
             <p className="text-xs text-gray-400">{100 - usagePercent - pendingPercent}%</p>
@@ -114,7 +114,7 @@ export default function BudgetRingGauge({
     if (v >= 100000000)
       return `${(v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1)}${isKo ? '억' : 'B'}`
     if (v >= 10000) return `${(v / 10000).toFixed(0)}${isKo ? '만' : 'k'}`
-    return v.toLocaleString()
+    return v.toLocaleString('en-US')
   }
 
   return (
@@ -128,7 +128,7 @@ export default function BudgetRingGauge({
             {t('dashboard.totalBudget')}{' '}
             <span className="font-bold text-gray-900">
               {'\u20A9'}
-              {totalBudget.toLocaleString()}
+              {totalBudget.toLocaleString('en-US')}
             </span>
           </span>
           <div className="flex border border-finance-border rounded overflow-hidden">
@@ -277,7 +277,7 @@ function BudgetTimeChart({
       {isZoomedIn && (
         <p className="text-xs text-finance-muted mb-1 text-right">
           {t('dashboard.totalBudget')} {'\u20A9'}
-          {totalBudget.toLocaleString()} ({t('dashboard.usage', { percent: usagePercent })})
+          {totalBudget.toLocaleString('en-US')} ({t('dashboard.usage', { percent: usagePercent })})
         </p>
       )}
       <div className="h-[200px]">
@@ -353,7 +353,7 @@ function BudgetTimeChart({
             />
             <Tooltip
               formatter={(v, name) => {
-                const val = `\u20A9${(Number(v) || 0).toLocaleString()}`
+                const val = `\u20A9${(Number(v) || 0).toLocaleString('en-US')}`
                 if (name === 'combined')
                   return [val, t('dashboard.used') + ' + ' + t('dashboard.pendingAmount')]
                 return [val, t('dashboard.used')]

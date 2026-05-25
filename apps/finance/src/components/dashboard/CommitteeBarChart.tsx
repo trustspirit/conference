@@ -36,7 +36,7 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
     if (v >= 100000000)
       return `${(v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1)}${isKo ? '억' : 'B'}`
     if (v >= 10000) return `${(v / 10000).toFixed(0)}${isKo ? '만' : 'k'}`
-    return v.toLocaleString()
+    return v.toLocaleString('en-US')
   }
 
   return (
@@ -46,7 +46,7 @@ export default function CommitteeBarChart({ byCommittee }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="var(--finance-neutral-subtle)" />
           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} tickFormatter={formatYAxis} />
-          <Tooltip formatter={(v) => `\u20A9${(Number(v) || 0).toLocaleString()}`} />
+          <Tooltip formatter={(v) => `\u20A9${(Number(v) || 0).toLocaleString('en-US')}`} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar
             dataKey="total"

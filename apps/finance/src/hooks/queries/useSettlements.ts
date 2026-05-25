@@ -186,12 +186,11 @@ export function useCreateSettlement() {
       })
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.requests.all(variables.projectId)
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.settlements.all(variables.projectId)
-      })
+      // Invalidate every cache derived from requests + settlements + dashboard.
+      queryClient.invalidateQueries({ queryKey: ['requests', variables.projectId] })
+      queryClient.invalidateQueries({ queryKey: ['settlements', variables.projectId] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(variables.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.budget.usage(variables.projectId) })
     }
   })
 }

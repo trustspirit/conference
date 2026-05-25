@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { DocumentIcon } from './Icons'
 
@@ -6,13 +7,21 @@ interface Props {
   description?: string
   actionLabel?: string
   actionTo?: string
+  /** Custom illustration in the circular badge. Defaults to a generic document icon. */
+  icon?: ReactNode
 }
 
-export default function EmptyState({ title, description, actionLabel, actionTo }: Props) {
+export default function EmptyState({
+  title,
+  description,
+  actionLabel,
+  actionTo,
+  icon
+}: Props) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-16 h-16 bg-finance-primary-surface rounded-full flex items-center justify-center mb-4">
-        <DocumentIcon className="w-8 h-8 text-finance-primary" />
+        {icon ?? <DocumentIcon className="w-8 h-8 text-finance-primary" />}
       </div>
       <p className="text-finance-text font-medium mb-1">{title}</p>
       {description && <p className="text-sm text-finance-muted mb-4">{description}</p>}

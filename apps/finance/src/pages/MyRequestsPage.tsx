@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useProject } from '../contexts/ProjectContext'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { formatFirestoreTime } from '../lib/utils'
 import { useInfiniteMyRequests, useCancelRequest } from '../hooks/queries/useRequests'
@@ -14,17 +14,25 @@ import EmptyState from '../components/EmptyState'
 import PageHeader from '../components/PageHeader'
 import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import FinanceTable from '../components/table/FinanceTable'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, useToast } from 'trust-ui-react'
 import { formatTotals } from '../lib/currency'
 
 type MyFilter = 'all' | 'pending' | 'reviewed' | 'approved' | 'rejected' | 'settled'
 
 export default function MyRequestsPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currentProject } = useProject()
-  const [filter, setFilter] = useState<MyFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filter = (searchParams.get('status') as MyFilter | null) ?? 'all'
+  const setFilter = (next: MyFilter) => {
+    const params = new URLSearchParams(searchParams)
+    if (next === 'all') params.delete('status')
+    else params.set('status', next)
+    setSearchParams(params, { replace: true })
+  }
 
   const firestoreStatus: RequestStatus | RequestStatus[] | undefined =
     filter === 'all'
@@ -66,7 +74,13 @@ export default function MyRequestsPage() {
       message: t('approval.cancelConfirm'),
       onConfirm: () => {
         closeConfirm()
-        cancelMutation.mutate({ requestId, projectId: currentProject!.id })
+        cancelMutation.mutate(
+          { requestId, projectId: currentProject!.id },
+          {
+            onSuccess: () => toast({ variant: 'success', message: t('approval.cancelSuccess') }),
+            onError: () => toast({ variant: 'danger', message: t('approval.cancelFailed') })
+          }
+        )
       }
     })
   }

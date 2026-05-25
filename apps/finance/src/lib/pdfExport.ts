@@ -134,6 +134,12 @@ function buildPdfStyles() {
     .receipt-name { font-size: 9px; color: #666; padding: 4px 6px; background: #f5f5f5; border-top: 1px solid #eee; }
     .receipt-fail { padding: 30px 10px; text-align: center; background: #f9f9f9; color: #999; font-size: 11px; }
     .receipt-number { position: absolute; top: 4px; left: 4px; background: #333; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; z-index: 1; }
+    /* "Large" receipt — reserved for dense documents (business registrations, contracts).
+       Spans a full A4 page so all text stays legible. Page breaks are handled by the
+       wrapper (.large-page) so we do not double up page-break-before + page-break-after. */
+    .receipt-card-large { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; break-inside: avoid; position: relative; }
+    .receipt-card-large img { width: 100%; max-height: 240mm; object-fit: contain; background: #f9f9f9; display: block; }
+    .large-page { page-break-before: always; }
     .bankbook-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .bankbook-card { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; break-inside: avoid; }
     .bankbook-card img { width: 100%; max-height: 300px; object-fit: contain; background: #f9f9f9; display: block; }
@@ -141,6 +147,42 @@ function buildPdfStyles() {
     .small-text { font-size: 9px; color: #888; }
     @media print { body { padding: 10mm; } }
   `
+}
+
+type NumberedReceiptImage = {
+  nr: { label: string; receipt: Receipt; displaySize?: 'large' }
+  img: { fileName: string; dataUrl: string | null }
+}
+
+function splitBySize(items: NumberedReceiptImage[]) {
+  const large: NumberedReceiptImage[] = []
+  const normal: NumberedReceiptImage[] = []
+  for (const item of items) {
+    if (item.nr.displaySize === 'large') large.push(item)
+    else normal.push(item)
+  }
+  return { large, normal }
+}
+
+function renderReceiptCards(items: NumberedReceiptImage[], size: 'normal' | 'large'): string {
+  const cls = size === 'large' ? 'receipt-card-large' : 'receipt-card'
+  return items
+    .map(({ nr, img }) => {
+      const inner = !img.dataUrl
+        ? `<div class="${cls}">
+            <div class="receipt-number">${escapeHtml(nr.label)}</div>
+            <div class="receipt-fail">Failed to load</div>
+            <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+          </div>`
+        : `<div class="${cls}">
+            <div class="receipt-number">${escapeHtml(nr.label)}</div>
+            <img src="${escapeHtml(img.dataUrl)}" />
+            <p class="receipt-name">${escapeHtml(img.fileName)}</p>
+          </div>`
+      // Each large card gets its own page; normals flow into the parent grid.
+      return size === 'large' ? `<div class="large-page">${inner}</div>` : inner
+    })
+    .join('')
 }
 
 interface ReimbursementRow {
@@ -274,13 +316,20 @@ export async function exportBatchSettlementPdf(
   const useOriginalRequests = originalRequests.length > 0
   const formSources = useOriginalRequests ? originalRequests : settlements
 
-  // Collect receipts per form source (original request or settlement)
-  const receiptsByForm = new Map<string, { label: string; receipt: Receipt }[]>()
+  // Collect receipts per form source (original request or settlement). The
+  // displaySize hint comes from the source's `receiptDisplaySizes` map keyed by
+  // storagePath — staff-managed override, defaults to undefined (normal).
+  const receiptsByForm = new Map<
+    string,
+    { label: string; receipt: Receipt; displaySize?: 'large' }[]
+  >()
   for (let idx = 0; idx < formSources.length; idx++) {
     const source = formSources[idx]
+    const sizeMap = source.receiptDisplaySizes ?? {}
     const entries = source.receipts.map((receipt) => ({
       label: `#${idx + 1} ${source.payee}`,
-      receipt
+      receipt,
+      displaySize: sizeMap[receipt.storagePath]
     }))
     receiptsByForm.set(source.id, entries)
   }
@@ -291,10 +340,7 @@ export async function exportBatchSettlementPdf(
 
   // Build index map: form source id → image indices
   let imageOffset = 0
-  const imagesByForm = new Map<
-    string,
-    { nr: { label: string; receipt: Receipt }; img: { fileName: string; dataUrl: string | null } }[]
-  >()
+  const imagesByForm = new Map<string, NumberedReceiptImage[]>()
   for (const source of formSources) {
     const entries = receiptsByForm.get(source.id) || []
     const mapped = entries.map((nr, i) => ({
@@ -565,59 +611,39 @@ export async function exportBatchSettlementPdf(
       </div>
       `)
 
-      // This form's receipts
+      // This form's receipts — large ones get their own page, normals fill a grid.
       const formReceiptImages = imagesByForm.get(source.id) || []
       if (formReceiptImages.length > 0) {
-        parts.push(`
-        <div class="page-break">
-          <h2>${t('field.receipts')} — ${escapeHtml(source.payee)}</h2>
-          <div class="receipt-grid">
-            ${formReceiptImages
-              .map(({ nr, img }) => {
-                if (!img.dataUrl)
-                  return `<div class="receipt-card">
-                <div class="receipt-number">${escapeHtml(nr.label)}</div>
-                <div class="receipt-fail">Failed to load</div>
-                <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-              </div>`
-                return `<div class="receipt-card">
-                <div class="receipt-number">${escapeHtml(nr.label)}</div>
-                <img src="${escapeHtml(img.dataUrl)}" />
-                <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-              </div>`
-              })
-              .join('')}
+        const { large, normal } = splitBySize(formReceiptImages)
+        const header = `<h2>${t('field.receipts')} — ${escapeHtml(source.payee)}</h2>`
+        if (normal.length > 0) {
+          parts.push(`
+          <div class="page-break">
+            ${header}
+            <div class="receipt-grid">${renderReceiptCards(normal, 'normal')}</div>
           </div>
-        </div>
-        `)
+          `)
+        }
+        // Each large card is its own .large-page (page-break-before: always).
+        // No outer .page-break wrapper — that would insert an extra blank page.
+        if (large.length > 0) parts.push(renderReceiptCards(large, 'large'))
       }
     }
   } else {
     // ── Unified: all receipts together (no individual forms needed) ──
     const allReceiptImages = [...imagesByForm.values()].flat()
     if (allReceiptImages.length > 0) {
-      parts.push(`
-      <div class="page-break">
-        <h2>${t('field.receipts')}</h2>
-        <div class="receipt-grid">
-          ${allReceiptImages
-            .map(({ nr, img }) => {
-              if (!img.dataUrl)
-                return `<div class="receipt-card">
-              <div class="receipt-number">${escapeHtml(nr.label)}</div>
-              <div class="receipt-fail">Failed to load</div>
-              <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-            </div>`
-              return `<div class="receipt-card">
-              <div class="receipt-number">${escapeHtml(nr.label)}</div>
-              <img src="${escapeHtml(img.dataUrl)}" />
-              <p class="receipt-name">${escapeHtml(img.fileName)}</p>
-            </div>`
-            })
-            .join('')}
+      const { large, normal } = splitBySize(allReceiptImages)
+      const header = `<h2>${t('field.receipts')}</h2>`
+      if (normal.length > 0) {
+        parts.push(`
+        <div class="page-break">
+          ${header}
+          <div class="receipt-grid">${renderReceiptCards(normal, 'normal')}</div>
         </div>
-      </div>
-      `)
+        `)
+      }
+      if (large.length > 0) parts.push(renderReceiptCards(large, 'large'))
     }
   }
 

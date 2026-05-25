@@ -113,7 +113,7 @@ export default function BudgetSettingsSection({
           ) : (
             <p className="text-sm font-medium">
               {'\u20A9'}
-              {budget.totalBudget.toLocaleString()}
+              {budget.totalBudget.toLocaleString('en-US')}
             </p>
           )}
         </div>
@@ -155,7 +155,7 @@ export default function BudgetSettingsSection({
                     />
                   ) : (
                     <span>
-                      {budget.byCode[code] ? `\u20A9${budget.byCode[code].toLocaleString()}` : '-'}
+                      {budget.byCode[code] ? `\u20A9${budget.byCode[code].toLocaleString('en-US')}` : '-'}
                     </span>
                   )}
                 </FinanceTable.Td>
@@ -175,7 +175,7 @@ export default function BudgetSettingsSection({
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" align="right" className="font-bold">
                     {'\u20A9'}
-                    {codeTotal.toLocaleString()}
+                    {codeTotal.toLocaleString('en-US')}
                   </FinanceTable.Td>
                 </tr>
                 {hasTotal && diff !== 0 && (
@@ -194,7 +194,7 @@ export default function BudgetSettingsSection({
                       className={`font-bold ${diff > 0 ? 'text-finance-danger' : 'text-finance-accent'}`}
                     >
                       {diff > 0 ? '+' : ''}
-                      {`\u20A9${diff.toLocaleString()}`}
+                      {`\u20A9${diff.toLocaleString('en-US')}`}
                     </FinanceTable.Td>
                   </tr>
                 )}

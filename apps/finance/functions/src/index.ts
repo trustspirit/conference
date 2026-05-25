@@ -40,19 +40,68 @@ interface UploadResult {
   url: string
 }
 
-async function uploadFileToStorage(file: FileInput, storagePath: string): Promise<UploadResult> {
-  if (!file.data.includes(',')) {
-    throw new Error('File data must be a base64 data URI')
+const MAX_UPLOAD_BYTES = 750 * 1024
+const ALLOWED_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'application/pdf'])
+
+// Verify file content matches its declared MIME using magic bytes — prevents a
+// client from uploading an arbitrary blob (e.g. an executable) labeled as image/png.
+function detectMimeFromMagic(buffer: Buffer): string | null {
+  if (buffer.length >= 8 &&
+      buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47 &&
+      buffer[4] === 0x0d && buffer[5] === 0x0a && buffer[6] === 0x1a && buffer[7] === 0x0a) {
+    return 'image/png'
   }
-  const base64Data = file.data.split(',')[1]
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return 'image/jpeg'
+  }
+  if (buffer.length >= 4 && buffer.subarray(0, 4).toString() === '%PDF') {
+    return 'application/pdf'
+  }
+  return null
+}
+
+// Strip directory separators / NUL / control chars to keep storagePath predictable.
+function sanitizeFilename(name: string): string {
+  return name.replace(/[\x00-\x1f/\\]/g, '_').slice(0, 200) || 'file'
+}
+
+async function uploadFileToStorage(file: FileInput, storagePath: string): Promise<UploadResult> {
+  if (!file?.data || typeof file.data !== 'string' || !file.data.startsWith('data:')) {
+    throw new HttpsError('invalid-argument', 'File data must be a base64 data URI')
+  }
+  const commaIdx = file.data.indexOf(',')
+  if (commaIdx < 0) {
+    throw new HttpsError('invalid-argument', 'Malformed data URI')
+  }
+  const header = file.data.slice(0, commaIdx) // e.g. "data:image/png;base64"
+  const declaredMime = header.split(';')[0].split(':')[1]
+  if (!ALLOWED_MIME_TYPES.has(declaredMime)) {
+    throw new HttpsError('invalid-argument', `Disallowed file type: ${declaredMime}`)
+  }
+
+  const base64Data = file.data.slice(commaIdx + 1)
   const buffer = Buffer.from(base64Data, 'base64')
-  const mimeType = file.data.split(';')[0].split(':')[1]
+
+  if (buffer.length === 0) {
+    throw new HttpsError('invalid-argument', 'Empty file')
+  }
+  if (buffer.length > MAX_UPLOAD_BYTES) {
+    throw new HttpsError(
+      'invalid-argument',
+      `File exceeds ${Math.floor(MAX_UPLOAD_BYTES / 1024)}KB limit`
+    )
+  }
+
+  const actualMime = detectMimeFromMagic(buffer)
+  if (actualMime !== declaredMime) {
+    throw new HttpsError('invalid-argument', 'File contents do not match declared type')
+  }
 
   const downloadToken = randomUUID()
   const fileRef = bucket.file(storagePath)
   await fileRef.save(buffer, {
     metadata: {
-      contentType: mimeType,
+      contentType: actualMime,
       metadata: {
         firebaseStorageDownloadTokens: downloadToken
       }
@@ -86,7 +135,8 @@ export const uploadReceiptsV2 = onCall(async (request) => {
 
   const results: UploadResult[] = []
   for (const file of files) {
-    const storagePath = `receipts/${projectId || 'default'}/${committee}/${Date.now()}_${file.name}`
+    const safeName = sanitizeFilename(file.name)
+    const storagePath = `receipts/${projectId || 'default'}/${committee}/${Date.now()}_${safeName}`
     results.push(await uploadFileToStorage(file, storagePath))
   }
   return results
@@ -116,7 +166,7 @@ export const uploadBankBookV2 = onCall(async (request) => {
     }
   }
 
-  const storagePath = `bankbook/${request.auth.uid}/${Date.now()}_${file.name}`
+  const storagePath = `bankbook/${request.auth.uid}/${Date.now()}_${sanitizeFilename(file.name)}`
   return await uploadFileToStorage(file, storagePath)
 })
 
@@ -132,7 +182,7 @@ export const uploadVendorBankBook = onCall(async (request) => {
   }
 
   // No old-file deletion — vendor bank books are per-request, not per-user
-  const storagePath = `vendor-bankbook/${request.auth.uid}/${Date.now()}_${file.name}`
+  const storagePath = `vendor-bankbook/${request.auth.uid}/${Date.now()}_${sanitizeFilename(file.name)}`
   return await uploadFileToStorage(file, storagePath)
 })
 
@@ -168,6 +218,58 @@ export const deleteStorageFiles = onCall(async (request) => {
   return { deleted: safePaths.length }
 })
 
+const STAFF_ROLES = new Set([
+  'admin',
+  'super_admin',
+  'executive',
+  'session_director',
+  'logistic_admin',
+  'finance_prep',
+  'finance_ops',
+  'approver_ops',
+  'approver_prep'
+])
+
+async function getCallerRole(uid: string): Promise<string | null> {
+  const snap = await admin.firestore().doc(`users/${uid}`).get()
+  return snap.exists ? ((snap.data()?.role as string) ?? null) : null
+}
+
+async function assertCanReadStoragePath(uid: string, storagePath: string): Promise<void> {
+  // Reject path traversal and absolute paths up front.
+  if (storagePath.includes('..') || storagePath.startsWith('/')) {
+    throw new HttpsError('invalid-argument', 'Invalid storage path')
+  }
+  const role = await getCallerRole(uid)
+  const isStaff = role !== null && STAFF_ROLES.has(role)
+
+  // bankbook/{ownerUid}/... and vendor-bankbook/{ownerUid}/...
+  const bankMatch = storagePath.match(/^(?:vendor-)?bankbook\/([^/]+)\//)
+  if (bankMatch) {
+    const ownerUid = bankMatch[1]
+    if (ownerUid !== uid && !isStaff) {
+      throw new HttpsError('permission-denied', 'Not authorized to read this file')
+    }
+    return
+  }
+
+  // receipts/{projectId}/... and routemaps/{projectId}/... — staff or project member
+  const projectMatch = storagePath.match(/^(?:receipts|routemaps)\/([^/]+)\//)
+  if (projectMatch) {
+    if (isStaff) return
+    const projectId = projectMatch[1]
+    const proj = await admin.firestore().doc(`projects/${projectId}`).get()
+    const members = (proj.data()?.memberUids as string[] | undefined) ?? []
+    if (!members.includes(uid)) {
+      throw new HttpsError('permission-denied', 'Not authorized to read this file')
+    }
+    return
+  }
+
+  // Unknown path prefix — deny by default.
+  throw new HttpsError('permission-denied', 'Not authorized to read this file')
+}
+
 // 파일 다운로드 프록시 (CORS 우회)
 export const downloadFileV2 = onCall(async (request) => {
   if (!request.auth) {
@@ -175,9 +277,11 @@ export const downloadFileV2 = onCall(async (request) => {
   }
 
   const { storagePath } = request.data as { storagePath: string }
-  if (!storagePath) {
+  if (!storagePath || typeof storagePath !== 'string') {
     throw new HttpsError('invalid-argument', 'No storage path provided')
   }
+
+  await assertCanReadStoragePath(request.auth.uid, storagePath)
 
   const fileRef = bucket.file(storagePath)
   const [exists] = await fileRef.exists()
@@ -738,6 +842,7 @@ function buildWeeklyDigestEmail(
 // 매주 일요일 09:00 KST 처리 대기 알림
 export const weeklyApproverDigest = onSchedule(
   {
+    // UTC 일요일 00:00 = KST 일요일 09:00 (한국은 DST 없음).
     schedule: 'every sunday 00:00',
     timeZone: 'UTC',
     secrets: [gmailUser, gmailAppPassword]

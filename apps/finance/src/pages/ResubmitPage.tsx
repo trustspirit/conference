@@ -736,6 +736,7 @@ export default function ResubmitPage() {
         confirmLabel={t('approval.resubmitConfirm')}
         requestItems={validItems}
         receiptFiles={files.length > 0 ? files : undefined}
+        isPending={submitting}
       />
 
       {blocker.state === 'blocked' && (

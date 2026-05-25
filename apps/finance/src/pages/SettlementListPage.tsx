@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useInfiniteSettlements, fetchRequestDatesByIds } from '../hooks/queries/useSettlements'
@@ -75,7 +75,14 @@ export default function SettlementListPage() {
   const { appUser } = useAuth()
   const { currentProject } = useProject()
   const canProcess = canAccessSettlement(appUser?.role || 'user')
-  const [committeeFilter, setCommitteeFilter] = useState<CommitteeFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const committeeFilter = (searchParams.get('committee') as CommitteeFilter | null) ?? 'all'
+  const setCommitteeFilter = (next: CommitteeFilter) => {
+    const params = new URLSearchParams(searchParams)
+    if (next === 'all') params.delete('committee')
+    else params.set('committee', next)
+    setSearchParams(params, { replace: true })
+  }
   const {
     data,
     isLoading: loading,

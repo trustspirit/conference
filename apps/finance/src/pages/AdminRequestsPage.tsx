@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import type { Committee, RequestStatus, PaymentRequest } from '../types'
@@ -11,7 +11,7 @@ import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import Tooltip from '../components/Tooltip'
 import FinanceTable from '../components/table/FinanceTable'
 import { useTranslation } from 'react-i18next'
-import { Select } from 'trust-ui-react'
+import { Select, useToast } from 'trust-ui-react'
 import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
 import { useInfiniteRequests, fetchAllRequests } from '../hooks/queries/useRequests'
 import {
@@ -51,13 +51,31 @@ function SortIcon({
 
 export default function AdminRequestsPage() {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const { appUser } = useAuth()
   const { currentProject } = useProject()
   const role = appUser?.role || 'user'
-  const [filter, setFilter] = useState<RequestStatus | 'all'>('all')
-  const [committeeFilter, setCommitteeFilter] = useState<Committee | 'all'>('all')
-  const [sortKey, setSortKey] = useState<SortKey>('date')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  // Filters + sort live in the URL so back/forward and shared links restore the view.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filter = (searchParams.get('status') as RequestStatus | 'all' | null) ?? 'all'
+  const committeeFilter = (searchParams.get('committee') as Committee | 'all' | null) ?? 'all'
+  const sortKey = (searchParams.get('sort') as SortKey | null) ?? 'date'
+  const sortDir = (searchParams.get('dir') as SortDir | null) ?? 'desc'
+
+  const updateParam = useCallback(
+    (key: string, value: string, defaultValue: string) => {
+      const next = new URLSearchParams(searchParams)
+      if (value === defaultValue) next.delete(key)
+      else next.set(key, value)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+  const setFilter = (v: RequestStatus | 'all') => updateParam('status', v, 'all')
+  const setCommitteeFilter = (v: Committee | 'all') => updateParam('committee', v, 'all')
+  const setSortKey = (v: SortKey) => updateParam('sort', v, 'date')
+  const setSortDir = (v: SortDir) => updateParam('dir', v, 'desc')
 
   const firestoreStatus: RequestStatus | RequestStatus[] | undefined =
     filter === 'all' ? undefined : filter === 'rejected' ? ['rejected', 'force_rejected'] : filter
@@ -135,7 +153,7 @@ export default function AdminRequestsPage() {
         }
         setExportDialogOpen(false)
       } catch {
-        alert(t('common.loadError'))
+        toast({ variant: 'danger', message: t('common.loadError') })
       } finally {
         setIsExporting(false)
       }
@@ -186,7 +204,7 @@ export default function AdminRequestsPage() {
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
     } else {
       setSortKey(key)
       setSortDir(key === 'date' ? 'desc' : 'asc')

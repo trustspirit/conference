@@ -119,7 +119,7 @@ export default function MonthlyTrendChart({
                 if (v >= 100000000)
                   return `${(v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1)}${isKo ? '억' : 'B'}`
                 if (v >= 10000) return `${(v / 10000).toFixed(0)}${isKo ? '만' : 'k'}`
-                return v.toLocaleString()
+                return v.toLocaleString('en-US')
               }}
             />
             <Tooltip
@@ -127,7 +127,7 @@ export default function MonthlyTrendChart({
                 const v = Number(value) || 0
                 if (name === 'count')
                   return [t('form.itemCount', { count: v }), t('dashboard.requestCount')]
-                return [`\u20A9${v.toLocaleString()}`, t('dashboard.requestAmount')]
+                return [`\u20A9${v.toLocaleString('en-US')}`, t('dashboard.requestAmount')]
               }}
             />
             <Area

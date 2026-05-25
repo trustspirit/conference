@@ -2,7 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function userRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return request.auth != null
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
     }
 
     function isAdmin() {
@@ -10,7 +12,7 @@ service cloud.firestore {
     }
 
     function isStaff() {
-      return userRole() != 'user';
+      return request.auth != null && userRole() != 'user';
     }
 
     match /users/{userId} {
@@ -32,7 +34,14 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.approvedBy == null
         && request.resource.data.approvalSignature == null
-        && request.resource.data.reviewedBy == null;
+        && request.resource.data.reviewedBy == null
+        // If this is a resubmission, the original must belong to the same requester.
+        // Prevents attaching one's own resubmit to another user's rejected request.
+        && (
+          !('originalRequestId' in request.resource.data)
+          || request.resource.data.originalRequestId == null
+          || get(/databases/$(database)/documents/requests/$(request.resource.data.originalRequestId)).data.requestedBy.uid == request.auth.uid
+        );
       allow update: if request.auth != null
         && (
           // --- Reviewer transitions (pending → reviewed | rejected) ---
@@ -115,6 +124,19 @@ service cloud.firestore {
             && request.resource.data.approvalSignature == null
             && userRole() == 'super_admin'
           )
+          // --- Staff can tweak the per-receipt PDF display-size map ---
+          // Lets reviewers/finance flag specific receipts as "large" for PDF export.
+          // Only the `receiptDisplaySizes` field is writable here, so the immutable
+          // receipt identity fields (storagePath, url, fileName) inside `receipts`
+          // remain untouchable — closing the H-2 review finding.
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['receiptDisplaySizes'])
+            && userRole() in [
+              'finance_prep', 'finance_ops', 'admin', 'super_admin',
+              'approver_ops', 'approver_prep', 'session_director',
+              'logistic_admin', 'executive'
+            ]
+          )
           // --- Super admin cascade cleanup: clear originalRequestId only ---
           // Needed so the deleteRequest mutation can unlink resubmissions inside its
           // transaction. The rule cannot know which request is being deleted, so it
@@ -142,8 +164,20 @@ service cloud.firestore {
     match /settlements/{docId} {
       allow read: if request.auth != null
         && userRole() in ['admin', 'super_admin', 'executive', 'session_director', 'logistic_admin', 'finance_prep', 'approver_ops', 'approver_prep'];
-      allow write: if request.auth != null
-        && userRole() in ['admin', 'super_admin', 'finance_prep'];
+      allow create: if request.auth != null
+        && userRole() in ['admin', 'super_admin', 'finance_prep']
+        && request.resource.data.createdBy.uid == request.auth.uid
+        && request.resource.data.keys().hasAll(['projectId', 'batchId', 'payee', 'committee', 'items', 'totalAmount', 'requestIds', 'createdBy', 'createdAt'])
+        && request.resource.data.committee in ['operations', 'preparation']
+        && request.resource.data.totalAmount is number
+        && request.resource.data.totalAmount >= 0
+        && request.resource.data.requestIds is list
+        && request.resource.data.requestIds.size() > 0
+        && request.resource.data.batchId is string
+        && request.resource.data.projectId is string;
+      // Settlements are immutable after creation; only super_admin can correct or delete.
+      allow update: if userRole() == 'super_admin';
+      allow delete: if userRole() == 'super_admin';
     }
     match /projects/{projectId} {
       allow read: if request.auth != null;

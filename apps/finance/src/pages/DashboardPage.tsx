@@ -11,6 +11,7 @@ import TabbedCharts from '../components/dashboard/TabbedCharts'
 import BudgetSettingsSection from '../components/dashboard/BudgetSettingsSection'
 import { useDashboardStats } from '../hooks/queries/useCloudFunctions'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
+import { formatAmount } from '../lib/currency'
 
 export default function DashboardPage() {
   const { t } = useTranslation()
@@ -60,7 +61,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label={t('dashboard.pendingRequests')}
-          value={`${t('form.itemCount', { count: stats.pending })} (\u20A9${stats.pendingAmount.toLocaleString()})`}
+          value={`${t('form.itemCount', { count: stats.pending })} (${formatAmount(stats.pendingAmount, 'KRW')})`}
           color="yellow"
           icon={<ClockIcon className="w-4 h-4 text-yellow-500" />}
         />
@@ -70,17 +71,14 @@ export default function DashboardPage() {
             <p className="text-xs text-finance-muted">{t('dashboard.approvedRequests')}</p>
           </div>
           <p className="text-lg font-bold text-finance-text">
-            {t('form.itemCount', { count: approved })} ({'\u20A9'}
-            {stats.approvedAmount.toLocaleString()})
+            {t('form.itemCount', { count: approved })} ({formatAmount(stats.approvedAmount, 'KRW')})
           </p>
           <div className="mt-2 pt-2 border-t border-finance-border-soft space-y-0.5">
             <p className="text-xs text-finance-muted">
-              {t('dashboard.settledCount', { count: stats.settled })} {'\u20A9'}
-              {stats.settledAmount.toLocaleString()}
+              {t('dashboard.settledCount', { count: stats.settled })} {formatAmount(stats.settledAmount, 'KRW')}
             </p>
             <p className="text-xs text-finance-muted">
-              {t('dashboard.unsettledCount', { count: stats.approvedOnly })} {'\u20A9'}
-              {stats.approvedOnlyAmount.toLocaleString()}
+              {t('dashboard.unsettledCount', { count: stats.approvedOnly })} {formatAmount(stats.approvedOnlyAmount, 'KRW')}
             </p>
           </div>
           <div className="mt-3 h-0.5 w-full bg-finance-accent" />

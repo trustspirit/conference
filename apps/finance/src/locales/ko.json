@@ -53,7 +53,11 @@
     "defaultColumns": "기본 항목",
     "optionalColumns": "추가 항목",
     "exportByRequest": "신청 건별",
-    "exportByBudgetCode": "예산 코드별"
+    "exportByBudgetCode": "예산 코드별",
+    "errorBoundaryTitle": "예기치 못한 오류가 발생했습니다",
+    "errorBoundaryDescription": "잠시 후 다시 시도하시거나 문제가 계속되면 관리자에게 문의해 주세요.",
+    "reload": "새로고침",
+    "goHome": "홈으로"
   },
   "role": {
     "label": "권한",
@@ -251,6 +255,8 @@
     "directorRequired": "60만원 초과 — 위원장/대회장 승인 필요",
     "cancelRequest": "신청 취소",
     "cancelConfirm": "이 신청서를 취소하시겠습니까?",
+    "cancelSuccess": "신청서가 취소되었습니다.",
+    "cancelFailed": "신청서 취소에 실패했습니다.",
     "remainingCount": "{{count}}건 남음",
     "viewOriginal": "원본 보기"
   },
@@ -271,6 +277,8 @@
     "noSettlements": "정산 내역이 없습니다.",
     "settleConfirm": "{{count}}건의 신청서를 정산 처리하시겠습니까?\n신청자 {{payeeCount}}명의 통합 리포트가 생성됩니다.",
     "settleFailed": "정산 처리에 실패했습니다.",
+    "missingApprovalSignature": "{{payee}} - 승인 서명이 누락되었습니다.",
+    "tooManyOperations": "선택한 신청서가 너무 많습니다. 건수를 줄여 다시 시도해 주세요.",
     "report": "리포트",
     "selectedSummary": "{{count}}건 선택 | 신청자 {{payeeCount}}명 | 총액 {{amount}}",
     "settlementDate": "정산일",
@@ -465,6 +473,7 @@
     "bankBookNameMatches": "통장사본의 이름, 은행 및 계좌번호가 신청 내용과 일치하는지",
     "bankBookCorrect": "통장사본이 최신 상태인지",
     "confirmReview": "모든 확인사항을 검토하셨습니까?",
+    "confirmReviewBody": "신청자 {{payee}} · {{amount}} 건을 검토 완료로 표시합니다. 진행하시겠습니까?",
     "expand": "펼치기",
     "collapse": "접기"
   },
@@ -477,7 +486,11 @@
     "downloading": "다운로드 중...",
     "downloadFailed": "다운로드에 실패했습니다.",
     "partialDownload": "{{total}}건 중 {{failed}}건을 다운로드하지 못했습니다.",
-    "viewRequest": "신청서 보기"
+    "viewRequest": "신청서 보기",
+    "markLarge": "PDF에서 크게 보기",
+    "markNormal": "PDF에서 보통 크기로 보기",
+    "sizeLargeBadge": "크게",
+    "sizeUpdateFailed": "영수증 표시 크기 변경에 실패했습니다."
   },
   "admin": {
     "rollbackTitle": "검토완료로 되돌리기",
