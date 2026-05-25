@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
@@ -11,6 +11,9 @@ import DisplayNameModal from './components/DisplayNameModal'
 import ConsentDialog from './components/ConsentDialog'
 import Spinner from './components/Spinner'
 import ErrorBoundary from './components/ErrorBoundary'
+import AwaitingAssignmentPage from './pages/AwaitingAssignmentPage'
+import NoProjectsPage from './pages/NoProjectsPage'
+import { effectiveSystemRole } from './hooks/useProjectRole'
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('./pages/LoginPage'))
@@ -28,6 +31,30 @@ const SettlementReportPage = lazy(() => import('./pages/SettlementReportPage'))
 const ResubmitPage = lazy(() => import('./pages/ResubmitPage'))
 const ReceiptsPage = lazy(() => import('./pages/ReceiptsPage'))
 
+function AssignmentGuard({ children }: { children: React.ReactNode }) {
+  const { appUser, needsDisplayName, needsConsent } = useAuth()
+  const location = useLocation()
+
+  // Skip guard for these paths
+  const SKIP_PATHS = ['/login', '/awaiting-assignment', '/no-projects', '/profile']
+  if (SKIP_PATHS.includes(location.pathname)) return <>{children}</>
+
+  // Not yet logged in or still in first-time setup → let existing flow handle
+  if (!appUser || needsDisplayName || needsConsent) return <>{children}</>
+
+  const sys = effectiveSystemRole(appUser)
+  if (sys === 'super_admin') return <>{children}</>
+
+  // assignedProjectCount fallback: count from legacy projectIds during transition
+  const count = appUser.assignedProjectCount
+    ?? ((appUser as unknown as { projectIds?: string[] }).projectIds?.length ?? 0)
+
+  if (count === 0) {
+    return sys === 'admin' ? <NoProjectsPage /> : <AwaitingAssignmentPage />
+  }
+  return <>{children}</>
+}
+
 function AppLayout() {
   const { needsDisplayName, needsConsent, user } = useAuth()
   return (
@@ -42,7 +69,9 @@ function AppLayout() {
         >
           {user && needsDisplayName && <DisplayNameModal />}
           {user && !needsDisplayName && needsConsent && <ConsentDialog />}
-          <Outlet />
+          <AssignmentGuard>
+            <Outlet />
+          </AssignmentGuard>
         </Suspense>
       </ErrorBoundary>
     </ProjectProvider>
@@ -54,6 +83,8 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/awaiting-assignment', element: <AwaitingAssignmentPage /> },
+      { path: '/no-projects', element: <NoProjectsPage /> },
       {
         path: '/request/new',
         element: (
