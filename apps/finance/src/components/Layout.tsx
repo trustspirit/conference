@@ -10,7 +10,7 @@ import {
   canAccessReceipts,
   canAccessSettlementRead
 } from '../lib/roles'
-import { useProjectRole } from '../hooks/useProjectRole'
+import { useProjectRole, effectiveSystemRole } from '../hooks/useProjectRole'
 import ProjectSelector from './ProjectSelector'
 import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from './Icons'
 import FloatingChatButton from './chat/FloatingChatButton'
@@ -173,6 +173,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const projectRole = useProjectRole() ?? 'user'
+  // Display label uses systemRole when super_admin (so the badge reads "최고 관리자"
+  // rather than the promoted ProjectRole 'admin').
+  const displayRole = effectiveSystemRole(appUser) === 'super_admin' ? 'super_admin' : projectRole
   const userName = appUser?.displayName || appUser?.name || appUser?.email
 
   const isActive = (path: string) => location.pathname === path
@@ -284,7 +287,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <GearIcon className="w-4 h-4 text-finance-muted" />
                 </Link>
               )}
-              <UserMenu userName={userName} role={projectRole} onLogout={logout} isActive={isActive} />
+              <UserMenu userName={userName} role={displayRole} onLogout={logout} isActive={isActive} />
             </div>
 
             {/* Mobile Menu Button */}
@@ -374,9 +377,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <div className="px-3 py-2 flex items-center justify-between gap-3">
                   <span className="min-w-0 truncate text-sm text-finance-muted">
                     {userName}
-                    {projectRole !== 'user' && (
+                    {displayRole !== 'user' && (
                       <span className="ml-1.5 text-xs bg-finance-primary-surface text-finance-primary px-1.5 py-0.5 rounded">
-                        {t(`role.${projectRole}`)}
+                        {t(`role.${displayRole}`)}
                       </span>
                     )}
                   </span>
