@@ -231,16 +231,30 @@ const STAFF_ROLES = new Set([
   'approver_prep'
 ])
 
-async function getCallerRole(uid: string): Promise<string | null> {
-  const snap = await admin.firestore().doc(`users/${uid}`).get()
-  return snap.exists ? ((snap.data()?.role as string) ?? null) : null
+/**
+ * True if the user has any "staff" role anywhere in the system —
+ * i.e., system admin/super_admin OR has a staff-level ProjectRole in any project.
+ * Used for the bankbook bypass: finance/approver staff need to see other users'
+ * bank info for verification.
+ */
+async function hasStaffRoleAnywhere(uid: string): Promise<boolean> {
+  const db = admin.firestore()
+  const userDoc = await db.doc(`users/${uid}`).get()
+  const data = userDoc.data()
+  if (!data) return false
+
+  // System-level staff
+  if (data.systemRole === 'super_admin' || data.systemRole === 'admin') return true
+
+  // Project-level: scan all projects (small N in this app — typically <10)
+  const projects = await db.collection('projects').get()
+  for (const p of projects.docs) {
+    const role = p.data()?.memberRoles?.[uid]
+    if (role && STAFF_ROLES.has(role)) return true
+  }
+  return false
 }
 
-/**
- * Returns uids that have one of the given roles in the project, plus all super_admins.
- * Reads from `memberRoles` if present, otherwise falls back to legacy `memberUids` + user `role`.
- * Always returns each uid only once.
- */
 async function uidsWithProjectRoles(projectId: string | undefined | null, roles: string[]): Promise<{ uid: string; role: string }[]> {
   if (!projectId) return []
   const db = admin.firestore()
@@ -248,20 +262,8 @@ async function uidsWithProjectRoles(projectId: string | undefined | null, roles:
   const data = projDoc.data() ?? {}
   const result = new Map<string, string>()  // uid -> role
 
-  if (data.memberRoles) {
-    for (const [uid, r] of Object.entries(data.memberRoles as Record<string, string>)) {
-      if (roles.includes(r)) result.set(uid, r)
-    }
-  } else if (Array.isArray(data.memberUids)) {
-    const userDocs = await Promise.all(
-      data.memberUids.map((uid: string) => db.doc(`users/${uid}`).get())
-    )
-    for (const userDoc of userDocs) {
-      const role = userDoc.data()?.role
-      if (typeof role === 'string' && roles.includes(role)) {
-        result.set(userDoc.id, role)
-      }
-    }
+  for (const [uid, r] of Object.entries((data.memberRoles ?? {}) as Record<string, string>)) {
+    if (roles.includes(r)) result.set(uid, r)
   }
 
   // Always include super_admins (regardless of project membership)
@@ -269,20 +271,13 @@ async function uidsWithProjectRoles(projectId: string | undefined | null, roles:
   for (const d of superSnap.docs) {
     if (!result.has(d.id)) result.set(d.id, 'admin')   // effective role for super_admin
   }
-  const legacySuperSnap = await db.collection('users').where('role', '==', 'super_admin').get()
-  for (const d of legacySuperSnap.docs) {
-    if (!result.has(d.id)) result.set(d.id, 'admin')
-  }
 
   return [...result.entries()].map(([uid, role]) => ({ uid, role }))
 }
 
 function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | null {
   if (!d) return null
-  if (d.systemRole) return d.systemRole
-  if (d.role === 'super_admin') return 'super_admin'
-  if (d.role === 'admin') return 'admin'
-  return 'member'
+  return d.systemRole ?? null
 }
 
 async function assertCanReadStoragePath(uid: string, storagePath: string): Promise<void> {
@@ -290,8 +285,7 @@ async function assertCanReadStoragePath(uid: string, storagePath: string): Promi
   if (storagePath.includes('..') || storagePath.startsWith('/')) {
     throw new HttpsError('invalid-argument', 'Invalid storage path')
   }
-  const role = await getCallerRole(uid)
-  const isStaff = role !== null && STAFF_ROLES.has(role)
+  const isStaff = await hasStaffRoleAnywhere(uid)
 
   // bankbook/{ownerUid}/... and vendor-bankbook/{ownerUid}/...
   const bankMatch = storagePath.match(/^(?:vendor-)?bankbook\/([^/]+)\//)
