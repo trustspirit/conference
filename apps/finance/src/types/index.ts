@@ -1,14 +1,4 @@
-export type UserRole =
-  | 'user'
-  | 'finance_ops'
-  | 'approver_ops'
-  | 'finance_prep'
-  | 'approver_prep'
-  | 'session_director'
-  | 'logistic_admin'
-  | 'executive'
-  | 'admin'
-  | 'super_admin'
+// UserRole — removed in Phase H (superseded by ProjectRole + SystemRole)
 
 export type SystemRole = 'super_admin' | 'admin' | 'member'
 

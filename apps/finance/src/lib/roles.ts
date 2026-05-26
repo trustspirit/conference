@@ -1,40 +1,39 @@
-import { UserRole, Committee, RequestStatus } from '../types'
+import { ProjectRole, Committee, RequestStatus } from '../types'
 
 /** Default amount threshold: requests above this require director/executive/admin approval */
 export const DEFAULT_APPROVAL_THRESHOLD = 600000
 
-/** Check if role has admin-level privileges (admin or super_admin) */
-export function isAdmin(role: UserRole): boolean {
-  return role === 'admin' || role === 'super_admin'
+/** Check if role has admin-level privileges */
+export function isAdmin(role: ProjectRole): boolean {
+  return role === 'admin'
 }
 
 /** Can review requests (finance_ops for operations, finance_prep for all) */
-export function canReview(role: UserRole): boolean {
-  return ['finance_ops', 'finance_prep', 'admin', 'super_admin'].includes(role)
+export function canReview(role: ProjectRole): boolean {
+  return ['finance_ops', 'finance_prep', 'admin'].includes(role)
 }
 
 /** Can review a specific committee's requests */
-export function canReviewCommittee(role: UserRole, committee: Committee): boolean {
+export function canReviewCommittee(role: ProjectRole, committee: Committee): boolean {
   if (isAdmin(role) || role === 'finance_prep') return true
   if (role === 'finance_ops' && committee === 'operations') return true
   return false
 }
 
 /** Can final-approve requests (reviewed->approved) */
-export function canFinalApprove(role: UserRole): boolean {
+export function canFinalApprove(role: ProjectRole): boolean {
   return [
     'approver_ops',
     'approver_prep',
     'session_director',
     'logistic_admin',
     'executive',
-    'admin',
-    'super_admin'
+    'admin'
   ].includes(role)
 }
 
 /** Can final-approve a specific committee's requests (ignoring amount) */
-export function canFinalApproveCommittee(role: UserRole, committee: Committee): boolean {
+export function canFinalApproveCommittee(role: ProjectRole, committee: Committee): boolean {
   if (isAdmin(role) || role === 'executive') return true
   if (role === 'session_director' && committee === 'operations') return true
   if (role === 'logistic_admin' && committee === 'preparation') return true
@@ -49,7 +48,7 @@ export function canFinalApproveCommittee(role: UserRole, committee: Committee): 
  * so any USD-containing request requires director/executive approval.
  */
 export function canFinalApproveRequest(
-  role: UserRole,
+  role: ProjectRole,
   committee: Committee,
   amount: number,
   threshold = DEFAULT_APPROVAL_THRESHOLD,
@@ -69,22 +68,22 @@ export function canFinalApproveRequest(
 }
 
 /** Can final-approve a request filed by a director (session_director/logistic_admin) — only executive/admin */
-export function canApproveDirectorRequest(role: UserRole): boolean {
+export function canApproveDirectorRequest(role: ProjectRole): boolean {
   return isAdmin(role) || role === 'executive'
 }
 
 /** Can force-reject approved requests (finance_prep, admin only) */
-export function canForceReject(role: UserRole): boolean {
+export function canForceReject(role: ProjectRole): boolean {
   return role === 'finance_prep' || isAdmin(role)
 }
 
 /** Can see a committee's requests in admin views (reviewer or final approver) */
-export function canSeeCommitteeRequests(role: UserRole, committee: Committee): boolean {
+export function canSeeCommitteeRequests(role: ProjectRole, committee: Committee): boolean {
   return canReviewCommittee(role, committee) || canFinalApproveCommittee(role, committee)
 }
 
 /** Can access dashboard and budget settings */
-export function canAccessDashboard(role: UserRole): boolean {
+export function canAccessDashboard(role: ProjectRole): boolean {
   return (
     isAdmin(role) ||
     role === 'finance_prep' ||
@@ -95,25 +94,24 @@ export function canAccessDashboard(role: UserRole): boolean {
 }
 
 /** Can access receipts management */
-export function canAccessReceipts(role: UserRole): boolean {
+export function canAccessReceipts(role: ProjectRole): boolean {
   return isAdmin(role) || role === 'finance_prep'
 }
 
 /** Can view user directory */
-export function canManageUsers(role: UserRole): boolean {
+export function canManageUsers(role: ProjectRole): boolean {
   return isAdmin(role)
 }
 
 /** Can process settlements (create, settle) */
-export function canAccessSettlement(role: UserRole): boolean {
+export function canAccessSettlement(role: ProjectRole): boolean {
   return isAdmin(role) || role === 'finance_prep'
 }
 
 /** Can view settlement list and reports (read-only) */
-export function canAccessSettlementRead(role: UserRole): boolean {
+export function canAccessSettlementRead(role: ProjectRole): boolean {
   return [
     'admin',
-    'super_admin',
     'finance_prep',
     'executive',
     'session_director',
@@ -124,12 +122,12 @@ export function canAccessSettlementRead(role: UserRole): boolean {
 }
 
 /** Can access admin menu (any non-user role) */
-export function isStaff(role: UserRole): boolean {
+export function isStaff(role: ProjectRole): boolean {
   return role !== 'user'
 }
 
 /** All roles for dropdown (super_admin is NOT included — only settable via Firestore) */
-export const ALL_ROLES: UserRole[] = [
+export const ALL_ROLES: ProjectRole[] = [
   'user',
   'finance_ops',
   'approver_ops',
@@ -142,7 +140,7 @@ export const ALL_ROLES: UserRole[] = [
 ]
 
 /** Can create vendor requests (prep committee all + ops finance/approver + admins) */
-export function canCreateVendorRequest(role: UserRole, committee?: Committee): boolean {
+export function canCreateVendorRequest(role: ProjectRole, committee?: Committee): boolean {
   if (isAdmin(role)) return true
   if (
     ['finance_prep', 'approver_prep', 'logistic_admin', 'finance_ops', 'approver_ops'].includes(
@@ -162,13 +160,3 @@ export const DELETABLE_STATUSES: readonly RequestStatus[] = [
   'cancelled',
   'force_rejected'
 ] as const
-
-/** Can roll back an approved request to reviewed (super_admin only) */
-export function canRollbackApproval(role: UserRole): boolean {
-  return role === 'super_admin'
-}
-
-/** Can permanently delete a request (super_admin only, status must be deletable) */
-export function canDeleteRequest(role: UserRole, status: RequestStatus): boolean {
-  return role === 'super_admin' && DELETABLE_STATUSES.includes(status)
-}
