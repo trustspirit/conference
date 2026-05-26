@@ -40,16 +40,26 @@ interface BatchGroup {
 }
 
 function groupByBatch(settlements: Settlement[]): BatchGroup[] {
+  // Track unique requestIds per batch — a mixed-currency request may appear in
+  // both the KRW and USD settlement docs of the same batch and must be counted once.
+  const requestIdsByBatch = new Map<string, Set<string>>()
   const map = new Map<string, BatchGroup>()
   for (const s of settlements) {
     const key = s.batchId || s.id // fallback for legacy settlements without batchId
+    let requestIds = requestIdsByBatch.get(key)
+    if (!requestIds) {
+      requestIds = new Set<string>()
+      requestIdsByBatch.set(key, requestIds)
+    }
+    for (const id of s.requestIds) requestIds.add(id)
+
     const existing = map.get(key)
     if (existing) {
       if (!existing.payees.includes(s.payee)) existing.payees.push(s.payee)
       if (!existing.committees.includes(s.committee)) existing.committees.push(s.committee)
       existing.totalAmount += s.totalAmount
       existing.totalAmountUsd += s.totalAmountUsd || 0
-      existing.totalRequests += s.requestIds.length
+      existing.totalRequests = requestIds.size
       existing.settlementCount += 1
       existing.isCorporateCard = existing.isCorporateCard || !!s.isCorporateCard
     } else {
@@ -60,7 +70,7 @@ function groupByBatch(settlements: Settlement[]): BatchGroup[] {
         committees: [s.committee],
         totalAmount: s.totalAmount,
         totalAmountUsd: s.totalAmountUsd || 0,
-        totalRequests: s.requestIds.length,
+        totalRequests: requestIds.size,
         date: formatFirestoreDate(s.createdAt),
         settlementCount: 1,
         isCorporateCard: s.isCorporateCard || false

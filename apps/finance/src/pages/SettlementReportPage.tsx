@@ -62,8 +62,9 @@ export default function SettlementReportPage() {
   const corporateCardTitle =
     currentProject?.corporateCardReportTitle || t('settlement.corporateCardReport')
 
-  // Load original requests for individual forms (preserves per-request approval signatures)
-  const allRequestIds = settlements.flatMap((s) => s.requestIds)
+  // Load original requests for individual forms (preserves per-request approval signatures).
+  // Dedupe: a mixed-currency request appears in both the KRW and USD settlement docs.
+  const allRequestIds = [...new Set(settlements.flatMap((s) => s.requestIds))]
   const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
 
   // Load payee user profiles for bank book URLs
@@ -196,7 +197,7 @@ export default function SettlementReportPage() {
   const committeeLabel = uniqueCommittees.map((c) => t(`committee.${c}`)).join(' / ')
   const totalAmount = settlements.reduce((sum, s) => sum + s.totalAmount, 0)
   const totalAmountUsd = settlements.reduce((sum, s) => sum + (s.totalAmountUsd || 0), 0)
-  const totalRequests = settlements.reduce((sum, s) => sum + s.requestIds.length, 0)
+  const totalRequests = allRequestIds.length
 
   // Budget code summary (use stored item.amount — already calculated at submission time)
   // Track KRW/USD per budget code separately so the report shows correct currency.

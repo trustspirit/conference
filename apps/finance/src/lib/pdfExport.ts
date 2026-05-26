@@ -398,7 +398,7 @@ export async function exportBatchSettlementPdf(
     ${!isCorporateCard ? `<div><span class="label">${t('field.bankAndAccount')}:</span> ${escapeHtml(bankDisplay)}</div>` : ''}
     <div><span class="label">${t('settlement.settlementDate')}:</span> ${escapeHtml(dateStr)}</div>
     ${committeeLabel ? `<div><span class="label">${t('committee.label')}:</span> ${committeeLabel}</div>` : ''}
-    <div><span class="label">${t('settlement.requestCount')}:</span> ${settlements.reduce((sum, s) => sum + s.requestIds.length, 0)}</div>
+    <div><span class="label">${t('settlement.requestCount')}:</span> ${new Set(settlements.flatMap((s) => s.requestIds)).size}</div>
   </div>
 
   <h2>${t('settlement.budgetSummary')}</h2>

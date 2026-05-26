@@ -264,7 +264,10 @@ export default function SettlementPage() {
         }
 
         // Split items + requests by currency. A request that has items in both
-        // currencies will appear in both the KRW and USD settlement docs.
+        // currencies will appear in both the KRW and USD settlement docs, but
+        // its receipts are attached only to the first one (KRW pass) so the
+        // unified report doesn't show them twice.
+        const claimedReceipts = new Set<string>()
         const buildForCurrency = (currency: Currency) => {
           const reqsForCurrency = reqs.filter((r) =>
             r.items.some((i) => getItemCurrency(i) === currency)
@@ -273,7 +276,10 @@ export default function SettlementPage() {
           const items = reqsForCurrency.flatMap((r) =>
             r.items.filter((i) => getItemCurrency(i) === currency)
           )
-          const receipts = reqsForCurrency.flatMap((r) => r.receipts)
+          const receipts = reqsForCurrency
+            .filter((r) => !claimedReceipts.has(r.id))
+            .flatMap((r) => r.receipts)
+          for (const r of reqsForCurrency) claimedReceipts.add(r.id)
           const sum = items.reduce((acc, i) => acc + i.amount, 0)
           return {
             ...base,
