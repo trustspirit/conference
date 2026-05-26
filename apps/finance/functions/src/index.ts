@@ -260,19 +260,13 @@ async function uidsWithProjectRoles(projectId: string | undefined | null, roles:
   const db = admin.firestore()
   const projDoc = await db.doc(`projects/${projectId}`).get()
   const data = projDoc.data() ?? {}
-  const result = new Map<string, string>()  // uid -> role
+  const result: { uid: string; role: string }[] = []
 
   for (const [uid, r] of Object.entries((data.memberRoles ?? {}) as Record<string, string>)) {
-    if (roles.includes(r)) result.set(uid, r)
+    if (roles.includes(r)) result.push({ uid, role: r })
   }
 
-  // Always include super_admins (regardless of project membership)
-  const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get()
-  for (const d of superSnap.docs) {
-    if (!result.has(d.id)) result.set(d.id, 'admin')   // effective role for super_admin
-  }
-
-  return [...result.entries()].map(([uid, role]) => ({ uid, role }))
+  return result
 }
 
 function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | null {
@@ -926,6 +920,12 @@ export const weeklyApproverDigest = onSchedule(
       for (const { uid, role } of perProject) {
         if (!recipientMap.has(uid)) recipientMap.set(uid, role)
       }
+    }
+
+    // super_admin은 개별 신청/상태변경 알림은 받지 않지만, 주간 다이제스트는 받음
+    const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get()
+    for (const d of superSnap.docs) {
+      if (!recipientMap.has(d.id)) recipientMap.set(d.id, 'admin')
     }
 
     if (recipientMap.size === 0) {
