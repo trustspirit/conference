@@ -297,10 +297,8 @@ async function assertCanReadStoragePath(uid: string, storagePath: string): Promi
     if (isStaff) return
     const projectId = projectMatch[1]
     const proj = await admin.firestore().doc(`projects/${projectId}`).get()
-    const data = proj.data() ?? {}
-    const inMemberRoles = data.memberRoles && data.memberRoles[uid] !== undefined
-    const inMemberUids = Array.isArray(data.memberUids) && data.memberUids.includes(uid)
-    if (!inMemberRoles && !inMemberUids) {
+    const memberRoles = proj.data()?.memberRoles as Record<string, string> | undefined
+    if (!memberRoles || memberRoles[uid] === undefined) {
       throw new HttpsError('permission-denied', 'Not authorized to read this file')
     }
     return
@@ -463,20 +461,12 @@ export const deleteUserAccount = onCall(async (request) => {
     console.warn(`Auth account deletion failed for ${uid}:`, error)
   }
 
-  // 프로젝트 memberRoles 및 legacy memberUids에서 제거
+  // 프로젝트 memberRoles에서 제거
   const projectsSnapshot = await admin.firestore().collection('projects').get()
   for (const projectDoc of projectsSnapshot.docs) {
-    const data = projectDoc.data() ?? {}
-    const updates: Record<string, unknown> = {}
-    if (data.memberRoles && data.memberRoles[uid] !== undefined) {
-      updates[`memberRoles.${uid}`] = FieldValue.delete()
-    }
-    const legacyUids: string[] | undefined = data.memberUids
-    if (Array.isArray(legacyUids) && legacyUids.includes(uid)) {
-      updates.memberUids = legacyUids.filter((id) => id !== uid)
-    }
-    if (Object.keys(updates).length > 0) {
-      await projectDoc.ref.update(updates)
+    const memberRoles = (projectDoc.data()?.memberRoles ?? {}) as Record<string, unknown>
+    if (memberRoles[uid] !== undefined) {
+      await projectDoc.ref.update({ [`memberRoles.${uid}`]: FieldValue.delete() })
     }
   }
 
