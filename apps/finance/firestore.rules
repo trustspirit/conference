@@ -171,6 +171,15 @@ service cloud.firestore {
             && request.resource.data.approvalSignature == null
             && isSuperAdmin()
           )
+          // --- Super admin settlement revert: settled → approved (clears settlementId) ---
+          // Paired with settlement doc deletion in useRevertSettlementBatch.
+          || (
+            resource.data.status == 'settled'
+            && request.resource.data.status == 'approved'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'settlementId'])
+            && !('settlementId' in request.resource.data)
+            && isSuperAdmin()
+          )
           // --- Staff can tweak the per-receipt PDF display-size map ---
           // Lets reviewers/finance flag specific receipts as "large" for PDF export.
           // Only the `receiptDisplaySizes` field is writable here, so the immutable
