@@ -195,6 +195,8 @@ export interface Settlement {
   totalAmount: number
   /** Optional USD sum — undefined treated as 0 for backwards compatibility */
   totalAmountUsd?: number
+  /** Settlement currency. Undefined on legacy docs (may contain mixed-currency items). */
+  currency?: Currency
   receipts: Receipt[]
   /** Inherited from the source request(s) at settlement creation time. */
   receiptDisplaySizes?: ReceiptDisplaySizes

@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useToast } from 'trust-ui-react'
+import { Button, Dialog, useToast } from 'trust-ui-react'
+import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
+import { effectiveSystemRole } from '../hooks/useProjectRole'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
 import {
   useSettlement,
   useSettlementBatch,
   useRequestsByIds,
-  useUsersByUids
+  useUsersByUids,
+  useRevertSettlementBatch
 } from '../hooks/queries/useSettlements'
 import { useUser } from '../hooks/queries/useUsers'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
@@ -25,9 +28,14 @@ import FinanceTable from '../components/table/FinanceTable'
 export default function SettlementReportPage() {
   const { t } = useTranslation()
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const { appUser } = useAuth()
   const { id } = useParams<{ id: string }>()
   const { currentProject } = useProject()
   const { data: settlement, isLoading } = useSettlement(id)
+  const isSuperAdmin = effectiveSystemRole(appUser) === 'super_admin'
+  const revertMutation = useRevertSettlementBatch()
+  const [revertConfirmOpen, setRevertConfirmOpen] = useState(false)
 
   // Load all settlements in the same batch
   const batchId = settlement?.batchId
@@ -108,6 +116,22 @@ export default function SettlementReportPage() {
       cancelled = true
     }
   }, [settlementIds]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleRevert = async () => {
+    if (!settlement) return
+    setRevertConfirmOpen(false)
+    try {
+      await revertMutation.mutateAsync({
+        batchId: settlement.batchId,
+        projectId: settlement.projectId
+      })
+      toast({ variant: 'success', message: t('settlement.revertSuccess') })
+      navigate('/admin/settlements')
+    } catch (err) {
+      console.error('Failed to revert settlement batch:', err)
+      toast({ variant: 'danger', message: t('settlement.revertFailed') })
+    }
+  }
 
   const handleExportPdf = async () => {
     if (settlements.length === 0) return
@@ -214,8 +238,34 @@ export default function SettlementReportPage() {
             >
               {exporting ? t('settlement.exporting') : t('settlement.exportPdf')}
             </button>
+            {isSuperAdmin && (
+              <button
+                onClick={() => setRevertConfirmOpen(true)}
+                disabled={revertMutation.isPending}
+                className="w-full px-4 py-2 rounded text-sm font-medium border border-finance-danger-border bg-finance-danger-bg text-finance-danger hover:bg-finance-danger hover:text-white disabled:opacity-50 whitespace-nowrap sm:w-auto"
+              >
+                {revertMutation.isPending ? t('settlement.reverting') : t('settlement.revert')}
+              </button>
+            )}
           </div>
         </div>
+
+        <Dialog open={revertConfirmOpen} onClose={() => setRevertConfirmOpen(false)} size="sm">
+          <Dialog.Title onClose={() => setRevertConfirmOpen(false)}>
+            {t('common.confirm')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <p>{t('settlement.revertConfirm')}</p>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button variant="outline" onClick={() => setRevertConfirmOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onClick={handleRevert} disabled={revertMutation.isPending}>
+              {t('settlement.revert')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
 
         <div className="mb-6">
           <h2 className="text-xl font-bold">

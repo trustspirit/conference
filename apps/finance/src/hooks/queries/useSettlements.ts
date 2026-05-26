@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query'
 import {
   collection,
+  deleteField,
   getDocs,
   getDoc,
   doc,
@@ -194,6 +195,72 @@ export function useCreateSettlement() {
     },
     onSuccess: (_data, variables) => {
       // Invalidate every cache derived from requests + settlements + dashboard.
+      queryClient.invalidateQueries({ queryKey: ['requests', variables.projectId] })
+      queryClient.invalidateQueries({ queryKey: ['settlements', variables.projectId] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(variables.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.budget.usage(variables.projectId) })
+    }
+  })
+}
+
+/**
+ * Revert an entire settlement batch: delete all settlement docs sharing the
+ * batchId and restore their requests to 'approved' (clearing settlementId).
+ * Intended for super_admin only — caller is responsible for the role check.
+ */
+export function useRevertSettlementBatch() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: { batchId: string; projectId: string }) => {
+      // Fetch batch IDs outside the transaction (transactions can't run queries).
+      const batchSnap = await getDocs(
+        query(
+          collection(db, 'settlements'),
+          where('projectId', '==', params.projectId),
+          where('batchId', '==', params.batchId)
+        )
+      )
+      if (batchSnap.empty) throw new Error('Settlement batch not found')
+
+      const settlementIds = batchSnap.docs.map((d) => d.id)
+      const requestIds = [
+        ...new Set(
+          batchSnap.docs.flatMap((d) => (d.data().requestIds as string[] | undefined) ?? [])
+        )
+      ]
+
+      // Op-count guard: reads (settlements + requests) + writes (deletes + updates).
+      const totalOps = (settlementIds.length + requestIds.length) * 2
+      if (totalOps > 500) {
+        throw new Error('Batch too large to revert in a single transaction')
+      }
+
+      await runTransaction(db, async (tx) => {
+        const settlementRefs = settlementIds.map((id) => doc(db, 'settlements', id))
+        const requestRefs = requestIds.map((id) => doc(db, 'requests', id))
+
+        const settlementSnaps = await Promise.all(settlementRefs.map((ref) => tx.get(ref)))
+        const requestSnaps = await Promise.all(requestRefs.map((ref) => tx.get(ref)))
+
+        for (const snap of requestSnaps) {
+          if (!snap.exists()) continue
+          const status = snap.data().status
+          if (status !== 'settled') {
+            throw new Error(`Request ${snap.id} is no longer settled (status: ${status})`)
+          }
+          tx.update(snap.ref, {
+            status: 'approved',
+            settlementId: deleteField()
+          })
+        }
+
+        for (const snap of settlementSnaps) {
+          if (snap.exists()) tx.delete(snap.ref)
+        }
+      })
+    },
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['requests', variables.projectId] })
       queryClient.invalidateQueries({ queryKey: ['settlements', variables.projectId] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(variables.projectId) })

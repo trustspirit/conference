@@ -6,7 +6,7 @@ import { db } from '@conference/firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { useProjectRole } from '../hooks/useProjectRole'
-import { PaymentRequest, AppUser } from '../types'
+import { PaymentRequest, AppUser, Currency } from '../types'
 import { canSeeCommitteeRequests } from '../lib/roles'
 import { useApprovedRequests, useForceRejectRequest } from '../hooks/queries/useRequests'
 import { useCreateSettlement } from '../hooks/queries/useSettlements'
@@ -17,7 +17,7 @@ import Layout from '../components/Layout'
 import SettlementSelectTable from '../components/settlement/SettlementSelectTable'
 import SettlementReviewStep from '../components/settlement/SettlementReviewStep'
 import SettlementSummary from '../components/settlement/SettlementSummary'
-import { formatTotals, sumByCurrency } from '../lib/currency'
+import { formatTotals, getItemCurrency } from '../lib/currency'
 
 type ReviewPhase = 'select' | 'review' | 'summary'
 
@@ -210,18 +210,6 @@ export default function SettlementPage() {
         return
       }
 
-      const totalRequests = Object.values(groupedByPayee).reduce((sum, reqs) => sum + reqs.length, 0)
-      const totalSettlements = Object.keys(groupedByPayee).length
-      const totalOps = totalRequests * 2 + totalSettlements // reads + updates + creates
-      if (totalOps > 500) {
-        toast({
-          variant: 'danger',
-          message: `${t('settlement.settleFailed')}: ${t('settlement.tooManyOperations')}`
-        })
-        setProcessing(false)
-        return
-      }
-
       const requesterUids = [
         ...new Set(Object.values(groupedByPayee).map((reqs) => reqs[0].requestedBy.uid))
       ]
@@ -241,46 +229,80 @@ export default function SettlementPage() {
       const batchId = crypto.randomUUID()
       const ccBatchId = hasCorporateCard ? crypto.randomUUID() : batchId
 
-      const settlementData = Object.values(groupedByPayee).map((reqs) => {
+      const settlementData = Object.values(groupedByPayee).flatMap((reqs) => {
         const first = reqs[0]
-        const allItems = reqs.flatMap((r) => r.items)
-        const allReceipts = reqs.flatMap((r) => r.receipts)
-        const totals = sumByCurrency(allItems)
         const userData = userDataMap.get(first.requestedBy.uid)
-
-        return {
+        const approvers = Object.values(
+          reqs.reduce<Record<string, { uid: string; name: string; email: string }>>((acc, r) => {
+            if (r.approvedBy && !acc[r.approvedBy.uid]) acc[r.approvedBy.uid] = r.approvedBy
+            return acc
+          }, {})
+        )
+        const base = {
           projectId: currentProject.id,
           batchId: first.isCorporateCard ? ccBatchId : batchId,
           createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
           createdBySignature: appUser.signature || null,
           payee: first.payee,
           phone: first.phone,
-          ...(first.isCorporateCard ? {} : {
-            bankName: first.bankName,
-            bankAccount: first.bankAccount,
-            bankBookUrl: first.isVendorRequest
-              ? first.vendorBankBookUrl || ''
-              : userData?.bankBookUrl || userData?.bankBookDriveUrl || '',
-          }),
+          ...(first.isCorporateCard
+            ? {}
+            : {
+                bankName: first.bankName,
+                bankAccount: first.bankAccount,
+                bankBookUrl: first.isVendorRequest
+                  ? first.vendorBankBookUrl || ''
+                  : userData?.bankBookUrl || userData?.bankBookDriveUrl || ''
+              }),
           session: first.session,
           committee: first.committee,
-          items: allItems,
-          totalAmount: totals.krw,
-          ...(totals.usd > 0 ? { totalAmountUsd: totals.usd } : {}),
-          receipts: allReceipts,
-          requestIds: reqs.map((r) => r.id),
           requestedBySignature: userData?.signature || null,
           approvedBy: first.approvedBy,
-          approvers: Object.values(
-            reqs.reduce<Record<string, { uid: string; name: string; email: string }>>((acc, r) => {
-              if (r.approvedBy && !acc[r.approvedBy.uid]) acc[r.approvedBy.uid] = r.approvedBy
-              return acc
-            }, {})
-          ),
+          approvers,
           approvalSignature: first.approvalSignature || null,
           ...(first.isCorporateCard ? { isCorporateCard: true } : {})
         }
+
+        // Split items + requests by currency. A request that has items in both
+        // currencies will appear in both the KRW and USD settlement docs.
+        const buildForCurrency = (currency: Currency) => {
+          const reqsForCurrency = reqs.filter((r) =>
+            r.items.some((i) => getItemCurrency(i) === currency)
+          )
+          if (reqsForCurrency.length === 0) return null
+          const items = reqsForCurrency.flatMap((r) =>
+            r.items.filter((i) => getItemCurrency(i) === currency)
+          )
+          const receipts = reqsForCurrency.flatMap((r) => r.receipts)
+          const sum = items.reduce((acc, i) => acc + i.amount, 0)
+          return {
+            ...base,
+            currency,
+            items,
+            totalAmount: currency === 'KRW' ? sum : 0,
+            ...(currency === 'USD' ? { totalAmountUsd: sum } : {}),
+            receipts,
+            requestIds: reqsForCurrency.map((r) => r.id)
+          }
+        }
+
+        return [buildForCurrency('KRW'), buildForCurrency('USD')].filter(
+          (d): d is NonNullable<typeof d> => d !== null
+        )
       })
+
+      // Op-count check: tx reads + updates each requestId once per settlement it
+      // appears in, plus one create per settlement.
+      const allRequestRefs = settlementData.reduce((sum, s) => sum + s.requestIds.length, 0)
+      const totalOps = allRequestRefs * 2 + settlementData.length
+      if (totalOps > 500) {
+        toast({
+          variant: 'danger',
+          message: `${t('settlement.settleFailed')}: ${t('settlement.tooManyOperations')}`
+        })
+        setProcessing(false)
+        return
+      }
 
       await createSettlementMutation.mutateAsync({
         projectId: currentProject.id,
