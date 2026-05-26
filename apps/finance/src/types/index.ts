@@ -40,10 +40,8 @@ export interface Project {
   budgetWarningThreshold?: number
   perKmRate?: number
   corporateCardReportTitle?: string
-  /** @deprecated removed in Phase H */
-  memberUids?: string[]
-  /** New per-project role map. Optional during migration; once cleanup is done, `memberUids` is removed. */
-  memberRoles?: Record<string /* uid */, ProjectRole>
+  // memberUids: string[] — removed in Phase H
+  memberRoles: Record<string /* uid */, ProjectRole>
   isActive: boolean
   deletedAt?: Date | null
 }
@@ -69,14 +67,11 @@ export interface AppUser {
   bankBookDriveId?: string
   /** @deprecated legacy Drive field — kept for existing data compatibility */
   bankBookDriveUrl?: string
-  /** New per-project model. Optional during migration; once cleanup is done, `role` is removed. */
-  systemRole?: SystemRole
-  /** Counter maintained by onProjectMembersWrite trigger; absent before backfill. */
-  assignedProjectCount?: number
-  /** @deprecated removed in Phase H */
-  role?: UserRole
-  /** @deprecated removed in Phase H */
-  projectIds?: string[]
+  systemRole: SystemRole
+  /** Maintained by `onProjectMembersWrite` trigger. */
+  assignedProjectCount: number
+  // role: UserRole       — removed in Phase H
+  // projectIds: string[] — removed in Phase H
   consentAgreedAt?: string
 }
 
