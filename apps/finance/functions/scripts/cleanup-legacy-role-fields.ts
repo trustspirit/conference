@@ -1,3 +1,21 @@
+/**
+ * Phase H cleanup — permanently deletes legacy fields from Firestore:
+ *   users/{uid}.role, users/{uid}.projectIds, projects/{id}.memberUids
+ *
+ * Prerequisite: Phase G code must be deployed to production. Verify by:
+ *   1. New sign-ups should not create users with `role`/`projectIds` fields.
+ *   2. New project creation should not write `memberUids`.
+ *   If either still happens, this cleanup will be undone by the next write.
+ *
+ * Do NOT re-run `migrate-to-per-project-roles.ts` after this script. That script
+ * reads legacy fields to populate the new shape; after this cleanup legacy fields
+ * are gone, so a re-run would be a no-op at best (and confusing).
+ *
+ * Usage:
+ *   pnpm --filter @conference/finance cleanup:legacy-roles            # dry-run
+ *   pnpm --filter @conference/finance cleanup:legacy-roles:commit     # apply
+ */
+
 import { initializeApp, applicationDefault } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 
@@ -40,6 +58,20 @@ async function main() {
   }
 
   const writer = db.bulkWriter()
+  let failCount = 0
+  writer.onWriteError((error) => {
+    // BulkWriter retries automatically; this handler logs each failure and decides
+    // whether to keep retrying. Default retry policy is 5 attempts with exponential backoff.
+    if (error.failedAttempts >= 5) {
+      console.error(
+        `Write FAILED permanently for ${error.documentRef.path}: ${error.message}`
+      )
+      failCount++
+      return false // give up
+    }
+    return true // retry
+  })
+
   for (const d of usersToClean) {
     const update: Record<string, unknown> = {}
     const data = d.data()
@@ -51,7 +83,35 @@ async function main() {
     writer.update(d.ref, { memberUids: FieldValue.delete() })
   }
   await writer.close()
-  console.log('Cleanup complete.')
+  console.log(`\nCommit complete. ${failCount} permanent write failure(s).`)
+
+  // Post-write verification: refetch and confirm no legacy fields remain.
+  console.log('\nVerifying...')
+  const verifyUsers = await db.collection('users').get()
+  const remainingUsers = verifyUsers.docs.filter(
+    (d) => d.data().role !== undefined || d.data().projectIds !== undefined
+  )
+  const verifyProjects = await db.collection('projects').get()
+  const remainingProjects = verifyProjects.docs.filter((d) => d.data().memberUids !== undefined)
+
+  if (remainingUsers.length === 0 && remainingProjects.length === 0 && failCount === 0) {
+    console.log('✓ Verification passed. No legacy fields remain.')
+  } else {
+    console.warn(
+      `⚠️ Verification: ${remainingUsers.length} users + ${remainingProjects.length} projects ` +
+        `still have legacy fields. Re-run the script (it is idempotent).`
+    )
+    if (remainingUsers.length > 0) {
+      console.warn('  Affected users:', remainingUsers.map((d) => d.id).join(', '))
+    }
+    if (remainingProjects.length > 0) {
+      console.warn('  Affected projects:', remainingProjects.map((d) => d.id).join(', '))
+    }
+    process.exitCode = 1
+  }
 }
 
-main().catch((e) => { console.error(e); process.exit(1) })
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

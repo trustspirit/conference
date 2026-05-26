@@ -1,3 +1,12 @@
+/**
+ * Phase F migration — reads legacy fields (users.role, projects.memberUids) and writes
+ * the new shape (users.systemRole, projects.memberRoles, users.assignedProjectCount).
+ *
+ * ⚠️ DO NOT re-run after `cleanup-legacy-role-fields.ts` (Phase H) has been executed.
+ * Once legacy fields are deleted, this script has nothing to read; re-running is at
+ * best a no-op and could mask configuration mistakes.
+ */
+
 import { initializeApp, applicationDefault } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 
