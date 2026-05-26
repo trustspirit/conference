@@ -42,7 +42,6 @@ export default function ProjectCreateForm({
           documentNo: '',
           directorApprovalThreshold: 600000,
           budgetWarningThreshold: 85,
-          memberUids: [appUser.uid],
           memberRoles: { [appUser.uid]: 'admin' as const },
           isActive: true
         } as unknown as Omit<Project, 'id'>
