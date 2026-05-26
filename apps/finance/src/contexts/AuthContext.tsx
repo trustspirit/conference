@@ -92,9 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               bankBookPath: '',
               bankBookUrl: '',
               systemRole: 'member',
-              assignedProjectCount: 0,
-              role: 'user',          // legacy field, kept until phase H
-              projectIds: []         // legacy field, kept until phase H — empty so legacy path doesn't auto-grant access
+              assignedProjectCount: 0
             }
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser)
             // No auto-add to default project — super_admin will assign explicitly.
