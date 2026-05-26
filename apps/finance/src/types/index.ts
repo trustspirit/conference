@@ -40,7 +40,8 @@ export interface Project {
   budgetWarningThreshold?: number
   perKmRate?: number
   corporateCardReportTitle?: string
-  memberUids: string[]
+  /** @deprecated removed in Phase H */
+  memberUids?: string[]
   /** New per-project role map. Optional during migration; once cleanup is done, `memberUids` is removed. */
   memberRoles?: Record<string /* uid */, ProjectRole>
   isActive: boolean
@@ -72,8 +73,10 @@ export interface AppUser {
   systemRole?: SystemRole
   /** Counter maintained by onProjectMembersWrite trigger; absent before backfill. */
   assignedProjectCount?: number
-  role: UserRole
-  projectIds: string[]
+  /** @deprecated removed in Phase H */
+  role?: UserRole
+  /** @deprecated removed in Phase H */
+  projectIds?: string[]
   consentAgreedAt?: string
 }
 
