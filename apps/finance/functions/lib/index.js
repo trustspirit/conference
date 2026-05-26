@@ -247,18 +247,12 @@ async function uidsWithProjectRoles(projectId, roles) {
     const db = admin.firestore();
     const projDoc = await db.doc(`projects/${projectId}`).get();
     const data = projDoc.data() ?? {};
-    const result = new Map(); // uid -> role
+    const result = [];
     for (const [uid, r] of Object.entries((data.memberRoles ?? {}))) {
         if (roles.includes(r))
-            result.set(uid, r);
+            result.push({ uid, role: r });
     }
-    // Always include super_admins (regardless of project membership)
-    const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get();
-    for (const d of superSnap.docs) {
-        if (!result.has(d.id))
-            result.set(d.id, 'admin'); // effective role for super_admin
-    }
-    return [...result.entries()].map(([uid, role]) => ({ uid, role }));
+    return result;
 }
 function getSystemRole(d) {
     if (!d)
@@ -287,10 +281,8 @@ async function assertCanReadStoragePath(uid, storagePath) {
             return;
         const projectId = projectMatch[1];
         const proj = await admin.firestore().doc(`projects/${projectId}`).get();
-        const data = proj.data() ?? {};
-        const inMemberRoles = data.memberRoles && data.memberRoles[uid] !== undefined;
-        const inMemberUids = Array.isArray(data.memberUids) && data.memberUids.includes(uid);
-        if (!inMemberRoles && !inMemberUids) {
+        const memberRoles = proj.data()?.memberRoles;
+        if (!memberRoles || memberRoles[uid] === undefined) {
             throw new https_1.HttpsError('permission-denied', 'Not authorized to read this file');
         }
         return;
@@ -417,20 +409,12 @@ exports.deleteUserAccount = (0, https_1.onCall)(async (request) => {
     catch (error) {
         console.warn(`Auth account deletion failed for ${uid}:`, error);
     }
-    // 프로젝트 memberRoles 및 legacy memberUids에서 제거
+    // 프로젝트 memberRoles에서 제거
     const projectsSnapshot = await admin.firestore().collection('projects').get();
     for (const projectDoc of projectsSnapshot.docs) {
-        const data = projectDoc.data() ?? {};
-        const updates = {};
-        if (data.memberRoles && data.memberRoles[uid] !== undefined) {
-            updates[`memberRoles.${uid}`] = firestore_2.FieldValue.delete();
-        }
-        const legacyUids = data.memberUids;
-        if (Array.isArray(legacyUids) && legacyUids.includes(uid)) {
-            updates.memberUids = legacyUids.filter((id) => id !== uid);
-        }
-        if (Object.keys(updates).length > 0) {
-            await projectDoc.ref.update(updates);
+        const memberRoles = (projectDoc.data()?.memberRoles ?? {});
+        if (memberRoles[uid] !== undefined) {
+            await projectDoc.ref.update({ [`memberRoles.${uid}`]: firestore_2.FieldValue.delete() });
         }
     }
     console.log(`User ${uid} deleted by ${request.auth.uid}`);
@@ -804,6 +788,12 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
             if (!recipientMap.has(uid))
                 recipientMap.set(uid, role);
         }
+    }
+    // super_admin은 개별 신청/상태변경 알림은 받지 않지만, 주간 다이제스트는 받음
+    const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get();
+    for (const d of superSnap.docs) {
+        if (!recipientMap.has(d.id))
+            recipientMap.set(d.id, 'admin');
     }
     if (recipientMap.size === 0) {
         console.log('No relevant users found');
