@@ -23,7 +23,8 @@ export const queryKeys = {
     detail: (id: string) => ['settlements', id] as const,
     infinite: (projectId: string, committee?: string) =>
       ['settlements', projectId, 'infinite', committee] as const,
-    batch: (batchId: string) => ['settlements', 'batch', batchId] as const
+    batch: (projectId: string, batchId: string) =>
+      ['settlements', projectId, 'batch', batchId] as const
   },
   users: {
     all: () => ['users'] as const,

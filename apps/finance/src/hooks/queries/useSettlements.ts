@@ -80,15 +80,22 @@ export function useSettlement(id: string | undefined) {
   })
 }
 
-export function useSettlementBatch(batchId: string | undefined) {
+export function useSettlementBatch(
+  batchId: string | undefined,
+  projectId: string | undefined
+) {
   return useQuery({
-    queryKey: queryKeys.settlements.batch(batchId!),
+    queryKey: queryKeys.settlements.batch(projectId!, batchId!),
     queryFn: async () => {
-      const q = query(collection(db, 'settlements'), where('batchId', '==', batchId))
+      const q = query(
+        collection(db, 'settlements'),
+        where('projectId', '==', projectId),
+        where('batchId', '==', batchId)
+      )
       const snap = await getDocs(q)
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Settlement)
     },
-    enabled: !!batchId
+    enabled: !!batchId && !!projectId
   })
 }
 

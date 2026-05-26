@@ -31,7 +31,10 @@ export default function SettlementReportPage() {
 
   // Load all settlements in the same batch
   const batchId = settlement?.batchId
-  const { data: batchSettlements, isLoading: batchLoading } = useSettlementBatch(batchId)
+  const { data: batchSettlements, isLoading: batchLoading } = useSettlementBatch(
+    batchId,
+    settlement?.projectId
+  )
 
   const documentNo = currentProject?.documentNo || ''
   const projectName = currentProject?.name || ''
