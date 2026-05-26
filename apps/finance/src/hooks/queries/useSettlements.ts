@@ -193,12 +193,27 @@ export function useCreateSettlement() {
         }
       })
     },
-    onSuccess: (_data, variables) => {
-      // Invalidate every cache derived from requests + settlements + dashboard.
-      queryClient.invalidateQueries({ queryKey: ['requests', variables.projectId] })
-      queryClient.invalidateQueries({ queryKey: ['settlements', variables.projectId] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(variables.projectId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.usage(variables.projectId) })
+    onSuccess: async (_data, variables) => {
+      // type: 'all' + await so the destination page (/admin/settlements) sees
+      // fresh data immediately after navigation, not stale-with-background-refetch.
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: ['requests', variables.projectId],
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: ['settlements', variables.projectId],
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.dashboard.stats(variables.projectId),
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.budget.usage(variables.projectId),
+          type: 'all'
+        })
+      ])
     }
   })
 }
@@ -212,7 +227,10 @@ export function useRevertSettlementBatch() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (params: { batchId: string; projectId: string }) => {
+    mutationFn: async (params: {
+      batchId: string
+      projectId: string
+    }): Promise<{ deletedSettlementIds: string[] }> => {
       // Fetch batch IDs outside the transaction (transactions can't run queries).
       const batchSnap = await getDocs(
         query(
@@ -259,12 +277,39 @@ export function useRevertSettlementBatch() {
           if (snap.exists()) tx.delete(snap.ref)
         }
       })
+
+      return { deletedSettlementIds: settlementIds }
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['requests', variables.projectId] })
-      queryClient.invalidateQueries({ queryKey: ['settlements', variables.projectId] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats(variables.projectId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.budget.usage(variables.projectId) })
+    onSuccess: async (data, variables) => {
+      // Drop per-settlement detail caches outright — the docs no longer exist,
+      // so showing stale "found" data on direct navigation would be misleading.
+      // Detail key (`['settlements', id]`) does not share a prefix with our
+      // list/batch keys (`['settlements', projectId, ...]`), so we must remove
+      // them explicitly.
+      for (const id of data.deletedSettlementIds) {
+        queryClient.removeQueries({ queryKey: queryKeys.settlements.detail(id), exact: true })
+      }
+
+      // type: 'all' + await so the destination page (/admin/settlements) sees
+      // fresh data immediately after navigation, not stale-with-background-refetch.
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: ['requests', variables.projectId],
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: ['settlements', variables.projectId],
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.dashboard.stats(variables.projectId),
+          type: 'all'
+        }),
+        queryClient.refetchQueries({
+          queryKey: queryKeys.budget.usage(variables.projectId),
+          type: 'all'
+        })
+      ])
     }
   })
 }

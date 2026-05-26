@@ -130,7 +130,8 @@ export default function SettlementReportPage() {
       navigate('/admin/settlements')
     } catch (err) {
       console.error('Failed to revert settlement batch:', err)
-      toast({ variant: 'danger', message: t('settlement.revertFailed') })
+      const detail = err instanceof Error ? err.message : String(err)
+      toast({ variant: 'danger', message: `${t('settlement.revertFailed')}: ${detail}` })
     }
   }
 
