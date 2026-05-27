@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useToast } from 'trust-ui-react'
 import { useRemoveInclusion } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../../types'
+import { ChevronDownIcon } from '../Icons'
 import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
 
 interface Props {
@@ -35,6 +36,95 @@ function CategoryChip({ category }: { category: OpsBudgetCategory | undefined })
       />
       {category.name}
     </span>
+  )
+}
+
+function CategoryDropdown({
+  categories,
+  selected,
+  onSelect,
+  label,
+}: {
+  categories: { id: string; name: string; color?: string }[]
+  selected: { id: string; name: string; color?: string } | null
+  onSelect: (id: string) => void
+  label: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 px-2 py-1 rounded border border-finance-border-soft bg-transparent hover:bg-finance-surface text-sm"
+      >
+        {selected ? (
+          <>
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: selected.color ?? '#888' }}
+              aria-hidden
+            />
+            <span className="font-semibold text-finance-primary">{selected.name}</span>
+          </>
+        ) : (
+          <span className="text-finance-muted">{label}</span>
+        )}
+        <ChevronDownIcon className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-10 mt-1 min-w-[12rem] max-h-72 overflow-auto rounded-md border border-finance-border-soft bg-finance-surface shadow-lg"
+        >
+          {categories.map((c) => {
+            const active = selected?.id === c.id
+            return (
+              <li
+                key={c.id}
+                role="option"
+                aria-selected={active}
+                onClick={() => {
+                  onSelect(c.id)
+                  setOpen(false)
+                }}
+                className={`flex items-center gap-2 px-3 py-2 cursor-pointer text-sm hover:bg-finance-border-soft ${
+                  active ? 'bg-finance-primary-surface text-finance-primary' : 'text-finance-body'
+                }`}
+              >
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: c.color ?? '#888' }}
+                  aria-hidden
+                />
+                <span className="flex-1">{c.name}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -175,13 +265,18 @@ export default function OpsBudgetIncludedList({
     <div className="finance-panel rounded-lg p-4 sm:p-6 mt-6">
       {/* View toggle */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-finance-primary">
-          {view === 'all'
-            ? t('dashboard.opsBudget.allInclusionsTitle')
-            : category
-            ? t('dashboard.opsBudget.includedTitle', { name: category.name })
-            : t('dashboard.opsBudget.allInclusionsTitle')}
-        </h3>
+        {view === 'category' ? (
+          <CategoryDropdown
+            categories={categories}
+            selected={category}
+            onSelect={(id) => onSelectCategory?.(id)}
+            label={t('dashboard.opsBudget.categorySelectLabel')}
+          />
+        ) : (
+          <h3 className="text-sm font-semibold text-finance-primary">
+            {t('dashboard.opsBudget.allInclusionsTitle')}
+          </h3>
+        )}
         <div role="tablist" aria-label={t('dashboard.opsBudget.viewToggleLabel')} className="flex items-center gap-1 text-xs">
           <span className="text-finance-muted mr-1">{t('dashboard.opsBudget.viewToggleLabel')}:</span>
           <button
