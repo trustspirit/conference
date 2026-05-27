@@ -349,6 +349,22 @@
     "dailyTrend": "Daily (14 days)",
     "requestCount": "Requests",
     "requestAmount": "Amount",
+    "budgetCodeItemList": {
+      "title": "Items by Budget Code",
+      "filterAll": "All",
+      "searchPlaceholder": "Search submitter or description",
+      "loadMore": "Load more",
+      "emptyForFilter": "No items match the current filter",
+      "columns": {
+        "date": "Date",
+        "submitter": "Submitter",
+        "committee": "Committee",
+        "code": "Budget Code",
+        "description": "Description",
+        "amount": "Amount",
+        "status": "Status"
+      }
+    },
     "tabs": {
       "overview": "Project overview",
       "opsBudget": "Ops committee budget"
@@ -356,6 +372,7 @@
     "opsBudget": {
       "categoriesTitle": "Categories",
       "addCategory": "Add category",
+      "categorySelectLabel": "Select category",
       "colName": "Name",
       "colBudgetCode": "Budget code",
       "colAllocated": "Allocated (KRW)",

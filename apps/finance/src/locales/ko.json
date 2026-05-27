@@ -349,6 +349,22 @@
     "dailyTrend": "일별 (14일)",
     "requestCount": "신청 건수",
     "requestAmount": "신청 금액",
+    "budgetCodeItemList": {
+      "title": "예산 코드별 항목",
+      "filterAll": "전체",
+      "searchPlaceholder": "제출자 또는 품목 설명 검색",
+      "loadMore": "더 보기",
+      "emptyForFilter": "필터 조건에 맞는 항목이 없습니다",
+      "columns": {
+        "date": "제출일",
+        "submitter": "제출자",
+        "committee": "위원회",
+        "code": "예산 코드",
+        "description": "품목 설명",
+        "amount": "금액",
+        "status": "상태"
+      }
+    },
     "tabs": {
       "overview": "프로젝트 개요",
       "opsBudget": "운영위 예산"
@@ -356,6 +372,7 @@
     "opsBudget": {
       "categoriesTitle": "카테고리",
       "addCategory": "카테고리 추가",
+      "categorySelectLabel": "카테고리 선택",
       "colName": "이름",
       "colBudgetCode": "예산 코드",
       "colAllocated": "배정 (KRW)",
