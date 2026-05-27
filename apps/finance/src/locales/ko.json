@@ -450,7 +450,8 @@
       "reduceTotalSource": "총 예산을 ₩{{from}}에서 ₩{{to}}으로 줄입니다.",
       "addCategorySource": "새 카테고리 '{{name}}'에 ₩{{amount}} 배정",
       "editCategorySource": "'{{name}}' 카테고리 배정을 ₩{{from}}에서 ₩{{to}}으로 변경",
-      "cannotRedistributeNoOthers": "재배분할 다른 카테고리가 없습니다. 총 예산을 늘리거나 다른 카테고리를 먼저 추가하세요."
+      "cannotRedistributeNoOthers": "재배분할 다른 카테고리가 없습니다. 총 예산을 늘리거나 다른 카테고리를 먼저 추가하세요.",
+      "insufficientPoolCapacity": "재배분 가능한 금액(₩{{available}})이 부족합니다 (필요 ₩{{deficit}}). 총 예산을 늘리거나 일부 카테고리 배정을 먼저 줄여주세요."
     }
   },
   "users": {

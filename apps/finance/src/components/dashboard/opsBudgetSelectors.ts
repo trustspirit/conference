@@ -94,13 +94,12 @@ export interface RedistributeContext {
  * returns the deficit and the pool of other categories to deduct from.
  *
  * - When `totalKrw` is 0 or not set: no constraint; deficit is always 0.
- * - When editing an existing category (isNew=false), the draft's existing entry
- *   is excluded from `availablePool`.
+ * - The draft's id is filtered out from `availablePool`; this correctly handles
+ *   both add (fresh UUID never matches) and edit (existing id excluded) cases.
  */
 export function computeRedistributeContext(
   currentCategories: OpsBudgetCategory[],
   draftCategory: { id: string; allocatedKrw: number },
-  _isNew: boolean,
   totalKrw: number,
 ): RedistributeContext {
   const others = currentCategories.filter((c) => c.id !== draftCategory.id)

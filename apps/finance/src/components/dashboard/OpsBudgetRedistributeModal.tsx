@@ -71,7 +71,6 @@ export default function OpsBudgetRedistributeModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={onCancel}
     >
       <div
         role="dialog" aria-modal="true" aria-labelledby="opsbudget-redistribute-title"

@@ -185,7 +185,7 @@ describe('computeRedistributeContext', () => {
   ]
 
   it('returns deficit > 0 when sum exceeds total', () => {
-    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, true, 5000)
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, 5000)
     // others sum = 1000+2000 = 3000; new sum = 3000+5000 = 8000; deficit = 8000-5000 = 3000
     expect(ctx.deficit).toBe(3000)
     expect(ctx.newSum).toBe(8000)
@@ -193,19 +193,19 @@ describe('computeRedistributeContext', () => {
   })
 
   it('returns deficit ≤ 0 when within total', () => {
-    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 1000 }, true, 5000)
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 1000 }, 5000)
     // others sum = 3000; new sum = 4000; deficit = 4000-5000 = -1000
     expect(ctx.deficit).toBe(-1000)
   })
 
   it('treats totalKrw=0 as unconstrained (deficit always 0)', () => {
-    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, true, 0)
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, 0)
     expect(ctx.deficit).toBe(0)
   })
 
   it('excludes the draft category from the pool when editing', () => {
     // Editing c1 (currently 1000) to 4000; others = [c2 with 2000]
-    const ctx = computeRedistributeContext(cats, { id: 'c1', allocatedKrw: 4000 }, false, 5000)
+    const ctx = computeRedistributeContext(cats, { id: 'c1', allocatedKrw: 4000 }, 5000)
     expect(ctx.availablePool.map((p) => p.id)).toEqual(['c2'])
     // newSum = 2000 + 4000 = 6000; deficit = 6000 - 5000 = 1000
     expect(ctx.deficit).toBe(1000)

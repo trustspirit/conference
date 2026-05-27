@@ -117,37 +117,24 @@ export default function OpsBudgetCategoryTable({
       )
     )
 
-  const persistTotal = (newTotal: number) =>
-    new Promise<void>((resolve, reject) =>
-      update.mutate(
-        { projectId: project.id, categories, totalKrw: newTotal, updatedBy: currentUser },
-        {
-          onSuccess: () => resolve(),
-          onError: (err) => {
-            toast({ variant: 'danger', message: `${t('common.saveError')}: ${(err as Error).message}` })
-            reject(err)
-          },
-        }
-      )
-    )
-
   // ---------------------------------------------------------------------------
   // Total budget save
   // ---------------------------------------------------------------------------
 
   const handleSaveTotal = async () => {
+    const safeTotal = Math.max(0, Math.floor(tempTotal) || 0)
     const currentTotal = project.opsBudget?.totalKrw ?? 0
-    if (tempTotal === currentTotal) { setEditingTotal(false); return }
-    if (tempTotal > 0 && tempTotal < sumAllocated) {
+    if (safeTotal === currentTotal) { setEditingTotal(false); return }
+    if (safeTotal > 0 && safeTotal < sumAllocated) {
       // New total is less than current sum — need redistribution
       setRedistributeState({
         mode: 'reduce-total',
         pool: categories.map((c) => ({ id: c.id, name: c.name, allocatedKrw: c.allocatedKrw })),
-        deficit: sumAllocated - tempTotal,
-        newTotal: tempTotal,
+        deficit: sumAllocated - safeTotal,
+        newTotal: safeTotal,
         sourceLabel: t('dashboard.opsBudget.reduceTotalSource', {
           from: currentTotal.toLocaleString('en-US'),
-          to: tempTotal.toLocaleString('en-US'),
+          to: safeTotal.toLocaleString('en-US'),
         }),
         newSumBefore: sumAllocated,
       })
@@ -155,9 +142,9 @@ export default function OpsBudgetCategoryTable({
     }
     // No conflict — save directly
     try {
-      await persistTotal(tempTotal)
+      await persist(categories, safeTotal)
       setEditingTotal(false)
-    } catch { /* persistTotal already toasted */ }
+    } catch { /* persist already toasted */ }
   }
 
   // ---------------------------------------------------------------------------
@@ -179,10 +166,21 @@ export default function OpsBudgetCategoryTable({
     }
 
     if (totalKrw > 0 && newAlloc > 0) {
-      const ctx = computeRedistributeContext(categories, draftCategory, true, totalKrw)
+      const ctx = computeRedistributeContext(categories, draftCategory, totalKrw)
       if (ctx.deficit > 0) {
         if (ctx.availablePool.length === 0) {
           toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
+          return
+        }
+        const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
+        if (poolCapacity < ctx.deficit) {
+          toast({
+            variant: 'danger',
+            message: t('dashboard.opsBudget.insufficientPoolCapacity', {
+              deficit: ctx.deficit.toLocaleString('en-US'),
+              available: poolCapacity.toLocaleString('en-US'),
+            }),
+          })
           return
         }
         setRedistributeState({
@@ -222,10 +220,21 @@ export default function OpsBudgetCategoryTable({
       const original = categories.find((c) => c.id === draft.id)
       const allocationIncreased = !original || draft.allocatedKrw > original.allocatedKrw
       if (allocationIncreased) {
-        const ctx = computeRedistributeContext(categories, draft, false, totalKrw)
+        const ctx = computeRedistributeContext(categories, draft, totalKrw)
         if (ctx.deficit > 0) {
           if (ctx.availablePool.length === 0) {
             toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
+            return
+          }
+          const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
+          if (poolCapacity < ctx.deficit) {
+            toast({
+              variant: 'danger',
+              message: t('dashboard.opsBudget.insufficientPoolCapacity', {
+                deficit: ctx.deficit.toLocaleString('en-US'),
+                available: poolCapacity.toLocaleString('en-US'),
+              }),
+            })
             return
           }
           setRedistributeState({
