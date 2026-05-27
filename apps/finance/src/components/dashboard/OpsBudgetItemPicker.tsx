@@ -22,6 +22,7 @@ import { useToast } from 'trust-ui-react'
 import {
   useOpsBudgetIncludableItems,
   useOpsBudgetAllOperationsItems,
+  useOpsBudgetInclusions,
   useAddInclusion,
   useUpdateOpsBudgetCategories,
   type AnnotatedOperationsItem,
@@ -57,6 +58,20 @@ interface CreateCategoryFlowState {
   itemsByCode: Map<number, AnnotatedOperationsItem[]>
   /** Resolved items ready to submit (item + categoryId pairs) */
   resolved: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
+}
+
+interface OverflowPlan {
+  /** The full set of items the user wants to add (post-resolve) */
+  pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
+  /** For each over-allocated category: how much extra is needed */
+  pending: Array<{
+    categoryId: string
+    overflow: number
+    sourceLabel: string
+    pool: Array<{ id: string; name: string; allocatedKrw: number; maxDeduction: number }>
+  }>
+  /** Per-categoryId map of deductions accumulated as user confirms each */
+  appliedDeductions: Record<string, Record<string, number>>
 }
 
 const PAGE_SIZE = 50
@@ -224,9 +239,20 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
 
   const includable = useOpsBudgetIncludableItems(projectId)
   const allOps = useOpsBudgetAllOperationsItems(projectId)
+  const inclusions = useOpsBudgetInclusions(projectId)
 
   const add = useAddInclusion()
   const updateCategories = useUpdateOpsBudgetCategories()
+
+  // Per-category sum of already-included KRW items (USD items are excluded from cap check)
+  const includedKrwByCategory = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const inc of inclusions.data ?? []) {
+      if (inc.snapshot.currency === 'USD') continue
+      m.set(inc.categoryId, (m.get(inc.categoryId) ?? 0) + inc.snapshot.amount)
+    }
+    return m
+  }, [inclusions.data])
 
   // --- Filter state ---
   const [search, setSearch] = useState('')
@@ -247,7 +273,11 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   const [pendingNewCategory, setPendingNewCategory] = useState<{
     category: OpsBudgetCategory
     itemsForThisCode: AnnotatedOperationsItem[]
+    effectiveTotalKrw: number
   } | null>(null)
+
+  // Category-level overflow plan (sequential modal queue)
+  const [overflowPlan, setOverflowPlan] = useState<OverflowPlan | null>(null)
 
   // Sentinel ref for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -339,9 +369,9 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   // Reset pagination when filtered list changes
   useEffect(() => { setShown(PAGE_SIZE) }, [filtered.length])
 
-  // ---------- submitItems helper ----------
+  // ---------- submitItemsRaw: direct mutation (no cap check) ----------
 
-  const submitItems = async (
+  const submitItemsRaw = async (
     pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
   ): Promise<Set<string>> => {
     const results = await Promise.allSettled(
@@ -369,6 +399,139 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     if (permissionDenied) toast({ variant: 'danger', message: t('common.permissionDenied') })
     else if (failedIds.size) toast({ variant: 'danger', message: t('dashboard.opsBudget.addFailedCount', { count: failedIds.size }) })
     return failedIds
+  }
+
+  // ---------- finalizeOverflowPlan: apply category allocations then add inclusions ----------
+
+  const finalizeOverflowPlan = async (plan: OverflowPlan) => {
+    setOverflowPlan(null)
+    // Compute net allocation changes per category
+    const overflowByCatId = new Map<string, number>()
+    const sourceDeductionMap = new Map<string, number>()
+    for (const [overCatId, deductionsForThisCat] of Object.entries(plan.appliedDeductions)) {
+      const totalDeducted = Object.values(deductionsForThisCat).reduce((s, v) => s + v, 0)
+      overflowByCatId.set(overCatId, totalDeducted)
+      for (const [sourceId, amount] of Object.entries(deductionsForThisCat)) {
+        sourceDeductionMap.set(sourceId, (sourceDeductionMap.get(sourceId) ?? 0) + amount)
+      }
+    }
+    const updatedCategories = categories.map((c) => {
+      let next = c.allocatedKrw
+      next += overflowByCatId.get(c.id) ?? 0          // add overflow received
+      next -= sourceDeductionMap.get(c.id) ?? 0       // subtract deduction taken from this source
+      return { ...c, allocatedKrw: next }
+    })
+    try {
+      await updateCategories.mutateAsync({
+        projectId,
+        categories: updatedCategories,
+        updatedBy: currentUser,
+      })
+    } catch (err) {
+      toast({ variant: 'danger', message: `${t('common.saveError')}: ${(err as Error).message}` })
+      return
+    }
+    // Now add the inclusions
+    const failedIds = await submitItemsRaw(plan.pairs)
+    setSelected(failedIds)
+  }
+
+  // ---------- Overflow plan apply / cancel handlers ----------
+
+  const handleOverflowApply = async (
+    overflowCategoryId: string,
+    deductions: Record<string, number>,
+  ) => {
+    if (!overflowPlan) return
+    const updatedDeductions = {
+      ...overflowPlan.appliedDeductions,
+      [overflowCategoryId]: deductions,
+    }
+    const remainingPending = overflowPlan.pending.slice(1)
+    if (remainingPending.length > 0) {
+      setOverflowPlan({ ...overflowPlan, pending: remainingPending, appliedDeductions: updatedDeductions })
+      return
+    }
+    // All overflows resolved — atomic apply
+    await finalizeOverflowPlan({ ...overflowPlan, pending: [], appliedDeductions: updatedDeductions })
+  }
+
+  const handleOverflowCancel = (overflowCategoryId: string) => {
+    if (!overflowPlan) return
+    // Skip this category's items, continue queue
+    const skippedPairs = overflowPlan.pairs.filter((p) => p.categoryId !== overflowCategoryId)
+    const remainingPending = overflowPlan.pending.slice(1)
+    if (remainingPending.length === 0) {
+      void finalizeOverflowPlan({ ...overflowPlan, pairs: skippedPairs, pending: [] })
+    } else {
+      setOverflowPlan({ ...overflowPlan, pairs: skippedPairs, pending: remainingPending })
+    }
+  }
+
+  // ---------- submitItemsWithOverflowCheck: check category-level overflow before submitting ----------
+
+  const submitItemsWithOverflowCheck = async (
+    pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
+  ): Promise<Set<string>> => {
+    // Group incoming KRW by categoryId (USD items are excluded from cap check)
+    const incomingByCat = new Map<string, number>()
+    for (const { item, categoryId } of pairs) {
+      if (item.snapshot.currency === 'USD') continue
+      incomingByCat.set(categoryId, (incomingByCat.get(categoryId) ?? 0) + item.snapshot.amount)
+    }
+
+    // Compute overflow per category
+    const overflowing: OverflowPlan['pending'] = []
+    for (const [categoryId, incoming] of incomingByCat.entries()) {
+      const cat = categories.find((c) => c.id === categoryId)
+      if (!cat) continue
+      const currentIncluded = includedKrwByCategory.get(categoryId) ?? 0
+      const newIncluded = currentIncluded + incoming
+      if (newIncluded > cat.allocatedKrw) {
+        const overflow = newIncluded - cat.allocatedKrw
+        // Build pool: OTHER categories with remaining > 0
+        const pool = categories
+          .filter((c) => c.id !== categoryId)
+          .map((c) => {
+            const cInc = includedKrwByCategory.get(c.id) ?? 0
+            const remaining = Math.max(0, c.allocatedKrw - cInc)
+            return { id: c.id, name: c.name, allocatedKrw: c.allocatedKrw, maxDeduction: remaining }
+          })
+          .filter((p) => p.maxDeduction > 0)
+        const poolCapacity = pool.reduce((s, p) => s + p.maxDeduction, 0)
+        if (poolCapacity < overflow) {
+          toast({
+            variant: 'danger',
+            message: t('dashboard.opsBudget.cannotAddOverCategoryCap', {
+              name: cat.name,
+              overflow: overflow.toLocaleString('en-US'),
+              available: poolCapacity.toLocaleString('en-US'),
+            }),
+          })
+          // Mark all as failed so user retries
+          return new Set(pairs.map((p) => itemId(p.item)))
+        }
+        overflowing.push({
+          categoryId,
+          overflow,
+          sourceLabel: t('dashboard.opsBudget.categoryOverflowSource', {
+            name: cat.name,
+            overflow: overflow.toLocaleString('en-US'),
+          }),
+          pool,
+        })
+      }
+    }
+
+    if (overflowing.length === 0) {
+      // No overflow — submit directly
+      return submitItemsRaw(pairs)
+    }
+
+    // Open the overflow plan; modal rendered conditionally below
+    setOverflowPlan({ pairs, pending: overflowing, appliedDeductions: {} })
+    // Caller gets empty failedIds; actual result propagated via setSelected in finalizeOverflowPlan
+    return new Set()
   }
 
   // ---------- Add selected handler ----------
@@ -401,7 +564,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     // Submit immediately-resolved items (fire-and-forget)
     let immediateFailedIds = new Set<string>()
     if (immediateResolve.length > 0) {
-      immediateFailedIds = await submitItems(immediateResolve)
+      immediateFailedIds = await submitItemsWithOverflowCheck(immediateResolve)
     }
 
     // Start create-category flow for items with no matching category
@@ -461,7 +624,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     if (stillPending.length === 0) {
       // Done with disambiguation
       setDisambig(null)
-      const failedIds = await submitItems(allResolved)
+      const failedIds = await submitItemsWithOverflowCheck(allResolved)
       setSelected(failedIds)
     } else {
       setDisambig({ queue: stillPending, resolved: allResolved, codeResolution: newCodeResolution })
@@ -475,7 +638,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       // No more to disambiguate; submit already-resolved ones
       setDisambig(null)
       if (disambig.resolved.length > 0) {
-        const failedIds = await submitItems(disambig.resolved)
+        const failedIds = await submitItemsWithOverflowCheck(disambig.resolved)
         setSelected(failedIds)
       } else {
         setSelected(new Set())
@@ -493,7 +656,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       setSelected(new Set())
       return
     }
-    const failedIds = await submitItems(resolved)
+    const failedIds = await submitItemsWithOverflowCheck(resolved)
     setSelected(failedIds)
   }
 
@@ -553,7 +716,9 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       color: paletteColor(categories.length),
     }
 
-    const ctx = computeRedistributeContext(categories, newCategory, totalKrw)
+    const sumAllocated = categories.reduce((s, c) => s + c.allocatedKrw, 0)
+    const effectiveTotalKrw = totalKrw > 0 ? totalKrw : sumAllocated
+    const ctx = computeRedistributeContext(categories, newCategory, effectiveTotalKrw)
     if (ctx.deficit > 0) {
       // Check pool capacity before opening redistribute modal
       if (ctx.availablePool.length === 0) {
@@ -575,7 +740,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         return
       }
       // Open redistribute modal — dismiss create modal first
-      setPendingNewCategory({ category: newCategory, itemsForThisCode: itemsForCode })
+      setPendingNewCategory({ category: newCategory, itemsForThisCode: itemsForCode, effectiveTotalKrw })
       return
     }
 
@@ -640,14 +805,22 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       {createFlow && createFlow.pendingCodes.length > 0 && !pendingNewCategory && (() => {
         const currentCode = createFlow.pendingCodes[0]
         const itemsForCode = createFlow.itemsByCode.get(currentCode) ?? []
+        const itemsTotalKrw = itemsForCode.reduce(
+          (s, it) => s + (it.snapshot.currency === 'USD' ? 0 : it.snapshot.amount),
+          0
+        )
+        const itemsTotalUsd = itemsForCode.reduce(
+          (s, it) => s + (it.snapshot.currency === 'USD' ? it.snapshot.amountUsd : 0),
+          0
+        )
         return (
           <OpsBudgetCreateCategoryModal
             budgetCode={currentCode}
             itemCount={itemsForCode.length}
+            itemsTotalKrw={itemsTotalKrw}
+            itemsTotalUsd={itemsTotalUsd}
             defaultColor={paletteColor(categories.length)}
-            onCreate={(name, allocatedKrw) =>
-              handleCreateCategoryConfirm(name, allocatedKrw, currentCode, itemsForCode)
-            }
+            onCreate={(name) => handleCreateCategoryConfirm(name, itemsTotalKrw, currentCode, itemsForCode)}
             onCancel={() => handleCreateCategoryCancel(currentCode)}
           />
         )
@@ -656,7 +829,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       {/* Redistribute modal — chained from create-category when deficit > 0 */}
       {pendingNewCategory && (() => {
         const draft = pendingNewCategory.category
-        const ctx = computeRedistributeContext(categories, draft, totalKrw)
+        const ctx = computeRedistributeContext(categories, draft, pendingNewCategory.effectiveTotalKrw)
         return (
           <OpsBudgetRedistributeModal
             pool={ctx.availablePool}
@@ -665,10 +838,25 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
               name: draft.name,
               amount: draft.allocatedKrw.toLocaleString('en-US'),
             })}
-            totalKrw={totalKrw}
+            totalKrw={pendingNewCategory.effectiveTotalKrw}
             newSumBeforeRedistribute={ctx.newSum}
             onApply={handleRedistributeApply}
             onCancel={handleRedistributeCancel}
+          />
+        )
+      })()}
+
+      {/* Category-overflow redistribute modal — sequential queue, one per overflowing category */}
+      {overflowPlan && overflowPlan.pending.length > 0 && (() => {
+        const current = overflowPlan.pending[0]
+        return (
+          <OpsBudgetRedistributeModal
+            pool={current.pool}
+            deficit={current.overflow}
+            sourceLabel={current.sourceLabel}
+            totalKrw={null}
+            onApply={(deductions) => handleOverflowApply(current.categoryId, deductions)}
+            onCancel={() => handleOverflowCancel(current.categoryId)}
           />
         )
       })()}

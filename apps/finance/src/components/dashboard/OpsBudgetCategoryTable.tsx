@@ -6,7 +6,7 @@ import {
   paletteColor, computeCategoryTotals,
   computeRedistributeContext,
 } from './opsBudgetSelectors'
-import { useUpdateOpsBudgetCategories } from '../../hooks/queries/useOpsBudget'
+import { useUpdateOpsBudgetCategories, useDeleteCategoryWithInclusions } from '../../hooks/queries/useOpsBudget'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
 import type {
   OpsBudgetCategory, OpsBudgetInclusion, Project,
@@ -39,6 +39,7 @@ type RedistributeState =
       deficit: number
       sourceLabel: string
       newSumBefore: number
+      totalKrw: number
       draftCategory: OpsBudgetCategory
     }
   | {
@@ -47,6 +48,7 @@ type RedistributeState =
       deficit: number
       sourceLabel: string
       newSumBefore: number
+      totalKrw: number
       draftCategory: OpsBudgetCategory
     }
   | {
@@ -66,6 +68,7 @@ export default function OpsBudgetCategoryTable({
   const { t } = useTranslation()
   const { toast } = useToast()
   const update = useUpdateOpsBudgetCategories()
+  const deleteCategory = useDeleteCategoryWithInclusions()
   const categories = useMemo(
     () => [...(project.opsBudget?.categories ?? [])].sort((a, b) => a.sortIndex - b.sortIndex),
     [project.opsBudget?.categories]
@@ -165,36 +168,40 @@ export default function OpsBudgetCategoryTable({
       color: paletteColor(categories.length),
     }
 
-    if (totalKrw > 0 && newAlloc > 0) {
-      const ctx = computeRedistributeContext(categories, draftCategory, totalKrw)
-      if (ctx.deficit > 0) {
-        if (ctx.availablePool.length === 0) {
-          toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
-          return
-        }
-        const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
-        if (poolCapacity < ctx.deficit) {
-          toast({
-            variant: 'danger',
-            message: t('dashboard.opsBudget.insufficientPoolCapacity', {
-              deficit: ctx.deficit.toLocaleString('en-US'),
-              available: poolCapacity.toLocaleString('en-US'),
+    if (newAlloc > 0) {
+      const effectiveTotalKrw = totalKrw > 0 ? totalKrw : sumAllocated
+      if (effectiveTotalKrw > 0) {
+        const ctx = computeRedistributeContext(categories, draftCategory, effectiveTotalKrw)
+        if (ctx.deficit > 0) {
+          if (ctx.availablePool.length === 0) {
+            toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
+            return
+          }
+          const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
+          if (poolCapacity < ctx.deficit) {
+            toast({
+              variant: 'danger',
+              message: t('dashboard.opsBudget.insufficientPoolCapacity', {
+                deficit: ctx.deficit.toLocaleString('en-US'),
+                available: poolCapacity.toLocaleString('en-US'),
+              }),
+            })
+            return
+          }
+          setRedistributeState({
+            mode: 'add',
+            pool: ctx.availablePool,
+            deficit: ctx.deficit,
+            sourceLabel: t('dashboard.opsBudget.addCategorySource', {
+              name: draftCategory.name,
+              amount: newAlloc.toLocaleString('en-US'),
             }),
+            newSumBefore: ctx.newSum,
+            totalKrw: effectiveTotalKrw,
+            draftCategory,
           })
           return
         }
-        setRedistributeState({
-          mode: 'add',
-          pool: ctx.availablePool,
-          deficit: ctx.deficit,
-          sourceLabel: t('dashboard.opsBudget.addCategorySource', {
-            name: draftCategory.name,
-            amount: newAlloc.toLocaleString('en-US'),
-          }),
-          newSumBefore: ctx.newSum,
-          draftCategory,
-        })
-        return
       }
     }
 
@@ -216,40 +223,44 @@ export default function OpsBudgetCategoryTable({
       return
     }
 
-    if (totalKrw > 0) {
+    {
       const original = categories.find((c) => c.id === draft.id)
       const allocationIncreased = !original || draft.allocatedKrw > original.allocatedKrw
       if (allocationIncreased) {
-        const ctx = computeRedistributeContext(categories, draft, totalKrw)
-        if (ctx.deficit > 0) {
-          if (ctx.availablePool.length === 0) {
-            toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
-            return
-          }
-          const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
-          if (poolCapacity < ctx.deficit) {
-            toast({
-              variant: 'danger',
-              message: t('dashboard.opsBudget.insufficientPoolCapacity', {
-                deficit: ctx.deficit.toLocaleString('en-US'),
-                available: poolCapacity.toLocaleString('en-US'),
+        const effectiveTotalKrw = totalKrw > 0 ? totalKrw : sumAllocated
+        if (effectiveTotalKrw > 0) {
+          const ctx = computeRedistributeContext(categories, draft, effectiveTotalKrw)
+          if (ctx.deficit > 0) {
+            if (ctx.availablePool.length === 0) {
+              toast({ variant: 'danger', message: t('dashboard.opsBudget.cannotRedistributeNoOthers') })
+              return
+            }
+            const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
+            if (poolCapacity < ctx.deficit) {
+              toast({
+                variant: 'danger',
+                message: t('dashboard.opsBudget.insufficientPoolCapacity', {
+                  deficit: ctx.deficit.toLocaleString('en-US'),
+                  available: poolCapacity.toLocaleString('en-US'),
+                }),
+              })
+              return
+            }
+            setRedistributeState({
+              mode: 'edit',
+              pool: ctx.availablePool,
+              deficit: ctx.deficit,
+              sourceLabel: t('dashboard.opsBudget.editCategorySource', {
+                name: draft.name,
+                from: (original?.allocatedKrw ?? 0).toLocaleString('en-US'),
+                to: draft.allocatedKrw.toLocaleString('en-US'),
               }),
+              newSumBefore: ctx.newSum,
+              totalKrw: effectiveTotalKrw,
+              draftCategory: draft,
             })
             return
           }
-          setRedistributeState({
-            mode: 'edit',
-            pool: ctx.availablePool,
-            deficit: ctx.deficit,
-            sourceLabel: t('dashboard.opsBudget.editCategorySource', {
-              name: draft.name,
-              from: (original?.allocatedKrw ?? 0).toLocaleString('en-US'),
-              to: draft.allocatedKrw.toLocaleString('en-US'),
-            }),
-            newSumBefore: ctx.newSum,
-            draftCategory: draft,
-          })
-          return
         }
       }
     }
@@ -271,12 +282,20 @@ export default function OpsBudgetCategoryTable({
       ? t('dashboard.opsBudget.deleteWithInclusions', { count: refs })
       : t('dashboard.opsBudget.confirmDelete', { name: cat.name })
     if (!window.confirm(confirmMsg)) return
-    const next = categories.filter((c) => c.id !== cat.id)
-                          .map((c, i) => ({ ...c, sortIndex: i }))
+    const next = categories
+      .filter((c) => c.id !== cat.id)
+      .map((c, i) => ({ ...c, sortIndex: i }))
     try {
-      await persist(next)
+      await deleteCategory.mutateAsync({
+        projectId: project.id,
+        categoryId: cat.id,
+        nextCategories: next,
+        updatedBy: currentUser,
+      })
       if (selectedCategoryId === cat.id) onSelectCategory(next[0]?.id ?? null)
-    } catch { /* persist already toasted; leave list unchanged */ }
+    } catch (err) {
+      toast({ variant: 'danger', message: `${t('common.saveError')}: ${(err as Error).message}` })
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -333,7 +352,7 @@ export default function OpsBudgetCategoryTable({
           pool={redistributeState.pool}
           deficit={redistributeState.deficit}
           sourceLabel={redistributeState.sourceLabel}
-          totalKrw={redistributeState.mode === 'reduce-total' ? redistributeState.newTotal : totalKrw}
+          totalKrw={redistributeState.mode === 'reduce-total' ? redistributeState.newTotal : redistributeState.totalKrw}
           newSumBeforeRedistribute={redistributeState.newSumBefore}
           onApply={handleRedistributeApply}
           onCancel={() => setRedistributeState(null)}
@@ -577,13 +596,11 @@ export default function OpsBudgetCategoryTable({
           <h4 className="text-xs font-semibold text-finance-primary mb-2">
             {t('dashboard.opsBudget.codeReconcile')}
           </h4>
-          <FinanceTable variant="embedded" minWidthClassName="min-w-[420px]">
+          <FinanceTable variant="embedded" minWidthClassName="min-w-[320px]">
             <FinanceTable.Head>
               <tr>
                 <FinanceTable.Th size="compact">{t('dashboard.opsBudget.colBudgetCode')}</FinanceTable.Th>
                 <FinanceTable.Th size="compact" align="right">{t('dashboard.opsBudget.opsAllocated')}</FinanceTable.Th>
-                <FinanceTable.Th size="compact" align="right">{t('dashboard.opsBudget.projectByCode')}</FinanceTable.Th>
-                <FinanceTable.Th size="compact" align="right">{t('dashboard.opsBudget.diff')}</FinanceTable.Th>
               </tr>
             </FinanceTable.Head>
             <FinanceTable.Body>
@@ -591,8 +608,6 @@ export default function OpsBudgetCategoryTable({
                 const opsAlloc = categories
                   .filter((c) => c.budgetCode === code)
                   .reduce((s, c) => s + c.allocatedKrw, 0)
-                const projectAlloc = project.budgetConfig?.byCode?.[code] ?? 0
-                const diff = opsAlloc - projectAlloc
                 return (
                   <FinanceTable.Row key={code} hover={false}>
                     <FinanceTable.Td size="compact" className="font-mono">
@@ -601,27 +616,11 @@ export default function OpsBudgetCategoryTable({
                     <FinanceTable.Td size="compact" align="right">
                       {opsAlloc ? `₩${opsAlloc.toLocaleString('en-US')}` : '-'}
                     </FinanceTable.Td>
-                    <FinanceTable.Td size="compact" align="right" className="text-finance-muted">
-                      {projectAlloc ? `₩${projectAlloc.toLocaleString('en-US')}` : '-'}
-                    </FinanceTable.Td>
-                    <FinanceTable.Td size="compact" align="right"
-                      className={diff > 0 ? 'text-finance-danger font-semibold' : ''}>
-                      {diff === 0 ? '-' : `${diff > 0 ? '+' : ''}₩${diff.toLocaleString('en-US')}`}
-                    </FinanceTable.Td>
                   </FinanceTable.Row>
                 )
               })}
             </FinanceTable.Body>
           </FinanceTable>
-          {UNIQUE_BUDGET_CODES.some((code) => {
-            const opsAlloc = categories.filter((c) => c.budgetCode === code).reduce((s, c) => s + c.allocatedKrw, 0)
-            const projectAlloc = project.budgetConfig?.byCode?.[code] ?? 0
-            return opsAlloc > projectAlloc && projectAlloc > 0
-          }) && (
-            <p className="mt-2 text-xs text-finance-warning">
-              ⚠ {t('dashboard.opsBudget.overAllocationWarning')}
-            </p>
-          )}
         </div>
       </div>
     </>

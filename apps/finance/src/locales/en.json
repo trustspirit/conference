@@ -410,9 +410,6 @@
       "compositionChartAriaLabel": "Included expense composition by category chart",
       "codeReconcile": "Allocation by budget code",
       "opsAllocated": "Ops allocated",
-      "projectByCode": "Project allocation",
-      "diff": "Diff",
-      "overAllocationWarning": "Some budget codes have ops categories whose sum exceeds the project allocation.",
       "pickerTitleGlobal": "Items to include in budget",
       "pickerHintGlobal": "On 'Add', items are auto-assigned to the matching category by budget code. If multiple categories share a code, you'll be prompted to choose.",
       "sessionFilterAll": "All sessions",
@@ -455,7 +452,13 @@
       "insufficientPoolCapacity": "Not enough capacity to redistribute (available ₩{{available}}, needed ₩{{deficit}}). Increase the total budget or reduce some category allocations first.",
       "createCategoryTitle": "Create new category",
       "createCategoryHelp": "No category for budget code {{code}}. Create one to include {{count}} item(s).",
-      "createNewSource": "Allocating ₩{{amount}} to new category '{{name}}'"
+      "createNewSource": "Allocating ₩{{amount}} to new category '{{name}}'",
+      "autoAllocation": "Auto-allocated budget",
+      "autoAllocationHint": "Sum of the {{count}} item(s) being added becomes this category's budget.",
+      "cannotAddOverCategoryCap": "Adding these items would exceed '{{name}}' by ₩{{overflow}}, but only ₩{{available}} is available across other categories.",
+      "categoryOverflowSource": "'{{name}}' is short by ₩{{overflow}}",
+      "maxDeductibleHint": "Max deductible ₩{{amount}}",
+      "overflowDeficit": "Overflow"
     }
   },
   "users": {

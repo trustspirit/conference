@@ -4,6 +4,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import {
   collection, doc, setDoc, deleteDoc, serverTimestamp, onSnapshot,
   Timestamp, QueryDocumentSnapshot, DocumentData, FieldValue,
+  query, where, getDocs, writeBatch,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
@@ -323,6 +324,68 @@ export function useRemoveInclusion() {
       }
     },
     // onSettled is intentionally omitted: realtime listener reconciles automatically.
+  })
+}
+
+// ---------- Delete category with cascading inclusion removal ----------
+
+interface DeleteCategoryWithInclusionsParams {
+  projectId: string
+  categoryId: string
+  nextCategories: OpsBudgetCategory[]   // project.opsBudget.categories AFTER removing this id
+  updatedBy: { uid: string; name: string; email: string }
+  totalKrw?: number
+}
+
+export function useDeleteCategoryWithInclusions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (p: DeleteCategoryWithInclusionsParams) => {
+      // Step 1: fetch all inclusions in this category
+      const colRef = collection(db, 'projects', p.projectId, 'opsBudgetInclusions')
+      const q = query(colRef, where('categoryId', '==', p.categoryId))
+      const snap = await getDocs(q)
+
+      // Step 2: build batch — update project doc + delete each inclusion
+      const batch = writeBatch(db)
+      const projectRef = doc(db, 'projects', p.projectId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opsBudgetPayload: any = {
+        opsBudget: {
+          categories: p.nextCategories,
+          updatedAt: serverTimestamp(),
+          updatedBy: p.updatedBy,
+          ...(p.totalKrw !== undefined ? { totalKrw: p.totalKrw } : {}),
+        },
+      }
+      batch.set(projectRef, opsBudgetPayload, { merge: true })
+      for (const d of snap.docs) {
+        batch.delete(d.ref)
+      }
+      await batch.commit()
+    },
+    onMutate: async (p) => {
+      // Optimistically remove inclusions matching this category
+      const incKey = queryKeys.opsBudget.inclusions(p.projectId)
+      await queryClient.cancelQueries({ queryKey: incKey })
+      const previous = queryClient.getQueryData<OpsBudgetInclusion[]>(incKey) ?? []
+      queryClient.setQueryData<OpsBudgetInclusion[]>(
+        incKey,
+        previous.filter((i) => i.categoryId !== p.categoryId)
+      )
+      return { previous }
+    },
+    onError: (_e, p, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(queryKeys.opsBudget.inclusions(p.projectId), ctx.previous)
+      }
+    },
+    onSettled: (_d, _e, vars) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.opsBudget.inclusions(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.opsBudget.includableItems(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
+    },
   })
 }
 

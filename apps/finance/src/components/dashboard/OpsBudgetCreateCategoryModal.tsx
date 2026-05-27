@@ -4,17 +4,19 @@ import { useTranslation } from 'react-i18next'
 interface Props {
   budgetCode: number
   itemCount: number
+  itemsTotalKrw: number   // sum of items' KRW amounts (USD items contribute 0)
+  itemsTotalUsd: number   // for display only
   defaultColor: string
-  onCreate: (name: string, allocatedKrw: number) => void
+  onCreate: (name: string) => void   // no allocation arg — auto-calc from items sum
   onCancel: () => void
 }
 
 export default function OpsBudgetCreateCategoryModal({
-  budgetCode, itemCount, defaultColor, onCreate, onCancel,
+  budgetCode, itemCount, itemsTotalKrw, itemsTotalUsd, defaultColor, onCreate, onCancel,
 }: Props) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const [allocated, setAllocated] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
@@ -24,10 +26,15 @@ export default function OpsBudgetCreateCategoryModal({
 
   const canSubmit = name.trim().length > 0
 
+  const handleConfirm = () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    onCreate(name.trim())
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={onCancel}
     >
       <div
         role="dialog"
@@ -65,17 +72,24 @@ export default function OpsBudgetCreateCategoryModal({
               {budgetCode} — {t(`budgetCode.${budgetCode}`)}
             </span>
           </div>
-          <label className="block">
-            <span className="block text-xs text-finance-muted mb-1">{t('dashboard.opsBudget.colAllocated')}</span>
-            <input
-              type="number"
-              min={0}
-              value={allocated || ''}
-              onChange={(e) => setAllocated(Math.max(0, Number(e.target.value) || 0))}
-              placeholder="0"
-              className="border border-finance-border rounded px-2 py-1.5 text-sm w-full text-right"
-            />
-          </label>
+          <div>
+            <span className="block text-xs text-finance-muted mb-1">
+              {t('dashboard.opsBudget.autoAllocation')}
+            </span>
+            <div className="px-3 py-2 rounded bg-finance-bg">
+              <span className="font-mono text-sm font-semibold">
+                ₩{itemsTotalKrw.toLocaleString('en-US')}
+              </span>
+              {itemsTotalUsd > 0 && (
+                <span className="ml-2 font-mono text-xs text-finance-muted">
+                  + ${itemsTotalUsd.toLocaleString('en-US')}
+                </span>
+              )}
+              <p className="text-xs text-finance-muted mt-0.5">
+                {t('dashboard.opsBudget.autoAllocationHint', { count: itemCount })}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2">
@@ -88,8 +102,8 @@ export default function OpsBudgetCreateCategoryModal({
           </button>
           <button
             type="button"
-            disabled={!canSubmit}
-            onClick={() => onCreate(name.trim(), allocated)}
+            disabled={!canSubmit || isSubmitting}
+            onClick={handleConfirm}
             className="finance-primary-button text-sm px-3 py-1.5 rounded disabled:opacity-50"
           >
             {t('common.next')}

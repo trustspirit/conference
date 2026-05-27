@@ -1,17 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+interface PoolEntry {
+  id: string
+  name: string
+  allocatedKrw: number
+  /** Optional cap override; defaults to allocatedKrw. Used in category-overflow mode
+   *  to restrict deduction to the source category's remaining (unincluded) budget. */
+  maxDeduction?: number
+}
+
 interface Props {
   /** Categories the user can deduct from (everyone except the draft). */
-  pool: Array<{ id: string; name: string; allocatedKrw: number }>
+  pool: Array<PoolEntry>
   /** Required total to deduct (>0). */
   deficit: number
   /** Label describing the source change (e.g. "신규 카테고리 'MC 세팅'에 ₩500,000 배정") */
   sourceLabel: string
-  /** Total budget cap for context display */
-  totalKrw: number
-  /** New sum BEFORE redistribution (used for context) */
-  newSumBeforeRedistribute: number
+  /** Total budget cap for context display. When null/0, the totalKrw context block is
+   *  hidden and a single "Overflow" line is shown instead (categoryOverflow mode). */
+  totalKrw: number | null
+  /** New sum BEFORE redistribution (used for context). Optional in categoryOverflow mode. */
+  newSumBeforeRedistribute?: number
   onApply: (deductions: Record<string, number>) => void
   onCancel: () => void
 }
@@ -39,22 +49,27 @@ export default function OpsBudgetRedistributeModal({
   const balanced = sumDeducted === deficit
   const overDeducted = sumDeducted > deficit
 
+  // Whether we're in "category overflow" mode (no totalKrw context to show)
+  const isCategoryOverflowMode = !totalKrw
+
   // Auto-equal-split convenience
   const handleEqualSplit = () => {
-    const eligible = pool.filter((p) => p.allocatedKrw > 0)
+    const eligible = pool.filter((p) => (p.maxDeduction ?? p.allocatedKrw) > 0)
     if (eligible.length === 0) return
     const per = Math.floor(deficit / eligible.length)
     const remainder = deficit - per * eligible.length
     const next: Record<string, number> = Object.fromEntries(pool.map((p) => [p.id, 0]))
     eligible.forEach((p, idx) => {
-      next[p.id] = Math.min(p.allocatedKrw, per + (idx === 0 ? remainder : 0))
+      const cap = p.maxDeduction ?? p.allocatedKrw
+      next[p.id] = Math.min(cap, per + (idx === 0 ? remainder : 0))
     })
     // Distribute any remainder if first one was capped
     let stillNeeded = deficit - Object.values(next).reduce((s, v) => s + v, 0)
     if (stillNeeded > 0) {
       for (const p of eligible) {
         if (stillNeeded === 0) break
-        const room = p.allocatedKrw - next[p.id]
+        const cap = p.maxDeduction ?? p.allocatedKrw
+        const room = cap - next[p.id]
         const add = Math.min(room, stillNeeded)
         next[p.id] += add
         stillNeeded -= add
@@ -84,20 +99,29 @@ export default function OpsBudgetRedistributeModal({
           {sourceLabel}
         </p>
 
-        <div className="space-y-1 text-xs mb-4 bg-finance-bg p-3 rounded">
-          <div className="flex justify-between">
-            <span className="text-finance-muted">{t('dashboard.opsBudget.opsTotalBudget')}:</span>
-            <span className="font-mono">{'₩'}{totalKrw.toLocaleString('en-US')}</span>
+        {isCategoryOverflowMode ? (
+          <div className="space-y-1 text-xs mb-4 bg-finance-bg p-3 rounded">
+            <div className="flex justify-between font-semibold text-finance-danger">
+              <span>{t('dashboard.opsBudget.overflowDeficit')}:</span>
+              <span className="font-mono">{'₩'}{deficit.toLocaleString('en-US')}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-finance-muted">{t('dashboard.opsBudget.newSumBefore')}:</span>
-            <span className="font-mono">{'₩'}{newSumBeforeRedistribute.toLocaleString('en-US')}</span>
+        ) : (
+          <div className="space-y-1 text-xs mb-4 bg-finance-bg p-3 rounded">
+            <div className="flex justify-between">
+              <span className="text-finance-muted">{t('dashboard.opsBudget.opsTotalBudget')}:</span>
+              <span className="font-mono">{'₩'}{totalKrw.toLocaleString('en-US')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-finance-muted">{t('dashboard.opsBudget.newSumBefore')}:</span>
+              <span className="font-mono">{'₩'}{(newSumBeforeRedistribute ?? 0).toLocaleString('en-US')}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-finance-danger">
+              <span>{t('dashboard.opsBudget.deficit')}:</span>
+              <span className="font-mono">-{'₩'}{deficit.toLocaleString('en-US')}</span>
+            </div>
           </div>
-          <div className="flex justify-between font-semibold text-finance-danger">
-            <span>{t('dashboard.opsBudget.deficit')}:</span>
-            <span className="font-mono">-{'₩'}{deficit.toLocaleString('en-US')}</span>
-          </div>
-        </div>
+        )}
 
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-finance-muted">
@@ -124,6 +148,7 @@ export default function OpsBudgetRedistributeModal({
             </thead>
             <tbody>
               {pool.map((p) => {
+                const cap = p.maxDeduction ?? p.allocatedKrw
                 const ded = deductions[p.id] ?? 0
                 const after = p.allocatedKrw - ded
                 return (
@@ -134,12 +159,17 @@ export default function OpsBudgetRedistributeModal({
                       <input
                         type="number"
                         min={0}
-                        max={p.allocatedKrw}
+                        max={cap}
                         value={ded || ''}
-                        onChange={(e) => updateDeduction(p.id, Number(e.target.value), p.allocatedKrw)}
+                        onChange={(e) => updateDeduction(p.id, Number(e.target.value), cap)}
                         aria-label={`${p.name} ${t('dashboard.opsBudget.takeFrom')}`}
                         className="border border-finance-border rounded px-2 py-1 text-sm w-28 text-right"
                       />
+                      {p.maxDeduction !== undefined && p.maxDeduction < p.allocatedKrw && (
+                        <p className="text-[10px] text-finance-muted mt-0.5">
+                          {t('dashboard.opsBudget.maxDeductibleHint', { amount: p.maxDeduction.toLocaleString('en-US') })}
+                        </p>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-right font-mono">{'₩'}{after.toLocaleString('en-US')}</td>
                   </tr>

@@ -17,6 +17,7 @@ import {
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
 import type { AppUser, ProjectRole, SystemRole } from '../../types'
+import type { ProjectMember } from './useProjectMembers'
 
 const PAGE_SIZE = 20
 
@@ -86,12 +87,28 @@ export function useUpdateProjectMemberRole() {
         [`memberRoles.${uid}`]: role
       })
     },
-    onSuccess: (_d, vars) => {
+    onMutate: async ({ projectId, uid, role }) => {
+      const membersKey = queryKeys.projects.members(projectId)
+      await queryClient.cancelQueries({ queryKey: membersKey })
+      const previousMembers = queryClient.getQueryData<ProjectMember[]>(membersKey)
+      if (previousMembers) {
+        queryClient.setQueryData<ProjectMember[]>(
+          membersKey,
+          previousMembers.map((m) =>
+            m.uid === uid ? { ...m, projectRole: role } : m
+          )
+        )
+      }
+      return { previousMembers }
+    },
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previousMembers) {
+        queryClient.setQueryData(queryKeys.projects.members(vars.projectId), ctx.previousMembers)
+      }
+    },
+    onSettled: (_d, _err, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
-      // Also refresh the project-list cache that backs useProject() context —
-      // useProjectMembers' queryFn reads memberRoles from currentProject, so
-      // without this the refetch returns the same stale data.
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
     }
   })
@@ -105,7 +122,24 @@ export function useRemoveProjectMember() {
         [`memberRoles.${uid}`]: deleteField()
       })
     },
-    onSuccess: (_d, vars) => {
+    onMutate: async ({ projectId, uid }) => {
+      const membersKey = queryKeys.projects.members(projectId)
+      await queryClient.cancelQueries({ queryKey: membersKey })
+      const previousMembers = queryClient.getQueryData<ProjectMember[]>(membersKey)
+      if (previousMembers) {
+        queryClient.setQueryData<ProjectMember[]>(
+          membersKey,
+          previousMembers.filter((m) => m.uid !== uid)
+        )
+      }
+      return { previousMembers }
+    },
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previousMembers) {
+        queryClient.setQueryData(queryKeys.projects.members(vars.projectId), ctx.previousMembers)
+      }
+    },
+    onSettled: (_d, _err, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
