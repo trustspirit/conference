@@ -14,6 +14,13 @@ import {
 } from './budgetCodeItemSelectors'
 import type { PaymentRequest } from '../../types'
 
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 const PAGE_SIZE = 50
 
 interface Props {
@@ -124,7 +131,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                     key={`${row.requestId}__${row.itemIndex}`}
                     className="border-b border-finance-border-soft hover:bg-finance-surface"
                   >
-                    <Td>{row.createdAt.toISOString().slice(0, 10)}</Td>
+                    <Td>{formatLocalDate(row.createdAt)}</Td>
                     <Td>{row.submitterName}</Td>
                     <Td>{t(`committee.${row.committee}`)}</Td>
                     <Td>
@@ -172,7 +179,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                 <Link to={`/requests/${row.requestId}`} className="block">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-finance-muted">
-                      {row.createdAt.toISOString().slice(0, 10)} · {row.submitterName}
+                      {formatLocalDate(row.createdAt)} · {row.submitterName}
                     </span>
                     <StatusBadge status={row.status} />
                   </div>
