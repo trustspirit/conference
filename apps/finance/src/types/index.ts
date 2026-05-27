@@ -18,6 +18,44 @@ export interface ProjectBudgetConfig {
   byCode: Record<number, number>
 }
 
+export interface OpsBudgetCategory {
+  id: string
+  name: string
+  budgetCode: number
+  allocatedKrw: number
+  sortIndex: number
+  color?: string
+}
+
+export interface OpsBudget {
+  categories: OpsBudgetCategory[]
+  updatedAt: Date
+  updatedBy: { uid: string; name: string; email: string }
+}
+
+export interface OpsBudgetInclusionSnapshot {
+  amount: number
+  amountUsd: number
+  currency: Currency
+  budgetCode: number
+  budgetDescKey?: string
+  description: string
+  payee: string
+  date: string
+  session: string
+  requestStatus: RequestStatus
+}
+
+export interface OpsBudgetInclusion {
+  id: string
+  categoryId: string
+  requestId: string
+  itemIndex: number
+  snapshot: OpsBudgetInclusionSnapshot
+  addedBy: { uid: string; name: string; email: string }
+  addedAt: Date
+}
+
 export interface Project {
   id: string
   name: string
@@ -34,6 +72,7 @@ export interface Project {
   memberRoles: Record<string /* uid */, ProjectRole>
   isActive: boolean
   deletedAt?: Date | null
+  opsBudget?: OpsBudget
 }
 
 export interface GlobalSettings {

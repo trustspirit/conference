@@ -37,6 +37,12 @@ export const queryKeys = {
   budget: {
     usage: (projectId: string) => ['budget', projectId, 'usage'] as const
   },
+  opsBudget: {
+    inclusions: (projectId: string) =>
+      ['opsBudget', projectId, 'inclusions'] as const,
+    includableItems: (projectId: string) =>
+      ['opsBudget', projectId, 'includable'] as const
+  },
   settings: {
     global: () => ['settings', 'global'] as const
   }

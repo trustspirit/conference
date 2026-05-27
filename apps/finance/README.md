@@ -24,9 +24,24 @@
 
 ### 대시보드
 
+`/admin/dashboard`는 두 개의 탭으로 구성됩니다.
+
+#### 프로젝트 개요 (기존)
+
 요약 카드, 예산 사용률, 신청 추이 차트, 위원회별/예산코드별 현황을 확인합니다.
+접근 가능 역할: `admin`, `executive`, `session_director`, `logistic_admin`, `finance_prep`.
 
 ![대시보드](docs/screenshots/dashboard.png)
+
+#### 운영위 예산 (신규)
+
+운영위원회가 자체적으로 정의한 카테고리(이름 + 예산 코드)에 예산을 배정하고,
+승인된/정산된 운영위 신청서의 아이템을 카테고리에 포함시켜 차감 현황을 추적합니다.
+한 아이템은 한 카테고리에만 들어갑니다 (deterministic doc ID로 강제).
+USD 아이템은 별도 칼럼으로 표시되고 KRW 예산에서는 차감되지 않습니다.
+접근 가능 역할: `admin`, `finance_ops`, `approver_ops`, `session_director` (+ `super_admin`).
+
+![운영위 예산](docs/screenshots/dashboard-ops-budget.png)
 
 ### 사용자 관리
 

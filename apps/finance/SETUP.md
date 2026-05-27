@@ -379,3 +379,18 @@ Vite의 `manualChunks`와 React `lazy()`를 사용하여 청크를 분리합니�
 | 각 페이지         | Lazy-loaded 페이지별 청크        |
 
 모든 청크가 500KB 미만으로 Rollup 경고 없이 빌드됩니다.
+
+### 운영위 예산 Dashboard 데이터 (v2026.05)
+
+- `projects/{pid}` 문서에 `opsBudget` 필드가 추가됩니다 (카테고리 목록).
+- `projects/{pid}/opsBudgetInclusions/{requestId}__{itemIndex}` 서브콜렉션에 포함된
+  아이템이 저장됩니다. 도큐먼트 ID는 `${requestId}__${itemIndex}` 형식이어야 하며,
+  Firestore Rules가 강제합니다.
+- `firestore.indexes.json`에 `opsBudgetInclusions (categoryId asc, addedAt desc)`
+  복합 인덱스가 추가되어 있습니다.
+
+배포:
+
+```
+pnpm --filter @conference/finance exec firebase deploy --only firestore:rules,firestore:indexes
+```

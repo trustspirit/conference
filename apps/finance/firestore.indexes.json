@@ -443,6 +443,14 @@
         { "fieldPath": "committee", "order": "ASCENDING" },
         { "fieldPath": "totalAmount", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "opsBudgetInclusions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "categoryId", "order": "ASCENDING" },
+        { "fieldPath": "addedAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

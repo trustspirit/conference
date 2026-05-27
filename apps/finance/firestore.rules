@@ -41,6 +41,24 @@ service cloud.firestore {
       return callerProjectRole(projectId) in allowed;
     }
 
+    function canManageOpsBudget(projectId) {
+      return hasProjectRole(projectId,
+        ['admin', 'finance_ops', 'approver_ops', 'session_director']);
+    }
+
+    function isProjectMember(projectId) {
+      return request.auth != null
+        && (
+          callerProjectRole(projectId) != null
+          || isSuperAdmin()
+        );
+    }
+
+    function diffOnlyTouches(allowedKeys) {
+      return request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(allowedKeys);
+    }
+
     match /users/{userId} {
       // Read: own doc, or any authenticated user (member directory access).
       // Bank info is internal-tool trust; pre-G effective behavior was "any non-'user' role can read all".
@@ -237,9 +255,33 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if request.auth != null;
       allow update: if request.auth != null
-        && (effectiveProjectRole(projectId, request.auth.uid) == 'admin' || isSuperAdmin());
+        && (
+          effectiveProjectRole(projectId, request.auth.uid) == 'admin'
+          || isSuperAdmin()
+          || (canManageOpsBudget(projectId) && diffOnlyTouches(['opsBudget']))
+        );
       allow create: if request.auth != null && systemRole() in ['admin', 'super_admin'];
       allow delete: if request.auth != null && systemRole() in ['admin', 'super_admin'];
+
+      match /opsBudgetInclusions/{inclusionId} {
+        allow read:   if isProjectMember(projectId);
+        allow create: if canManageOpsBudget(projectId)
+          && inclusionId == request.resource.data.requestId
+                            + '__'
+                            + string(request.resource.data.itemIndex)
+          && request.resource.data.keys().hasAll(
+               ['categoryId','requestId','itemIndex','snapshot','addedBy','addedAt'])
+          && request.resource.data.requestId is string
+          && request.resource.data.itemIndex is int
+          && request.resource.data.itemIndex >= 0
+          && request.resource.data.categoryId is string
+          && exists(/databases/$(database)/documents/requests/$(request.resource.data.requestId))
+          && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.projectId == projectId
+          && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.committee == 'operations'
+          && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.status in ['approved', 'settled'];
+        allow delete: if canManageOpsBudget(projectId);
+        allow update: if false;
+      }
     }
   }
 }

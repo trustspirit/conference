@@ -2,12 +2,14 @@ export default function StatCard({
   label,
   value,
   color = 'gray',
-  icon
+  icon,
+  sub,
 }: {
   label: string
   value: string
   color?: string
   icon?: React.ReactNode
+  sub?: string
 }) {
   const colors: Record<string, string> = {
     gray: 'bg-finance-primary',
@@ -23,6 +25,7 @@ export default function StatCard({
         <p className="text-xs text-finance-muted">{label}</p>
       </div>
       <p className="text-lg font-bold text-finance-text">{value}</p>
+      {sub && <p className="text-xs text-finance-muted mt-0.5">{sub}</p>}
       <div className={`mt-3 h-0.5 w-full ${colors[color]}`} />
     </div>
   )

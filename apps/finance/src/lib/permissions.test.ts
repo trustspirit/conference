@@ -25,3 +25,30 @@ describe('ACTION_PERMISSIONS', () => {
     expect(can('finance_prep', 'project.editSettings')).toBe(false)
   })
 })
+
+describe('opsBudget.access action', () => {
+  it('finance_ops can access', () => {
+    expect(can('finance_ops', 'opsBudget.access')).toBe(true)
+  })
+  it('approver_ops can access', () => {
+    expect(can('approver_ops', 'opsBudget.access')).toBe(true)
+  })
+  it('session_director can access', () => {
+    expect(can('session_director', 'opsBudget.access')).toBe(true)
+  })
+  it('admin can access', () => {
+    expect(can('admin', 'opsBudget.access')).toBe(true)
+  })
+  it('finance_prep cannot access', () => {
+    expect(can('finance_prep', 'opsBudget.access')).toBe(false)
+  })
+  it('user cannot access', () => {
+    expect(can('user', 'opsBudget.access')).toBe(false)
+  })
+  it('executive cannot access (operations-only feature)', () => {
+    expect(can('executive', 'opsBudget.access')).toBe(false)
+  })
+  it('logistic_admin cannot access', () => {
+    expect(can('logistic_admin', 'opsBudget.access')).toBe(false)
+  })
+})

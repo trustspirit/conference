@@ -1,5 +1,11 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useLocation } from 'react-router-dom'
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+  Outlet,
+  useLocation
+} from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { queryClient } from './lib/queryClient'
@@ -160,7 +166,9 @@ const router = createBrowserRouter([
               'executive',
               'session_director',
               'logistic_admin',
-              'finance_prep'
+              'finance_prep',
+              'finance_ops',
+              'approver_ops'
             ]}
           >
             <DashboardPage />

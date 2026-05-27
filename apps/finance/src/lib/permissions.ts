@@ -10,6 +10,7 @@ export type Action =
   | 'project.manageMembers'
   | 'project.editSettings'
   | 'project.viewDashboard'
+  | 'opsBudget.access'
   | 'settlement.read'
   | 'settlement.create'
   | 'receipts.access'
@@ -36,6 +37,9 @@ export const ACTION_PERMISSIONS: Record<Action, ProjectRole[]> = {
   'project.viewDashboard': [
     'admin', 'finance_prep', 'executive',
     'session_director', 'logistic_admin'
+  ],
+  'opsBudget.access': [
+    'admin', 'finance_ops', 'approver_ops', 'session_director'
   ],
   'settlement.read': [
     'admin', 'finance_prep', 'executive',
