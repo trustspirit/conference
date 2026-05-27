@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
 import { BUDGET_COUNTED_STATUSES } from '../../lib/budgetStatuses'
 import StatusBadge from '../StatusBadge'
@@ -32,6 +32,7 @@ type CodeFilter = number | 'all'
 
 export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [codeFilter, setCodeFilter] = useState<CodeFilter>('all')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('createdAt')
@@ -99,7 +100,11 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
         className="w-full mb-3 px-3 py-1.5 text-sm border border-finance-border-soft rounded bg-transparent placeholder:text-finance-muted focus:outline-none focus:ring-1 focus:ring-finance-primary"
       />
 
-      {filtered.length === 0 ? (
+      {allRows.length === 0 ? (
+        <p className="text-sm text-finance-muted py-8 text-center">
+          {t('common.noData')}
+        </p>
+      ) : filtered.length === 0 ? (
         <p className="text-sm text-finance-muted py-8 text-center">
           {t('dashboard.budgetCodeItemList.emptyForFilter')}
         </p>
@@ -129,7 +134,8 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                 {visibleRows.map((row) => (
                   <tr
                     key={`${row.requestId}__${row.itemIndex}`}
-                    className="border-b border-finance-border-soft hover:bg-finance-surface"
+                    className="border-b border-finance-border-soft hover:bg-finance-surface cursor-pointer"
+                    onClick={() => navigate(`/request/${row.requestId}`)}
                   >
                     <Td>{formatLocalDate(row.createdAt)}</Td>
                     <Td>{row.submitterName}</Td>
@@ -150,21 +156,21 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                       {row.description}
                     </Td>
                     <Td className="text-right whitespace-nowrap">
-                      <div>₩{row.amountKrw.toLocaleString('en-US')}</div>
-                      {row.amountUsd > 0 && (
-                        <div className="text-[11px] text-finance-muted">
-                          (${row.amountUsd.toLocaleString('en-US')} USD)
-                        </div>
+                      {row.amountUsd > 0 && row.amountKrw === 0 ? (
+                        <div>${row.amountUsd.toLocaleString('en-US')} USD</div>
+                      ) : (
+                        <>
+                          <div>₩{row.amountKrw.toLocaleString('en-US')}</div>
+                          {row.amountUsd > 0 && (
+                            <div className="text-[11px] text-finance-muted">
+                              (${row.amountUsd.toLocaleString('en-US')} USD)
+                            </div>
+                          )}
+                        </>
                       )}
                     </Td>
                     <Td>
-                      <Link
-                        to={`/requests/${row.requestId}`}
-                        className="inline-flex"
-                        aria-label={`Open request ${row.requestId}`}
-                      >
-                        <StatusBadge status={row.status} />
-                      </Link>
+                      <StatusBadge status={row.status} />
                     </Td>
                   </tr>
                 ))}
@@ -176,7 +182,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
           <ul className="sm:hidden space-y-2">
             {visibleRows.map((row) => (
               <li key={`${row.requestId}__${row.itemIndex}`} className="border border-finance-border-soft rounded p-3">
-                <Link to={`/requests/${row.requestId}`} className="block">
+                <Link to={`/request/${row.requestId}`} className="block">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-finance-muted">
                       {formatLocalDate(row.createdAt)} · {row.submitterName}
@@ -187,7 +193,11 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                     <span className="inline-flex items-center rounded border border-finance-border bg-finance-surface px-1.5 py-0.5 text-[11px] font-semibold">
                       {row.budgetCode} · {t(`budgetCode.${row.budgetCode}`)}
                     </span>
-                    <span className="text-sm font-semibold">₩{row.amountKrw.toLocaleString('en-US')}</span>
+                    {row.amountUsd > 0 && row.amountKrw === 0 ? (
+                      <span className="text-sm font-semibold">${row.amountUsd.toLocaleString('en-US')} USD</span>
+                    ) : (
+                      <span className="text-sm font-semibold">₩{row.amountKrw.toLocaleString('en-US')}</span>
+                    )}
                   </div>
                   <p className="text-xs text-finance-muted truncate">{row.description}</p>
                 </Link>
