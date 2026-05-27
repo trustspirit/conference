@@ -13,6 +13,8 @@ import BudgetRingGauge from '../components/dashboard/BudgetRingGauge'
 import TabbedCharts from '../components/dashboard/TabbedCharts'
 import BudgetSettingsSection from '../components/dashboard/BudgetSettingsSection'
 import OpsBudgetTab from '../components/dashboard/OpsBudgetTab'
+import BudgetCodeItemList from '../components/dashboard/BudgetCodeItemList'
+import { useRequests } from '../hooks/queries/useRequests'
 import { useDashboardStats } from '../hooks/queries/useCloudFunctions'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { formatAmount } from '../lib/currency'
@@ -29,6 +31,8 @@ function OverviewTab() {
 
   const { data: stats, isLoading: loading, error } = useDashboardStats(currentProject?.id)
   const budgetUsage = useBudgetUsage()
+  const { data: requests = [] } = useRequests(currentProject?.id)
+  const usdToKrwRate = resolveUsdToKrwRate(currentProject)
   const canEditBudget = projectRole === 'admin' || projectRole === 'finance_prep'
 
   if (loading) return <Spinner />
@@ -99,6 +103,8 @@ function OverviewTab() {
         dailyTrend={stats.dailyTrend}
         dailyCount={stats.dailyCount}
       />
+
+      <BudgetCodeItemList requests={requests} usdToKrwRate={usdToKrwRate} />
 
       {canEditBudget && currentProject && (
         <BudgetSettingsSection key={currentProject.id} project={currentProject} />
