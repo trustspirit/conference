@@ -41,6 +41,8 @@ export default function OpsBudgetTab() {
     [currentProject?.opsBudget?.categories]
   )
 
+  const usdToKrwRate = currentProject?.opsBudget?.usdToKrwRate ?? 0
+
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   useEffect(() => {
     if (selectedCategoryId && categories.some((c) => c.id === selectedCategoryId)) return
@@ -106,6 +108,7 @@ export default function OpsBudgetTab() {
           categories={categories}
           inclusions={incData}
           unassignedCount={includable.data?.length ?? 0}
+          usdToKrwRate={usdToKrwRate}
           onJumpToPicker={() => {
             setPanelTab('picker')
             pickerRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -116,7 +119,7 @@ export default function OpsBudgetTab() {
       {inclusionsLoading ? (
         <SkeletonBlock label="charts" height={240} />
       ) : (
-        <OpsBudgetCharts categories={categories} inclusions={incData} />
+        <OpsBudgetCharts categories={categories} inclusions={incData} usdToKrwRate={usdToKrwRate} />
       )}
 
       <OpsBudgetCategoryTable

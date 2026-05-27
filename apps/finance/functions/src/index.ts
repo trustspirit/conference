@@ -1037,10 +1037,13 @@ export const getDashboardStats = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Not a member of this project')
   }
 
+  const projectData = projSnap.data() ?? {}
+  const usdToKrwRate = (projectData.opsBudget?.usdToKrwRate as number | undefined) ?? 0
+
   const snap = await db
     .collection('requests')
     .where('projectId', '==', projectId)
-    .select('status', 'totalAmount', 'committee', 'items', 'date', 'createdAt')
+    .select('status', 'totalAmount', 'totalAmountUsd', 'committee', 'items', 'date', 'createdAt')
     .get()
 
   let total = 0
@@ -1065,20 +1068,22 @@ export const getDashboardStats = onCall(async (request) => {
   snap.forEach((doc) => {
     const d = doc.data()
     const status = d.status as string
-    // KRW-only by design — totalAmount excludes USD items (USD is tracked separately in
-    // totalAmountUsd and not aggregated into dashboard/budget statistics).
+    // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
+    // included in all aggregations. When unset (or 0), USD items contribute 0.
     const amount = (d.totalAmount as number) || 0
+    const amountUsd = (d.totalAmountUsd as number) || 0
+    const effectiveAmount = amount + (usdToKrwRate > 0 ? Math.round(amountUsd * usdToKrwRate) : 0)
     const committee = (d.committee as string) || 'operations'
     const items = (d.items as { budgetCode: number; amount: number; currency?: string }[]) || []
     const date = (d.date as string) || ''
 
     total++
-    totalAmount += amount
+    totalAmount += effectiveAmount
 
-    if (status === 'pending') { pending++; pendingAmount += amount }
-    else if (status === 'reviewed') { reviewed++; reviewedAmount += amount }
-    else if (status === 'approved') { approvedOnly++; approvedOnlyAmount += amount }
-    else if (status === 'settled') { settled++; settledAmount += amount }
+    if (status === 'pending') { pending++; pendingAmount += effectiveAmount }
+    else if (status === 'reviewed') { reviewed++; reviewedAmount += effectiveAmount }
+    else if (status === 'approved') { approvedOnly++; approvedOnlyAmount += effectiveAmount }
+    else if (status === 'settled') { settled++; settledAmount += effectiveAmount }
     else if (status === 'rejected' || status === 'force_rejected') { rejected++ }
 
     const isApproved = status === 'approved' || status === 'settled'
@@ -1086,24 +1091,28 @@ export const getDashboardStats = onCall(async (request) => {
 
     if (!byCommittee[committee]) byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 }
     byCommittee[committee].count++
-    byCommittee[committee].amount += amount
-    if (isApproved) byCommittee[committee].approvedAmount += amount
+    byCommittee[committee].amount += effectiveAmount
+    if (isApproved) byCommittee[committee].approvedAmount += effectiveAmount
 
     for (const item of items) {
       const code = item.budgetCode
       if (!byBudgetCode[code]) byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 }
       byBudgetCode[code].count++
-      // Aggregate KRW only — project budgets and dashboards are KRW-based; USD is tracked separately.
-      if ((item.currency || 'KRW') !== 'USD') {
-        byBudgetCode[code].amount += item.amount
-        if (isApproved) byBudgetCode[code].approvedAmount += item.amount
-      }
+      // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
+      // included in all aggregations. When unset (or 0), USD items contribute 0.
+      const itemCurrency = item.currency || 'KRW'
+      const itemEffectiveKrw =
+        itemCurrency === 'USD'
+          ? (usdToKrwRate > 0 ? Math.round(item.amount * usdToKrwRate) : 0)
+          : item.amount
+      byBudgetCode[code].amount += itemEffectiveKrw
+      if (isApproved) byBudgetCode[code].approvedAmount += itemEffectiveKrw
     }
 
     if (date) {
       const month = date.substring(0, 7)
-      monthlyTrend[month] = (monthlyTrend[month] || 0) + amount
-      dailyTrend[date] = (dailyTrend[date] || 0) + amount
+      monthlyTrend[month] = (monthlyTrend[month] || 0) + effectiveAmount
+      dailyTrend[date] = (dailyTrend[date] || 0) + effectiveAmount
       dailyCount[date] = (dailyCount[date] || 0) + 1
       monthlyCount[month] = (monthlyCount[month] || 0) + 1
     }
@@ -1127,7 +1136,8 @@ export const getDashboardStats = onCall(async (request) => {
     monthlyTrend,
     monthlyCount,
     dailyTrend,
-    dailyCount
+    dailyCount,
+    usdToKrwRate
   }
 })
 

@@ -28,7 +28,7 @@ import {
   type AnnotatedOperationsItem,
 } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, Project } from '../../types'
-import { inclusionId, computeRedistributeContext, paletteColor } from './opsBudgetSelectors'
+import { inclusionId, computeRedistributeContext, paletteColor, effectiveKrwForSnapshot } from './opsBudgetSelectors'
 import Spinner from '../Spinner'
 import OpsBudgetCreateCategoryModal from './OpsBudgetCreateCategoryModal'
 import OpsBudgetRedistributeModal from './OpsBudgetRedistributeModal'
@@ -249,6 +249,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     [project.opsBudget?.categories]
   )
   const totalKrw = project.opsBudget?.totalKrw ?? 0
+  const usdToKrwRate = project.opsBudget?.usdToKrwRate ?? 0
 
   const includable = useOpsBudgetIncludableItems(projectId)
   const allOps = useOpsBudgetAllOperationsItems(projectId)
@@ -257,15 +258,16 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   const add = useAddInclusion()
   const updateCategories = useUpdateOpsBudgetCategories()
 
-  // Per-category sum of already-included KRW items (USD items are excluded from cap check)
+  // Per-category effective KRW sum of already-included items.
+  // USD items contribute amountUsd * usdToKrwRate (or 0 when rate is unset).
   const includedKrwByCategory = useMemo(() => {
     const m = new Map<string, number>()
     for (const inc of inclusions.data ?? []) {
-      if (inc.snapshot.currency === 'USD') continue
-      m.set(inc.categoryId, (m.get(inc.categoryId) ?? 0) + inc.snapshot.amount)
+      const eff = effectiveKrwForSnapshot(inc.snapshot, usdToKrwRate)
+      m.set(inc.categoryId, (m.get(inc.categoryId) ?? 0) + eff)
     }
     return m
-  }, [inclusions.data])
+  }, [inclusions.data, usdToKrwRate])
 
   // --- Filter state ---
   const [search, setSearch] = useState('')
@@ -527,11 +529,13 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   const submitItemsWithOverflowCheck = async (
     pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
   ): Promise<Set<string>> => {
-    // Group incoming KRW by categoryId (USD items are excluded from cap check)
+    // Group incoming effective KRW by categoryId.
+    // USD items contribute amountUsd * usdToKrwRate (0 when rate=0 → skip cap check).
     const incomingByCat = new Map<string, number>()
     for (const { item, categoryId } of pairs) {
-      if (item.snapshot.currency === 'USD') continue
-      incomingByCat.set(categoryId, (incomingByCat.get(categoryId) ?? 0) + item.snapshot.amount)
+      const eff = effectiveKrwForSnapshot(item.snapshot, usdToKrwRate)
+      if (eff === 0) continue   // nothing to count toward KRW cap
+      incomingByCat.set(categoryId, (incomingByCat.get(categoryId) ?? 0) + eff)
     }
 
     // Compute overflow per category
@@ -906,7 +910,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         const currentCode = createFlow.pendingCodes[0]
         const itemsForCode = createFlow.itemsByCode.get(currentCode) ?? []
         const itemsTotalKrw = itemsForCode.reduce(
-          (s, it) => s + (it.snapshot.currency === 'USD' ? 0 : it.snapshot.amount),
+          (s, it) => s + effectiveKrwForSnapshot(it.snapshot, usdToKrwRate),
           0
         )
         const itemsTotalUsd = itemsForCode.reduce(
@@ -1064,7 +1068,18 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
                       {isUsd ? (
                         <span className="text-finance-muted">
                           ${it.snapshot.amountUsd.toLocaleString('en-US')}
-                          <UsdChip tooltip={t('dashboard.opsBudget.usdNotDeducted')} />
+                          <UsdChip tooltip={
+                            usdToKrwRate > 0
+                              ? t('dashboard.opsBudget.usdConvertedHint', {
+                                  amount: effectiveKrwForSnapshot(it.snapshot, usdToKrwRate).toLocaleString('en-US'),
+                                })
+                              : t('dashboard.opsBudget.usdNotDeducted')
+                          } />
+                          {usdToKrwRate > 0 && (
+                            <span className="ml-1 text-[10px] text-finance-muted">
+                              (≈₩{effectiveKrwForSnapshot(it.snapshot, usdToKrwRate).toLocaleString('en-US')})
+                            </span>
+                          )}
                         </span>
                       ) : (
                         <span>{'₩'}{it.snapshot.amount.toLocaleString('en-US')}</span>

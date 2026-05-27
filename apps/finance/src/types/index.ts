@@ -30,6 +30,7 @@ export interface OpsBudgetCategory {
 export interface OpsBudget {
   categories: OpsBudgetCategory[]
   totalKrw?: number    // undefined/0 means no constraint
+  usdToKrwRate?: number  // KRW per USD. 0/undefined = USD not converted (excluded from budget)
   updatedAt: Date
   updatedBy: { uid: string; name: string; email: string }
 }

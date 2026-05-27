@@ -457,7 +457,11 @@
       "cannotAddOverCategoryCap": "Adding these items would exceed '{{name}}' by ₩{{overflow}}, but only ₩{{available}} is available across other categories.",
       "categoryOverflowSource": "'{{name}}' is short by ₩{{overflow}}",
       "maxDeductibleHint": "Max deductible ₩{{amount}}",
-      "overflowDeficit": "Overflow"
+      "overflowDeficit": "Overflow",
+      "usdRateLabel": "Approved budget exchange rate (USD → KRW)",
+      "usdRateNotSet": "Not set (USD excluded from budget)",
+      "usdRateHint": "When this rate is set, USD items are converted to KRW and included in both category budgets and the project-wide dashboard totals.",
+      "usdConvertedHint": "≈ ₩{{amount}} (approved rate applied)"
     }
   },
   "users": {

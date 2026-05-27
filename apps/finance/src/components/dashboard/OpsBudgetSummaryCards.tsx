@@ -8,16 +8,17 @@ interface Props {
   categories: OpsBudgetCategory[]
   inclusions: OpsBudgetInclusion[]
   unassignedCount: number
+  usdToKrwRate: number
   onJumpToPicker?: (() => void) | undefined
 }
 
 export default function OpsBudgetSummaryCards({
-  categories, inclusions, unassignedCount, onJumpToPicker,
+  categories, inclusions, unassignedCount, usdToKrwRate, onJumpToPicker,
 }: Props) {
   const { t } = useTranslation()
   const totals = useMemo(
-    () => computeCategoryTotals(categories, inclusions),
-    [categories, inclusions]
+    () => computeCategoryTotals(categories, inclusions, usdToKrwRate),
+    [categories, inclusions, usdToKrwRate]
   )
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">

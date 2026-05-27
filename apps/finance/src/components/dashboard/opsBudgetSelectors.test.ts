@@ -6,6 +6,7 @@ import {
   paletteColor,
   computeRedistributeContext,
   computeReduceTotalContext,
+  effectiveKrwForSnapshot,
   type CategoryTotals,
 } from './opsBudgetSelectors'
 import type {
@@ -230,5 +231,94 @@ describe('computeReduceTotalContext', () => {
 
   it('pool includes all categories', () => {
     expect(computeReduceTotalContext(cats, 2000).availablePool).toHaveLength(2)
+  })
+})
+
+// ---------- effectiveKrwForSnapshot ----------
+
+describe('effectiveKrwForSnapshot', () => {
+  const krwSnap = (overrides: Partial<import('../../types').OpsBudgetInclusionSnapshot> = {}): import('../../types').OpsBudgetInclusionSnapshot => ({
+    amount: 5000, amountUsd: 0, currency: 'KRW',
+    budgetCode: 5862, description: '', payee: '', date: '', session: '',
+    requestStatus: 'approved', ...overrides,
+  })
+  const usdSnap = (overrides: Partial<import('../../types').OpsBudgetInclusionSnapshot> = {}): import('../../types').OpsBudgetInclusionSnapshot => ({
+    amount: 0, amountUsd: 100, currency: 'USD',
+    budgetCode: 5862, description: '', payee: '', date: '', session: '',
+    requestStatus: 'approved', ...overrides,
+  })
+
+  it('KRW snapshot returns amount as-is', () => {
+    expect(effectiveKrwForSnapshot(krwSnap(), 1300)).toBe(5000)
+  })
+
+  it('USD snapshot multiplies by rate', () => {
+    expect(effectiveKrwForSnapshot(usdSnap(), 1300)).toBe(130_000)
+  })
+
+  it('USD snapshot returns 0 when rate is 0', () => {
+    expect(effectiveKrwForSnapshot(usdSnap(), 0)).toBe(0)
+  })
+
+  it('USD snapshot rounds to nearest KRW', () => {
+    expect(effectiveKrwForSnapshot(usdSnap({ amountUsd: 100.5 }), 1300.7)).toBe(Math.round(100.5 * 1300.7))
+  })
+
+  it('treats missing currency as KRW', () => {
+    const snap = { ...krwSnap(), currency: undefined } as unknown as import('../../types').OpsBudgetInclusionSnapshot
+    expect(effectiveKrwForSnapshot(snap, 1300)).toBe(5000)
+  })
+})
+
+// ---------- computeCategoryTotals with usdToKrwRate ----------
+
+describe('computeCategoryTotals with usdToKrwRate', () => {
+  it('includes USD converted KRW in includedKrw and grand totals', () => {
+    const cats: OpsBudgetCategory[] = [
+      { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 200_000, sortIndex: 0 },
+    ]
+    const incs: OpsBudgetInclusion[] = [
+      baseInclusion({ snapshot: { ...baseInclusion().snapshot, amount: 50_000 } }),
+      baseInclusion({
+        id: 'r1__1', itemIndex: 1,
+        snapshot: { ...baseInclusion().snapshot, amount: 0, amountUsd: 100, currency: 'USD' },
+      }),
+    ]
+    const t = computeCategoryTotals(cats, incs, 1300)
+    expect(t.byCategory.c1.includedKrw).toBe(50_000 + 130_000)
+    expect(t.byCategory.c1.includedUsd).toBe(100)
+    expect(t.grandTotalKrw).toBe(180_000)
+  })
+
+  it('rate=0 keeps current behavior (USD excluded from KRW total)', () => {
+    const cats: OpsBudgetCategory[] = [
+      { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 100_000, sortIndex: 0 },
+    ]
+    const incs: OpsBudgetInclusion[] = [
+      baseInclusion({ snapshot: { ...baseInclusion().snapshot, amount: 0, amountUsd: 50, currency: 'USD' } }),
+    ]
+    expect(computeCategoryTotals(cats, incs, 0).byCategory.c1.includedKrw).toBe(0)
+  })
+
+  it('no rate arg keeps current behavior (USD excluded)', () => {
+    const cats: OpsBudgetCategory[] = [
+      { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 100_000, sortIndex: 0 },
+    ]
+    const incs: OpsBudgetInclusion[] = [
+      baseInclusion({ snapshot: { ...baseInclusion().snapshot, amount: 0, amountUsd: 50, currency: 'USD' } }),
+    ]
+    expect(computeCategoryTotals(cats, incs).byCategory.c1.includedKrw).toBe(0)
+  })
+
+  it('remainingKrw and usageRatio reflect USD-converted KRW', () => {
+    const cats: OpsBudgetCategory[] = [
+      { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 200_000, sortIndex: 0 },
+    ]
+    const incs: OpsBudgetInclusion[] = [
+      baseInclusion({ snapshot: { ...baseInclusion().snapshot, amount: 0, amountUsd: 100, currency: 'USD' } }),
+    ]
+    const t = computeCategoryTotals(cats, incs, 1000)
+    expect(t.byCategory.c1.remainingKrw).toBe(100_000)
+    expect(t.byCategory.c1.usageRatio).toBe(0.5)
   })
 })

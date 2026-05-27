@@ -12,15 +12,16 @@ type ChartTab = 'usage' | 'composition'
 interface Props {
   categories: OpsBudgetCategory[]
   inclusions: OpsBudgetInclusion[]
+  usdToKrwRate: number
 }
 
-export default function OpsBudgetCharts({ categories, inclusions }: Props) {
+export default function OpsBudgetCharts({ categories, inclusions, usdToKrwRate }: Props) {
   const { t } = useTranslation()
   const [tab, setTab] = useState<ChartTab>('usage')
 
   const totals = useMemo(
-    () => computeCategoryTotals(categories, inclusions),
-    [categories, inclusions]
+    () => computeCategoryTotals(categories, inclusions, usdToKrwRate),
+    [categories, inclusions, usdToKrwRate]
   )
 
   const barData = categories.map((c) => {

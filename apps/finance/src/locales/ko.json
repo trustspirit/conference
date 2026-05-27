@@ -457,7 +457,11 @@
       "cannotAddOverCategoryCap": "'{{name}}' 카테고리 예산을 ₩{{overflow}} 초과하지만, 다른 카테고리에서 가져올 수 있는 잔여 예산이 ₩{{available}}밖에 없습니다.",
       "categoryOverflowSource": "'{{name}}' 카테고리에 ₩{{overflow}} 부족",
       "maxDeductibleHint": "최대 차감 가능 ₩{{amount}}",
-      "overflowDeficit": "초과액"
+      "overflowDeficit": "초과액",
+      "usdRateLabel": "승인 예산 환율 (USD → KRW)",
+      "usdRateNotSet": "미설정 (USD는 예산에서 차감 안 됨)",
+      "usdRateHint": "승인 예산 환율을 설정하면 USD 아이템이 KRW로 환산되어 카테고리 예산과 전체 대시보드 집계에 포함됩니다.",
+      "usdConvertedHint": "≈ ₩{{amount}} (승인 환율 적용)"
     }
   },
   "users": {

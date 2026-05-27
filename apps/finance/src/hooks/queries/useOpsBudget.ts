@@ -335,6 +335,7 @@ interface DeleteCategoryWithInclusionsParams {
   nextCategories: OpsBudgetCategory[]   // project.opsBudget.categories AFTER removing this id
   updatedBy: { uid: string; name: string; email: string }
   totalKrw?: number
+  usdToKrwRate?: number
 }
 
 export function useDeleteCategoryWithInclusions() {
@@ -356,6 +357,7 @@ export function useDeleteCategoryWithInclusions() {
           updatedAt: serverTimestamp(),
           updatedBy: p.updatedBy,
           ...(p.totalKrw !== undefined ? { totalKrw: p.totalKrw } : {}),
+          ...(p.usdToKrwRate !== undefined ? { usdToKrwRate: p.usdToKrwRate } : {}),
         },
       }
       batch.set(projectRef, opsBudgetPayload, { merge: true })
@@ -393,6 +395,7 @@ interface UpdateCategoriesParams {
   projectId: string
   categories: OpsBudgetCategory[]
   totalKrw?: number    // if provided, written; if omitted, field is preserved via merge
+  usdToKrwRate?: number  // if provided, written; if omitted, field is preserved via merge
   updatedBy: { uid: string; name: string; email: string }
 }
 
@@ -405,6 +408,7 @@ export function useUpdateOpsBudgetCategories() {
         opsBudget: {
           categories: OpsBudgetCategory[]
           totalKrw?: number
+          usdToKrwRate?: number
           updatedAt: FieldValue
           updatedBy: { uid: string; name: string; email: string }
         }
@@ -414,6 +418,7 @@ export function useUpdateOpsBudgetCategories() {
           updatedAt: serverTimestamp(),
           updatedBy: p.updatedBy,
           ...(p.totalKrw !== undefined ? { totalKrw: p.totalKrw } : {}),
+          ...(p.usdToKrwRate !== undefined ? { usdToKrwRate: p.usdToKrwRate } : {}),
         },
       }
       await setDoc(ref, payload, { merge: true })

@@ -62,6 +62,7 @@ export interface DashboardStats {
   monthlyCount: Record<string, number>
   dailyTrend: Record<string, number>
   dailyCount: Record<string, number>
+  usdToKrwRate?: number
 }
 
 export function useDashboardStats(projectId: string | undefined) {

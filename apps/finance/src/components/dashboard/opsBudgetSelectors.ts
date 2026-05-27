@@ -37,9 +37,25 @@ export function inclusionId(requestId: string, itemIndex: number): string {
   return `${requestId}__${itemIndex}`
 }
 
+/**
+ * Effective KRW amount for budget calculations.
+ * - KRW items: snapshot.amount
+ * - USD items: snapshot.amountUsd * usdToKrwRate (0 if rate is 0/undefined)
+ */
+export function effectiveKrwForSnapshot(
+  snapshot: OpsBudgetInclusionSnapshot,
+  usdToKrwRate: number,
+): number {
+  if ((snapshot.currency ?? 'KRW') === 'USD') {
+    return Math.round(snapshot.amountUsd * (usdToKrwRate > 0 ? usdToKrwRate : 0))
+  }
+  return snapshot.amount
+}
+
 export function computeCategoryTotals(
   categories: OpsBudgetCategory[],
-  inclusions: OpsBudgetInclusion[]
+  inclusions: OpsBudgetInclusion[],
+  usdToKrwRate: number = 0,
 ): OpsBudgetTotals {
   const byCategory: Record<string, CategoryTotals> = {}
   for (const c of categories) {
@@ -56,6 +72,7 @@ export function computeCategoryTotals(
     const currency = s.currency ?? 'KRW'
     if (currency === 'USD') {
       t.includedUsd += s.amountUsd
+      t.includedKrw += effectiveKrwForSnapshot(s, usdToKrwRate)
     } else {
       t.includedKrw += s.amount
     }
