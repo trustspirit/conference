@@ -6,10 +6,13 @@
  *   Items are matched to categories by budgetCode at submit time.
  * - "Show included items" toggle implements Spec §4 picker behavior:
  *   already-included items appear read-only with their category name chip.
+ * - "Create category on the fly" flow: when no category matches the item's
+ *   budgetCode, open a create-category modal instead of toasting an error.
+ *   Optionally chains into the redistribute modal if the new allocation
+ *   pushes the sum over totalKrw.
  *
  * Props:
- *   projectId   – Firestore project ID
- *   categories  – all defined OpsBudgetCategory[] (to resolve budgetCode → category)
+ *   project     – full Project document (categories + totalKrw derived inside)
  *   currentUser – { uid, name, email } of the acting user
  */
 
@@ -20,17 +23,19 @@ import {
   useOpsBudgetIncludableItems,
   useOpsBudgetAllOperationsItems,
   useAddInclusion,
+  useUpdateOpsBudgetCategories,
   type AnnotatedOperationsItem,
 } from '../../hooks/queries/useOpsBudget'
-import type { OpsBudgetCategory } from '../../types'
-import { inclusionId } from './opsBudgetSelectors'
+import type { OpsBudgetCategory, Project } from '../../types'
+import { inclusionId, computeRedistributeContext, paletteColor } from './opsBudgetSelectors'
 import Spinner from '../Spinner'
+import OpsBudgetCreateCategoryModal from './OpsBudgetCreateCategoryModal'
+import OpsBudgetRedistributeModal from './OpsBudgetRedistributeModal'
 
 // ---------- Types ----------
 
 interface Props {
-  projectId: string
-  categories: OpsBudgetCategory[]
+  project: Project
   currentUser: { uid: string; name: string; email: string }
 }
 
@@ -45,9 +50,26 @@ interface DisambiguateState {
   codeResolution: Map<number, string>
 }
 
+interface CreateCategoryFlowState {
+  /** Queue of unique budgetCodes still to process */
+  pendingCodes: number[]
+  /** Items grouped by budgetCode (built once at flow start) */
+  itemsByCode: Map<number, AnnotatedOperationsItem[]>
+  /** Resolved items ready to submit (item + categoryId pairs) */
+  resolved: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
+}
+
 const PAGE_SIZE = 50
 
 // ---------- Helpers ----------
+
+function newCategoryId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  // Fallback for environments without crypto.randomUUID
+  return `cat_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+}
 
 function itemId(it: AnnotatedOperationsItem): string {
   return inclusionId(it.requestId, it.itemIndex)
@@ -187,14 +209,24 @@ function DisambiguateModal({
 
 // ---------- Main Component ----------
 
-export default function OpsBudgetItemPicker({ projectId, categories, currentUser }: Props) {
+export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   const { t } = useTranslation()
   const { toast } = useToast()
+
+  const projectId = project.id
+
+  // Derive categories + totalKrw from project doc (stays reactive to project changes)
+  const categories = useMemo(
+    () => [...(project.opsBudget?.categories ?? [])].sort((a, b) => a.sortIndex - b.sortIndex),
+    [project.opsBudget?.categories]
+  )
+  const totalKrw = project.opsBudget?.totalKrw ?? 0
 
   const includable = useOpsBudgetIncludableItems(projectId)
   const allOps = useOpsBudgetAllOperationsItems(projectId)
 
   const add = useAddInclusion()
+  const updateCategories = useUpdateOpsBudgetCategories()
 
   // --- Filter state ---
   const [search, setSearch] = useState('')
@@ -208,6 +240,14 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
 
   // Disambiguation modal state
   const [disambig, setDisambig] = useState<DisambiguateState | null>(null)
+
+  // Create-category flow state
+  const [createFlow, setCreateFlow] = useState<CreateCategoryFlowState | null>(null)
+  // Pending new category waiting for redistribute confirmation
+  const [pendingNewCategory, setPendingNewCategory] = useState<{
+    category: OpsBudgetCategory
+    itemsForThisCode: AnnotatedOperationsItem[]
+  } | null>(null)
 
   // Sentinel ref for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -299,57 +339,7 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
   // Reset pagination when filtered list changes
   useEffect(() => { setShown(PAGE_SIZE) }, [filtered.length])
 
-  // --- Add selected handler ---
-  const handleAddSelected = async () => {
-    if (selected.size === 0) return
-
-    // Resolve targets from FULL items list (not filtered) — Minor #15 fix
-    const targets = rawItems.filter(
-      (it) => it.assignedCategoryId === null && selected.has(itemId(it))
-    )
-    if (targets.length === 0) return
-
-    // Separate items by how many matching categories exist
-    const immediateResolve: Array<{ item: AnnotatedOperationsItem; categoryId: string }> = []
-    const needsDisambiguation: AnnotatedOperationsItem[] = []
-    const noCategory: AnnotatedOperationsItem[] = []
-
-    for (const it of targets) {
-      const matches = categories.filter((c) => c.budgetCode === it.snapshot.budgetCode)
-      if (matches.length === 0) {
-        noCategory.push(it)
-      } else if (matches.length === 1) {
-        immediateResolve.push({ item: it, categoryId: matches[0].id })
-      } else {
-        needsDisambiguation.push(it)
-      }
-    }
-
-    // Toast errors for items with no matching category
-    for (const it of noCategory) {
-      toast({
-        variant: 'danger',
-        message: t('dashboard.opsBudget.noCategoryForCode', { code: it.snapshot.budgetCode }),
-      })
-    }
-
-    // Submit immediately-resolved items
-    let immediateFailedIds = new Set<string>()
-    if (immediateResolve.length > 0) {
-      immediateFailedIds = await submitItems(immediateResolve)
-    }
-
-    // Start disambiguation queue if needed
-    if (needsDisambiguation.length > 0) {
-      setDisambig({
-        queue: needsDisambiguation,
-        resolved: [],
-        codeResolution: new Map(),
-      })
-    } else {
-      setSelected(immediateFailedIds)
-    }
-  }
+  // ---------- submitItems helper ----------
 
   const submitItems = async (
     pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
@@ -381,7 +371,69 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
     return failedIds
   }
 
-  // --- Disambiguation handlers ---
+  // ---------- Add selected handler ----------
+
+  const handleAddSelected = async () => {
+    if (selected.size === 0) return
+
+    // Resolve targets from FULL items list (not filtered) — Minor #15 fix
+    const targets = rawItems.filter(
+      (it) => it.assignedCategoryId === null && selected.has(itemId(it))
+    )
+    if (targets.length === 0) return
+
+    // Separate items by how many matching categories exist
+    const immediateResolve: Array<{ item: AnnotatedOperationsItem; categoryId: string }> = []
+    const needsDisambiguation: AnnotatedOperationsItem[] = []
+    const noCategory: AnnotatedOperationsItem[] = []
+
+    for (const it of targets) {
+      const matches = categories.filter((c) => c.budgetCode === it.snapshot.budgetCode)
+      if (matches.length === 0) {
+        noCategory.push(it)
+      } else if (matches.length === 1) {
+        immediateResolve.push({ item: it, categoryId: matches[0].id })
+      } else {
+        needsDisambiguation.push(it)
+      }
+    }
+
+    // Submit immediately-resolved items (fire-and-forget)
+    let immediateFailedIds = new Set<string>()
+    if (immediateResolve.length > 0) {
+      immediateFailedIds = await submitItems(immediateResolve)
+    }
+
+    // Start create-category flow for items with no matching category
+    if (noCategory.length > 0) {
+      const itemsByCode = new Map<number, AnnotatedOperationsItem[]>()
+      for (const it of noCategory) {
+        const list = itemsByCode.get(it.snapshot.budgetCode) ?? []
+        list.push(it)
+        itemsByCode.set(it.snapshot.budgetCode, list)
+      }
+      const pendingCodes = Array.from(itemsByCode.keys())
+      setCreateFlow({ pendingCodes, itemsByCode, resolved: [] })
+      // Note: immediateFailedIds handled when create flow finishes via finishCreateFlow
+      // If disambig also needed, it starts below; both can coexist (separate modals,
+      // create flow renders on top at z-50, disambig will wait underneath)
+    }
+
+    // Start disambiguation queue if needed
+    if (needsDisambiguation.length > 0) {
+      setDisambig({
+        queue: needsDisambiguation,
+        resolved: [],
+        codeResolution: new Map(),
+      })
+    } else if (noCategory.length === 0) {
+      // No create flow, no disambig — update selection to keep failed items
+      setSelected(immediateFailedIds)
+    }
+  }
+
+  // ---------- Disambiguation handlers ----------
+
   const handleDisambiguateChoose = async (categoryId: string, applyToAll: boolean) => {
     if (!disambig) return
     const [current, ...remaining] = disambig.queue
@@ -433,7 +485,130 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
     }
   }
 
-  // --- Category name lookup for "already included" chip ---
+  // ---------- Create-category flow handlers ----------
+
+  const finishCreateFlow = async (resolved: Array<{ item: AnnotatedOperationsItem; categoryId: string }>) => {
+    setCreateFlow(null)
+    if (resolved.length === 0) {
+      setSelected(new Set())
+      return
+    }
+    const failedIds = await submitItems(resolved)
+    setSelected(failedIds)
+  }
+
+  const persistAndAdvance = async (
+    newCategory: OpsBudgetCategory,
+    deductions: Record<string, number>,
+    itemsForCode: AnnotatedOperationsItem[],
+    code: number,
+  ) => {
+    if (!createFlow) return
+    // Build updated categories with deductions applied + new category appended
+    const updatedCategories: OpsBudgetCategory[] = [
+      ...categories.map((c) =>
+        deductions[c.id]
+          ? { ...c, allocatedKrw: c.allocatedKrw - deductions[c.id] }
+          : c
+      ),
+      newCategory,
+    ]
+    try {
+      await updateCategories.mutateAsync({
+        projectId,
+        categories: updatedCategories,
+        updatedBy: currentUser,
+      })
+    } catch (err) {
+      toast({
+        variant: 'danger',
+        message: `${t('common.saveError')}: ${(err as Error).message}`,
+      })
+      return
+    }
+    // Append items resolved to this new category
+    const newResolvedForCode = itemsForCode.map((item) => ({ item, categoryId: newCategory.id }))
+    const newResolvedAll = [...createFlow.resolved, ...newResolvedForCode]
+    // Advance queue
+    const nextPending = createFlow.pendingCodes.filter((c) => c !== code)
+    if (nextPending.length === 0) {
+      await finishCreateFlow(newResolvedAll)
+    } else {
+      setCreateFlow({ ...createFlow, pendingCodes: nextPending, resolved: newResolvedAll })
+    }
+  }
+
+  const handleCreateCategoryConfirm = async (
+    name: string,
+    allocatedKrw: number,
+    budgetCode: number,
+    itemsForCode: AnnotatedOperationsItem[],
+  ) => {
+    const newCategory: OpsBudgetCategory = {
+      id: newCategoryId(),
+      name,
+      budgetCode,
+      allocatedKrw,
+      sortIndex: categories.length,
+      color: paletteColor(categories.length),
+    }
+
+    const ctx = computeRedistributeContext(categories, newCategory, totalKrw)
+    if (ctx.deficit > 0) {
+      // Check pool capacity before opening redistribute modal
+      if (ctx.availablePool.length === 0) {
+        toast({
+          variant: 'danger',
+          message: t('dashboard.opsBudget.cannotRedistributeNoOthers'),
+        })
+        return
+      }
+      const poolCapacity = ctx.availablePool.reduce((s, p) => s + p.allocatedKrw, 0)
+      if (poolCapacity < ctx.deficit) {
+        toast({
+          variant: 'danger',
+          message: t('dashboard.opsBudget.insufficientPoolCapacity', {
+            deficit: ctx.deficit.toLocaleString('en-US'),
+            available: poolCapacity.toLocaleString('en-US'),
+          }),
+        })
+        return
+      }
+      // Open redistribute modal — dismiss create modal first
+      setPendingNewCategory({ category: newCategory, itemsForThisCode: itemsForCode })
+      return
+    }
+
+    // No redistribute needed — persist immediately
+    await persistAndAdvance(newCategory, {}, itemsForCode, budgetCode)
+  }
+
+  const handleRedistributeApply = async (deductions: Record<string, number>) => {
+    if (!pendingNewCategory) return
+    const { category, itemsForThisCode } = pendingNewCategory
+    setPendingNewCategory(null)
+    await persistAndAdvance(category, deductions, itemsForThisCode, category.budgetCode)
+  }
+
+  const handleRedistributeCancel = () => {
+    setPendingNewCategory(null)
+    // Return to the create-category modal (createFlow is still set)
+  }
+
+  const handleCreateCategoryCancel = (code: number) => {
+    if (!createFlow) return
+    // Skip this code's items (they remain selected for retry)
+    const nextPending = createFlow.pendingCodes.filter((c) => c !== code)
+    if (nextPending.length === 0) {
+      // Flow is done (no more codes); finishCreateFlow with whatever was already resolved
+      void finishCreateFlow(createFlow.resolved)
+    } else {
+      setCreateFlow({ ...createFlow, pendingCodes: nextPending })
+    }
+  }
+
+  // ---------- Category name lookup for "already included" chip ----------
+
   const categoryNameById = useMemo(() => {
     const m = new Map<string, string>()
     for (const c of categories) m.set(c.id, c.name)
@@ -457,6 +632,43 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
             matchingCategories={matchingCategories}
             onChoose={handleDisambiguateChoose}
             onSkip={handleDisambiguateSkip}
+          />
+        )
+      })()}
+
+      {/* Create-category modal — shown when there's a pending code and no redistribute pending */}
+      {createFlow && createFlow.pendingCodes.length > 0 && !pendingNewCategory && (() => {
+        const currentCode = createFlow.pendingCodes[0]
+        const itemsForCode = createFlow.itemsByCode.get(currentCode) ?? []
+        return (
+          <OpsBudgetCreateCategoryModal
+            budgetCode={currentCode}
+            itemCount={itemsForCode.length}
+            defaultColor={paletteColor(categories.length)}
+            onCreate={(name, allocatedKrw) =>
+              handleCreateCategoryConfirm(name, allocatedKrw, currentCode, itemsForCode)
+            }
+            onCancel={() => handleCreateCategoryCancel(currentCode)}
+          />
+        )
+      })()}
+
+      {/* Redistribute modal — chained from create-category when deficit > 0 */}
+      {pendingNewCategory && (() => {
+        const draft = pendingNewCategory.category
+        const ctx = computeRedistributeContext(categories, draft, totalKrw)
+        return (
+          <OpsBudgetRedistributeModal
+            pool={ctx.availablePool}
+            deficit={ctx.deficit}
+            sourceLabel={t('dashboard.opsBudget.createNewSource', {
+              name: draft.name,
+              amount: draft.allocatedKrw.toLocaleString('en-US'),
+            })}
+            totalKrw={totalKrw}
+            newSumBeforeRedistribute={ctx.newSum}
+            onApply={handleRedistributeApply}
+            onCancel={handleRedistributeCancel}
           />
         )
       })()}

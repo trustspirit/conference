@@ -89,6 +89,10 @@ export function useUpdateProjectMemberRole() {
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
+      // Also refresh the project-list cache that backs useProject() context —
+      // useProjectMembers' queryFn reads memberRoles from currentProject, so
+      // without this the refetch returns the same stale data.
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
     }
   })
 }
@@ -104,6 +108,7 @@ export function useRemoveProjectMember() {
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.members(vars.projectId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(vars.projectId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
     }
   })
 }

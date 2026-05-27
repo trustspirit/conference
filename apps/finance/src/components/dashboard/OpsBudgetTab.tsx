@@ -136,8 +136,7 @@ export default function OpsBudgetTab() {
         <div className="mt-4">
           {panelTab === 'picker' && (
             <OpsBudgetItemPicker
-              projectId={projectId}
-              categories={categories}
+              project={currentProject!}
               currentUser={currentUser}
             />
           )}

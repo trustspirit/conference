@@ -36,6 +36,7 @@
     "saving": "Saving...",
     "saved": "Saved successfully.",
     "cancel": "Cancel",
+    "next": "Next",
     "confirm": "Confirm",
     "delete": "Delete",
     "clear": "Clear",
@@ -451,7 +452,10 @@
       "addCategorySource": "Allocating ₩{{amount}} to new category '{{name}}'",
       "editCategorySource": "Changing '{{name}}' allocation from ₩{{from}} to ₩{{to}}",
       "cannotRedistributeNoOthers": "No other categories to redistribute from. Increase total budget or add another category first.",
-      "insufficientPoolCapacity": "Not enough capacity to redistribute (available ₩{{available}}, needed ₩{{deficit}}). Increase the total budget or reduce some category allocations first."
+      "insufficientPoolCapacity": "Not enough capacity to redistribute (available ₩{{available}}, needed ₩{{deficit}}). Increase the total budget or reduce some category allocations first.",
+      "createCategoryTitle": "Create new category",
+      "createCategoryHelp": "No category for budget code {{code}}. Create one to include {{count}} item(s).",
+      "createNewSource": "Allocating ₩{{amount}} to new category '{{name}}'"
     }
   },
   "users": {
