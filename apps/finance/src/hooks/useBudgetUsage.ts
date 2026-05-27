@@ -9,6 +9,7 @@ import {
 import { db } from '@conference/firebase'
 import { useProject } from '../contexts/ProjectContext'
 import { queryKeys } from './queries/queryKeys'
+import { BUDGET_COUNTED_STATUSES } from '../lib/budgetStatuses'
 
 export interface BudgetUsage {
   percent: number
@@ -16,8 +17,6 @@ export interface BudgetUsage {
   exceeded: boolean
   warning: boolean
 }
-
-const COUNTED_STATUSES = ['reviewed', 'approved', 'settled'] as const
 
 export function useBudgetUsage(): BudgetUsage | null {
   const { currentProject } = useProject()
@@ -32,7 +31,7 @@ export function useBudgetUsage(): BudgetUsage | null {
       const q = query(
         collection(db, 'requests'),
         where('projectId', '==', projectId),
-        where('status', 'in', [...COUNTED_STATUSES])
+        where('status', 'in', [...BUDGET_COUNTED_STATUSES])
       )
       const snap = await getAggregateFromServer(q, { total: sum('totalAmount') })
       return (snap.data().total as number | null) ?? 0
