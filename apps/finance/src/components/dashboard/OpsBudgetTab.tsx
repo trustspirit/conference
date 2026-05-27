@@ -149,6 +149,7 @@ export default function OpsBudgetTab() {
               category={selectedCategory}
               categories={categories}
               inclusions={incData}
+              usdToKrwRate={usdToKrwRate}
               onSelectCategory={setSelectedCategoryId}
             />
           )}

@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom'
 import { useToast } from 'trust-ui-react'
 import { useRemoveInclusion } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../../types'
+import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
 
 interface Props {
   projectId: string
   category: OpsBudgetCategory | null
   categories: OpsBudgetCategory[]
   inclusions: OpsBudgetInclusion[]
+  usdToKrwRate: number
   onSelectCategory?: (id: string) => void
 }
 
@@ -41,6 +43,7 @@ export default function OpsBudgetIncludedList({
   category,
   categories,
   inclusions,
+  usdToKrwRate,
   onSelectCategory,
 }: Props) {
   const { t } = useTranslation()
@@ -90,21 +93,21 @@ export default function OpsBudgetIncludedList({
   }
 
   // Subtotals for category view
-  const subtotalCategory = filteredCategory.reduce(
-    (s, i) => s + (i.snapshot.currency === 'USD' ? 0 : i.snapshot.amount),
+  const subtotalCategoryKrw = filteredCategory.reduce(
+    (s, i) => s + effectiveKrwForSnapshot(i.snapshot, usdToKrwRate),
     0
   )
-  const subtotalUsdCategory = filteredCategory.reduce(
+  const subtotalCategoryUsd = filteredCategory.reduce(
     (s, i) => s + (i.snapshot.currency === 'USD' ? i.snapshot.amountUsd : 0),
     0
   )
 
   // Subtotals for all view
-  const subtotalAll = filteredAll.reduce(
-    (s, i) => s + (i.snapshot.currency === 'USD' ? 0 : i.snapshot.amount),
+  const subtotalAllKrw = filteredAll.reduce(
+    (s, i) => s + effectiveKrwForSnapshot(i.snapshot, usdToKrwRate),
     0
   )
-  const subtotalUsdAll = filteredAll.reduce(
+  const subtotalAllUsd = filteredAll.reduce(
     (s, i) => s + (i.snapshot.currency === 'USD' ? i.snapshot.amountUsd : 0),
     0
   )
@@ -146,7 +149,16 @@ export default function OpsBudgetIncludedList({
         </Link>
         <span className="font-mono text-sm">
           {inc.snapshot.currency === 'USD'
-            ? `$${inc.snapshot.amountUsd.toLocaleString('en-US')}`
+            ? (
+              <span>
+                <span className="text-finance-muted">${inc.snapshot.amountUsd.toLocaleString('en-US')}</span>
+                {usdToKrwRate > 0 && (
+                  <span className="ml-1 text-[10px] text-finance-muted">
+                    (≈₩{Math.round(inc.snapshot.amountUsd * usdToKrwRate).toLocaleString('en-US')})
+                  </span>
+                )}
+              </span>
+            )
             : `${'₩'}${inc.snapshot.amount.toLocaleString('en-US')}`}
         </span>
         <button
@@ -220,9 +232,9 @@ export default function OpsBudgetIncludedList({
           {category && (
             <div className="mt-3 pt-3 border-t border-finance-border-soft flex justify-end gap-4 text-sm">
               <span className="text-finance-muted">{t('dashboard.opsBudget.subtotal')}:</span>
-              <span className="font-semibold">{'₩'}{subtotalCategory.toLocaleString('en-US')}</span>
-              {subtotalUsdCategory > 0 && (
-                <span className="font-semibold">${subtotalUsdCategory.toLocaleString('en-US')}</span>
+              <span className="font-semibold">{'₩'}{subtotalCategoryKrw.toLocaleString('en-US')}</span>
+              {usdToKrwRate <= 0 && subtotalCategoryUsd > 0 && (
+                <span className="font-semibold">${subtotalCategoryUsd.toLocaleString('en-US')}</span>
               )}
             </div>
           )}
@@ -254,9 +266,9 @@ export default function OpsBudgetIncludedList({
             </span>
             <div className="flex gap-4">
               <span className="text-finance-muted">{t('dashboard.opsBudget.subtotal')}:</span>
-              <span className="font-semibold">{'₩'}{subtotalAll.toLocaleString('en-US')}</span>
-              {subtotalUsdAll > 0 && (
-                <span className="font-semibold">${subtotalUsdAll.toLocaleString('en-US')}</span>
+              <span className="font-semibold">{'₩'}{subtotalAllKrw.toLocaleString('en-US')}</span>
+              {usdToKrwRate <= 0 && subtotalAllUsd > 0 && (
+                <span className="font-semibold">${subtotalAllUsd.toLocaleString('en-US')}</span>
               )}
             </div>
           </div>
