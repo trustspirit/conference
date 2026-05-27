@@ -25,11 +25,16 @@ export default function OpsBudgetCharts({ categories, inclusions }: Props) {
 
   const barData = categories.map((c) => {
     const tt = totals.byCategory[c.id]
+    // With the new total-budget + redistribute enforcement, included should never
+    // exceed allocatedKrw. Drop the explicit overflow stack to keep the chart clean.
+    // Defensive cap on `included` so the visual stays within the bar even in the
+    // rare edge case of stale data.
+    const included = Math.min(tt.includedKrw, c.allocatedKrw)
+    const remaining = Math.max(0, c.allocatedKrw - included)
     return {
       name: c.name,
-      included: tt.includedKrw,
-      remaining: Math.max(0, tt.remainingKrw),
-      overflow: tt.remainingKrw < 0 ? -tt.remainingKrw : 0,
+      included,
+      remaining,
       color: c.color ?? paletteColor(c.sortIndex),
     }
   })
@@ -89,14 +94,33 @@ export default function OpsBudgetCharts({ categories, inclusions }: Props) {
             <div style={{ height: Math.max(180, barData.length * 36) }}>
               <ResponsiveContainer>
                 <BarChart data={barData} layout="vertical"
-                  margin={{ top: 8, right: 16, bottom: 8, left: 80 }}>
-                  <XAxis type="number" tickFormatter={(v) => `₩${(v / 1000).toLocaleString()}k`} />
-                  <YAxis dataKey="name" type="category" width={120} />
-                  <Tooltip formatter={(v) => `₩${(Number(v) || 0).toLocaleString('en-US')}`} />
-                  <Legend />
+                  margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+                  <XAxis
+                    type="number"
+                    tickFormatter={(v) => `₩${(v / 1000).toLocaleString()}k`}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    width={140}
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                  />
+                  <Tooltip
+                    formatter={(v) => `₩${(Number(v) || 0).toLocaleString('en-US')}`}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 6,
+                      fontSize: 12,
+                    }}
+                    labelStyle={{ color: '#111827', fontWeight: 600 }}
+                    itemStyle={{ color: '#374151' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="included"  stackId="b" name={t('dashboard.opsBudget.included')}  fill="#4f46e5" />
-                  <Bar dataKey="remaining" stackId="b" name={t('dashboard.opsBudget.remaining')} fill="#e5e7eb" />
-                  <Bar dataKey="overflow"  stackId="b" name={t('dashboard.opsBudget.overflow')}  fill="#ef4444" />
+                  <Bar dataKey="remaining" stackId="b" name={t('dashboard.opsBudget.remaining')} fill="#cbd5e1" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

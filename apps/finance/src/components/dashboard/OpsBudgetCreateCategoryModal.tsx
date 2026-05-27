@@ -7,7 +7,7 @@ interface Props {
   itemsTotalKrw: number   // sum of items' KRW amounts (USD items contribute 0)
   itemsTotalUsd: number   // for display only
   defaultColor: string
-  onCreate: (name: string) => void   // no allocation arg — auto-calc from items sum
+  onCreate: (name: string) => Promise<void>   // no allocation arg — auto-calc from items sum
   onCancel: () => void
 }
 
@@ -26,10 +26,16 @@ export default function OpsBudgetCreateCategoryModal({
 
   const canSubmit = name.trim().length > 0
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (isSubmitting) return
     setIsSubmitting(true)
-    onCreate(name.trim())
+    try {
+      await onCreate(name.trim())
+      // If the parent doesn't unmount the modal (error path), re-enable the button
+      setIsSubmitting(false)
+    } catch {
+      setIsSubmitting(false)
+    }
   }
 
   return (

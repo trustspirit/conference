@@ -379,7 +379,6 @@
       "noIncludedYet": "아직 포함된 지출이 없습니다.",
       "included": "포함",
       "remaining": "잔여",
-      "overflow": "초과",
       "pickerTitle": "'{{name}}'에 추가할 아이템",
       "pickerHint": "예산 코드 {{code}}와 일치하는 항목이 기본 노출됩니다.",
       "addSelected": "선택한 {{count}}개 추가",

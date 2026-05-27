@@ -379,7 +379,6 @@
       "noIncludedYet": "Nothing included yet.",
       "included": "Included",
       "remaining": "Remaining",
-      "overflow": "Overflow",
       "pickerTitle": "Add items to '{{name}}'",
       "pickerHint": "Items matching budget code {{code}} are shown by default.",
       "addSelected": "Add {{count}} selected",

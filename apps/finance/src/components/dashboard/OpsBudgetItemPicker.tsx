@@ -51,6 +51,19 @@ interface DisambiguateState {
   codeResolution: Map<number, string>
 }
 
+/**
+ * Internal pipeline used to serialize the three modal flows from a single Add click.
+ * Stored in a ref (not state) to avoid re-render coupling.
+ *
+ * After overflow resolves (or was not needed), we process:
+ *   Phase 2 — disambiguation items
+ *   Phase 3 — create-category items
+ */
+interface AddPipeline {
+  needsDisambig: AnnotatedOperationsItem[]
+  needsCreate: AnnotatedOperationsItem[]
+}
+
 interface CreateCategoryFlowState {
   /** Queue of unique budgetCodes still to process */
   pendingCodes: number[]
@@ -279,6 +292,16 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
   // Category-level overflow plan (sequential modal queue)
   const [overflowPlan, setOverflowPlan] = useState<OverflowPlan | null>(null)
 
+  // Pipeline ref: schedules deferred disambig/create phases after overflow resolves.
+  // Stored as a ref (not state) so it doesn't trigger re-renders.
+  const pipelineRef = useRef<AddPipeline | null>(null)
+
+  // Sentinel: set to true synchronously inside submitItemsWithOverflowCheck when it
+  // decides to queue an overflow plan (before React re-renders). Read immediately
+  // after the call in handleAddSelected to decide whether to run phase 2+3 now or
+  // defer to finalizeOverflowPlan.
+  const overflowQueuedRef = useRef(false)
+
   // Sentinel ref for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -401,6 +424,28 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     return failedIds
   }
 
+  // ---------- Phase starters — declared here so finalizeOverflowPlan can reference them ----------
+
+  const startCreateFlow = useCallback((items: AnnotatedOperationsItem[]) => {
+    const itemsByCode = new Map<number, AnnotatedOperationsItem[]>()
+    for (const it of items) {
+      const list = itemsByCode.get(it.snapshot.budgetCode) ?? []
+      list.push(it)
+      itemsByCode.set(it.snapshot.budgetCode, list)
+    }
+    const pendingCodes = Array.from(itemsByCode.keys())
+    setCreateFlow({ pendingCodes, itemsByCode, resolved: [] })
+  }, [])
+
+  const startDisambigFlow = useCallback((
+    items: AnnotatedOperationsItem[],
+    nextCreate: AnnotatedOperationsItem[],
+  ) => {
+    // Stash the create-phase items so disambig completion can advance the pipeline
+    pipelineRef.current = { needsDisambig: [], needsCreate: nextCreate }
+    setDisambig({ queue: items, resolved: [], codeResolution: new Map() })
+  }, [])
+
   // ---------- finalizeOverflowPlan: apply category allocations then add inclusions ----------
 
   const finalizeOverflowPlan = async (plan: OverflowPlan) => {
@@ -434,6 +479,15 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     // Now add the inclusions
     const failedIds = await submitItemsRaw(plan.pairs)
     setSelected(failedIds)
+
+    // Advance the add-pipeline: start disambig or create phase if they were stashed
+    const next = pipelineRef.current
+    pipelineRef.current = null
+    if (next?.needsDisambig.length) {
+      startDisambigFlow(next.needsDisambig, next.needsCreate)
+    } else if (next?.needsCreate.length) {
+      startCreateFlow(next.needsCreate)
+    }
   }
 
   // ---------- Overflow plan apply / cancel handlers ----------
@@ -528,7 +582,9 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       return submitItemsRaw(pairs)
     }
 
-    // Open the overflow plan; modal rendered conditionally below
+    // Open the overflow plan; modal rendered conditionally below.
+    // Set the sentinel so handleAddSelected can detect this synchronously.
+    overflowQueuedRef.current = true
     setOverflowPlan({ pairs, pending: overflowing, appliedDeductions: {} })
     // Caller gets empty failedIds; actual result propagated via setSelected in finalizeOverflowPlan
     return new Set()
@@ -561,38 +617,35 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       }
     }
 
-    // Submit immediately-resolved items (fire-and-forget)
-    let immediateFailedIds = new Set<string>()
+    // Phase 1: submit immediately-resolved items (may queue overflow modal)
     if (immediateResolve.length > 0) {
-      immediateFailedIds = await submitItemsWithOverflowCheck(immediateResolve)
-    }
+      // Reset the sentinel before the call
+      overflowQueuedRef.current = false
+      await submitItemsWithOverflowCheck(immediateResolve)
 
-    // Start create-category flow for items with no matching category
-    if (noCategory.length > 0) {
-      const itemsByCode = new Map<number, AnnotatedOperationsItem[]>()
-      for (const it of noCategory) {
-        const list = itemsByCode.get(it.snapshot.budgetCode) ?? []
-        list.push(it)
-        itemsByCode.set(it.snapshot.budgetCode, list)
+      if (overflowQueuedRef.current) {
+        // Overflow modal was opened synchronously inside the call.
+        // Stash phases 2+3 in pipelineRef; finalizeOverflowPlan will advance them.
+        pipelineRef.current = { needsDisambig: needsDisambiguation, needsCreate: noCategory }
+        return  // pipeline resumes in finalizeOverflowPlan
       }
-      const pendingCodes = Array.from(itemsByCode.keys())
-      setCreateFlow({ pendingCodes, itemsByCode, resolved: [] })
-      // Note: immediateFailedIds handled when create flow finishes via finishCreateFlow
-      // If disambig also needed, it starts below; both can coexist (separate modals,
-      // create flow renders on top at z-50, disambig will wait underneath)
+      // No overflow — phases 2+3 can start now.
     }
 
-    // Start disambiguation queue if needed
+    // Phase 2: disambiguation
     if (needsDisambiguation.length > 0) {
-      setDisambig({
-        queue: needsDisambiguation,
-        resolved: [],
-        codeResolution: new Map(),
-      })
-    } else if (noCategory.length === 0) {
-      // No create flow, no disambig — update selection to keep failed items
-      setSelected(immediateFailedIds)
+      // startDisambigFlow stashes noCategory in pipelineRef for phase 3
+      startDisambigFlow(needsDisambiguation, noCategory)
+      return
     }
+
+    // Phase 3: create-category
+    if (noCategory.length > 0) {
+      startCreateFlow(noCategory)
+      return
+    }
+
+    // Nothing left to do; selection was already updated by submitItemsRaw
   }
 
   // ---------- Disambiguation handlers ----------
@@ -622,10 +675,16 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     const allResolved = [...newResolved, ...autoResolved]
 
     if (stillPending.length === 0) {
-      // Done with disambiguation
+      // Done with disambiguation — submit resolved items, then advance pipeline to create phase
       setDisambig(null)
       const failedIds = await submitItemsWithOverflowCheck(allResolved)
       setSelected(failedIds)
+      // Advance pipeline: start create-category phase if stashed
+      const next = pipelineRef.current
+      pipelineRef.current = null
+      if (next?.needsCreate.length) {
+        startCreateFlow(next.needsCreate)
+      }
     } else {
       setDisambig({ queue: stillPending, resolved: allResolved, codeResolution: newCodeResolution })
     }
@@ -642,6 +701,12 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         setSelected(failedIds)
       } else {
         setSelected(new Set())
+      }
+      // Advance pipeline: start create-category phase if stashed
+      const next = pipelineRef.current
+      pipelineRef.current = null
+      if (next?.needsCreate.length) {
+        startCreateFlow(next.needsCreate)
       }
     } else {
       setDisambig({ ...disambig, queue: remaining })
@@ -785,8 +850,23 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
 
   return (
     <>
-      {/* Disambiguation modal */}
-      {disambig && disambig.queue.length > 0 && (() => {
+      {/* Category-overflow redistribute modal — highest priority; renders before any other modal */}
+      {overflowPlan && overflowPlan.pending.length > 0 && (() => {
+        const current = overflowPlan.pending[0]
+        return (
+          <OpsBudgetRedistributeModal
+            pool={current.pool}
+            deficit={current.overflow}
+            sourceLabel={current.sourceLabel}
+            totalKrw={null}
+            onApply={(deductions) => handleOverflowApply(current.categoryId, deductions)}
+            onCancel={() => handleOverflowCancel(current.categoryId)}
+          />
+        )
+      })()}
+
+      {/* Disambiguation modal — only when no overflow modal is active */}
+      {disambig && disambig.queue.length > 0 && !overflowPlan && (() => {
         const current = disambig.queue[0]
         const matchingCategories = categories.filter(
           (c) => c.budgetCode === current.snapshot.budgetCode
@@ -801,33 +881,8 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         )
       })()}
 
-      {/* Create-category modal — shown when there's a pending code and no redistribute pending */}
-      {createFlow && createFlow.pendingCodes.length > 0 && !pendingNewCategory && (() => {
-        const currentCode = createFlow.pendingCodes[0]
-        const itemsForCode = createFlow.itemsByCode.get(currentCode) ?? []
-        const itemsTotalKrw = itemsForCode.reduce(
-          (s, it) => s + (it.snapshot.currency === 'USD' ? 0 : it.snapshot.amount),
-          0
-        )
-        const itemsTotalUsd = itemsForCode.reduce(
-          (s, it) => s + (it.snapshot.currency === 'USD' ? it.snapshot.amountUsd : 0),
-          0
-        )
-        return (
-          <OpsBudgetCreateCategoryModal
-            budgetCode={currentCode}
-            itemCount={itemsForCode.length}
-            itemsTotalKrw={itemsTotalKrw}
-            itemsTotalUsd={itemsTotalUsd}
-            defaultColor={paletteColor(categories.length)}
-            onCreate={(name) => handleCreateCategoryConfirm(name, itemsTotalKrw, currentCode, itemsForCode)}
-            onCancel={() => handleCreateCategoryCancel(currentCode)}
-          />
-        )
-      })()}
-
-      {/* Redistribute modal — chained from create-category when deficit > 0 */}
-      {pendingNewCategory && (() => {
+      {/* Redistribute modal — chained from create-category when deficit > 0; only when no overflow or disambig active */}
+      {pendingNewCategory && !overflowPlan && !disambig && (() => {
         const draft = pendingNewCategory.category
         const ctx = computeRedistributeContext(categories, draft, pendingNewCategory.effectiveTotalKrw)
         return (
@@ -846,17 +901,27 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         )
       })()}
 
-      {/* Category-overflow redistribute modal — sequential queue, one per overflowing category */}
-      {overflowPlan && overflowPlan.pending.length > 0 && (() => {
-        const current = overflowPlan.pending[0]
+      {/* Create-category modal — only when no overflow, disambig, or redistribute active */}
+      {createFlow && createFlow.pendingCodes.length > 0 && !pendingNewCategory && !overflowPlan && !disambig && (() => {
+        const currentCode = createFlow.pendingCodes[0]
+        const itemsForCode = createFlow.itemsByCode.get(currentCode) ?? []
+        const itemsTotalKrw = itemsForCode.reduce(
+          (s, it) => s + (it.snapshot.currency === 'USD' ? 0 : it.snapshot.amount),
+          0
+        )
+        const itemsTotalUsd = itemsForCode.reduce(
+          (s, it) => s + (it.snapshot.currency === 'USD' ? it.snapshot.amountUsd : 0),
+          0
+        )
         return (
-          <OpsBudgetRedistributeModal
-            pool={current.pool}
-            deficit={current.overflow}
-            sourceLabel={current.sourceLabel}
-            totalKrw={null}
-            onApply={(deductions) => handleOverflowApply(current.categoryId, deductions)}
-            onCancel={() => handleOverflowCancel(current.categoryId)}
+          <OpsBudgetCreateCategoryModal
+            budgetCode={currentCode}
+            itemCount={itemsForCode.length}
+            itemsTotalKrw={itemsTotalKrw}
+            itemsTotalUsd={itemsTotalUsd}
+            defaultColor={paletteColor(categories.length)}
+            onCreate={async (name) => { await handleCreateCategoryConfirm(name, itemsTotalKrw, currentCode, itemsForCode) }}
+            onCancel={() => handleCreateCategoryCancel(currentCode)}
           />
         )
       })()}
@@ -874,7 +939,14 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
           </div>
           <button
             onClick={handleAddSelected}
-            disabled={selected.size === 0 || add.isPending}
+            disabled={
+              selected.size === 0 ||
+              add.isPending ||
+              !!overflowPlan ||
+              !!createFlow ||
+              !!pendingNewCategory ||
+              !!disambig
+            }
             className="finance-primary-button text-sm px-3 py-1.5 rounded disabled:opacity-50 whitespace-nowrap shrink-0"
           >
             {t('dashboard.opsBudget.addSelected', { count: selected.size })}
