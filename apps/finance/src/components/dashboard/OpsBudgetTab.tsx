@@ -27,19 +27,6 @@ function SkeletonBlock({ height, label }: { height: number; label: string }) {
   )
 }
 
-function useIsDesktop(): boolean {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isDesktop
-}
-
 export default function OpsBudgetTab() {
   const { t } = useTranslation()
   const { appUser } = useAuth()
@@ -63,7 +50,6 @@ export default function OpsBudgetTab() {
   const [panelTab, setPanelTab] = useState<PanelTab>('picker')
 
   const pickerRef = useRef<HTMLDivElement>(null)
-  const isDesktop = useIsDesktop()
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId) ?? null
   const currentUser = appUser
@@ -83,8 +69,32 @@ export default function OpsBudgetTab() {
   const incData = inclusions.data ?? []
 
   const panelTabs: TabDef<PanelTab>[] = [
-    { key: 'picker',   label: t('dashboard.opsBudget.panelTabPicker') },
-    { key: 'included', label: t('dashboard.opsBudget.panelTabIncluded') },
+    {
+      key: 'picker',
+      label: (
+        <span className="inline-flex items-center gap-1.5">
+          {t('dashboard.opsBudget.panelTabPicker')}
+          {includable.data && includable.data.length > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-finance-primary/10 text-finance-primary text-xs font-semibold">
+              {includable.data.length}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'included',
+      label: (
+        <span className="inline-flex items-center gap-1.5">
+          {t('dashboard.opsBudget.panelTabIncluded')}
+          {incData.length > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-finance-primary/10 text-finance-primary text-xs font-semibold">
+              {incData.length}
+            </span>
+          )}
+        </span>
+      ),
+    },
   ]
 
   return (
@@ -96,7 +106,10 @@ export default function OpsBudgetTab() {
           categories={categories}
           inclusions={incData}
           unassignedCount={includable.data?.length ?? 0}
-          onJumpToPicker={() => pickerRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          onJumpToPicker={() => {
+            setPanelTab('picker')
+            pickerRef.current?.scrollIntoView({ behavior: 'smooth' })
+          }}
         />
       )}
 
@@ -114,50 +127,31 @@ export default function OpsBudgetTab() {
         onSelectCategory={setSelectedCategoryId}
       />
 
-      {isDesktop ? (
-        /* Desktop: side-by-side, single mount */
-        <div ref={pickerRef} className="grid grid-cols-2 gap-4 mt-6">
-          <OpsBudgetItemPicker
-            projectId={projectId}
-            categories={categories}
-            currentUser={currentUser}
-          />
-          <OpsBudgetIncludedList
-            projectId={projectId}
-            category={selectedCategory}
-            categories={categories}
-            inclusions={incData}
-            onSelectCategory={setSelectedCategoryId}
-          />
+      <div ref={pickerRef} className="mt-6">
+        <Tabs<PanelTab>
+          tabs={panelTabs}
+          active={panelTab}
+          onChange={setPanelTab}
+        />
+        <div className="mt-4">
+          {panelTab === 'picker' && (
+            <OpsBudgetItemPicker
+              projectId={projectId}
+              categories={categories}
+              currentUser={currentUser}
+            />
+          )}
+          {panelTab === 'included' && (
+            <OpsBudgetIncludedList
+              projectId={projectId}
+              category={selectedCategory}
+              categories={categories}
+              inclusions={incData}
+              onSelectCategory={setSelectedCategoryId}
+            />
+          )}
         </div>
-      ) : (
-        /* Mobile: sub-tabs, single mount */
-        <div className="mt-6">
-          <Tabs<PanelTab>
-            tabs={panelTabs}
-            active={panelTab}
-            onChange={setPanelTab}
-          />
-          <div ref={pickerRef} className="mt-4">
-            {panelTab === 'picker' && (
-              <OpsBudgetItemPicker
-                projectId={projectId}
-                categories={categories}
-                currentUser={currentUser}
-              />
-            )}
-            {panelTab === 'included' && (
-              <OpsBudgetIncludedList
-                projectId={projectId}
-                category={selectedCategory}
-                categories={categories}
-                inclusions={incData}
-                onSelectCategory={setSelectedCategoryId}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

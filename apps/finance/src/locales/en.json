@@ -60,7 +60,8 @@
     "goHome": "Home",
     "actions": "Actions",
     "permissionDenied": "You do not have permission.",
-    "saveError": "Failed to save."
+    "saveError": "Failed to save.",
+    "apply": "Apply"
   },
   "role": {
     "label": "Role",
@@ -433,7 +434,23 @@
       "itemsShown": "Showing {{shown}} of {{total}}",
       "selectionClearedOnFilterChange": "Selection cleared on filter change.",
       "panelTabPicker": "Add items",
-      "panelTabIncluded": "Included items"
+      "panelTabIncluded": "Included items",
+      "opsTotalBudget": "Total ops budget",
+      "allocatedOfTotal": "{{allocated}}원 of {{total}}원 allocated",
+      "redistributeTitle": "Redistribute budget",
+      "newSumBefore": "New sum before adjustment",
+      "deficit": "Deficit",
+      "takeFromHelp": "Choose where to take it from.",
+      "equalSplit": "Split equally",
+      "takeFrom": "Take from",
+      "currentAlloc": "Current allocation",
+      "afterChange": "After change",
+      "sumDeducted": "Sum to deduct",
+      "noCategoriesToRedistribute": "No other categories to redistribute from.",
+      "reduceTotalSource": "Reducing total budget from ₩{{from}} to ₩{{to}}.",
+      "addCategorySource": "Allocating ₩{{amount}} to new category '{{name}}'",
+      "editCategorySource": "Changing '{{name}}' allocation from ₩{{from}} to ₩{{to}}",
+      "cannotRedistributeNoOthers": "No other categories to redistribute from. Increase total budget or add another category first."
     }
   },
   "users": {

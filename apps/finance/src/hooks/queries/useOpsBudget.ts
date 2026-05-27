@@ -8,7 +8,7 @@ import {
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
 import type {
-  OpsBudget, OpsBudgetCategory, OpsBudgetInclusion,
+  OpsBudgetCategory, OpsBudgetInclusion,
 } from '../../types'
 import { useRequests } from './useRequests'
 import {
@@ -329,6 +329,7 @@ export function useRemoveInclusion() {
 interface UpdateCategoriesParams {
   projectId: string
   categories: OpsBudgetCategory[]
+  totalKrw?: number    // if provided, written; if omitted, field is preserved via merge
   updatedBy: { uid: string; name: string; email: string }
 }
 
@@ -337,11 +338,19 @@ export function useUpdateOpsBudgetCategories() {
   return useMutation({
     mutationFn: async (p: UpdateCategoriesParams) => {
       const ref = doc(db, 'projects', p.projectId)
-      const payload: { opsBudget: Omit<OpsBudget, 'updatedAt'> & { updatedAt: FieldValue } } = {
+      const payload: {
+        opsBudget: {
+          categories: OpsBudgetCategory[]
+          totalKrw?: number
+          updatedAt: FieldValue
+          updatedBy: { uid: string; name: string; email: string }
+        }
+      } = {
         opsBudget: {
           categories: p.categories,
           updatedAt: serverTimestamp(),
           updatedBy: p.updatedBy,
+          ...(p.totalKrw !== undefined ? { totalKrw: p.totalKrw } : {}),
         },
       }
       await setDoc(ref, payload, { merge: true })

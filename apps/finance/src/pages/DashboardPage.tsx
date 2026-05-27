@@ -127,8 +127,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (active && tabs.some((tt) => tt.key === active)) return
-    setActive(tabs[0]?.key ?? null)
-  }, [tabs, active])
+    const next = tabs[0]?.key ?? null
+    setActive(next)
+    if (next) {
+      const params = new URLSearchParams(searchParams)
+      params.set('tab', next)
+      setSearchParams(params, { replace: true })
+    }
+  }, [tabs, active, searchParams, setSearchParams])
 
   const handleChange = (key: DashboardTab) => {
     setActive(key)

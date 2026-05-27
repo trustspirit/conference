@@ -4,6 +4,8 @@ import {
   computeCategoryTotals,
   diffIncludableItems,
   paletteColor,
+  computeRedistributeContext,
+  computeReduceTotalContext,
   type CategoryTotals,
 } from './opsBudgetSelectors'
 import type {
@@ -173,5 +175,60 @@ describe('paletteColor', () => {
     expect(paletteColor(10)).toBe(paletteColor(0))
     expect(paletteColor(15)).toBe(paletteColor(5))
     expect(paletteColor(100)).toMatch(/^#[0-9a-fA-F]{6}$/)
+  })
+})
+
+describe('computeRedistributeContext', () => {
+  const cats: OpsBudgetCategory[] = [
+    { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 1000, sortIndex: 0 },
+    { id: 'c2', name: 'B', budgetCode: 5110, allocatedKrw: 2000, sortIndex: 1 },
+  ]
+
+  it('returns deficit > 0 when sum exceeds total', () => {
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, true, 5000)
+    // others sum = 1000+2000 = 3000; new sum = 3000+5000 = 8000; deficit = 8000-5000 = 3000
+    expect(ctx.deficit).toBe(3000)
+    expect(ctx.newSum).toBe(8000)
+    expect(ctx.availablePool).toHaveLength(2)
+  })
+
+  it('returns deficit ≤ 0 when within total', () => {
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 1000 }, true, 5000)
+    // others sum = 3000; new sum = 4000; deficit = 4000-5000 = -1000
+    expect(ctx.deficit).toBe(-1000)
+  })
+
+  it('treats totalKrw=0 as unconstrained (deficit always 0)', () => {
+    const ctx = computeRedistributeContext(cats, { id: 'new', allocatedKrw: 5000 }, true, 0)
+    expect(ctx.deficit).toBe(0)
+  })
+
+  it('excludes the draft category from the pool when editing', () => {
+    // Editing c1 (currently 1000) to 4000; others = [c2 with 2000]
+    const ctx = computeRedistributeContext(cats, { id: 'c1', allocatedKrw: 4000 }, false, 5000)
+    expect(ctx.availablePool.map((p) => p.id)).toEqual(['c2'])
+    // newSum = 2000 + 4000 = 6000; deficit = 6000 - 5000 = 1000
+    expect(ctx.deficit).toBe(1000)
+  })
+})
+
+describe('computeReduceTotalContext', () => {
+  const cats: OpsBudgetCategory[] = [
+    { id: 'c1', name: 'A', budgetCode: 5862, allocatedKrw: 1000, sortIndex: 0 },
+    { id: 'c2', name: 'B', budgetCode: 5110, allocatedKrw: 2000, sortIndex: 1 },
+  ]
+
+  it('returns deficit > 0 when reducing below sum', () => {
+    // currentSum = 3000; newTotal = 2000; deficit = 1000
+    expect(computeReduceTotalContext(cats, 2000).deficit).toBe(1000)
+  })
+
+  it('returns deficit ≤ 0 when new total ≥ sum', () => {
+    // currentSum = 3000; newTotal = 4000; deficit = -1000
+    expect(computeReduceTotalContext(cats, 4000).deficit).toBe(-1000)
+  })
+
+  it('pool includes all categories', () => {
+    expect(computeReduceTotalContext(cats, 2000).availablePool).toHaveLength(2)
   })
 })

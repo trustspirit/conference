@@ -29,6 +29,7 @@ export interface OpsBudgetCategory {
 
 export interface OpsBudget {
   categories: OpsBudgetCategory[]
+  totalKrw?: number    // undefined/0 means no constraint
   updatedAt: Date
   updatedBy: { uid: string; name: string; email: string }
 }

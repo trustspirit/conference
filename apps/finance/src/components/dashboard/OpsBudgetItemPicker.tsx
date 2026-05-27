@@ -127,10 +127,22 @@ function DisambiguateModal({
   const { t } = useTranslation()
   const [applyToAll, setApplyToAll] = useState(false)
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onSkip() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onSkip])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
-        <h4 className="text-sm font-semibold text-finance-primary mb-1">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onSkip}>
+      <div
+        className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="opsbudget-disambig-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h4 id="opsbudget-disambig-title" className="text-sm font-semibold text-finance-primary mb-1">
           {t('dashboard.opsBudget.disambiguateTitle')}
         </h4>
         <p className="text-xs text-finance-muted mb-4">
@@ -322,8 +334,9 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
     }
 
     // Submit immediately-resolved items
+    let immediateFailedIds = new Set<string>()
     if (immediateResolve.length > 0) {
-      await submitItems(immediateResolve)
+      immediateFailedIds = await submitItems(immediateResolve)
     }
 
     // Start disambiguation queue if needed
@@ -334,13 +347,13 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
         codeResolution: new Map(),
       })
     } else {
-      setSelected(new Set())
+      setSelected(immediateFailedIds)
     }
   }
 
   const submitItems = async (
     pairs: Array<{ item: AnnotatedOperationsItem; categoryId: string }>
-  ) => {
+  ): Promise<Set<string>> => {
     const results = await Promise.allSettled(
       pairs.map(({ item, categoryId }) =>
         add.mutateAsync({
@@ -353,14 +366,19 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
         })
       )
     )
-    const okCount = results.filter((r) => r.status === 'fulfilled').length
-    const failCount = results.length - okCount
-    const permissionDenied = results.some(
-      (r) => r.status === 'rejected' && (r.reason as { code?: string })?.code === 'permission-denied'
-    )
+    const failedIds = new Set<string>()
+    let okCount = 0
+    let permissionDenied = false
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') { okCount++; return }
+      const id = inclusionId(pairs[i].item.requestId, pairs[i].item.itemIndex)
+      failedIds.add(id)
+      if ((r.reason as { code?: string })?.code === 'permission-denied') permissionDenied = true
+    })
     if (okCount) toast({ variant: 'success', message: t('dashboard.opsBudget.addedCount', { count: okCount }) })
     if (permissionDenied) toast({ variant: 'danger', message: t('common.permissionDenied') })
-    else if (failCount) toast({ variant: 'danger', message: t('dashboard.opsBudget.addFailedCount', { count: failCount }) })
+    else if (failedIds.size) toast({ variant: 'danger', message: t('dashboard.opsBudget.addFailedCount', { count: failedIds.size }) })
+    return failedIds
   }
 
   // --- Disambiguation handlers ---
@@ -391,21 +409,25 @@ export default function OpsBudgetItemPicker({ projectId, categories, currentUser
     if (stillPending.length === 0) {
       // Done with disambiguation
       setDisambig(null)
-      setSelected(new Set())
-      await submitItems(allResolved)
+      const failedIds = await submitItems(allResolved)
+      setSelected(failedIds)
     } else {
       setDisambig({ queue: stillPending, resolved: allResolved, codeResolution: newCodeResolution })
     }
   }
 
-  const handleDisambiguateSkip = () => {
+  const handleDisambiguateSkip = async () => {
     if (!disambig) return
     const [, ...remaining] = disambig.queue
     if (remaining.length === 0) {
       // No more to disambiguate; submit already-resolved ones
       setDisambig(null)
-      setSelected(new Set())
-      if (disambig.resolved.length > 0) void submitItems(disambig.resolved)
+      if (disambig.resolved.length > 0) {
+        const failedIds = await submitItems(disambig.resolved)
+        setSelected(failedIds)
+      } else {
+        setSelected(new Set())
+      }
     } else {
       setDisambig({ ...disambig, queue: remaining })
     }

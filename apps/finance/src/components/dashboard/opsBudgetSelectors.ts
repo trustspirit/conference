@@ -80,6 +80,57 @@ export function computeCategoryTotals(
   }
 }
 
+// ---------- Redistribution helpers ----------
+
+export interface RedistributeContext {
+  deficit: number
+  newSum: number
+  totalKrw: number
+  availablePool: Array<{ id: string; name: string; allocatedKrw: number }>
+}
+
+/**
+ * Computes whether adding/editing a category would exceed `totalKrw`, and if so,
+ * returns the deficit and the pool of other categories to deduct from.
+ *
+ * - When `totalKrw` is 0 or not set: no constraint; deficit is always 0.
+ * - When editing an existing category (isNew=false), the draft's existing entry
+ *   is excluded from `availablePool`.
+ */
+export function computeRedistributeContext(
+  currentCategories: OpsBudgetCategory[],
+  draftCategory: { id: string; allocatedKrw: number },
+  _isNew: boolean,
+  totalKrw: number,
+): RedistributeContext {
+  const others = currentCategories.filter((c) => c.id !== draftCategory.id)
+  const otherSum = others.reduce((s, c) => s + c.allocatedKrw, 0)
+  const newSum = otherSum + draftCategory.allocatedKrw
+  const deficit = totalKrw > 0 ? newSum - totalKrw : 0
+  return {
+    deficit,
+    newSum,
+    totalKrw,
+    availablePool: others.map((c) => ({ id: c.id, name: c.name, allocatedKrw: c.allocatedKrw })),
+  }
+}
+
+/**
+ * Computes the deficit and pool when reducing the total budget below the current sum.
+ */
+export function computeReduceTotalContext(
+  currentCategories: OpsBudgetCategory[],
+  newTotalKrw: number,
+): RedistributeContext {
+  const currentSum = currentCategories.reduce((s, c) => s + c.allocatedKrw, 0)
+  return {
+    deficit: currentSum - newTotalKrw,
+    newSum: currentSum,
+    totalKrw: newTotalKrw,
+    availablePool: currentCategories.map((c) => ({ id: c.id, name: c.name, allocatedKrw: c.allocatedKrw })),
+  }
+}
+
 export interface IncludableItem {
   requestId: string
   itemIndex: number
