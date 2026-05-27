@@ -5,6 +5,7 @@ import FinanceTable from '../table/FinanceTable'
 import {
   paletteColor, computeCategoryTotals,
   computeRedistributeContext,
+  resolveUsdToKrwRate,
 } from './opsBudgetSelectors'
 import { useUpdateOpsBudgetCategories, useDeleteCategoryWithInclusions } from '../../hooks/queries/useOpsBudget'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
@@ -74,7 +75,7 @@ export default function OpsBudgetCategoryTable({
     [project.opsBudget?.categories]
   )
   const totalKrw = project.opsBudget?.totalKrw ?? 0
-  const usdToKrwRate = project.opsBudget?.usdToKrwRate ?? 0
+  const usdToKrwRate = resolveUsdToKrwRate(project)
   const sumAllocated = categories.reduce((s, c) => s + c.allocatedKrw, 0)
 
   const totals = useMemo(
@@ -85,10 +86,6 @@ export default function OpsBudgetCategoryTable({
   // --- total budget editing ---
   const [editingTotal, setEditingTotal] = useState(false)
   const [tempTotal, setTempTotal] = useState<number>(totalKrw)
-
-  // --- USD rate editing ---
-  const [editingRate, setEditingRate] = useState(false)
-  const [tempRate, setTempRate] = useState<number>(usdToKrwRate)
 
   // --- category editing / adding ---
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -105,15 +102,14 @@ export default function OpsBudgetCategoryTable({
   // Persist helpers
   // ---------------------------------------------------------------------------
 
-  /** Persist categories (and optionally a new totalKrw / usdToKrwRate) to Firestore. */
-  const persist = (next: OpsBudgetCategory[], nextTotal?: number, nextRate?: number) =>
+  /** Persist categories (and optionally a new totalKrw) to Firestore. */
+  const persist = (next: OpsBudgetCategory[], nextTotal?: number) =>
     new Promise<void>((resolve, reject) =>
       update.mutate(
         {
           projectId: project.id,
           categories: next,
           ...(nextTotal !== undefined ? { totalKrw: nextTotal } : {}),
-          ...(nextRate !== undefined ? { usdToKrwRate: nextRate } : {}),
           updatedBy: currentUser,
         },
         {
@@ -153,19 +149,6 @@ export default function OpsBudgetCategoryTable({
     try {
       await persist(categories, safeTotal)
       setEditingTotal(false)
-    } catch { /* persist already toasted */ }
-  }
-
-  // ---------------------------------------------------------------------------
-  // USD rate save
-  // ---------------------------------------------------------------------------
-
-  const handleSaveRate = async () => {
-    const safeRate = Math.max(0, Number(tempRate) || 0)
-    if (safeRate === usdToKrwRate) { setEditingRate(false); return }
-    try {
-      await persist(categories, undefined, safeRate)
-      setEditingRate(false)
     } catch { /* persist already toasted */ }
   }
 
@@ -427,49 +410,6 @@ export default function OpsBudgetCategoryTable({
               </div>
             )}
 
-            {/* USD → KRW rate editor */}
-            <div className="mt-3">
-              <p className="text-xs text-finance-muted">{t('dashboard.opsBudget.usdRateLabel')}</p>
-              {editingRate ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-finance-muted">1 USD =</span>
-                  <input
-                    type="number" min={0} step="0.01"
-                    value={tempRate || ''}
-                    onChange={(e) => setTempRate(Number(e.target.value) || 0)}
-                    autoFocus
-                    className="border border-finance-border rounded px-2 py-1 text-sm w-32"
-                  />
-                  <span className="text-xs text-finance-muted">KRW</span>
-                  <button onClick={handleSaveRate} className="text-xs text-finance-primary">
-                    {t('common.save')}
-                  </button>
-                  <button
-                    onClick={() => { setEditingRate(false); setTempRate(usdToKrwRate) }}
-                    className="text-xs text-finance-muted"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-sm font-medium text-finance-text">
-                    {usdToKrwRate > 0
-                      ? `1 USD = ₩${usdToKrwRate.toLocaleString('en-US')}`
-                      : t('dashboard.opsBudget.usdRateNotSet')}
-                  </span>
-                  <button
-                    onClick={() => { setTempRate(usdToKrwRate); setEditingRate(true) }}
-                    className="text-xs text-finance-primary hover:underline"
-                  >
-                    {t('common.edit')}
-                  </button>
-                </div>
-              )}
-              <p className="text-xs text-finance-muted mt-0.5">
-                {t('dashboard.opsBudget.usdRateHint')}
-              </p>
-            </div>
           </div>
         </div>
 

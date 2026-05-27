@@ -3,8 +3,18 @@ import type {
   OpsBudgetInclusion,
   OpsBudgetInclusionSnapshot,
   PaymentRequest,
+  Project,
   RequestStatus,
 } from '../../types'
+
+/**
+ * Resolve the active USD→KRW rate for a project.
+ * Prefers project.usdToKrwRate (new location); falls back to legacy
+ * project.opsBudget.usdToKrwRate for backward compat.
+ */
+export function resolveUsdToKrwRate(project: Project | undefined | null): number {
+  return project?.usdToKrwRate ?? project?.opsBudget?.usdToKrwRate ?? 0
+}
 
 export interface CategoryTotals {
   includedKrw: number

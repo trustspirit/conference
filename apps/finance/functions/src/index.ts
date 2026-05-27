@@ -1038,7 +1038,9 @@ export const getDashboardStats = onCall(async (request) => {
   }
 
   const projectData = projSnap.data() ?? {}
-  const usdToKrwRate = (projectData.opsBudget?.usdToKrwRate as number | undefined) ?? 0
+  const usdToKrwRate =
+    (projectData.usdToKrwRate as number | undefined) ??
+    (projectData.opsBudget?.usdToKrwRate as number | undefined) ?? 0
 
   const snap = await db
     .collection('requests')

@@ -17,6 +17,7 @@ import { useDashboardStats } from '../hooks/queries/useCloudFunctions'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { formatAmount } from '../lib/currency'
 import { canViewOpsBudgetTab, canViewProjectOverviewTab } from '../lib/opsBudgetRoles'
+import { resolveUsdToKrwRate } from '../components/dashboard/opsBudgetSelectors'
 
 type DashboardTab = 'overview' | 'opsBudget'
 
@@ -109,6 +110,8 @@ function OverviewTab() {
 export default function DashboardPage() {
   const { t } = useTranslation()
   const role = useProjectRole()
+  const { currentProject } = useProject()
+  const usdToKrwRate = resolveUsdToKrwRate(currentProject)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const tabs = useMemo<TabDef<DashboardTab>[]>(() => {
@@ -154,6 +157,14 @@ export default function DashboardPage() {
   return (
     <Layout>
       <h2 className="text-xl font-bold text-finance-primary mb-4">{t('dashboard.title')}</h2>
+      {usdToKrwRate > 0 && (
+        <p className="text-xs text-finance-muted mb-4 -mt-2 flex items-center gap-1.5">
+          <span className="inline-flex items-center px-2 py-0.5 rounded bg-finance-primary/10 text-finance-primary text-[11px] font-medium">
+            {t('dashboard.opsBudget.usdRateLabel')}
+          </span>
+          <span className="font-mono">1 USD = ₩{usdToKrwRate.toLocaleString('en-US')}</span>
+        </p>
+      )}
       <Tabs<DashboardTab> tabs={tabs} active={active} onChange={handleChange} />
       <div className="pt-6">
         {active === 'overview' && <OverviewTab />}

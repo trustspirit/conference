@@ -6,6 +6,7 @@ import {
   useOpsBudgetInclusions,
   useOpsBudgetIncludableItems,
 } from '../../hooks/queries/useOpsBudget'
+import { resolveUsdToKrwRate } from './opsBudgetSelectors'
 import OpsBudgetSummaryCards from './OpsBudgetSummaryCards'
 import OpsBudgetCharts from './OpsBudgetCharts'
 import OpsBudgetCategoryTable from './OpsBudgetCategoryTable'
@@ -41,7 +42,7 @@ export default function OpsBudgetTab() {
     [currentProject?.opsBudget?.categories]
   )
 
-  const usdToKrwRate = currentProject?.opsBudget?.usdToKrwRate ?? 0
+  const usdToKrwRate = resolveUsdToKrwRate(currentProject)
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   useEffect(() => {

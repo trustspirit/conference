@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
 import { useUpdateProject } from '../../hooks/queries/useProjects'
+import { useProjectRole } from '../../hooks/useProjectRole'
 import FinanceTable from '../table/FinanceTable'
 
 interface BudgetConfig {
@@ -12,12 +13,15 @@ interface BudgetConfig {
 export default function BudgetSettingsSection({
   project
 }: {
-  project: { id: string; budgetConfig: BudgetConfig; documentNo: string }
+  project: { id: string; budgetConfig: BudgetConfig; documentNo: string; usdToKrwRate?: number }
 }) {
   const { t } = useTranslation()
   const updateProject = useUpdateProject()
+  const projectRole = useProjectRole()
+  const canEditRate = projectRole === 'admin'
   const budget = project.budgetConfig ?? { totalBudget: 0, byCode: {} }
   const docNo = project.documentNo ?? ''
+  const usdToKrwRate = project.usdToKrwRate ?? 0
 
   const [editingBudget, setEditingBudget] = useState(false)
   const [tempBudget, setTempBudget] = useState<BudgetConfig>(budget)
@@ -25,6 +29,9 @@ export default function BudgetSettingsSection({
   const [editingDocNo, setEditingDocNo] = useState(false)
   const [tempDocNo, setTempDocNo] = useState(docNo)
   const [savingDocNo, setSavingDocNo] = useState(false)
+  const [editingRate, setEditingRate] = useState(false)
+  const [tempRate, setTempRate] = useState<number>(usdToKrwRate)
+  const [savingRate, setSavingRate] = useState(false)
 
   const handleSaveBudget = () => {
     setSavingBudget(true)
@@ -53,6 +60,23 @@ export default function BudgetSettingsSection({
         },
         onError: () => {
           setSavingDocNo(false)
+        }
+      }
+    )
+  }
+
+  const handleSaveRate = () => {
+    const safeRate = Math.max(0, Math.floor(Number(tempRate)) || 0)
+    setSavingRate(true)
+    updateProject.mutate(
+      { projectId: project.id, data: { usdToKrwRate: safeRate } },
+      {
+        onSuccess: () => {
+          setEditingRate(false)
+          setSavingRate(false)
+        },
+        onError: () => {
+          setSavingRate(false)
         }
       }
     )
@@ -271,6 +295,68 @@ export default function BudgetSettingsSection({
             <p className="text-sm font-mono font-medium">{docNo || t('dashboard.notSet')}</p>
           )}
           <p className="text-xs text-finance-muted mt-1">{t('dashboard.documentNoHint')}</p>
+        </div>
+      </div>
+      <div className="finance-panel rounded-lg p-4 mt-6 sm:p-6">
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-semibold text-finance-primary">
+            {t('dashboard.opsBudget.usdRateLabel')}
+          </h3>
+          {canEditRate && (
+            !editingRate ? (
+              <button
+                onClick={() => {
+                  setTempRate(usdToKrwRate)
+                  setEditingRate(true)
+                }}
+                className="text-sm text-finance-primary hover:text-finance-primary-hover"
+              >
+                {t('common.edit')}
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingRate(false)}
+                  className="text-sm text-finance-muted hover:text-finance-text"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={handleSaveRate}
+                  disabled={savingRate}
+                  className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
+                >
+                  {savingRate ? t('common.saving') : t('common.save')}
+                </button>
+              </div>
+            )
+          )}
+        </div>
+        <div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-sm font-medium text-finance-text">
+              {usdToKrwRate > 0
+                ? `1 USD = ₩${usdToKrwRate.toLocaleString('en-US')}`
+                : t('dashboard.opsBudget.usdRateNotSet')}
+            </span>
+          </div>
+          {canEditRate && editingRate && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-sm text-finance-muted">1 USD =</span>
+              <input
+                type="number"
+                min={0}
+                step="1"
+                value={tempRate || ''}
+                onChange={(e) => setTempRate(Number(e.target.value) || 0)}
+                autoFocus
+                className="border border-finance-border rounded px-3 py-2 text-sm w-36 focus:border-finance-primary focus:outline-none"
+                placeholder="0"
+              />
+              <span className="text-sm text-finance-muted">KRW</span>
+            </div>
+          )}
+          <p className="text-xs text-finance-muted mt-1">{t('dashboard.opsBudget.usdRateHint')}</p>
         </div>
       </div>
     </>

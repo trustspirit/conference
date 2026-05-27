@@ -28,7 +28,7 @@ import {
   type AnnotatedOperationsItem,
 } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, Project } from '../../types'
-import { inclusionId, computeRedistributeContext, paletteColor, effectiveKrwForSnapshot } from './opsBudgetSelectors'
+import { inclusionId, computeRedistributeContext, paletteColor, effectiveKrwForSnapshot, resolveUsdToKrwRate } from './opsBudgetSelectors'
 import Spinner from '../Spinner'
 import OpsBudgetCreateCategoryModal from './OpsBudgetCreateCategoryModal'
 import OpsBudgetRedistributeModal from './OpsBudgetRedistributeModal'
@@ -249,7 +249,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
     [project.opsBudget?.categories]
   )
   const totalKrw = project.opsBudget?.totalKrw ?? 0
-  const usdToKrwRate = project.opsBudget?.usdToKrwRate ?? 0
+  const usdToKrwRate = resolveUsdToKrwRate(project)
 
   const includable = useOpsBudgetIncludableItems(projectId)
   const allOps = useOpsBudgetAllOperationsItems(projectId)

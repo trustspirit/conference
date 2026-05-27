@@ -7,6 +7,7 @@ import {
   computeRedistributeContext,
   computeReduceTotalContext,
   effectiveKrwForSnapshot,
+  resolveUsdToKrwRate,
   type CategoryTotals,
 } from './opsBudgetSelectors'
 import type {
@@ -28,6 +29,26 @@ const baseInclusion = (
   addedBy: { uid: 'u1', name: 'n', email: 'e' },
   addedAt: new Date('2026-05-10'),
   ...overrides,
+})
+
+describe('resolveUsdToKrwRate', () => {
+  it('returns project.usdToKrwRate when set', () => {
+    expect(resolveUsdToKrwRate({ usdToKrwRate: 1300 } as any)).toBe(1300)
+  })
+  it('falls back to project.opsBudget.usdToKrwRate when top-level unset', () => {
+    expect(resolveUsdToKrwRate({ opsBudget: { categories: [], usdToKrwRate: 1250 } } as any)).toBe(1250)
+  })
+  it('prefers top-level over legacy', () => {
+    expect(resolveUsdToKrwRate({
+      usdToKrwRate: 1300,
+      opsBudget: { categories: [], usdToKrwRate: 1100 },
+    } as any)).toBe(1300)
+  })
+  it('returns 0 when neither set', () => {
+    expect(resolveUsdToKrwRate({} as any)).toBe(0)
+    expect(resolveUsdToKrwRate(null)).toBe(0)
+    expect(resolveUsdToKrwRate(undefined)).toBe(0)
+  })
 })
 
 describe('inclusionId', () => {
