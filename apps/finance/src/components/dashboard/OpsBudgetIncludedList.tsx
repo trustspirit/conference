@@ -5,9 +5,9 @@ import { useToast } from 'trust-ui-react'
 import { useRemoveInclusion } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../../types'
 import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
-import { OPS_BUDGET_PAGE_SIZE, LoadMoreButton } from './listPaging'
+import { OPS_BUDGET_INCLUDED_PAGE_SIZE, LoadMoreButton } from './listPaging'
 
-const PAGE_SIZE = OPS_BUDGET_PAGE_SIZE
+const PAGE_SIZE = OPS_BUDGET_INCLUDED_PAGE_SIZE
 
 interface Props {
   projectId: string
