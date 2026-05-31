@@ -18,8 +18,6 @@ interface Props {
   project: Project
   inclusions: OpsBudgetInclusion[]
   currentUser: { uid: string; name: string; email: string }
-  selectedCategoryId: string | null
-  onSelectCategory: (id: string | null) => void
 }
 
 function newCategoryId() {
@@ -64,7 +62,7 @@ type RedistributeState =
 // ---------------------------------------------------------------------------
 
 export default function OpsBudgetCategoryTable({
-  project, inclusions, currentUser, selectedCategoryId, onSelectCategory,
+  project, inclusions, currentUser,
 }: Props) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -294,7 +292,6 @@ export default function OpsBudgetCategoryTable({
         nextCategories: next,
         updatedBy: currentUser,
       })
-      if (selectedCategoryId === cat.id) onSelectCategory(next[0]?.id ?? null)
     } catch (err) {
       toast({ variant: 'danger', message: `${t('common.saveError')}: ${(err as Error).message}` })
     }
@@ -446,8 +443,6 @@ export default function OpsBudgetCategoryTable({
                 <FinanceTable.Row
                   key={cat.id}
                   hover
-                  selected={selectedCategoryId === cat.id}
-                  onClick={() => onSelectCategory(cat.id)}
                 >
                   <FinanceTable.Td size="compact">
                     <span className="inline-block w-2.5 h-2.5 rounded-full mr-2 align-middle"

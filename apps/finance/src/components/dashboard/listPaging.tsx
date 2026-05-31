@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 
-/** Shared page size for the three dashboard list panels (overall budget item
- *  list, ops-budget item picker, ops-budget included list). Kept in lockstep
- *  so the three panels paginate at the same cadence. */
+/** Page size for the overall-budget item list (overview tab). */
 export const DASHBOARD_PAGE_SIZE = 15
+
+/** Page size for the ops-budget panels (item picker, included list). */
+export const OPS_BUDGET_PAGE_SIZE = 10
 
 interface LoadMoreButtonProps {
   remaining: number

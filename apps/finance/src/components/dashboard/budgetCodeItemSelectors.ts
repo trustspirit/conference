@@ -1,9 +1,14 @@
+import { firestoreToDate } from '../../lib/utils'
 import type { Committee, PaymentRequest, RequestStatus } from '../../types'
 
 export interface BudgetCodeItemRow {
   requestId: string
   itemIndex: number
-  /** User-entered submission date (req.date, 'YYYY-MM-DD'). Reliable across legacy data, unlike createdAt. */
+  /**
+   * Displayed submission date ('YYYY-MM-DD'). Uses the actual submission
+   * timestamp (req.createdAt) when present, falling back to the user-entered
+   * req.date for legacy requests that predate createdAt (avoids the 1970 epoch).
+   */
   date: string
   submitterName: string
   committee: Committee
@@ -17,6 +22,24 @@ export interface BudgetCodeItemRow {
   status: RequestStatus
 }
 
+/** Format a Date as a local-time 'YYYY-MM-DD' string. */
+function formatYmd(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/**
+ * Actual submission date when createdAt is a real timestamp; otherwise the
+ * user-entered req.date. firestoreToDate returns the epoch (time 0) for a
+ * missing/invalid createdAt, which we treat as "no real submission time".
+ */
+function submissionDate(req: PaymentRequest): string {
+  const submittedAt = firestoreToDate(req.createdAt)
+  return submittedAt.getTime() === 0 ? (req.date ?? '') : formatYmd(submittedAt)
+}
+
 export function flattenRequestsToItems(
   requests: PaymentRequest[],
   usdToKrwRate: number,
@@ -26,7 +49,7 @@ export function flattenRequestsToItems(
   const rows: BudgetCodeItemRow[] = []
   for (const req of requests) {
     if (!counted.has(req.status)) continue
-    const date = req.date ?? ''
+    const date = submissionDate(req)
     req.items.forEach((item, itemIndex) => {
       const isUsd = item.currency === 'USD'
       const amountUsd = isUsd ? item.amount : 0

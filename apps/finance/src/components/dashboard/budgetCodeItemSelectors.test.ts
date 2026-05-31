@@ -14,7 +14,7 @@ const baseRequest = (overrides: Partial<PaymentRequest> = {}): PaymentRequest =>
   projectId: 'p1',
   committee: 'operations',
   status: 'approved',
-  createdAt: new Date('2026-05-10') as unknown as PaymentRequest['createdAt'],
+  createdAt: new Date(2026, 4, 10) as unknown as PaymentRequest['createdAt'],
   date: '2026-05-10',
   requestedBy: { uid: 'u1', name: '홍길동', email: 'a@b.c' },
   items: [
@@ -41,15 +41,21 @@ describe('flattenRequestsToItems', () => {
     expect(rows[1]).toMatchObject({ requestId: 'r1', itemIndex: 1, budgetCode: 5110, amountKrw: 30000 })
   })
 
-  it('uses the user-entered req.date string as the displayed date, not createdAt', () => {
-    const reqs = [baseRequest({ id: 'r1', date: '2026-02-15' })]
+  it('uses the actual submission timestamp (createdAt) as the displayed date', () => {
+    const reqs = [
+      baseRequest({
+        id: 'r1',
+        createdAt: new Date(2026, 1, 15) as unknown as PaymentRequest['createdAt'],
+        date: '2026-02-10', // user-entered date differs; createdAt wins
+      }),
+    ]
     const rows = flattenRequestsToItems(reqs, 1300, BUDGET_COUNTED_STATUSES)
     expect(rows[0].date).toBe('2026-02-15')
   })
 
-  it('never falls back to the 1970 epoch when createdAt is missing (regression)', () => {
-    // Legacy/imported requests can lack a valid createdAt; the displayed date
-    // must come from req.date so it never renders as 1970-01-01.
+  it('falls back to req.date when createdAt is missing (no 1970 epoch)', () => {
+    // Legacy/migrated requests can lack a valid createdAt; the displayed date
+    // must fall back to req.date so it never renders as 1970-01-01.
     const reqs = [
       baseRequest({
         id: 'r1',

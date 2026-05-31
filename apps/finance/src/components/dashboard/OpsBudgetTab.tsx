@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../contexts/AuthContext'
 import { useProject } from '../../contexts/ProjectContext'
@@ -44,17 +44,10 @@ export default function OpsBudgetTab() {
 
   const usdToKrwRate = resolveUsdToKrwRate(currentProject)
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
-  useEffect(() => {
-    if (selectedCategoryId && categories.some((c) => c.id === selectedCategoryId)) return
-    setSelectedCategoryId(categories[0]?.id ?? null)
-  }, [categories, selectedCategoryId])
-
   const [panelTab, setPanelTab] = useState<PanelTab>('picker')
 
   const pickerRef = useRef<HTMLDivElement>(null)
 
-  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) ?? null
   const currentUser = appUser
     ? { uid: appUser.uid, name: appUser.displayName || appUser.name, email: appUser.email }
     : null
@@ -127,8 +120,6 @@ export default function OpsBudgetTab() {
         project={currentProject!}
         inclusions={incData}
         currentUser={currentUser}
-        selectedCategoryId={selectedCategoryId}
-        onSelectCategory={setSelectedCategoryId}
       />
 
       <div ref={pickerRef} className="mt-6">
@@ -147,11 +138,9 @@ export default function OpsBudgetTab() {
           {panelTab === 'included' && (
             <OpsBudgetIncludedList
               projectId={projectId}
-              category={selectedCategory}
               categories={categories}
               inclusions={incData}
               usdToKrwRate={usdToKrwRate}
-              onSelectCategory={setSelectedCategoryId}
             />
           )}
         </div>

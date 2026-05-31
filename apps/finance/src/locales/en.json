@@ -416,6 +416,7 @@
       "viewAll": "All inclusions",
       "viewToggleLabel": "View",
       "allInclusionsTitle": "All included items",
+      "chipAll": "All",
       "selectCategoryHint": "Select a row in the category table above.",
       "searchAllPlaceholder": "Search payee/description/session/category…",
       "totalCount": "{{count}} total",

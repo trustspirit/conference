@@ -32,7 +32,7 @@ import { inclusionId, computeRedistributeContext, paletteColor, effectiveKrwForS
 import Spinner from '../Spinner'
 import OpsBudgetCreateCategoryModal from './OpsBudgetCreateCategoryModal'
 import OpsBudgetRedistributeModal from './OpsBudgetRedistributeModal'
-import { DASHBOARD_PAGE_SIZE } from './listPaging'
+import { OPS_BUDGET_PAGE_SIZE } from './listPaging'
 
 // ---------- Types ----------
 
@@ -88,7 +88,7 @@ interface OverflowPlan {
   appliedDeductions: Record<string, Record<string, number>>
 }
 
-const PAGE_SIZE = DASHBOARD_PAGE_SIZE
+const PAGE_SIZE = OPS_BUDGET_PAGE_SIZE
 
 // ---------- Helpers ----------
 
