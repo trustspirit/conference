@@ -17,12 +17,16 @@ export interface BudgetCodeItemRow {
 }
 
 function toDate(value: unknown): Date {
+  if (!value) return new Date(0)
   if (value instanceof Date) return value
-  if (value && typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
-    return (value as { toDate: () => Date }).toDate()
-  }
-  if (value && typeof value === 'object' && 'seconds' in value && typeof (value as { seconds: number }).seconds === 'number') {
-    return new Date((value as { seconds: number }).seconds * 1000)
+  if (typeof value === 'number') return new Date(value)
+  if (typeof value === 'string') return new Date(value)
+  if (typeof value === 'object') {
+    const v = value as Record<string, unknown>
+    if (typeof v.toDate === 'function') return (v.toDate as () => Date)()
+    if (typeof v.toMillis === 'function') return new Date((v.toMillis as () => number)())
+    if (typeof v.seconds === 'number') return new Date(v.seconds * 1000)
+    if (typeof v._seconds === 'number') return new Date(v._seconds * 1000)
   }
   return new Date(0)
 }

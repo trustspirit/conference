@@ -44,6 +44,8 @@ export interface OpsBudgetInclusionSnapshot {
   budgetDescKey?: string
   description: string
   payee: string
+  /** Snapshot of req.requestedBy.name at inclusion time. Optional for legacy items. */
+  submitterName?: string
   date: string
   session: string
   requestStatus: RequestStatus

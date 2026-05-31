@@ -7,6 +7,8 @@ import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../..
 import { ChevronDownIcon } from '../Icons'
 import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
 
+const PAGE_SIZE = 15
+
 interface Props {
   projectId: string
   category: OpsBudgetCategory | null
@@ -141,6 +143,8 @@ export default function OpsBudgetIncludedList({
   const remove = useRemoveInclusion()
   const [view, setView] = useState<ViewMode>('category')
   const [search, setSearch] = useState('')
+  const [visibleCategory, setVisibleCategory] = useState(PAGE_SIZE)
+  const [visibleAll, setVisibleAll] = useState(PAGE_SIZE)
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -164,6 +168,7 @@ export default function OpsBudgetIncludedList({
     return sorted.filter((i) => {
       const cat = categoryMap.get(i.categoryId)
       return (
+        (i.snapshot.submitterName ?? '').toLowerCase().includes(q) ||
         i.snapshot.payee.toLowerCase().includes(q) ||
         i.snapshot.description.toLowerCase().includes(q) ||
         i.snapshot.session.toLowerCase().includes(q) ||
@@ -171,6 +176,19 @@ export default function OpsBudgetIncludedList({
       )
     })
   }, [inclusions, search, categoryMap])
+
+  useEffect(() => {
+    setVisibleCategory(PAGE_SIZE)
+  }, [category?.id])
+
+  useEffect(() => {
+    setVisibleAll(PAGE_SIZE)
+  }, [search])
+
+  const visibleCategoryRows = filteredCategory.slice(0, visibleCategory)
+  const visibleAllRows = filteredAll.slice(0, visibleAll)
+  const hasMoreCategory = filteredCategory.length > visibleCategoryRows.length
+  const hasMoreAll = filteredAll.length > visibleAllRows.length
 
   const handleRemove = async (incId: string) => {
     if (!window.confirm(t('dashboard.opsBudget.confirmRemove'))) return
@@ -224,7 +242,7 @@ export default function OpsBudgetIncludedList({
           className="flex-1 min-w-0"
         >
           <p className="text-sm truncate">
-            <span className="font-medium">{inc.snapshot.payee}</span>
+            <span className="font-medium">{inc.snapshot.submitterName || inc.snapshot.payee}</span>
             {' · '}
             <span className="text-finance-muted">{inc.snapshot.description}</span>
           </p>
@@ -320,9 +338,21 @@ export default function OpsBudgetIncludedList({
               {t('dashboard.opsBudget.noIncludedItems')}
             </p>
           ) : (
-            <ul className="space-y-2">
-              {filteredCategory.map((inc) => renderRow(inc, false))}
-            </ul>
+            <>
+              <ul className="space-y-2">
+                {visibleCategoryRows.map((inc) => renderRow(inc, false))}
+              </ul>
+              {hasMoreCategory && (
+                <div className="pt-3 flex justify-center">
+                  <button
+                    onClick={() => setVisibleCategory((v) => v + PAGE_SIZE)}
+                    className="text-sm px-3 py-1.5 rounded border border-finance-border-soft hover:bg-finance-surface"
+                  >
+                    {t('dashboard.budgetCodeItemList.loadMore')} ({filteredCategory.length - visibleCategoryRows.length})
+                  </button>
+                </div>
+              )}
+            </>
           )}
           {category && (
             <div className="mt-3 pt-3 border-t border-finance-border-soft flex justify-end gap-4 text-sm">
@@ -351,9 +381,21 @@ export default function OpsBudgetIncludedList({
               {t('dashboard.opsBudget.noIncludedItems')}
             </p>
           ) : (
-            <ul className="space-y-2">
-              {filteredAll.map((inc) => renderRow(inc, true))}
-            </ul>
+            <>
+              <ul className="space-y-2">
+                {visibleAllRows.map((inc) => renderRow(inc, true))}
+              </ul>
+              {hasMoreAll && (
+                <div className="pt-3 flex justify-center">
+                  <button
+                    onClick={() => setVisibleAll((v) => v + PAGE_SIZE)}
+                    className="text-sm px-3 py-1.5 rounded border border-finance-border-soft hover:bg-finance-surface"
+                  >
+                    {t('dashboard.budgetCodeItemList.loadMore')} ({filteredAll.length - visibleAllRows.length})
+                  </button>
+                </div>
+              )}
+            </>
           )}
           <div className="mt-3 pt-3 border-t border-finance-border-soft flex justify-between items-center text-sm">
             <span className="text-finance-muted">

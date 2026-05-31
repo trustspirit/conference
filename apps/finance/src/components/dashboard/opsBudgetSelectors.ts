@@ -201,6 +201,7 @@ export function diffIncludableItems(
           budgetDescKey: it.budgetDescKey,
           description: it.description,
           payee: req.payee,
+          submitterName: req.requestedBy?.name ?? '',
           date: req.date,
           session: req.session,
           requestStatus: req.status,

@@ -21,7 +21,7 @@ function formatLocalDate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 15
 
 interface Props {
   requests: PaymentRequest[]

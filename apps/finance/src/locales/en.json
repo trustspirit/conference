@@ -366,7 +366,7 @@
       }
     },
     "tabs": {
-      "overview": "Project overview",
+      "overview": "Total budget",
       "opsBudget": "Ops committee budget"
     },
     "opsBudget": {
@@ -434,6 +434,8 @@
       "sortDate": "Date",
       "sortAmount": "Amount",
       "sortPayee": "Payee",
+      "sortSubmitter": "Requester",
+      "colDescription": "Description",
       "sortCode": "Budget code",
       "sortAsc": "Asc",
       "sortDesc": "Desc",

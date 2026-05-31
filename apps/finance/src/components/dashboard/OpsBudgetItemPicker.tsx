@@ -40,7 +40,7 @@ interface Props {
   currentUser: { uid: string; name: string; email: string }
 }
 
-type SortKey = 'date' | 'amount' | 'payee' | 'code'
+type SortKey = 'date' | 'amount' | 'submitter' | 'code'
 
 interface DisambiguateState {
   /** Items that still need a category resolution */
@@ -87,7 +87,7 @@ interface OverflowPlan {
   appliedDeductions: Record<string, Record<string, number>>
 }
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 15
 
 // ---------- Helpers ----------
 
@@ -115,8 +115,10 @@ function compareItems(a: AnnotatedOperationsItem, b: AnnotatedOperationsItem, ke
       cmp = aAmt - bAmt
       break
     }
-    case 'payee':
-      cmp = a.snapshot.payee.localeCompare(b.snapshot.payee)
+    case 'submitter':
+      cmp = (a.snapshot.submitterName ?? a.snapshot.payee).localeCompare(
+        b.snapshot.submitterName ?? b.snapshot.payee
+      )
       break
     case 'code':
       cmp = a.snapshot.budgetCode - b.snapshot.budgetCode
@@ -328,6 +330,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       if (sessionFilter !== '__all__' && it.snapshot.session !== sessionFilter) return false
       if (!q) return true
       return (
+        (it.snapshot.submitterName ?? '').toLowerCase().includes(q) ||
         it.snapshot.payee.toLowerCase().includes(q) ||
         it.snapshot.description.toLowerCase().includes(q) ||
         it.snapshot.session.toLowerCase().includes(q) ||
@@ -1012,10 +1015,12 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
         ) : (
           <div className="overflow-x-auto">
             {/* Header row */}
-            <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-x-3 gap-y-0 border-b border-finance-border pb-1 mb-1 px-1">
+            <div className="grid grid-cols-[auto_minmax(80px,140px)_1fr_auto_auto] gap-x-3 gap-y-0 border-b border-finance-border pb-1 mb-1 px-1">
               <span className="w-5" />
-              <SortHeader label={t('dashboard.opsBudget.sortPayee')} sortKey="payee" currentKey={sortKey} direction={sortDir} onSort={handleSort} />
-              <span className="text-xs font-semibold uppercase tracking-wide text-finance-muted" />
+              <SortHeader label={t('dashboard.opsBudget.sortSubmitter')} sortKey="submitter" currentKey={sortKey} direction={sortDir} onSort={handleSort} />
+              <span className="text-xs font-semibold uppercase tracking-wide text-finance-muted">
+                {t('dashboard.opsBudget.colDescription')}
+              </span>
               <SortHeader label={t('dashboard.opsBudget.sortAmount')} sortKey="amount" currentKey={sortKey} direction={sortDir} onSort={handleSort} />
               <SortHeader label={t('dashboard.opsBudget.sortCode')} sortKey="code" currentKey={sortKey} direction={sortDir} onSort={handleSort} />
             </div>
@@ -1030,7 +1035,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
                 return (
                   <li
                     key={id}
-                    className={`grid grid-cols-[auto_1fr_1fr_auto_auto] gap-x-3 items-center py-2 px-1 text-sm ${
+                    className={`grid grid-cols-[auto_minmax(80px,140px)_1fr_auto_auto] gap-x-3 items-center py-2 px-1 text-sm ${
                       isIncluded ? 'opacity-60' : ''
                     }`}
                   >
@@ -1042,14 +1047,14 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
                         type="checkbox"
                         checked={selected.has(id)}
                         onChange={() => toggle(id)}
-                        aria-label={`${it.snapshot.payee} - ${it.snapshot.description}`}
+                        aria-label={`${it.snapshot.submitterName ?? it.snapshot.payee} - ${it.snapshot.description}`}
                         className="w-4 h-4"
                       />
                     )}
 
-                    {/* Payee + date */}
+                    {/* Submitter + date */}
                     <div className="min-w-0">
-                      <div className="truncate font-medium">{it.snapshot.payee}</div>
+                      <div className="truncate font-medium">{it.snapshot.submitterName || it.snapshot.payee}</div>
                       <div className="text-xs text-finance-muted">{it.snapshot.date} · {it.snapshot.session}</div>
                     </div>
 
