@@ -15,6 +15,7 @@ const baseRequest = (overrides: Partial<PaymentRequest> = {}): PaymentRequest =>
   committee: 'operations',
   status: 'approved',
   createdAt: new Date('2026-05-10') as unknown as PaymentRequest['createdAt'],
+  date: '2026-05-10',
   requestedBy: { uid: 'u1', name: '홍길동', email: 'a@b.c' },
   items: [
     { description: '호텔 2박', budgetCode: 5862, budgetDescKey: 'lodging', amount: 200000, currency: 'KRW' },
@@ -38,6 +39,27 @@ describe('flattenRequestsToItems', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]).toMatchObject({ requestId: 'r1', itemIndex: 0, budgetCode: 5862, amountKrw: 100000 })
     expect(rows[1]).toMatchObject({ requestId: 'r1', itemIndex: 1, budgetCode: 5110, amountKrw: 30000 })
+  })
+
+  it('uses the user-entered req.date string as the displayed date, not createdAt', () => {
+    const reqs = [baseRequest({ id: 'r1', date: '2026-02-15' })]
+    const rows = flattenRequestsToItems(reqs, 1300, BUDGET_COUNTED_STATUSES)
+    expect(rows[0].date).toBe('2026-02-15')
+  })
+
+  it('never falls back to the 1970 epoch when createdAt is missing (regression)', () => {
+    // Legacy/imported requests can lack a valid createdAt; the displayed date
+    // must come from req.date so it never renders as 1970-01-01.
+    const reqs = [
+      baseRequest({
+        id: 'r1',
+        date: '2025-12-31',
+        createdAt: undefined as unknown as PaymentRequest['createdAt'],
+      }),
+    ]
+    const rows = flattenRequestsToItems(reqs, 1300, BUDGET_COUNTED_STATUSES)
+    expect(rows[0].date).toBe('2025-12-31')
+    expect(rows[0].date.startsWith('1970')).toBe(false)
   })
 
   it('excludes requests whose status is not in the counted set', () => {
@@ -90,8 +112,8 @@ describe('flattenRequestsToItems', () => {
 
 describe('filterByBudgetCode', () => {
   const rows: BudgetCodeItemRow[] = [
-    { requestId: 'a', itemIndex: 0, createdAt: new Date(), submitterName: 's', committee: 'operations', budgetCode: 5862, description: '', amountKrw: 1, amountUsd: 0, status: 'approved' },
-    { requestId: 'b', itemIndex: 0, createdAt: new Date(), submitterName: 's', committee: 'operations', budgetCode: 5110, description: '', amountKrw: 1, amountUsd: 0, status: 'approved' },
+    { requestId: 'a', itemIndex: 0, date: '2026-05-01', submitterName: 's', committee: 'operations', budgetCode: 5862, description: '', amountKrw: 1, amountUsd: 0, status: 'approved' },
+    { requestId: 'b', itemIndex: 0, date: '2026-05-01', submitterName: 's', committee: 'operations', budgetCode: 5110, description: '', amountKrw: 1, amountUsd: 0, status: 'approved' },
   ]
 
   it('returns all rows when filter is "all"', () => {
@@ -105,8 +127,8 @@ describe('filterByBudgetCode', () => {
 
 describe('searchItems', () => {
   const rows: BudgetCodeItemRow[] = [
-    { requestId: 'a', itemIndex: 0, createdAt: new Date(), submitterName: '홍길동', committee: 'operations', budgetCode: 5862, description: '호텔 2박', amountKrw: 1, amountUsd: 0, status: 'approved' },
-    { requestId: 'b', itemIndex: 0, createdAt: new Date(), submitterName: 'Alice', committee: 'preparation', budgetCode: 5110, description: 'Bus fare', amountKrw: 1, amountUsd: 0, status: 'approved' },
+    { requestId: 'a', itemIndex: 0, date: '2026-05-01', submitterName: '홍길동', committee: 'operations', budgetCode: 5862, description: '호텔 2박', amountKrw: 1, amountUsd: 0, status: 'approved' },
+    { requestId: 'b', itemIndex: 0, date: '2026-05-01', submitterName: 'Alice', committee: 'preparation', budgetCode: 5110, description: 'Bus fare', amountKrw: 1, amountUsd: 0, status: 'approved' },
   ]
 
   it('returns all rows when query is empty', () => {
@@ -125,14 +147,14 @@ describe('searchItems', () => {
 
 describe('sortItems', () => {
   const r = (overrides: Partial<BudgetCodeItemRow>): BudgetCodeItemRow => ({
-    requestId: 'x', itemIndex: 0, createdAt: new Date(0), submitterName: '', committee: 'operations',
+    requestId: 'x', itemIndex: 0, date: '2026-01-01', submitterName: '', committee: 'operations',
     budgetCode: 5862, description: '', amountKrw: 0, amountUsd: 0, status: 'approved', ...overrides,
   })
 
-  it('sorts by createdAt desc by default semantics', () => {
-    const rows = [r({ requestId: 'old', createdAt: new Date('2026-01-01') }), r({ requestId: 'new', createdAt: new Date('2026-05-01') })]
-    expect(sortItems(rows, 'createdAt', 'desc').map((x) => x.requestId)).toEqual(['new', 'old'])
-    expect(sortItems(rows, 'createdAt', 'asc').map((x) => x.requestId)).toEqual(['old', 'new'])
+  it('sorts by date desc by default semantics', () => {
+    const rows = [r({ requestId: 'old', date: '2026-01-01' }), r({ requestId: 'new', date: '2026-05-01' })]
+    expect(sortItems(rows, 'date', 'desc').map((x) => x.requestId)).toEqual(['new', 'old'])
+    expect(sortItems(rows, 'date', 'asc').map((x) => x.requestId)).toEqual(['old', 'new'])
   })
 
   it('sorts by amountKrw', () => {

@@ -15,13 +15,6 @@ import {
 import type { PaymentRequest } from '../../types'
 import { DASHBOARD_PAGE_SIZE, LoadMoreButton } from './listPaging'
 
-function formatLocalDate(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 const PAGE_SIZE = DASHBOARD_PAGE_SIZE
 
 interface Props {
@@ -36,7 +29,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
   const navigate = useNavigate()
   const [codeFilter, setCodeFilter] = useState<CodeFilter>('all')
   const [search, setSearch] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('createdAt')
+  const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<SortDirection>('desc')
   const [visible, setVisible] = useState(PAGE_SIZE)
 
@@ -116,8 +109,8 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-finance-muted border-b border-finance-border-soft">
-                  <Th onClick={() => onHeaderClick('createdAt')}>
-                    {t('dashboard.budgetCodeItemList.columns.date')}{sortArrow('createdAt')}
+                  <Th onClick={() => onHeaderClick('date')}>
+                    {t('dashboard.budgetCodeItemList.columns.date')}{sortArrow('date')}
                   </Th>
                   <Th onClick={() => onHeaderClick('submitterName')}>
                     {t('dashboard.budgetCodeItemList.columns.submitter')}{sortArrow('submitterName')}
@@ -138,7 +131,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                     className="border-b border-finance-border-soft hover:bg-finance-surface cursor-pointer"
                     onClick={() => navigate(`/request/${row.requestId}`)}
                   >
-                    <Td>{formatLocalDate(row.createdAt)}</Td>
+                    <Td>{row.date}</Td>
                     <Td>{row.submitterName}</Td>
                     <Td>{t(`committee.${row.committee}`)}</Td>
                     <Td>
@@ -186,7 +179,7 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
                 <Link to={`/request/${row.requestId}`} className="block">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-finance-muted">
-                      {formatLocalDate(row.createdAt)} · {row.submitterName}
+                      {row.date} · {row.submitterName}
                     </span>
                     <StatusBadge status={row.status} />
                   </div>

@@ -1,10 +1,10 @@
-import { firestoreToDate } from '../../lib/utils'
 import type { Committee, PaymentRequest, RequestStatus } from '../../types'
 
 export interface BudgetCodeItemRow {
   requestId: string
   itemIndex: number
-  createdAt: Date
+  /** User-entered submission date (req.date, 'YYYY-MM-DD'). Reliable across legacy data, unlike createdAt. */
+  date: string
   submitterName: string
   committee: Committee
   budgetCode: number
@@ -26,7 +26,7 @@ export function flattenRequestsToItems(
   const rows: BudgetCodeItemRow[] = []
   for (const req of requests) {
     if (!counted.has(req.status)) continue
-    const createdAt = firestoreToDate(req.createdAt)
+    const date = req.date ?? ''
     req.items.forEach((item, itemIndex) => {
       const isUsd = item.currency === 'USD'
       const amountUsd = isUsd ? item.amount : 0
@@ -34,7 +34,7 @@ export function flattenRequestsToItems(
       rows.push({
         requestId: req.id,
         itemIndex,
-        createdAt,
+        date,
         submitterName: req.requestedBy?.name ?? '',
         committee: req.committee,
         budgetCode: item.budgetCode,
@@ -65,7 +65,7 @@ export function searchItems(rows: BudgetCodeItemRow[], query: string): BudgetCod
   )
 }
 
-export type SortKey = 'createdAt' | 'amountKrw' | 'submitterName'
+export type SortKey = 'date' | 'amountKrw' | 'submitterName'
 export type SortDirection = 'asc' | 'desc'
 
 export function sortItems(
@@ -76,7 +76,8 @@ export function sortItems(
   const mult = direction === 'asc' ? 1 : -1
   const copy = [...rows]
   copy.sort((a, b) => {
-    if (key === 'createdAt') return (a.createdAt.getTime() - b.createdAt.getTime()) * mult
+    // 'YYYY-MM-DD' strings sort lexicographically in chronological order.
+    if (key === 'date') return a.date.localeCompare(b.date) * mult
     if (key === 'amountKrw') return (a.amountKrw - b.amountKrw) * mult
     return a.submitterName.localeCompare(b.submitterName) * mult
   })
