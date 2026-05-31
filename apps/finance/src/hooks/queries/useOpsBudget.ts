@@ -7,6 +7,7 @@ import {
   query, where, getDocs, writeBatch,
 } from 'firebase/firestore'
 import { db } from '@conference/firebase'
+import { firestoreToDate } from '../../lib/utils'
 import { queryKeys } from './queryKeys'
 import type {
   OpsBudgetCategory, OpsBudgetInclusion,
@@ -211,13 +212,7 @@ export function annotateAllOperationsItems(
   }
 
   return out.sort((a, b) => {
-    const toMs = (d: unknown): number => {
-      if (d instanceof Date) return d.getTime()
-      const maybe = d as { toDate?: () => Date } | null
-      if (maybe && typeof maybe.toDate === 'function') return maybe.toDate().getTime()
-      return 0
-    }
-    const dt = toMs(b.source.requestCreatedAt) - toMs(a.source.requestCreatedAt)
+    const dt = firestoreToDate(b.source.requestCreatedAt).getTime() - firestoreToDate(a.source.requestCreatedAt).getTime()
     if (dt !== 0) return dt
     const cmp = a.requestId.localeCompare(b.requestId)
     if (cmp !== 0) return cmp

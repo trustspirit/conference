@@ -6,8 +6,9 @@ import { useRemoveInclusion } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../../types'
 import { ChevronDownIcon } from '../Icons'
 import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
+import { DASHBOARD_PAGE_SIZE, LoadMoreButton } from './listPaging'
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = DASHBOARD_PAGE_SIZE
 
 interface Props {
   projectId: string
@@ -168,7 +169,7 @@ export default function OpsBudgetIncludedList({
     return sorted.filter((i) => {
       const cat = categoryMap.get(i.categoryId)
       return (
-        (i.snapshot.submitterName ?? '').toLowerCase().includes(q) ||
+        (i.snapshot.submitterName || '').toLowerCase().includes(q) ||
         i.snapshot.payee.toLowerCase().includes(q) ||
         i.snapshot.description.toLowerCase().includes(q) ||
         i.snapshot.session.toLowerCase().includes(q) ||
@@ -179,11 +180,11 @@ export default function OpsBudgetIncludedList({
 
   useEffect(() => {
     setVisibleCategory(PAGE_SIZE)
-  }, [category?.id])
+  }, [category?.id, view])
 
   useEffect(() => {
     setVisibleAll(PAGE_SIZE)
-  }, [search])
+  }, [search, view])
 
   const visibleCategoryRows = filteredCategory.slice(0, visibleCategory)
   const visibleAllRows = filteredAll.slice(0, visibleAll)
@@ -343,14 +344,10 @@ export default function OpsBudgetIncludedList({
                 {visibleCategoryRows.map((inc) => renderRow(inc, false))}
               </ul>
               {hasMoreCategory && (
-                <div className="pt-3 flex justify-center">
-                  <button
-                    onClick={() => setVisibleCategory((v) => v + PAGE_SIZE)}
-                    className="text-sm px-3 py-1.5 rounded border border-finance-border-soft hover:bg-finance-surface"
-                  >
-                    {t('dashboard.budgetCodeItemList.loadMore')} ({filteredCategory.length - visibleCategoryRows.length})
-                  </button>
-                </div>
+                <LoadMoreButton
+                  remaining={filteredCategory.length - visibleCategoryRows.length}
+                  onClick={() => setVisibleCategory((v) => v + PAGE_SIZE)}
+                />
               )}
             </>
           )}
@@ -386,14 +383,10 @@ export default function OpsBudgetIncludedList({
                 {visibleAllRows.map((inc) => renderRow(inc, true))}
               </ul>
               {hasMoreAll && (
-                <div className="pt-3 flex justify-center">
-                  <button
-                    onClick={() => setVisibleAll((v) => v + PAGE_SIZE)}
-                    className="text-sm px-3 py-1.5 rounded border border-finance-border-soft hover:bg-finance-surface"
-                  >
-                    {t('dashboard.budgetCodeItemList.loadMore')} ({filteredAll.length - visibleAllRows.length})
-                  </button>
-                </div>
+                <LoadMoreButton
+                  remaining={filteredAll.length - visibleAllRows.length}
+                  onClick={() => setVisibleAll((v) => v + PAGE_SIZE)}
+                />
               )}
             </>
           )}

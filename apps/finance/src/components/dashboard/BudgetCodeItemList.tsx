@@ -13,6 +13,7 @@ import {
   type SortDirection,
 } from './budgetCodeItemSelectors'
 import type { PaymentRequest } from '../../types'
+import { DASHBOARD_PAGE_SIZE, LoadMoreButton } from './listPaging'
 
 function formatLocalDate(date: Date): string {
   const y = date.getFullYear()
@@ -21,7 +22,7 @@ function formatLocalDate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = DASHBOARD_PAGE_SIZE
 
 interface Props {
   requests: PaymentRequest[]
@@ -206,14 +207,10 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
           </ul>
 
           {hasMore && (
-            <div className="pt-3 flex justify-center">
-              <button
-                onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                className="text-sm px-3 py-1.5 rounded border border-finance-border-soft hover:bg-finance-surface"
-              >
-                {t('dashboard.budgetCodeItemList.loadMore')} ({filtered.length - visible})
-              </button>
-            </div>
+            <LoadMoreButton
+              remaining={filtered.length - visibleRows.length}
+              onClick={() => setVisible((v) => v + PAGE_SIZE)}
+            />
           )}
         </>
       )}

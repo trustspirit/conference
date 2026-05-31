@@ -1,3 +1,4 @@
+import { firestoreToDate } from '../../lib/utils'
 import type {
   OpsBudgetCategory,
   OpsBudgetInclusion,
@@ -167,16 +168,6 @@ export interface IncludableItem {
   }
 }
 
-/** Converts a Date or Firestore Timestamp-like object to milliseconds.
- *  Firestore Timestamp objects are not hydrated to Date by useRequests,
- *  so we must handle both shapes defensively. */
-function toMillis(d: unknown): number {
-  if (d instanceof Date) return d.getTime()
-  const maybe = d as { toDate?: () => Date } | null
-  if (maybe && typeof maybe.toDate === 'function') return maybe.toDate().getTime()
-  return 0
-}
-
 export function diffIncludableItems(
   requests: PaymentRequest[],
   existingInclusions: OpsBudgetInclusion[]
@@ -214,7 +205,7 @@ export function diffIncludableItems(
     })
   }
   return out.sort((a, b) => {
-    const dt = toMillis(b.source.requestCreatedAt) - toMillis(a.source.requestCreatedAt)
+    const dt = firestoreToDate(b.source.requestCreatedAt).getTime() - firestoreToDate(a.source.requestCreatedAt).getTime()
     if (dt !== 0) return dt
     const idCmp = a.requestId.localeCompare(b.requestId)
     if (idCmp !== 0) return idCmp

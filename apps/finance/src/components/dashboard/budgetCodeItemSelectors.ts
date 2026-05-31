@@ -1,3 +1,4 @@
+import { firestoreToDate } from '../../lib/utils'
 import type { Committee, PaymentRequest, RequestStatus } from '../../types'
 
 export interface BudgetCodeItemRow {
@@ -16,21 +17,6 @@ export interface BudgetCodeItemRow {
   status: RequestStatus
 }
 
-function toDate(value: unknown): Date {
-  if (!value) return new Date(0)
-  if (value instanceof Date) return value
-  if (typeof value === 'number') return new Date(value)
-  if (typeof value === 'string') return new Date(value)
-  if (typeof value === 'object') {
-    const v = value as Record<string, unknown>
-    if (typeof v.toDate === 'function') return (v.toDate as () => Date)()
-    if (typeof v.toMillis === 'function') return new Date((v.toMillis as () => number)())
-    if (typeof v.seconds === 'number') return new Date(v.seconds * 1000)
-    if (typeof v._seconds === 'number') return new Date(v._seconds * 1000)
-  }
-  return new Date(0)
-}
-
 export function flattenRequestsToItems(
   requests: PaymentRequest[],
   usdToKrwRate: number,
@@ -40,7 +26,7 @@ export function flattenRequestsToItems(
   const rows: BudgetCodeItemRow[] = []
   for (const req of requests) {
     if (!counted.has(req.status)) continue
-    const createdAt = toDate(req.createdAt)
+    const createdAt = firestoreToDate(req.createdAt)
     req.items.forEach((item, itemIndex) => {
       const isUsd = item.currency === 'USD'
       const amountUsd = isUsd ? item.amount : 0

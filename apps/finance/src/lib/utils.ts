@@ -35,6 +35,31 @@ export function fileToBase64(file: File): Promise<string> {
   })
 }
 
+/** Coerce any common Firestore Timestamp shape (instance, plain `{seconds}`,
+ *  admin-style `{_seconds}`, ISO string, millis number) to a `Date`. Returns
+ *  `new Date(0)` for null/undefined/unrecognized shapes so callers can sort
+ *  deterministically without NaN propagation. */
+export function firestoreToDate(value: unknown): Date {
+  if (!value) return new Date(0)
+  if (value instanceof Date) return value
+  if (typeof value === 'number') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? new Date(0) : d
+  }
+  if (typeof value === 'string') {
+    const d = new Date(value)
+    return isNaN(d.getTime()) ? new Date(0) : d
+  }
+  if (typeof value === 'object') {
+    const v = value as Record<string, unknown>
+    if (typeof v.toDate === 'function') return (v.toDate as () => Date)()
+    if (typeof v.toMillis === 'function') return new Date((v.toMillis as () => number)())
+    if (typeof v.seconds === 'number') return new Date(v.seconds * 1000)
+    if (typeof v._seconds === 'number') return new Date(v._seconds * 1000)
+  }
+  return new Date(0)
+}
+
 /** Firestore Timestamp → 한국어 날짜 문자열 */
 export function formatFirestoreDate(date: unknown): string {
   if (date && typeof date === 'object' && 'toDate' in date) {

@@ -32,6 +32,7 @@ import { inclusionId, computeRedistributeContext, paletteColor, effectiveKrwForS
 import Spinner from '../Spinner'
 import OpsBudgetCreateCategoryModal from './OpsBudgetCreateCategoryModal'
 import OpsBudgetRedistributeModal from './OpsBudgetRedistributeModal'
+import { DASHBOARD_PAGE_SIZE } from './listPaging'
 
 // ---------- Types ----------
 
@@ -87,7 +88,7 @@ interface OverflowPlan {
   appliedDeductions: Record<string, Record<string, number>>
 }
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = DASHBOARD_PAGE_SIZE
 
 // ---------- Helpers ----------
 
@@ -116,8 +117,8 @@ function compareItems(a: AnnotatedOperationsItem, b: AnnotatedOperationsItem, ke
       break
     }
     case 'submitter':
-      cmp = (a.snapshot.submitterName ?? a.snapshot.payee).localeCompare(
-        b.snapshot.submitterName ?? b.snapshot.payee
+      cmp = (a.snapshot.submitterName || a.snapshot.payee).localeCompare(
+        b.snapshot.submitterName || b.snapshot.payee
       )
       break
     case 'code':
@@ -201,7 +202,7 @@ function DisambiguateModal({
           {t('dashboard.opsBudget.disambiguateHelp', { code: item.snapshot.budgetCode })}
         </p>
         <p className="text-xs mb-3">
-          <span className="font-medium">{item.snapshot.payee}</span>
+          <span className="font-medium">{item.snapshot.submitterName || item.snapshot.payee}</span>
           {' · '}
           <span className="text-finance-muted">{item.snapshot.description}</span>
         </p>
@@ -330,7 +331,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
       if (sessionFilter !== '__all__' && it.snapshot.session !== sessionFilter) return false
       if (!q) return true
       return (
-        (it.snapshot.submitterName ?? '').toLowerCase().includes(q) ||
+        (it.snapshot.submitterName || '').toLowerCase().includes(q) ||
         it.snapshot.payee.toLowerCase().includes(q) ||
         it.snapshot.description.toLowerCase().includes(q) ||
         it.snapshot.session.toLowerCase().includes(q) ||
@@ -1047,7 +1048,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
                         type="checkbox"
                         checked={selected.has(id)}
                         onChange={() => toggle(id)}
-                        aria-label={`${it.snapshot.submitterName ?? it.snapshot.payee} - ${it.snapshot.description}`}
+                        aria-label={`${it.snapshot.submitterName || it.snapshot.payee} - ${it.snapshot.description}`}
                         className="w-4 h-4"
                       />
                     )}
