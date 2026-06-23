@@ -79,37 +79,78 @@ async function preloadImageUrl(url: string): Promise<string | null> {
   }
 }
 
+type ReceiptDownloadFn = ReturnType<
+  typeof httpsCallable<
+    { storagePath: string },
+    { data: string; contentType: string; fileName: string }
+  >
+>
+
+// Receipts are fetched through the `downloadFileV2` callable, which loads each
+// file into memory and returns it base64-encoded. Firing one request per receipt
+// all at once (Promise.all over every receipt) overwhelms the function instance
+// once there are many receipts — concurrent in-memory downloads exhaust memory /
+// hit timeouts, so some requests fail and render as "Failed to load". Bound the
+// concurrency and retry transient failures so large settlements load reliably.
+const RECEIPT_DOWNLOAD_CONCURRENCY = 6
+const RECEIPT_DOWNLOAD_RETRIES = 2
+
+async function downloadOneReceipt(
+  downloadFn: ReceiptDownloadFn,
+  r: Receipt
+): Promise<{ fileName: string; dataUrl: string | null }> {
+  if (!r.storagePath) return { fileName: r.fileName, dataUrl: null }
+
+  for (let attempt = 0; attempt <= RECEIPT_DOWNLOAD_RETRIES; attempt++) {
+    try {
+      const result = await downloadFn({ storagePath: r.storagePath })
+      const { data, contentType } = result.data
+      const isPdf = r.fileName.toLowerCase().endsWith('.pdf') || contentType === 'application/pdf'
+
+      if (isPdf) {
+        const binary = atob(data)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        const pageDataUrl = await pdfToImageDataUrl(bytes)
+        return { fileName: r.fileName, dataUrl: pageDataUrl }
+      }
+
+      return { fileName: r.fileName, dataUrl: `data:${contentType};base64,${data}` }
+    } catch (err) {
+      if (attempt === RECEIPT_DOWNLOAD_RETRIES) {
+        console.error(
+          `Failed to preload receipt "${r.fileName}" after ${attempt + 1} attempts:`,
+          err
+        )
+        return { fileName: r.fileName, dataUrl: null }
+      }
+      // Exponential backoff (300ms, 600ms) lets a momentarily overloaded
+      // function recover before we retry.
+      await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt))
+    }
+  }
+  return { fileName: r.fileName, dataUrl: null }
+}
+
 async function preloadReceipts(receipts: Receipt[]) {
   const downloadFn = httpsCallable<
     { storagePath: string },
     { data: string; contentType: string; fileName: string }
   >(functions, 'downloadFileV2')
 
-  return Promise.all(
-    receipts.map(async (r): Promise<{ fileName: string; dataUrl: string | null }> => {
-      try {
-        if (!r.storagePath) return { fileName: r.fileName, dataUrl: null }
+  const results: { fileName: string; dataUrl: string | null }[] = new Array(receipts.length)
+  let next = 0
+  const worker = async () => {
+    while (true) {
+      const i = next++
+      if (i >= receipts.length) return
+      results[i] = await downloadOneReceipt(downloadFn, receipts[i])
+    }
+  }
 
-        const result = await downloadFn({ storagePath: r.storagePath })
-        const { data, contentType } = result.data
-        const isPdf =
-          r.fileName.toLowerCase().endsWith('.pdf') || contentType === 'application/pdf'
-
-        if (isPdf) {
-          const binary = atob(data)
-          const bytes = new Uint8Array(binary.length)
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-          const pageDataUrl = await pdfToImageDataUrl(bytes)
-          return { fileName: r.fileName, dataUrl: pageDataUrl }
-        }
-
-        return { fileName: r.fileName, dataUrl: `data:${contentType};base64,${data}` }
-      } catch (err) {
-        console.error(`Failed to preload receipt "${r.fileName}":`, err)
-        return { fileName: r.fileName, dataUrl: null }
-      }
-    })
-  )
+  const poolSize = Math.min(RECEIPT_DOWNLOAD_CONCURRENCY, receipts.length)
+  await Promise.all(Array.from({ length: poolSize }, () => worker()))
+  return results
 }
 
 function buildPdfStyles() {
