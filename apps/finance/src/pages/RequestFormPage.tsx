@@ -4,7 +4,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../hooks/queries/queryKeys'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import { useCreateRequest, useMyRequests } from '../hooks/queries/useRequests'
+import { useCreateRequests, useMyRequests } from '../hooks/queries/useRequests'
+import CurrencySplitDialog from '../components/CurrencySplitDialog'
+import {
+  hasMixedCurrency,
+  splitRequestByCurrency,
+  type NewRequest
+} from '../lib/splitRequestByCurrency'
 import { useUploadReceipts } from '../hooks/queries/useCloudFunctions'
 import { RequestItem, Receipt, Committee } from '../types'
 import Layout from '../components/Layout'
@@ -75,7 +81,7 @@ export default function RequestFormPage() {
   const projectRole = useProjectRole()
 
   const queryClient = useQueryClient()
-  const createRequest = useCreateRequest()
+  const createRequests = useCreateRequests()
   const uploadReceiptsMutation = useUploadReceipts()
   const { data: myRequests = [] } = useMyRequests(currentProject?.id, user?.uid)
 
@@ -107,6 +113,12 @@ export default function RequestFormPage() {
   const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
   const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
   const [inlineSignature, setInlineSignature] = useState('')
+  const [splitOpen, setSplitOpen] = useState(false)
+  const [pendingSplit, setPendingSplit] = useState<{
+    payload: NewRequest
+    items: RequestItem[]
+    receipts: Receipt[]
+  } | null>(null)
 
   const vendorBankBookPreviewUrl = useMemo(
     () => (vendorBankBookFile ? URL.createObjectURL(vendorBankBookFile) : null),
@@ -118,7 +130,9 @@ export default function RequestFormPage() {
     }
   }, [vendorBankBookPreviewUrl])
 
-  const showRequestTypeDropdown = projectRole ? canCreateVendorRequest(projectRole, committee) : false
+  const showRequestTypeDropdown = projectRole
+    ? canCreateVendorRequest(projectRole, committee)
+    : false
 
   const needsBankBook =
     !isVendorRequest && !isCorporateCard && !appUser?.bankBookUrl && !appUser?.bankBookDriveUrl
@@ -352,12 +366,14 @@ export default function RequestFormPage() {
     }
     setErrors([])
 
-    // Check for duplicate amount in active requests (compare KRW + USD totals together)
+    // Check for a duplicate amount in active requests. A mixed-currency form is split
+    // into two single-currency requests on submit, so match per currency: warn if the
+    // KRW half OR the USD half equals an existing active request's matching-currency total.
     const duplicate = myRequests.find(
       (r) =>
-        r.totalAmount === validTotals.krw &&
-        (r.totalAmountUsd || 0) === validTotals.usd &&
-        (r.status === 'pending' || r.status === 'approved')
+        (r.status === 'pending' || r.status === 'approved') &&
+        ((validTotals.krw > 0 && r.totalAmount === validTotals.krw) ||
+          (validTotals.usd > 0 && (r.totalAmountUsd || 0) === validTotals.usd))
     )
     if (duplicate) {
       setConfirmDialog({
@@ -471,7 +487,7 @@ export default function RequestFormPage() {
       }
 
       const finalTotals = sumByCurrency(finalItems)
-      await createRequest.mutateAsync({
+      const payload: NewRequest = {
         projectId: currentProject!.id,
         status: 'pending',
         payee,
@@ -503,15 +519,20 @@ export default function RequestFormPage() {
         originalRequestId: null,
         comments,
         ...(isVendorRequest
-          ? {
-              isVendorRequest: true,
-              vendorBankBookPath,
-              vendorBankBookUrl
-            }
+          ? { isVendorRequest: true, vendorBankBookPath, vendorBankBookUrl }
           : {}),
         ...(isCorporateCard ? { isCorporateCard: true } : {})
-      })
+      }
 
+      if (hasMixedCurrency(finalItems)) {
+        // Defer creation: let the user assign receipts to a currency.
+        setPendingSplit({ payload, items: finalItems, receipts })
+        setSplitOpen(true)
+        setSubmitting(false)
+        return
+      }
+
+      await createRequests.mutateAsync([payload])
       setSubmitted(true)
       clearDraft()
       navigate('/my-requests')
@@ -520,6 +541,25 @@ export default function RequestFormPage() {
       toast({ variant: 'danger', message: t('form.submitFailed') })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleSplitConfirm = async (usdReceiptPaths: Set<string>) => {
+    if (!pendingSplit) return
+    setSubmitting(true)
+    try {
+      await createRequests.mutateAsync(
+        splitRequestByCurrency(pendingSplit.payload, usdReceiptPaths)
+      )
+      setSubmitted(true)
+      clearDraft()
+      navigate('/my-requests')
+    } catch (err) {
+      console.error(err)
+      toast({ variant: 'danger', message: t('form.submitFailed') })
+    } finally {
+      setSubmitting(false)
+      setSplitOpen(false)
     }
   }
 
@@ -829,6 +869,15 @@ export default function RequestFormPage() {
           </Button>
         </Dialog.Actions>
       </Dialog>
+
+      <CurrencySplitDialog
+        open={splitOpen}
+        items={pendingSplit?.items ?? []}
+        receipts={pendingSplit?.receipts ?? []}
+        submitting={submitting}
+        onConfirm={handleSplitConfirm}
+        onCancel={() => setSplitOpen(false)}
+      />
 
       {/* 페이지 이동 확인 모달 */}
       {blocker.state === 'blocked' && (

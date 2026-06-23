@@ -10,6 +10,7 @@ import { PaymentRequest, AppUser, Currency } from '../types'
 import { canSeeCommitteeRequests } from '../lib/roles'
 import { useApprovedRequests, useForceRejectRequest } from '../hooks/queries/useRequests'
 import { useCreateSettlement } from '../hooks/queries/useSettlements'
+import { buildSettlementDocs } from '../lib/settlementBuilder'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { Dialog, Button, useToast } from 'trust-ui-react'
@@ -17,7 +18,7 @@ import Layout from '../components/Layout'
 import SettlementSelectTable from '../components/settlement/SettlementSelectTable'
 import SettlementReviewStep from '../components/settlement/SettlementReviewStep'
 import SettlementSummary from '../components/settlement/SettlementSummary'
-import { formatTotals, getItemCurrency } from '../lib/currency'
+import { formatTotals } from '../lib/currency'
 
 type ReviewPhase = 'select' | 'review' | 'summary'
 
@@ -225,76 +226,27 @@ export default function SettlementPage() {
         })
       )
 
-      const hasCorporateCard = includedRequests.some((r) => r.isCorporateCard)
-      const batchId = crypto.randomUUID()
-      const ccBatchId = hasCorporateCard ? crypto.randomUUID() : batchId
-
-      const settlementData = Object.values(groupedByPayee).flatMap((reqs) => {
-        const first = reqs[0]
-        const userData = userDataMap.get(first.requestedBy.uid)
-        const approvers = Object.values(
-          reqs.reduce<Record<string, { uid: string; name: string; email: string }>>((acc, r) => {
-            if (r.approvedBy && !acc[r.approvedBy.uid]) acc[r.approvedBy.uid] = r.approvedBy
-            return acc
-          }, {})
-        )
-        const base = {
-          projectId: currentProject.id,
-          batchId: first.isCorporateCard ? ccBatchId : batchId,
-          createdBy: { uid: user.uid, name: creatorName, email: appUser.email },
-          createdBySignature: appUser.signature || null,
-          payee: first.payee,
-          phone: first.phone,
-          ...(first.isCorporateCard
-            ? {}
-            : {
-                bankName: first.bankName,
-                bankAccount: first.bankAccount,
-                bankBookUrl: first.isVendorRequest
-                  ? first.vendorBankBookUrl || ''
-                  : userData?.bankBookUrl || userData?.bankBookDriveUrl || ''
-              }),
-          session: first.session,
-          committee: first.committee,
-          requestedBySignature: userData?.signature || null,
-          approvedBy: first.approvedBy,
-          approvers,
-          approvalSignature: first.approvalSignature || null,
-          ...(first.isCorporateCard ? { isCorporateCard: true } : {})
+      // One batchId per (cardType, currency) so KRW and USD become separate
+      // reports/list rows. IDs are generated lazily — only combinations that
+      // actually occur get an id.
+      const batchIdCache = new Map<string, string>()
+      const resolveBatchId = (isCorporateCard: boolean, currency: Currency) => {
+        const key = `${isCorporateCard ? 'cc' : 'reg'}:${currency}`
+        let id = batchIdCache.get(key)
+        if (!id) {
+          id = crypto.randomUUID()
+          batchIdCache.set(key, id)
         }
+        return id
+      }
 
-        // Split items + requests by currency. A request that has items in both
-        // currencies will appear in both the KRW and USD settlement docs, but
-        // its receipts are attached only to the first one (KRW pass) so the
-        // unified report doesn't show them twice.
-        const claimedReceipts = new Set<string>()
-        const buildForCurrency = (currency: Currency) => {
-          const reqsForCurrency = reqs.filter((r) =>
-            r.items.some((i) => getItemCurrency(i) === currency)
-          )
-          if (reqsForCurrency.length === 0) return null
-          const items = reqsForCurrency.flatMap((r) =>
-            r.items.filter((i) => getItemCurrency(i) === currency)
-          )
-          const receipts = reqsForCurrency
-            .filter((r) => !claimedReceipts.has(r.id))
-            .flatMap((r) => r.receipts)
-          for (const r of reqsForCurrency) claimedReceipts.add(r.id)
-          const sum = items.reduce((acc, i) => acc + i.amount, 0)
-          return {
-            ...base,
-            currency,
-            items,
-            totalAmount: currency === 'KRW' ? sum : 0,
-            ...(currency === 'USD' ? { totalAmountUsd: sum } : {}),
-            receipts,
-            requestIds: reqsForCurrency.map((r) => r.id)
-          }
-        }
-
-        return [buildForCurrency('KRW'), buildForCurrency('USD')].filter(
-          (d): d is NonNullable<typeof d> => d !== null
-        )
+      const settlementData = buildSettlementDocs({
+        groupedByPayee,
+        projectId: currentProject.id,
+        creator: { uid: user.uid, name: creatorName, email: appUser.email },
+        creatorSignature: appUser.signature || null,
+        userDataByUid: userDataMap,
+        resolveBatchId
       })
 
       // Op-count check: tx reads + updates each requestId once per settlement it

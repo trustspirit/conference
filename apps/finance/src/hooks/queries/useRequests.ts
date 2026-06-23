@@ -20,6 +20,7 @@ import {
   runTransaction,
   limit,
   startAfter,
+  writeBatch,
   QueryDocumentSnapshot,
   DocumentData,
   QueryConstraint
@@ -228,6 +229,34 @@ export function useCreateRequest() {
     },
     onSuccess: (id, variables) => {
       invalidateRequestCaches(queryClient, variables.projectId, id)
+    }
+  })
+}
+
+/**
+ * Create multiple request docs atomically in one writeBatch. Used by the
+ * currency-split flow so a mixed request's two single-currency docs both commit
+ * or neither does. Returns the created doc ids in input order.
+ */
+export function useCreateRequests() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (
+      requests: Array<Omit<PaymentRequest, 'id' | 'createdAt'> & { createdAt?: unknown }>
+    ) => {
+      const batch = writeBatch(db)
+      const refs = requests.map(() => doc(collection(db, 'requests')))
+      requests.forEach((data, i) => {
+        batch.set(refs[i], stripUndefined({ ...data, createdAt: serverTimestamp() }))
+      })
+      await batch.commit()
+      return refs.map((r) => r.id)
+    },
+    onSuccess: (ids, variables) => {
+      const projectId = variables[0]?.projectId
+      if (!projectId) return
+      for (const id of ids) invalidateRequestCaches(queryClient, projectId, id)
     }
   })
 }

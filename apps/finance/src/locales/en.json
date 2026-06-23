@@ -157,6 +157,17 @@
     "searchFailed": "Search failed. Please enter manually",
     "routeMap": "Route Map"
   },
+  "currencySplit": {
+    "title": "Split by currency",
+    "description": "This request has both KRW and USD items. Select which receipts are USD — the rest will go to the KRW request.",
+    "usd": "USD",
+    "krwRequest": "KRW request",
+    "usdRequest": "USD request",
+    "receiptCount": "{{count}} receipt(s)",
+    "missingReceipts": "Assign at least one receipt to each currency that needs one.",
+    "confirm": "Create 2 requests",
+    "cancel": "Cancel"
+  },
   "form": {
     "title": "Payment / Reimbursement Request Form",
     "subtitle": "Payment / Reimbursement Request Form",

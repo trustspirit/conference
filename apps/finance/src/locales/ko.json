@@ -157,6 +157,17 @@
     "searchFailed": "검색에 실패했습니다. 직접 입력해주세요",
     "routeMap": "경로맵"
   },
+  "currencySplit": {
+    "title": "통화별 분리",
+    "description": "이 신청서에 KRW와 USD 항목이 함께 있습니다. USD 영수증을 선택하세요 — 나머지는 KRW 신청서로 들어갑니다.",
+    "usd": "USD",
+    "krwRequest": "KRW 신청서",
+    "usdRequest": "USD 신청서",
+    "receiptCount": "영수증 {{count}}개",
+    "missingReceipts": "영수증이 필요한 각 통화에 최소 1개의 영수증을 배정하세요.",
+    "confirm": "신청서 2개 생성",
+    "cancel": "취소"
+  },
   "form": {
     "title": "지불 / 환불 신청서",
     "subtitle": "Payment / Reimbursement Request Form",

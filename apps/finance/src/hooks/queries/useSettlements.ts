@@ -25,6 +25,7 @@ import {
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
 import type { Settlement, Committee, PaymentRequest, AppUser } from '../../types'
+import { revertRequestAction } from '../../lib/settlementRevert'
 
 const PAGE_SIZE = 20
 
@@ -263,9 +264,11 @@ export function useRevertSettlementBatch() {
 
         for (const snap of requestSnaps) {
           if (!snap.exists()) continue
-          const status = snap.data().status
-          if (status !== 'settled') {
-            throw new Error(`Request ${snap.id} is no longer settled (status: ${status})`)
+          const data = snap.data()
+          // Revert only requests whose settlementId belongs to this batch; a
+          // request re-settled into another batch (or already reverted) is skipped.
+          if (revertRequestAction(data.status, data.settlementId, settlementIds) !== 'revert') {
+            continue
           }
           tx.update(snap.ref, {
             status: 'approved',

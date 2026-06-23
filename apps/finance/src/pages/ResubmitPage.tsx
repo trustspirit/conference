@@ -4,9 +4,15 @@ import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../hooks/queries/queryKeys'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import { useRequest, useCreateRequest } from '../hooks/queries/useRequests'
+import { useRequest, useCreateRequests } from '../hooks/queries/useRequests'
 import { useUploadReceipts } from '../hooks/queries/useCloudFunctions'
 import { RequestItem, Receipt, Committee } from '../types'
+import CurrencySplitDialog from '../components/CurrencySplitDialog'
+import {
+  hasMixedCurrency,
+  splitRequestByCurrency,
+  type NewRequest
+} from '../lib/splitRequestByCurrency'
 import Layout from '../components/Layout'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 import ItemRow from '../components/ItemRow'
@@ -39,7 +45,7 @@ export default function ResubmitPage() {
 
   const { data: original, isLoading: loading } = useRequest(id)
   const queryClient = useQueryClient()
-  const createRequest = useCreateRequest()
+  const createRequests = useCreateRequests()
   const uploadReceiptsMutation = useUploadReceipts()
 
   const [payee, setPayee] = useState('')
@@ -62,6 +68,12 @@ export default function ResubmitPage() {
   const [inlineBankBookFile, setInlineBankBookFile] = useState<File | null>(null)
   const [inlineBankBookError, setInlineBankBookError] = useState<string | null>(null)
   const [inlineSignature, setInlineSignature] = useState('')
+  const [splitOpen, setSplitOpen] = useState(false)
+  const [pendingSplit, setPendingSplit] = useState<{
+    payload: NewRequest
+    items: RequestItem[]
+    receipts: Receipt[]
+  } | null>(null)
   const miniMapRefs = useRef(new Map<number, HTMLDivElement>())
   const routePathsRef = useRef(new Map<number, number[]>())
 
@@ -385,7 +397,8 @@ export default function ResubmitPage() {
         }
       }
 
-      await createRequest.mutateAsync({
+      const finalTotals = sumByCurrency(finalItems)
+      const payload: NewRequest = {
         projectId: currentProject.id,
         status: 'pending',
         payee,
@@ -396,10 +409,8 @@ export default function ResubmitPage() {
         session,
         committee,
         items: finalItems,
-        totalAmount: sumByCurrency(finalItems).krw,
-        ...(sumByCurrency(finalItems).usd > 0
-          ? { totalAmountUsd: sumByCurrency(finalItems).usd }
-          : {}),
+        totalAmount: finalTotals.krw,
+        ...(finalTotals.usd > 0 ? { totalAmountUsd: finalTotals.usd } : {}),
         receipts,
         requestedBy: {
           uid: user.uid,
@@ -419,21 +430,42 @@ export default function ResubmitPage() {
         originalRequestId: original.id,
         comments,
         ...(isVendorRequest
-          ? {
-              isVendorRequest: true,
-              vendorBankBookPath,
-              vendorBankBookUrl
-            }
+          ? { isVendorRequest: true, vendorBankBookPath, vendorBankBookUrl }
           : {}),
         ...(isCorporateCard ? { isCorporateCard: true } : {})
-      })
+      }
 
+      if (hasMixedCurrency(finalItems)) {
+        setPendingSplit({ payload, items: finalItems, receipts })
+        setSplitOpen(true)
+        setSubmitting(false)
+        return
+      }
+
+      await createRequests.mutateAsync([payload])
       navigate('/my-requests')
     } catch (err) {
       console.error(err)
       toast({ variant: 'danger', message: t('form.submitFailed') })
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleSplitConfirm = async (usdReceiptPaths: Set<string>) => {
+    if (!pendingSplit) return
+    setSubmitting(true)
+    try {
+      await createRequests.mutateAsync(
+        splitRequestByCurrency(pendingSplit.payload, usdReceiptPaths)
+      )
+      navigate('/my-requests')
+    } catch (err) {
+      console.error(err)
+      toast({ variant: 'danger', message: t('form.submitFailed') })
+    } finally {
+      setSubmitting(false)
+      setSplitOpen(false)
     }
   }
 
@@ -722,6 +754,15 @@ export default function ResubmitPage() {
           </Button>
         </div>
       </form>
+
+      <CurrencySplitDialog
+        open={splitOpen}
+        items={pendingSplit?.items ?? []}
+        receipts={pendingSplit?.receipts ?? []}
+        submitting={submitting}
+        onConfirm={handleSplitConfirm}
+        onCancel={() => setSplitOpen(false)}
+      />
 
       <ProcessingOverlay open={submitting} text={t('common.processingMessage')} />
 
