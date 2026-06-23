@@ -95,6 +95,15 @@ type ReceiptDownloadFn = ReturnType<
 const RECEIPT_DOWNLOAD_CONCURRENCY = 6
 const RECEIPT_DOWNLOAD_RETRIES = 2
 
+// Callable error codes that are deterministic — retrying cannot help, so fail fast
+// instead of burning the full retry budget (and extra function calls) on them.
+const NON_RETRYABLE_CODES = new Set([
+  'functions/invalid-argument',
+  'functions/permission-denied',
+  'functions/not-found',
+  'functions/unauthenticated'
+])
+
 async function downloadOneReceipt(
   downloadFn: ReceiptDownloadFn,
   r: Receipt
@@ -117,9 +126,14 @@ async function downloadOneReceipt(
 
       return { fileName: r.fileName, dataUrl: `data:${contentType};base64,${data}` }
     } catch (err) {
-      if (attempt === RECEIPT_DOWNLOAD_RETRIES) {
+      const code =
+        err && typeof err === 'object' && 'code' in err ? String((err as { code: unknown }).code) : ''
+      const deterministic = NON_RETRYABLE_CODES.has(code)
+      if (deterministic || attempt === RECEIPT_DOWNLOAD_RETRIES) {
         console.error(
-          `Failed to preload receipt "${r.fileName}" after ${attempt + 1} attempts:`,
+          `Failed to preload receipt "${r.fileName}"${
+            deterministic ? '' : ` after ${attempt + 1} attempts`
+          }:`,
           err
         )
         return { fileName: r.fileName, dataUrl: null }

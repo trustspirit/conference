@@ -63,7 +63,15 @@ function detectMimeFromMagic(buffer: Buffer): string | null {
 
 // Strip directory separators / NUL / control chars to keep storagePath predictable.
 function sanitizeFilename(name: string): string {
-  return name.replace(/[\x00-\x1f/\\]/g, '_').slice(0, 200) || 'file'
+  // Replace control chars and path separators, and collapse runs of dots so
+  // saved-webpage names (e.g. Coupang "...card-receipt_view..pdf") never put a
+  // ".." into the storage path. Keeps download path-traversal validation happy.
+  return (
+    name
+      .replace(/[\x00-\x1f/\\]/g, '_')
+      .replace(/\.{2,}/g, '.')
+      .slice(0, 200) || 'file'
+  )
 }
 
 async function uploadFileToStorage(file: FileInput, storagePath: string): Promise<UploadResult> {
@@ -275,8 +283,12 @@ function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | 
 }
 
 async function assertCanReadStoragePath(uid: string, storagePath: string): Promise<void> {
-  // Reject path traversal and absolute paths up front.
-  if (storagePath.includes('..') || storagePath.startsWith('/')) {
+  // Reject path traversal and absolute paths up front. We check for a standalone
+  // ".." path *segment* rather than a bare ".." substring: filenames are sanitized
+  // at upload (slashes/backslashes replaced), so ".." inside a filename
+  // (e.g. "card-receipt_view..pdf") can never escape its directory and is legitimate.
+  const segments = storagePath.split('/')
+  if (storagePath.startsWith('/') || segments.some((s) => s === '..')) {
     throw new HttpsError('invalid-argument', 'Invalid storage path')
   }
   const isStaff = await hasStaffRoleAnywhere(uid)
