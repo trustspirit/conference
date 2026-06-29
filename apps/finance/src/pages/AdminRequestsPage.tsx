@@ -73,8 +73,21 @@ export default function AdminRequestsPage() {
   )
   const setFilter = (v: RequestStatus | 'all') => updateParam('status', v, 'all')
   const setCommitteeFilter = (v: Committee | 'all') => updateParam('committee', v, 'all')
-  const setSortKey = (v: SortKey) => updateParam('sort', v, 'date')
-  const setSortDir = (v: SortDir) => updateParam('dir', v, 'desc')
+  // Sort field + direction must change together in a single navigation. Calling
+  // two separate setSearchParams() in one handler doesn't work: each starts from
+  // the same not-yet-committed searchParams, so the second clobbers the first and
+  // the sort field is lost (only the direction sticks).
+  const setSort = useCallback(
+    (key: SortKey, dir: SortDir) => {
+      const next = new URLSearchParams(searchParams)
+      if (key === 'date') next.delete('sort')
+      else next.set('sort', key)
+      if (dir === 'desc') next.delete('dir')
+      else next.set('dir', dir)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
 
   const firestoreStatus: RequestStatus | RequestStatus[] | undefined =
     filter === 'all' ? undefined : filter === 'rejected' ? ['rejected', 'force_rejected'] : filter
@@ -203,10 +216,9 @@ export default function AdminRequestsPage() {
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+      setSort(key, sortDir === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortKey(key)
-      setSortDir(key === 'date' ? 'desc' : 'asc')
+      setSort(key, key === 'date' ? 'desc' : 'asc')
     }
   }
 
@@ -469,8 +481,7 @@ export default function AdminRequestsPage() {
                 value={`${sortKey}-${sortDir}`}
                 onChange={(v) => {
                   const [k, d] = (v as string).split('-') as [SortKey, SortDir]
-                  setSortKey(k)
-                  setSortDir(d)
+                  setSort(k, d)
                 }}
               />
             </div>
