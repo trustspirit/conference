@@ -253,7 +253,7 @@ export default function ItemRow({
                         : t('field.currencyToggleToKrw')
                   }
                   aria-label={t('field.currency')}
-                  className="-mx-1 px-1.5 py-0.5 rounded text-sm font-semibold text-finance-primary hover:bg-finance-primary-surface disabled:text-finance-muted disabled:cursor-not-allowed transition-colors"
+                  className="-mx-1.5 -my-2 px-2 py-2 rounded text-sm font-semibold text-finance-primary hover:bg-finance-primary-surface disabled:text-finance-muted disabled:cursor-not-allowed transition-colors"
                 >
                   {CURRENCY_SYMBOL[itemCurrency]}
                 </button>
@@ -372,12 +372,23 @@ export default function ItemRow({
                     <span className="relative">
                       <button
                         type="button"
-                        className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold cursor-help"
+                        aria-label={t('field.distanceKmHint')}
+                        // p-2/-m-1.5 enlarges the tap area without shifting layout;
+                        // hover handlers are skipped on touch, where the tap's
+                        // synthetic mouseenter+click would show then instantly hide.
+                        className="inline-flex items-center justify-center p-2 -m-1.5 cursor-help"
                         onClick={() => setShowDistanceHint((v) => !v)}
-                        onMouseEnter={() => setShowDistanceHint(true)}
-                        onMouseLeave={() => setShowDistanceHint(false)}
+                        onMouseEnter={() => {
+                          if (window.matchMedia('(hover: hover)').matches) setShowDistanceHint(true)
+                        }}
+                        onMouseLeave={() => {
+                          if (window.matchMedia('(hover: hover)').matches)
+                            setShowDistanceHint(false)
+                        }}
                       >
-                        ?
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold">
+                          ?
+                        </span>
                       </button>
                       {showDistanceHint && (
                         <span className="absolute z-10 left-0 top-5 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">

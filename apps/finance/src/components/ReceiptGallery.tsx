@@ -70,19 +70,37 @@ export default function ReceiptGallery({
                   <button
                     type="button"
                     onClick={(e) => handleToggle(e, r.storagePath, isLarge)}
-                    className="absolute top-1 right-1 p-1 rounded bg-white/90 hover:bg-white shadow text-finance-text"
+                    className="absolute top-1 right-1 p-2 rounded bg-white/90 hover:bg-white shadow text-finance-text"
                     aria-label={isLarge ? t('receipts.markNormal') : t('receipts.markLarge')}
                     title={isLarge ? t('receipts.markNormal') : t('receipts.markLarge')}
                   >
                     {isLarge ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <polyline points="4 14 10 14 10 20" />
                         <polyline points="20 10 14 10 14 4" />
                         <line x1="14" y1="10" x2="21" y2="3" />
                         <line x1="3" y1="21" x2="10" y2="14" />
                       </svg>
                     ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <polyline points="15 3 21 3 21 9" />
                         <polyline points="9 21 3 21 3 15" />
                         <line x1="21" y1="3" x2="14" y2="10" />

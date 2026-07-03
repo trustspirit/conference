@@ -69,6 +69,7 @@ export function ApprovalModal({
                   <BankBookPreview
                     url={bankBookUrl}
                     alt={t('field.bankBook')}
+                    maxHeight="max-h-48"
                     className="object-contain rounded border border-finance-border bg-white"
                   />
                 </a>

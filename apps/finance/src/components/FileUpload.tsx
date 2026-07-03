@@ -99,7 +99,7 @@ export default function FileUpload({
         accept="image/*,.pdf"
         onChange={handleChange}
         disabled={disabled}
-        className={`w-full text-sm text-finance-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold ${disabled ? 'file:bg-gray-100 file:text-gray-400 opacity-50 cursor-not-allowed' : 'file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover'}`}
+        className={`w-full text-base sm:text-sm text-finance-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold ${disabled ? 'file:bg-gray-100 file:text-gray-400 opacity-50 cursor-not-allowed' : 'file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover'}`}
       />
       <p className="text-xs text-finance-muted mt-1">
         {disabled ? t('form.receiptNotRequired') : t('form.receiptHint')}
@@ -143,7 +143,7 @@ export default function FileUpload({
                 <button
                   type="button"
                   onClick={() => onFilesChange(files.filter((_, j) => j !== i))}
-                  className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                  className="p-2 -m-1.5 rounded text-xs text-red-500 hover:text-red-700 shrink-0"
                   aria-label={`${t('common.delete')} ${f.name}`}
                   title={t('common.delete')}
                 >

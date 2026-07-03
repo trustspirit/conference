@@ -280,6 +280,7 @@
   "settlement": {
     "title": "Settlement",
     "description": "Select approved requests for settlement.",
+    "selectAll": "Select all",
     "listTitle": "Settlement History",
     "newSettlement": "New Settlement",
     "settle": "Settle Selected ({{count}})",

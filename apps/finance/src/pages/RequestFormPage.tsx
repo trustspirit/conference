@@ -638,7 +638,7 @@ export default function RequestFormPage() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
+                className="w-full border border-finance-border rounded px-3 py-2 text-base sm:text-sm focus:border-finance-primary focus:outline-none"
               />
             </div>
             <TextField
@@ -760,7 +760,7 @@ export default function RequestFormPage() {
                   setVendorBankBookError(null)
                   setVendorBankBookFile(f)
                 }}
-                className="w-full text-sm text-finance-muted file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover"
+                className="w-full text-base sm:text-sm text-finance-muted file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-finance-primary-surface file:text-finance-primary hover:file:bg-finance-primary-surface-hover"
               />
               {vendorBankBookError && (
                 <p className="text-xs text-red-600 mt-1">{vendorBankBookError}</p>

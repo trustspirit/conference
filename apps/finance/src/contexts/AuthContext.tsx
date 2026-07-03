@@ -28,6 +28,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+// Installed-PWA contexts can't reliably host an OAuth popup window.
+function isStandaloneDisplay(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as { standalone?: boolean }).standalone === true
+  )
+}
+
+// Popup failures that indicate the environment (not the user) rejected the
+// popup, so a redirect flow is worth attempting instead.
+const POPUP_FALLBACK_CODES = new Set([
+  'auth/popup-blocked',
+  'auth/popup-closed-by-user',
+  'auth/cancelled-popup-request',
+  'auth/operation-not-supported-in-this-environment',
+  'auth/web-storage-unsupported'
+])
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast()
   const toastRef = useRef(toast)
@@ -67,16 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // without requiring a refresh. Keep needs-* flags in sync too, otherwise
             // the displayName / consent modals can stay open after the underlying
             // field is populated by an admin or via a parallel tab.
-            unsubscribeUserDoc = onSnapshot(
-              doc(db, 'users', firebaseUser.uid),
-              (snap) => {
-                if (!snap.exists()) return
-                const next = snap.data() as AppUser
-                setAppUser(next)
-                setNeedsDisplayName(!next.displayName)
-                setNeedsConsent(!!next.displayName && !next.consentAgreedAt)
-              }
-            )
+            unsubscribeUserDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (snap) => {
+              if (!snap.exists()) return
+              const next = snap.data() as AppUser
+              setAppUser(next)
+              setNeedsDisplayName(!next.displayName)
+              setNeedsConsent(!!next.displayName && !next.consentAgreedAt)
+            })
           } else {
             const newUser: AppUser = {
               uid: firebaseUser.uid,
@@ -121,16 +136,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signInWithGoogle = async () => {
+    if (isStandaloneDisplay()) {
+      try {
+        await signInWithRedirect(auth, googleProvider)
+        return
+      } catch (error: unknown) {
+        console.error('Google sign-in redirect error:', error)
+        const firebaseError = error as { code?: string; message?: string }
+        toastRef.current({
+          variant: 'danger',
+          message: `${i18n.t('auth.loginFailed')}: ${firebaseError.code || firebaseError.message}`
+        })
+        return
+      }
+    }
     try {
       await signInWithPopup(auth, googleProvider)
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)
       const firebaseError = error as { code?: string; message?: string }
-      // If popup was blocked or closed, fall back to redirect
-      if (
-        firebaseError.code === 'auth/popup-blocked' ||
-        firebaseError.code === 'auth/popup-closed-by-user'
-      ) {
+      if (firebaseError.code && POPUP_FALLBACK_CODES.has(firebaseError.code)) {
         try {
           await signInWithRedirect(auth, googleProvider)
           return

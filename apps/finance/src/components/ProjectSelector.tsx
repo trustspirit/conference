@@ -103,7 +103,7 @@ export default function ProjectSelector() {
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(!open)}
-          className="flex max-w-full items-center gap-1.5 rounded-lg bg-finance-primary-surface px-3 py-1.5 text-sm font-semibold text-finance-primary transition-colors hover:bg-finance-primary-surface-hover sm:max-w-[200px]"
+          className="flex max-w-full items-center gap-1.5 rounded-lg bg-finance-primary-surface px-3 py-2 text-sm font-semibold text-finance-primary transition-colors hover:bg-finance-primary-surface-hover sm:max-w-[200px] sm:py-1.5"
         >
           <FolderIcon className="w-4 h-4 shrink-0" />
           <span className="truncate">{currentProject?.name || t('project.select')}</span>
@@ -129,7 +129,7 @@ export default function ProjectSelector() {
                     }
                   }
                 }}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-finance-primary-subtle transition-colors ${
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-finance-primary-subtle transition-colors sm:py-2 ${
                   currentProject?.id === p.id
                     ? 'finance-nav-active font-semibold'
                     : 'text-finance-text-secondary'
@@ -146,7 +146,7 @@ export default function ProjectSelector() {
                     setOpen(false)
                     setShowCreateModal(true)
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-finance-primary hover:bg-finance-primary-subtle transition-colors"
+                  className="w-full text-left px-4 py-2.5 text-sm text-finance-primary hover:bg-finance-primary-subtle transition-colors sm:py-2"
                 >
                   + {t('project.create')}
                 </button>
@@ -167,7 +167,7 @@ export default function ProjectSelector() {
                     <button
                       onClick={() => handleRestore(p.id)}
                       disabled={restoreProject.isPending}
-                      className="shrink-0 inline-flex items-center gap-1 text-xs text-finance-primary hover:text-finance-primary-hover disabled:text-gray-400 transition-colors ml-2"
+                      className="shrink-0 inline-flex items-center gap-1 p-2 -m-1.5 ml-1 rounded text-xs text-finance-primary hover:text-finance-primary-hover disabled:text-gray-400 transition-colors"
                     >
                       <RestoreIcon className="w-3.5 h-3.5" />
                       {t('project.restore')}
@@ -195,7 +195,7 @@ export default function ProjectSelector() {
               <h3 className="text-lg font-bold text-finance-primary">{t('project.create')}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 rounded-md hover:bg-finance-primary-subtle transition-colors"
+                className="p-2.5 -m-1.5 rounded-md hover:bg-finance-primary-subtle transition-colors"
               >
                 <CloseIcon className="w-5 h-5 text-gray-400" />
               </button>

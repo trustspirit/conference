@@ -45,12 +45,19 @@ function NavDropdown({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // On touch devices the tap fires mouseenter (open) followed by click
+  // (toggle → close), so the menu would flash and stay closed — hover
+  // handling must apply only where a real pointer can hover.
+  const hoverCapable = window.matchMedia('(hover: hover)').matches
+
   const handleMouseEnter = () => {
+    if (!hoverCapable) return
     clearTimeout(timeoutRef.current)
     setOpen(true)
   }
 
   const handleMouseLeave = () => {
+    if (!hoverCapable) return
     timeoutRef.current = setTimeout(() => setOpen(false), 150)
   }
 
@@ -191,7 +198,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ...(canAccessSettlementRead(projectRole)
       ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessDashboard(projectRole) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : [])
+    ...(canAccessDashboard(projectRole)
+      ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }]
+      : [])
   ]
 
   const managementGroup: NavGroup | null =
@@ -220,8 +229,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ...(canAccessSettlementRead(projectRole)
       ? [{ to: '/admin/settlements', label: t('nav.settlements') }]
       : []),
-    ...(canAccessReceipts(projectRole) ? [{ to: '/admin/receipts', label: t('nav.receipts') }] : []),
-    ...(canAccessDashboard(projectRole) ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }] : []),
+    ...(canAccessReceipts(projectRole)
+      ? [{ to: '/admin/receipts', label: t('nav.receipts') }]
+      : []),
+    ...(canAccessDashboard(projectRole)
+      ? [{ to: '/admin/dashboard', label: t('nav.dashboard') }]
+      : []),
     ...(canManageUsers(projectRole) ? [{ to: '/admin/users', label: t('nav.userManagement') }] : [])
   ]
 
@@ -281,27 +294,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   to="/settings"
                   aria-label={t('nav.settings')}
-                  className={`p-2 rounded-md transition-colors ${
+                  className={`p-2.5 rounded-md transition-colors ${
                     isActive('/settings') ? 'finance-nav-active' : 'hover:bg-finance-primary-subtle'
                   }`}
                 >
-                  <GearIcon className="w-4 h-4 text-finance-muted" />
+                  <GearIcon className="w-5 h-5 text-finance-muted" />
                 </Link>
               )}
-              <UserMenu userName={userName} role={displayRole} onLogout={logout} isActive={isActive} />
+              <UserMenu
+                userName={userName}
+                role={displayRole}
+                onLogout={logout}
+                isActive={isActive}
+              />
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden ml-2 shrink-0 p-2 rounded-md text-finance-primary hover:bg-finance-primary-subtle"
+              className="md:hidden ml-2 shrink-0 p-2.5 rounded-md text-finance-primary hover:bg-finance-primary-subtle"
               aria-label="Menu"
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
-                <CloseIcon className="w-5 h-5" />
+                <CloseIcon className="w-6 h-6" />
               ) : (
-                <MenuIcon className="w-5 h-5" />
+                <MenuIcon className="w-6 h-6" />
               )}
             </button>
           </div>
@@ -320,7 +338,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2.5 rounded-md text-sm ${
+                  className={`block px-3 py-3 rounded-md text-sm ${
                     isActive(item.to)
                       ? 'finance-nav-active font-semibold'
                       : 'text-finance-body hover:bg-finance-primary-subtle'
@@ -339,7 +357,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       key={item.to}
                       to={item.to}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-3 py-2.5 rounded-md text-sm ${
+                      className={`block px-3 py-3 rounded-md text-sm ${
                         isActive(item.to)
                           ? 'finance-nav-active font-semibold'
                           : 'text-finance-body hover:bg-finance-primary-subtle'
@@ -355,7 +373,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     to="/settings"
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block px-3 py-2.5 text-sm rounded-md ${
+                    className={`block px-3 py-3 text-sm rounded-md ${
                       isActive('/settings')
                         ? 'finance-nav-active font-semibold'
                         : 'text-finance-body hover:bg-finance-primary-subtle'
@@ -367,7 +385,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2.5 text-sm rounded-md ${
+                  className={`block px-3 py-3 text-sm rounded-md ${
                     isActive('/profile')
                       ? 'finance-nav-active font-semibold'
                       : 'text-finance-body hover:bg-finance-primary-subtle'
@@ -386,7 +404,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </span>
                   <button
                     onClick={logout}
-                    className="shrink-0 rounded-md px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="shrink-0 rounded-md px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
                   >
                     {t('nav.logout')}
                   </button>

@@ -3,13 +3,15 @@ import { createPortal } from 'react-dom'
 import ChatPanel from './ChatPanel'
 import { useChat } from '../../hooks/useChatStream'
 
+// Match the nav's md (768px) collapse point so chat and nav switch to their
+// mobile variants together.
 function useIsMobile() {
   return useSyncExternalStore(
     (cb) => {
       window.addEventListener('resize', cb)
       return () => window.removeEventListener('resize', cb)
     },
-    () => window.innerWidth < 640,
+    () => window.innerWidth < 768,
     () => false
   )
 }
@@ -70,7 +72,7 @@ export default function FloatingChatButton() {
   return (
     <>
       {mobilePanel}
-      <div className="fixed bottom-4 right-4 z-50 print:hidden sm:bottom-6 sm:right-6">
+      <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-50 print:hidden sm:bottom-6 sm:right-6">
         {isOpen && !isMobile && (
           <div className="absolute bottom-16 right-0 chat-panel-enter">
             <ChatPanel onClose={() => setIsOpen(false)} chat={chat} />

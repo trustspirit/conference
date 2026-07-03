@@ -280,6 +280,7 @@
   "settlement": {
     "title": "정산 처리",
     "description": "승인된 신청서를 선택하여 정산 처리합니다.",
+    "selectAll": "전체 선택",
     "listTitle": "정산 내역",
     "newSettlement": "새 정산 처리",
     "settle": "선택 항목 정산 ({{count}}건)",
