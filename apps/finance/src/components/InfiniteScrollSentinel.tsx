@@ -24,6 +24,9 @@ export default function InfiniteScrollSentinel({
     const el = sentinelRef.current
     if (!el) return
 
+    // Re-observe after each page finishes loading. IntersectionObserver only
+    // reports intersection changes, so a sentinel that stays visible after a
+    // short/filtered page would otherwise never request the following page.
     const observer = new IntersectionObserver(
       ([entry]) => {
         const { hasNextPage, isFetchingNextPage, fetchNextPage } = stateRef.current
@@ -36,7 +39,7 @@ export default function InfiniteScrollSentinel({
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [rootRef])
+  }, [rootRef, hasNextPage, isFetchingNextPage])
 
   if (!hasNextPage) return null
 
