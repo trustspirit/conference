@@ -32,50 +32,63 @@ function escapeHtml(str: string) {
     .replace(/"/g, '&quot;')
 }
 
-async function pdfToImageDataUrl(data: ArrayBuffer | Uint8Array): Promise<string | null> {
+/** Render EVERY page of a PDF to a PNG data URL. A multi-page receipt (e.g. a
+ *  scanned invoice + terms) must attach all pages, not just the cover — rendering
+ *  only page 1 silently drops the rest. Returns one data URL per page, in order;
+ *  an empty array signals a failed/empty document so callers can show a fallback. */
+async function pdfToImageDataUrls(data: ArrayBuffer | Uint8Array): Promise<string[]> {
   try {
     const loadingTask = pdfjsLib.getDocument({ data })
     const pdf = await loadingTask.promise
-    const page = await pdf.getPage(1)
-    const scale = 2
-    const viewport = page.getViewport({ scale })
-    const canvas = document.createElement('canvas')
-    canvas.width = viewport.width
-    canvas.height = viewport.height
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise
-    const dataUrl = canvas.toDataURL('image/png')
-    canvas.width = 0
-    canvas.height = 0
-    return dataUrl
+    const urls: string[] = []
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum)
+      const scale = 2
+      const viewport = page.getViewport({ scale })
+      const canvas = document.createElement('canvas')
+      canvas.width = viewport.width
+      canvas.height = viewport.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        canvas.width = 0
+        canvas.height = 0
+        continue
+      }
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise
+      urls.push(canvas.toDataURL('image/png'))
+      canvas.width = 0
+      canvas.height = 0
+    }
+    return urls
   } catch (err) {
-    console.error('pdfToImageDataUrl failed:', err)
-    return null
+    console.error('pdfToImageDataUrls failed:', err)
+    return []
   }
 }
 
-/** Fetch a URL and convert to data URL (handles both images and PDFs) */
-async function preloadImageUrl(url: string): Promise<string | null> {
+/** Fetch a URL and convert to data URLs (handles both images and PDFs). Returns
+ *  one data URL per page for PDFs (all pages), a single-element array for images,
+ *  and an empty array on failure. */
+async function preloadImageUrl(url: string): Promise<string[]> {
   try {
     const res = await fetch(url)
-    if (!res.ok) return null
+    if (!res.ok) return []
     const blob = await res.blob()
     const isPdf =
       blob.type === 'application/pdf' || decodeURIComponent(url).toLowerCase().includes('.pdf')
     if (isPdf) {
       const arrayBuffer = await blob.arrayBuffer()
-      return await pdfToImageDataUrl(arrayBuffer)
+      return await pdfToImageDataUrls(arrayBuffer)
     }
-    return await new Promise<string | null>((resolve) => {
+    return await new Promise<string[]>((resolve) => {
       const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => resolve(null)
+      reader.onload = () => resolve([reader.result as string])
+      reader.onerror = () => resolve([])
       reader.readAsDataURL(blob)
     })
   } catch (err) {
     console.error('preloadImageUrl failed:', err)
-    return null
+    return []
   }
 }
 
@@ -104,11 +117,17 @@ const NON_RETRYABLE_CODES = new Set([
   'functions/unauthenticated'
 ])
 
+// One receipt can expand into multiple images: a PDF renders one image per page,
+// while an image file (or a failure) yields a single entry. `dataUrls` always has
+// length ≥ 1 — a `[null]` entry represents a receipt that failed to load so the
+// print output still shows a "Failed to load" placeholder card.
+type PreloadedReceipt = { fileName: string; dataUrls: (string | null)[] }
+
 async function downloadOneReceipt(
   downloadFn: ReceiptDownloadFn,
   r: Receipt
-): Promise<{ fileName: string; dataUrl: string | null }> {
-  if (!r.storagePath) return { fileName: r.fileName, dataUrl: null }
+): Promise<PreloadedReceipt> {
+  if (!r.storagePath) return { fileName: r.fileName, dataUrls: [null] }
 
   for (let attempt = 0; attempt <= RECEIPT_DOWNLOAD_RETRIES; attempt++) {
     try {
@@ -120,11 +139,14 @@ async function downloadOneReceipt(
         const binary = atob(data)
         const bytes = new Uint8Array(binary.length)
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-        const pageDataUrl = await pdfToImageDataUrl(bytes)
-        return { fileName: r.fileName, dataUrl: pageDataUrl }
+        const pageDataUrls = await pdfToImageDataUrls(bytes)
+        return {
+          fileName: r.fileName,
+          dataUrls: pageDataUrls.length > 0 ? pageDataUrls : [null]
+        }
       }
 
-      return { fileName: r.fileName, dataUrl: `data:${contentType};base64,${data}` }
+      return { fileName: r.fileName, dataUrls: [`data:${contentType};base64,${data}`] }
     } catch (err) {
       const code =
         err && typeof err === 'object' && 'code' in err ? String((err as { code: unknown }).code) : ''
@@ -136,14 +158,14 @@ async function downloadOneReceipt(
           }:`,
           err
         )
-        return { fileName: r.fileName, dataUrl: null }
+        return { fileName: r.fileName, dataUrls: [null] }
       }
       // Exponential backoff (300ms, 600ms) lets a momentarily overloaded
       // function recover before we retry.
       await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt))
     }
   }
-  return { fileName: r.fileName, dataUrl: null }
+  return { fileName: r.fileName, dataUrls: [null] }
 }
 
 async function preloadReceipts(receipts: Receipt[]) {
@@ -152,7 +174,7 @@ async function preloadReceipts(receipts: Receipt[]) {
     { data: string; contentType: string; fileName: string }
   >(functions, 'downloadFileV2')
 
-  const results: { fileName: string; dataUrl: string | null }[] = new Array(receipts.length)
+  const results: PreloadedReceipt[] = new Array(receipts.length)
   let next = 0
   const worker = async () => {
     while (true) {
@@ -238,6 +260,38 @@ function renderReceiptCards(items: NumberedReceiptImage[], size: 'normal' | 'lar
       return size === 'large' ? `<div class="large-page">${inner}</div>` : inner
     })
     .join('')
+}
+
+/**
+ * Expand a form's receipt entries into per-page numbered images. Each receipt may
+ * have produced multiple page images (multi-page PDF) or a single one (image / single
+ * page / failure). The receipt number badge (`nr.label`) is preserved across all pages
+ * of the same receipt; when a receipt spans multiple pages, its filename gets a
+ * `(page/total)` suffix so reviewers can tell the pages apart.
+ *
+ * `entries` and `images` are index-aligned (both derived from the same receipt list).
+ */
+export function expandReceiptImages(
+  entries: { label: string; receipt: Receipt; displaySize?: 'large' }[],
+  images: { fileName: string; dataUrls: (string | null)[] }[]
+): NumberedReceiptImage[] {
+  const out: NumberedReceiptImage[] = []
+  entries.forEach((nr, i) => {
+    const img = images[i]
+    const pages = img && img.dataUrls.length > 0 ? img.dataUrls : [null]
+    const fileName = img?.fileName ?? nr.receipt.fileName
+    const multiPage = pages.length > 1
+    pages.forEach((pageUrl, pageIdx) => {
+      out.push({
+        nr,
+        img: {
+          fileName: multiPage ? `${fileName} (${pageIdx + 1}/${pages.length})` : fileName,
+          dataUrl: pageUrl
+        }
+      })
+    })
+  })
+  return out
 }
 
 interface ReimbursementRow {
@@ -393,16 +447,14 @@ export async function exportBatchSettlementPdf(
   const allNumberedReceipts = [...receiptsByForm.values()].flat()
   const allImages = await preloadReceipts(allNumberedReceipts.map((nr) => nr.receipt))
 
-  // Build index map: form source id → image indices
+  // Build index map: form source id → per-page numbered images. Each entry can
+  // expand into several images when its receipt is a multi-page PDF.
   let imageOffset = 0
   const imagesByForm = new Map<string, NumberedReceiptImage[]>()
   for (const source of formSources) {
     const entries = receiptsByForm.get(source.id) || []
-    const mapped = entries.map((nr, i) => ({
-      nr,
-      img: allImages[imageOffset + i]
-    }))
-    imagesByForm.set(source.id, mapped)
+    const formImages = allImages.slice(imageOffset, imageOffset + entries.length)
+    imagesByForm.set(source.id, expandReceiptImages(entries, formImages))
     imageOffset += entries.length
   }
 
@@ -432,10 +484,13 @@ export async function exportBatchSettlementPdf(
       }
       if (url) bankBookEntries.push({ payee: s.payee, url })
     }
-    // Preload bank book images as data URLs to avoid CORS/auth issues in print window
+    // Preload bank book images as data URLs to avoid CORS/auth issues in print window.
+    // A PDF bank book renders one image per page, so each URL can expand into several.
     const preloaded = await Promise.all(bankBookEntries.map((bb) => preloadImageUrl(bb.url)))
     for (let i = 0; i < bankBookEntries.length; i++) {
-      if (preloaded[i]) bankBooks.push({ payee: bankBookEntries[i].payee, dataUrl: preloaded[i]! })
+      for (const dataUrl of preloaded[i]) {
+        bankBooks.push({ payee: bankBookEntries[i].payee, dataUrl })
+      }
     }
   }
 
