@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button, Dialog, useToast } from 'trust-ui-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
-import { effectiveSystemRole } from '../hooks/useProjectRole'
+import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 import { formatFirestoreDate } from '../lib/utils'
 import { exportBatchSettlementPdf } from '../lib/pdfExport'
 import {
@@ -17,6 +17,8 @@ import {
 import { useUser } from '../hooks/queries/useUsers'
 import { DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import { formatTotals, getItemCurrency } from '../lib/currency'
+import { isStaff } from '../lib/roles'
+import { useReceiptSizeToggle } from '../hooks/useReceiptSizeToggle'
 import Layout from '../components/Layout'
 import Spinner from '../components/Spinner'
 import InfoGrid from '../components/InfoGrid'
@@ -66,6 +68,15 @@ export default function SettlementReportPage() {
   // Dedupe: a mixed-currency request appears in both the KRW and USD settlement docs.
   const allRequestIds = [...new Set(settlements.flatMap((s) => s.requestIds))]
   const { data: originalRequests, isLoading: requestsLoading } = useRequestsByIds(allRequestIds)
+
+  // 영수증 PDF 크기 토글. 값은 원본 신청서 문서에 저장되고, pdfExport가 같은 문서를
+  // 읽으므로 여기서 바꾼 크기가 그대로 PDF에 반영된다.
+  const role = useProjectRole() ?? 'user'
+  const receiptSizeToggle = useReceiptSizeToggle(
+    originalRequests,
+    currentProject?.id,
+    isStaff(role)
+  )
 
   // Load payee user profiles for bank book URLs
   const requesterUids = [...new Set((originalRequests || []).map((r) => r.requestedBy.uid))]
@@ -474,7 +485,7 @@ export default function SettlementReportPage() {
                 </div>
               </div>
 
-              <ReceiptGallery receipts={req.receipts} />
+              <ReceiptGallery receipts={req.receipts} {...receiptSizeToggle} />
             </div>
           ))
         ) : (
@@ -548,7 +559,10 @@ export default function SettlementReportPage() {
               </div>
             )}
 
-            <ReceiptGallery receipts={settlements.flatMap((s) => s.receipts)} />
+            <ReceiptGallery
+              receipts={settlements.flatMap((s) => s.receipts)}
+              {...receiptSizeToggle}
+            />
           </>
         )}
 
