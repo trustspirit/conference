@@ -110,9 +110,7 @@ describe('useReceiptSizeToggle', () => {
   })
 
   it('projectId가 없으면 저장하지 않고 실패 토스트를 띄운다', async () => {
-    const { result } = renderHook(() =>
-      useReceiptSizeToggle([req('r1', ['a'])], undefined, true)
-    )
+    const { result } = renderHook(() => useReceiptSizeToggle([req('r1', ['a'])], undefined, true))
     await act(async () => {
       await result.current.onToggleDisplaySize!('a', 'large')
     })
