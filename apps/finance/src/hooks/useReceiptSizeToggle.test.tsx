@@ -27,13 +27,13 @@ vi.mock('./queries/useRequests', () => ({
 }))
 
 import { useReceiptSizeToggle } from './useReceiptSizeToggle'
-import type { PaymentRequest } from '../types'
+import type { PaymentRequest, ReceiptDisplaySizes } from '../types'
 
 /** 테스트에 필요한 필드만 채운 최소 request. 나머지 필드는 훅이 읽지 않는다. */
 function req(
   id: string,
   storagePaths: string[],
-  receiptDisplaySizes?: Record<string, 'large'>
+  receiptDisplaySizes?: ReceiptDisplaySizes
 ): PaymentRequest {
   return {
     id,
@@ -83,7 +83,7 @@ describe('useReceiptSizeToggle', () => {
     })
   })
 
-  it("'normal' 토글은 키를 삭제하고 같은 request의 다른 키는 보존한다", async () => {
+  it("'normal' 토글은 키를 삭제하지 않고 'normal'을 명시 저장한다", async () => {
     const { result } = renderHook(() =>
       useReceiptSizeToggle([req('r1', ['a', 'b'], { a: 'large', b: 'large' })], 'p1', true)
     )
@@ -93,7 +93,7 @@ describe('useReceiptSizeToggle', () => {
     expect(mutateAsyncSpy).toHaveBeenCalledWith({
       requestId: 'r1',
       projectId: 'p1',
-      receiptDisplaySizes: { b: 'large' }
+      receiptDisplaySizes: { a: 'normal', b: 'large' }
     })
   })
 
@@ -159,5 +159,20 @@ describe('useReceiptSizeToggle', () => {
   it('enabled=false이면 isPending은 항상 false다', () => {
     const { result } = renderHook(() => useReceiptSizeToggle([req('r1', ['a'])], 'p1', false))
     expect(result.current.isPending).toBe(false)
+  })
+
+  it('projectDefault를 defaultSize로 그대로 돌려준다 (갤러리에 스프레드되는 값)', () => {
+    const { result } = renderHook(() =>
+      useReceiptSizeToggle([req('r1', ['a'])], 'p1', true, 'large')
+    )
+    expect(result.current.defaultSize).toBe('large')
+  })
+
+  it('enabled=false여도 defaultSize는 전달된다', () => {
+    const { result } = renderHook(() =>
+      useReceiptSizeToggle([req('r1', ['a'])], 'p1', false, 'large')
+    )
+    expect(result.current.onToggleDisplaySize).toBeUndefined()
+    expect(result.current.defaultSize).toBe('large')
   })
 })

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from 'trust-ui-react'
 import { useUpdateRequestReceiptDisplaySizes } from './queries/useRequests'
-import type { PaymentRequest, ReceiptDisplaySizes } from '../types'
+import type { PaymentRequest, ReceiptDisplaySize, ReceiptDisplaySizes } from '../types'
 
 export interface ReceiptSizeToggle {
   /** storagePath → 'large' 병합 맵. 권한과 무관하게 항상 채워진다 (배지 표시용). */
@@ -12,6 +12,8 @@ export interface ReceiptSizeToggle {
   onToggleDisplaySize?: (storagePath: string, next: 'normal' | 'large') => Promise<void>
   /** 저장 중이면 true. `enabled`가 false일 때도 항상 채워진다 (그때는 항상 false). */
   isPending: boolean
+  /** 프로젝트의 기본 표시 크기. 그대로 ReceiptGallery의 `defaultSize` prop으로 스프레드된다. */
+  defaultSize?: ReceiptDisplaySize
 }
 
 /**
@@ -24,11 +26,16 @@ export interface ReceiptSizeToggle {
  *
  * 훅은 `map()` 안에서 호출할 수 없으므로 페이지 상단에서 한 번 호출하고 모든 갤러리가
  * 결과를 공유한다. 훅 호출 횟수는 `requests` 길이와 무관하게 고정이다.
+ *
+ * 표시 크기는 3상태 모델을 따른다: 명시적으로 저장된 값 > 프로젝트 기본값(`projectDefault`)
+ * > `'normal'`. 그래서 토글은 'normal'로 되돌릴 때도 키를 지우지 않고 값을 명시 저장한다 —
+ * 키 삭제는 "기본값 상속"을 뜻하게 되므로, 프로젝트 기본값이 'large'인 경우 의도와 달라진다.
  */
 export function useReceiptSizeToggle(
   requests: PaymentRequest[] | undefined,
   projectId: string | undefined,
-  enabled: boolean
+  enabled: boolean,
+  projectDefault?: ReceiptDisplaySize
 ): ReceiptSizeToggle {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -50,10 +57,10 @@ export function useReceiptSizeToggle(
     return { displaySizes: sizes, ownerByPath: owner }
   }, [requests])
 
-  if (!enabled) return { displaySizes, isPending: false }
+  if (!enabled) return { displaySizes, isPending: false, defaultSize: projectDefault }
   // 소유 신청서 인덱스가 비어 있으면 (예: `useRequestsByIds`가 아직 안 불러왔거나 실패한 경우)
   // 어떤 토글도 성공할 수 없다. 실패할 수밖에 없는 버튼 대신 아예 숨긴다.
-  if (ownerByPath.size === 0) return { displaySizes, isPending: false }
+  if (ownerByPath.size === 0) return { displaySizes, isPending: false, defaultSize: projectDefault }
 
   const onToggleDisplaySize = async (storagePath: string, next: 'normal' | 'large') => {
     const owner = ownerByPath.get(storagePath)
@@ -63,10 +70,10 @@ export function useReceiptSizeToggle(
       toast({ variant: 'danger', message: t('receipts.sizeUpdateFailed') })
       return
     }
-    // 'large'만 명시적으로 저장하고 'normal'은 키를 지운다 — 부재가 기본 크기를 뜻한다.
+    // 두 값 모두 명시 저장한다. 프로젝트 기본값이 'large'일 수 있으므로 키를 지우면
+    // '일반'이 아니라 '기본값 상속'을 뜻하게 되어 의도와 달라진다.
     const map: ReceiptDisplaySizes = { ...(owner.receiptDisplaySizes ?? {}) }
-    if (next === 'large') map[storagePath] = 'large'
-    else delete map[storagePath]
+    map[storagePath] = next
 
     try {
       await mutation.mutateAsync({
@@ -79,5 +86,10 @@ export function useReceiptSizeToggle(
     }
   }
 
-  return { displaySizes, onToggleDisplaySize, isPending: mutation.isPending }
+  return {
+    displaySizes,
+    onToggleDisplaySize,
+    isPending: mutation.isPending,
+    defaultSize: projectDefault
+  }
 }
