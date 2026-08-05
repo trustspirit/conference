@@ -11,13 +11,16 @@ interface Props {
   /** When provided, each tile shows a toggle to flip the receipt's PDF size.
    *  Receives the receipt's storagePath and the desired next size. */
   onToggleDisplaySize?: (storagePath: string, next: 'normal' | 'large') => void | Promise<void>
+  /** When true, disables the toggle button while a size update is in flight. */
+  isPending?: boolean
 }
 
 export default function ReceiptGallery({
   receipts,
   title,
   displaySizes,
-  onToggleDisplaySize
+  onToggleDisplaySize,
+  isPending
 }: Props) {
   const { t } = useTranslation()
   if (receipts.length === 0) return null
@@ -70,7 +73,8 @@ export default function ReceiptGallery({
                   <button
                     type="button"
                     onClick={(e) => handleToggle(e, r.storagePath, isLarge)}
-                    className="absolute top-1 right-1 p-2 rounded bg-white/90 hover:bg-white shadow text-finance-text"
+                    disabled={isPending}
+                    className="absolute top-1 right-1 p-2 rounded bg-white/90 hover:bg-white shadow text-finance-text disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={isLarge ? t('receipts.markNormal') : t('receipts.markLarge')}
                     title={isLarge ? t('receipts.markNormal') : t('receipts.markLarge')}
                   >

@@ -36,15 +36,18 @@ const PAGE_SIZE = 20
 /**
  * Invalidate every cache that depends on the requests collection for a project.
  * Covers `requests.all`, `requests.byUser`, `requests.approved`, `requests.infinite*`
- * (all share the `['requests', projectId]` prefix) plus the derived dashboard stats
- * and budget usage queries. Call from every request mutation's onSuccess.
+ * (all share the `['requests', projectId]` prefix), `requests.byIds` (its own
+ * `['requests', 'byIds', ...]` prefix — does NOT share the projectId prefix, so it
+ * needs its own explicit invalidation), plus the derived dashboard stats and budget
+ * usage queries. Call from every request mutation's onSuccess.
  */
-function invalidateRequestCaches(
+export function invalidateRequestCaches(
   queryClient: QueryClient,
   projectId: string,
   requestId?: string
 ) {
   queryClient.invalidateQueries({ queryKey: ['requests', projectId] })
+  queryClient.invalidateQueries({ queryKey: ['requests', 'byIds'] })
   if (requestId) {
     queryClient.invalidateQueries({ queryKey: queryKeys.requests.detail(requestId) })
   }

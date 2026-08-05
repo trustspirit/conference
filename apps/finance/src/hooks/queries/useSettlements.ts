@@ -117,7 +117,7 @@ export async function fetchRequestDatesByIds(ids: string[]): Promise<Map<string,
 /** Load original requests by IDs (for settlement report individual forms) */
 export function useRequestsByIds(requestIds: string[]) {
   return useQuery({
-    queryKey: ['requests', 'byIds', ...requestIds],
+    queryKey: queryKeys.requests.byIds(requestIds),
     queryFn: async () => {
       if (requestIds.length === 0) return []
       const results = await Promise.all(

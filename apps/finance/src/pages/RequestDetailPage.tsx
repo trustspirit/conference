@@ -77,8 +77,9 @@ export default function RequestDetailPage() {
   const loading = requestLoading || requesterLoading
 
   // 영수증 PDF 크기 토글 — 값은 이 신청서 문서에 저장된다.
+  const receiptSizeToggleRequests = useMemo(() => (request ? [request] : []), [request])
   const receiptSizeToggle = useReceiptSizeToggle(
-    request ? [request] : [],
+    receiptSizeToggleRequests,
     currentProject?.id,
     isStaff(role)
   )

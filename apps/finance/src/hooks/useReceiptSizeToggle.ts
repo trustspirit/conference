@@ -7,8 +7,11 @@ import type { PaymentRequest, ReceiptDisplaySizes } from '../types'
 export interface ReceiptSizeToggle {
   /** storagePath → 'large' 병합 맵. 권한과 무관하게 항상 채워진다 (배지 표시용). */
   displaySizes: ReceiptDisplaySizes
-  /** `enabled`가 false면 undefined — ReceiptGallery가 토글 버튼을 숨긴다. */
+  /** `enabled`가 false이거나 소유 신청서 인덱스가 비어 있으면(예: 로드 실패) undefined —
+   *  ReceiptGallery가 토글 버튼을 숨긴다. 실패할 수밖에 없는 버튼을 보여주지 않기 위함. */
   onToggleDisplaySize?: (storagePath: string, next: 'normal' | 'large') => Promise<void>
+  /** 저장 중이면 true. `enabled`가 false일 때도 항상 채워진다 (그때는 항상 false). */
+  isPending: boolean
 }
 
 /**
@@ -47,7 +50,10 @@ export function useReceiptSizeToggle(
     return { displaySizes: sizes, ownerByPath: owner }
   }, [requests])
 
-  if (!enabled) return { displaySizes }
+  if (!enabled) return { displaySizes, isPending: false }
+  // 소유 신청서 인덱스가 비어 있으면 (예: `useRequestsByIds`가 아직 안 불러왔거나 실패한 경우)
+  // 어떤 토글도 성공할 수 없다. 실패할 수밖에 없는 버튼 대신 아예 숨긴다.
+  if (ownerByPath.size === 0) return { displaySizes, isPending: false }
 
   const onToggleDisplaySize = async (storagePath: string, next: 'normal' | 'large') => {
     const owner = ownerByPath.get(storagePath)
@@ -73,5 +79,5 @@ export function useReceiptSizeToggle(
     }
   }
 
-  return { displaySizes, onToggleDisplaySize }
+  return { displaySizes, onToggleDisplaySize, isPending: mutation.isPending }
 }

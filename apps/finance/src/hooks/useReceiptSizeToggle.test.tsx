@@ -137,4 +137,27 @@ describe('useReceiptSizeToggle', () => {
     const { result } = renderHook(() => useReceiptSizeToggle(undefined, 'p1', true))
     expect(result.current.displaySizes).toEqual({})
   })
+
+  it('request 목록이 비어 있으면 enabled=true여도 토글 핸들러를 주지 않는다', () => {
+    const { result } = renderHook(() => useReceiptSizeToggle([], 'p1', true))
+    expect(result.current.onToggleDisplaySize).toBeUndefined()
+    expect(result.current.isPending).toBe(false)
+  })
+
+  it('영수증에 storagePath가 없어 ownerByPath가 비면 enabled=true여도 토글 핸들러를 주지 않는다', () => {
+    const requestWithoutStoragePath = {
+      id: 'r1',
+      receipts: [{ fileName: 'a.jpg', storagePath: '' }],
+      receiptDisplaySizes: undefined
+    } as unknown as PaymentRequest
+    const { result } = renderHook(() =>
+      useReceiptSizeToggle([requestWithoutStoragePath], 'p1', true)
+    )
+    expect(result.current.onToggleDisplaySize).toBeUndefined()
+  })
+
+  it('enabled=false이면 isPending은 항상 false다', () => {
+    const { result } = renderHook(() => useReceiptSizeToggle([req('r1', ['a'])], 'p1', false))
+    expect(result.current.isPending).toBe(false)
+  })
 })
