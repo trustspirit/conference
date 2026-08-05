@@ -139,9 +139,10 @@ describe('useReceiptSizeToggle', () => {
   })
 
   it('request 목록이 비어 있으면 enabled=true여도 토글 핸들러를 주지 않는다', () => {
-    const { result } = renderHook(() => useReceiptSizeToggle([], 'p1', true))
+    const { result } = renderHook(() => useReceiptSizeToggle([], 'p1', true, 'large'))
     expect(result.current.onToggleDisplaySize).toBeUndefined()
     expect(result.current.isPending).toBe(false)
+    expect(result.current.defaultSize).toBe('large')
   })
 
   it('영수증에 storagePath가 없어 ownerByPath가 비면 enabled=true여도 토글 핸들러를 주지 않는다', () => {

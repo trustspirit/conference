@@ -811,7 +811,8 @@ export async function exportBatchSettlementPdf(
 }
 
 /**
- * Legacy single-settlement export (wraps batch export)
+ * Legacy single-settlement export (wraps batch export).
+ * Forwards no options, so it does not honor the project default receipt display size.
  */
 export async function exportSettlementPdf(
   settlement: Settlement,

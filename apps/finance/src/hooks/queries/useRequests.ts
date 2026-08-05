@@ -522,9 +522,11 @@ export function useDeleteRequest() {
 }
 
 /** Update the per-receipt PDF display-size map (e.g. flip storagePath → 'large').
- *  Staff-only at the Firestore rule level. Pass an empty object to clear all overrides.
- *  Storing only `large` entries (no explicit `normal`) keeps the document small and
- *  makes the absence-equals-default semantic explicit. */
+ *  Staff-only at the Firestore rule level. 3-state model: a missing key inherits the
+ *  project default (which may itself be 'large'); `'normal'` and `'large'` are both
+ *  stored explicitly, since deleting a key would mean "inherit" rather than "normal".
+ *  Pass an empty object to clear all overrides — every receipt then inherits the
+ *  project default. */
 export function useUpdateRequestReceiptDisplaySizes() {
   const queryClient = useQueryClient()
   return useMutation({

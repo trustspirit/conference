@@ -237,7 +237,10 @@ export interface Settlement {
   /** Settlement currency. Undefined on legacy docs (may contain mixed-currency items). */
   currency?: Currency
   receipts: Receipt[]
-  /** Inherited from the source request(s) at settlement creation time. */
+  /** Read-only fallback; this app never writes it — settlements created here leave it
+   *  `undefined`. Used only when the source requests can't be loaded (see `pdfExport.ts`),
+   *  in which case every receipt resolves to the project default. Older documents may
+   *  still carry a value from a previous implementation. */
   receiptDisplaySizes?: ReceiptDisplaySizes
   requestIds: string[]
   requestedBySignature: string | null
