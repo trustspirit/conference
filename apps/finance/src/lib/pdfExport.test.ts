@@ -71,6 +71,18 @@ describe('expandReceiptImages', () => {
     expect(result.every((r) => r.nr.displaySize === 'large')).toBe(true)
   })
 
+  it("carries an explicit 'normal' hint onto every page too", () => {
+    const entries = [
+      { label: '#1 Erin', receipt: receipt('note.pdf'), displaySize: 'normal' as const }
+    ]
+    const images = [{ fileName: 'note.pdf', dataUrls: ['data:img/p1', 'data:img/p2'] }]
+
+    const result = expandReceiptImages(entries, images)
+
+    expect(result).toHaveLength(2)
+    expect(result.every((r) => r.nr.displaySize === 'normal')).toBe(true)
+  })
+
   it('expands multiple receipts independently and in order', () => {
     const entries = [
       { label: '#1 Eve', receipt: receipt('a.pdf') },

@@ -80,6 +80,8 @@ export interface Project {
   opsBudget?: OpsBudget
   /** USD → KRW rate applied across all dashboards. 0/undefined = USD not converted. */
   usdToKrwRate?: number
+  /** 영수증 PDF 기본 표시 크기. undefined = 'normal' (하위 호환). */
+  defaultReceiptDisplaySize?: ReceiptDisplaySize
 }
 
 export interface GlobalSettings {
@@ -170,11 +172,14 @@ export interface Receipt {
   driveUrl?: string
 }
 
-/** Storage-path → display-size override for PDF rendering. Only `large` is stored
- *  explicitly; absence implies the default `normal` size. Kept as a top-level map so
- *  staff can flip a flag without ever gaining write access to receipt identity fields
- *  (`storagePath`, `url`, `fileName`). */
-export type ReceiptDisplaySizes = Record<string, 'large'>
+/** 영수증이 PDF에서 렌더되는 크기. 'large'는 한 장에 한 개로 렌더된다. */
+export type ReceiptDisplaySize = 'normal' | 'large'
+
+/** storagePath → 표시 크기. 키가 없으면 프로젝트 기본값
+ *  (`Project.defaultReceiptDisplaySize`, 그것도 없으면 'normal')을 상속한다.
+ *  receipts 배열과 분리된 top-level 맵이라, 스태프가 영수증 신원 필드
+ *  (storagePath / url / fileName)에 쓰기 권한 없이 크기만 바꿀 수 있다. */
+export type ReceiptDisplaySizes = Record<string, ReceiptDisplaySize>
 
 export interface PaymentRequest {
   id: string

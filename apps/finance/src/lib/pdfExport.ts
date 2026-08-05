@@ -1,12 +1,20 @@
 import { httpsCallable } from 'firebase/functions'
 import * as pdfjsLib from 'pdfjs-dist'
-import { Settlement, PaymentRequest, Receipt, AppUser, Currency } from '../types'
+import {
+  Settlement,
+  PaymentRequest,
+  Receipt,
+  AppUser,
+  Currency,
+  type ReceiptDisplaySize
+} from '../types'
 import { functions } from '@conference/firebase'
 import i18n from './i18n'
 import { formatFirestoreDate } from './utils'
 import { UNIQUE_BUDGET_CODES } from '../constants/budgetCodes'
 import { calcCarTransportAmount, DEFAULT_PER_KM_RATE } from '../components/ItemRow'
 import { formatAmount, formatTotals, getItemCurrency } from './currency'
+import { resolveReceiptDisplaySize } from './receiptDisplaySize'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
@@ -227,7 +235,7 @@ function buildPdfStyles() {
 }
 
 type NumberedReceiptImage = {
-  nr: { label: string; receipt: Receipt; displaySize?: 'large' }
+  nr: { label: string; receipt: Receipt; displaySize?: ReceiptDisplaySize }
   img: { fileName: string; dataUrl: string | null }
 }
 
@@ -272,7 +280,7 @@ function renderReceiptCards(items: NumberedReceiptImage[], size: 'normal' | 'lar
  * `entries` and `images` are index-aligned (both derived from the same receipt list).
  */
 export function expandReceiptImages(
-  entries: { label: string; receipt: Receipt; displaySize?: 'large' }[],
+  entries: { label: string; receipt: Receipt; displaySize?: ReceiptDisplaySize }[],
   images: { fileName: string; dataUrls: (string | null)[] }[]
 ): NumberedReceiptImage[] {
   const out: NumberedReceiptImage[] = []
@@ -316,6 +324,8 @@ export interface PdfExportOptions {
   reportTitle?: string
   createdBySignature?: string | null
   createdByName?: string
+  /** 프로젝트의 영수증 PDF 기본 크기. 개별 영수증의 명시값이 이보다 우선한다. */
+  defaultReceiptDisplaySize?: ReceiptDisplaySize
 }
 
 /**
@@ -426,19 +436,22 @@ export async function exportBatchSettlementPdf(
   const formSources = useOriginalRequests ? originalRequests : settlements
 
   // Collect receipts per form source (original request or settlement). The
-  // displaySize hint comes from the source's `receiptDisplaySizes` map keyed by
-  // storagePath — staff-managed override, defaults to undefined (normal).
+  // display size resolves as: per-receipt override > project default > 'normal'.
   const receiptsByForm = new Map<
     string,
-    { label: string; receipt: Receipt; displaySize?: 'large' }[]
+    { label: string; receipt: Receipt; displaySize?: ReceiptDisplaySize }[]
   >()
   for (let idx = 0; idx < formSources.length; idx++) {
     const source = formSources[idx]
-    const sizeMap = source.receiptDisplaySizes ?? {}
+    const sizeMap = source.receiptDisplaySizes
     const entries = source.receipts.map((receipt) => ({
       label: `#${idx + 1} ${source.payee}`,
       receipt,
-      displaySize: sizeMap[receipt.storagePath]
+      displaySize: resolveReceiptDisplaySize(
+        sizeMap,
+        receipt.storagePath,
+        options.defaultReceiptDisplaySize
+      )
     }))
     receiptsByForm.set(source.id, entries)
   }
