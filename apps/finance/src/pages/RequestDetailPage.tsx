@@ -11,13 +11,13 @@ import {
   useRejectRequest,
   useForceRejectRequest,
   useRollbackApproval,
-  useDeleteRequest,
-  useUpdateRequestReceiptDisplaySizes
+  useDeleteRequest
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
 import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
+import { useReceiptSizeToggle } from '../hooks/useReceiptSizeToggle'
 import { useTranslation } from 'react-i18next'
 import {
   canReviewCommittee,
@@ -69,13 +69,19 @@ export default function RequestDetailPage() {
   const forceRejectMutation = useForceRejectRequest()
   const rollbackMutation = useRollbackApproval()
   const deleteMutation = useDeleteRequest()
-  const updateReceiptSizesMutation = useUpdateRequestReceiptDisplaySizes()
   const budgetUsage = useBudgetUsage()
 
   const { data: request, isLoading: requestLoading } = useRequest(id)
   const { data: requester, isLoading: requesterLoading } = useUser(request?.requestedBy.uid)
   const { data: originalRequest } = useRequest(request?.originalRequestId ?? undefined)
   const loading = requestLoading || requesterLoading
+
+  // 영수증 PDF 크기 토글 — 값은 이 신청서 문서에 저장된다.
+  const receiptSizeToggle = useReceiptSizeToggle(
+    request ? [request] : [],
+    currentProject?.id,
+    isStaff(role)
+  )
 
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showRejectionModal, setShowRejectionModal] = useState(false)
@@ -508,32 +514,7 @@ export default function RequestDetailPage() {
               totalAmountUsd={request.totalAmountUsd}
             />
 
-            <ReceiptGallery
-              receipts={request.receipts}
-              displaySizes={request.receiptDisplaySizes}
-              onToggleDisplaySize={
-                isStaff(role)
-                  ? async (storagePath, next) => {
-                      // Toggle: 'large' is stored explicitly; reverting to 'normal'
-                      // removes the entry so the absence-equals-default semantic holds.
-                      const map: Record<string, 'large'> = {
-                        ...(request.receiptDisplaySizes ?? {})
-                      }
-                      if (next === 'large') map[storagePath] = 'large'
-                      else delete map[storagePath]
-                      try {
-                        await updateReceiptSizesMutation.mutateAsync({
-                          requestId: request.id,
-                          projectId: currentProject!.id,
-                          receiptDisplaySizes: map
-                        })
-                      } catch {
-                        toast({ variant: 'danger', message: t('receipts.sizeUpdateFailed') })
-                      }
-                    }
-                  : undefined
-              }
-            />
+            <ReceiptGallery receipts={request.receipts} {...receiptSizeToggle} />
 
             {/* Bank Book — vendor requests use vendor bank book, otherwise user profile (skip for corporate card) */}
             {(() => {
