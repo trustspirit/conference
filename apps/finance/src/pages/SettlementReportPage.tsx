@@ -75,7 +75,8 @@ export default function SettlementReportPage() {
   const receiptSizeToggle = useReceiptSizeToggle(
     originalRequests,
     currentProject?.id,
-    isStaff(role)
+    isStaff(role),
+    currentProject?.defaultReceiptDisplaySize
   )
 
   // Load payee user profiles for bank book URLs
@@ -161,7 +162,8 @@ export default function SettlementReportPage() {
           payeeUsers,
           reportTitle: isCorporateCard ? corporateCardTitle : undefined,
           createdBySignature: creatorSignature,
-          createdByName: creatorName
+          createdByName: creatorName,
+          defaultReceiptDisplaySize: currentProject?.defaultReceiptDisplaySize
         }
       )
       if (!success)

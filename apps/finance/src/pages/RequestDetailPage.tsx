@@ -81,7 +81,8 @@ export default function RequestDetailPage() {
   const receiptSizeToggle = useReceiptSizeToggle(
     receiptSizeToggleRequests,
     currentProject?.id,
-    isStaff(role)
+    isStaff(role),
+    currentProject?.defaultReceiptDisplaySize
   )
 
   const [showApprovalModal, setShowApprovalModal] = useState(false)
