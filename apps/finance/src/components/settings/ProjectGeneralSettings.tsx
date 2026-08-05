@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Project } from '../../types'
+import { Project, ReceiptDisplaySize } from '../../types'
 import { useUpdateProject } from '../../hooks/queries/useProjects'
 import { DEFAULT_PER_KM_RATE } from '../ItemRow'
+import { DEFAULT_RECEIPT_DISPLAY_SIZE } from '../../lib/receiptDisplaySize'
 
 export default function ProjectGeneralSettings({ project }: { project: Project }) {
   const { t } = useTranslation()
@@ -14,6 +15,9 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
   const [warningPct, setWarningPct] = useState(project.budgetWarningThreshold ?? 85)
   const [perKmRate, setPerKmRate] = useState(project.perKmRate ?? DEFAULT_PER_KM_RATE)
   const [ccReportTitle, setCcReportTitle] = useState(project.corporateCardReportTitle || '')
+  const [receiptSize, setReceiptSize] = useState<ReceiptDisplaySize>(
+    project.defaultReceiptDisplaySize ?? DEFAULT_RECEIPT_DISPLAY_SIZE
+  )
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -26,7 +30,8 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
     threshold !== (project.directorApprovalThreshold ?? 600000) ||
     warningPct !== (project.budgetWarningThreshold ?? 85) ||
     perKmRate !== (project.perKmRate ?? DEFAULT_PER_KM_RATE) ||
-    ccReportTitle !== (project.corporateCardReportTitle || '')
+    ccReportTitle !== (project.corporateCardReportTitle || '') ||
+    receiptSize !== (project.defaultReceiptDisplaySize ?? DEFAULT_RECEIPT_DISPLAY_SIZE)
 
   const handleSave = async () => {
     setSaving(true)
@@ -41,7 +46,8 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           directorApprovalThreshold: threshold,
           budgetWarningThreshold: warningPct,
           perKmRate,
-          ...(ccReportTitle ? { corporateCardReportTitle: ccReportTitle } : {})
+          ...(ccReportTitle ? { corporateCardReportTitle: ccReportTitle } : {}),
+          defaultReceiptDisplaySize: receiptSize
         }
       })
       setSaved(true)
@@ -141,6 +147,18 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
           className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
         />
         <p className="text-xs text-gray-400 mt-1">{t('project.corporateCardReportTitleHint')}</p>
+      </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">{t('project.defaultReceiptSize')}</label>
+        <select
+          value={receiptSize}
+          onChange={(e) => setReceiptSize(e.target.value as ReceiptDisplaySize)}
+          className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
+        >
+          <option value="normal">{t('project.receiptSizeNormal')}</option>
+          <option value="large">{t('project.receiptSizeLarge')}</option>
+        </select>
+        <p className="text-xs text-gray-400 mt-1">{t('project.defaultReceiptSizeHint')}</p>
       </div>
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">

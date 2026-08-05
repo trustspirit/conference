@@ -560,7 +560,11 @@
     "perKmRate": "Per-km Rate (Personal Car)",
     "perKmRateHint": "Rate applied per km when calculating personal car transportation costs.",
     "corporateCardReportTitle": "Corporate Card Report Title",
-    "corporateCardReportTitleHint": "Title displayed on corporate card settlement reports."
+    "corporateCardReportTitleHint": "Title displayed on corporate card settlement reports.",
+    "defaultReceiptSize": "Default Receipt Size in PDF",
+    "defaultReceiptSizeHint": "The size receipts render at by default in PDF exports. Per-receipt overrides take precedence over this default.",
+    "receiptSizeNormal": "Normal",
+    "receiptSizeLarge": "Large (one per page)"
   },
   "budget": {
     "warning": "{{percent}}% of the budget has been used. (Warning threshold: {{threshold}}%)",

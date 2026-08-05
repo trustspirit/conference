@@ -560,7 +560,11 @@
     "perKmRate": "자차 km당 단가",
     "perKmRateHint": "자차 교통비 산정 시 km당 적용되는 금액입니다.",
     "corporateCardReportTitle": "법인카드 보고서 타이틀",
-    "corporateCardReportTitleHint": "법인카드 정산 리포트에 표시될 타이틀입니다."
+    "corporateCardReportTitleHint": "법인카드 정산 리포트에 표시될 타이틀입니다.",
+    "defaultReceiptSize": "영수증 PDF 기본 크기",
+    "defaultReceiptSizeHint": "PDF 내보내기에서 영수증이 기본으로 렌더되는 크기입니다. 영수증별로 크기를 따로 지정하면 이 기본값보다 우선합니다.",
+    "receiptSizeNormal": "일반",
+    "receiptSizeLarge": "크게 (한 장에 한 개)"
   },
   "budget": {
     "warning": "예산의 {{percent}}%를 사용했습니다. (경고 기준: {{threshold}}%)",
