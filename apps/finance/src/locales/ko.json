@@ -644,6 +644,7 @@
     "markLarge": "PDF에서 크게 보기",
     "markNormal": "PDF에서 보통 크기로 보기",
     "sizeLargeBadge": "크게",
+    "sizeNormalBadge": "일반",
     "sizeUpdateFailed": "영수증 표시 크기 변경에 실패했습니다."
   },
   "admin": {

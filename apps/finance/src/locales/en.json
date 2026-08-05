@@ -644,6 +644,7 @@
     "markLarge": "Show large in PDF",
     "markNormal": "Show normal size in PDF",
     "sizeLargeBadge": "Large",
+    "sizeNormalBadge": "Normal",
     "sizeUpdateFailed": "Failed to update receipt display size."
   },
   "admin": {

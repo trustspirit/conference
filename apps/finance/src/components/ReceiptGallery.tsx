@@ -1,13 +1,16 @@
 import { MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Receipt, ReceiptDisplaySizes } from '../types'
+import { Receipt, ReceiptDisplaySize, ReceiptDisplaySizes } from '../types'
+import { DEFAULT_RECEIPT_DISPLAY_SIZE, resolveReceiptDisplaySize } from '../lib/receiptDisplaySize'
 import BankBookPreview from './BankBookPreview'
 
 interface Props {
   receipts: Receipt[]
   title?: string
-  /** Map of storagePath → 'large' (absence implies normal size). */
+  /** storagePath → 명시적 표시 크기. 키가 없으면 `defaultSize`를 상속한다. */
   displaySizes?: ReceiptDisplaySizes
+  /** 프로젝트의 기본 표시 크기. 생략하면 'normal'. */
+  defaultSize?: ReceiptDisplaySize
   /** When provided, each tile shows a toggle to flip the receipt's PDF size.
    *  Receives the receipt's storagePath and the desired next size. */
   onToggleDisplaySize?: (storagePath: string, next: 'normal' | 'large') => void | Promise<void>
@@ -19,6 +22,7 @@ export default function ReceiptGallery({
   receipts,
   title,
   displaySizes,
+  defaultSize,
   onToggleDisplaySize,
   isPending
 }: Props) {
@@ -45,7 +49,17 @@ export default function ReceiptGallery({
             (r.driveFileId
               ? `https://drive.google.com/thumbnail?id=${r.driveFileId}&sz=w400`
               : undefined)
-          const isLarge = displaySizes?.[r.storagePath] === 'large'
+          const size = resolveReceiptDisplaySize(displaySizes, r.storagePath, defaultSize)
+          const isLarge = size === 'large'
+          // 기본값과 다를 때만 배지를 단다. 기본이 'large'인 프로젝트에서 모든 타일에
+          // 배지가 박히면 예외를 못 알아본다.
+          const effectiveDefault = defaultSize ?? DEFAULT_RECEIPT_DISPLAY_SIZE
+          const badge =
+            size === effectiveDefault
+              ? null
+              : isLarge
+                ? t('receipts.sizeLargeBadge')
+                : t('receipts.sizeNormalBadge')
           const canToggle = onToggleDisplaySize && !!r.storagePath
           return (
             <a
@@ -64,9 +78,9 @@ export default function ReceiptGallery({
                     className="absolute inset-0 w-full h-full object-contain"
                   />
                 ) : null}
-                {isLarge && (
+                {badge && (
                   <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-finance-accent text-[10px] font-semibold text-white shadow">
-                    {t('receipts.sizeLargeBadge')}
+                    {badge}
                   </span>
                 )}
                 {canToggle && (

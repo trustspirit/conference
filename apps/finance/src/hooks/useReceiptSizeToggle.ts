@@ -5,7 +5,7 @@ import { useUpdateRequestReceiptDisplaySizes } from './queries/useRequests'
 import type { PaymentRequest, ReceiptDisplaySize, ReceiptDisplaySizes } from '../types'
 
 export interface ReceiptSizeToggle {
-  /** storagePath → 'large' 병합 맵. 권한과 무관하게 항상 채워진다 (배지 표시용). */
+  /** storagePath → 명시적 표시 크기 병합 맵. 권한과 무관하게 항상 채워진다 (배지 표시용). */
   displaySizes: ReceiptDisplaySizes
   /** `enabled`가 false이거나 소유 신청서 인덱스가 비어 있으면(예: 로드 실패) undefined —
    *  ReceiptGallery가 토글 버튼을 숨긴다. 실패할 수밖에 없는 버튼을 보여주지 않기 위함. */
