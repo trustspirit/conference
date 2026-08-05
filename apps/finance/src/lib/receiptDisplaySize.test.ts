@@ -17,8 +17,12 @@ describe('resolveReceiptDisplaySize', () => {
     expect(resolveReceiptDisplaySize({}, 'a', undefined)).toBe('normal')
   })
 
-  it('빈 storagePath는 기본값으로 떨어진다', () => {
-    expect(resolveReceiptDisplaySize({ '': 'large' }, '', 'normal')).toBe('large')
-    expect(resolveReceiptDisplaySize({}, '', 'large')).toBe('large')
+  it("storagePath가 없으면 기본값을 무시하고 'normal'이다", () => {
+    // storagePath가 신원이므로, 그게 없으면 갤러리가 토글 버튼을 숨긴다. 되돌릴 수단이
+    // 없는 영수증을 프로젝트 기본값이 'large'로 쓸어담지 않도록 여기서 끊는다.
+    expect(resolveReceiptDisplaySize({}, '', 'large')).toBe('normal')
+    expect(resolveReceiptDisplaySize(undefined, '', 'large')).toBe('normal')
+    // 빈 키로 저장된 항목이 있어도 그 영수증의 것이라고 볼 수 없다.
+    expect(resolveReceiptDisplaySize({ '': 'large' }, '', 'large')).toBe('normal')
   })
 })

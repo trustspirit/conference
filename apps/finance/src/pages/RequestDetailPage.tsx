@@ -375,7 +375,11 @@ export default function RequestDetailPage() {
         <Spinner />
       </Layout>
     )
-  if (!request)
+  // 다른 프로젝트의 신청서는 열지 않는다. 이 페이지는 승인 한도, 관련 신청서 목록,
+  // 영수증 기본 크기까지 전부 currentProject를 전제로 계산하므로, 프로젝트가 어긋난
+  // 채로 렌더하면 남의 프로젝트 기준으로 잘못된 값을 보여주게 된다.
+  // SettlementReportPage도 같은 가드를 쓴다.
+  if (!request || (currentProject && request.projectId !== currentProject.id))
     return (
       <Layout>
         <div className="text-center py-16 text-gray-500">{t('detail.notFound')}</div>
