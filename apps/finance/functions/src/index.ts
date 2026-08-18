@@ -6,6 +6,11 @@ import * as admin from 'firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import * as nodemailer from 'nodemailer'
 import { randomUUID } from 'node:crypto'
+import {
+  splitCorporateCard,
+  canSplitRequest,
+  SplitValidationError
+} from './lib/splitCorporateCard'
 
 admin.initializeApp()
 
@@ -275,6 +280,23 @@ async function uidsWithProjectRoles(projectId: string | undefined | null, roles:
   }
 
   return result
+}
+
+/**
+ * 호출자의 이 프로젝트 내 유효 역할. super_admin 은 모든 프로젝트에서 admin 으로
+ * 승격된다 — 클라이언트의 useProjectRole 과 같은 규칙이다.
+ */
+async function callerProjectRole(
+  projectId: string | undefined | null,
+  uid: string
+): Promise<string | null> {
+  const db = admin.firestore()
+  const userDoc = await db.doc(`users/${uid}`).get()
+  if (userDoc.data()?.systemRole === 'super_admin') return 'admin'
+  if (!projectId) return null
+  const projDoc = await db.doc(`projects/${projectId}`).get()
+  const roles = (projDoc.data()?.memberRoles ?? {}) as Record<string, string>
+  return roles[uid] ?? null
 }
 
 function getSystemRole(d: FirebaseFirestore.DocumentData | undefined): string | null {
@@ -591,6 +613,157 @@ export const calculateDistance = onCall({ secrets: [kakaoMobilityKey] }, async (
   }
 
   return { distanceMeters, routePath: simplifyPath(routePath) }
+})
+
+interface SplitCorporateCardInput {
+  requestId: string
+  corporateItemIndexes: number[]
+  corporateReceiptPaths: string[]
+}
+
+/**
+ * 제출된 신청서의 일부 항목을 법인카드 신청서로 분리한다.
+ *
+ * 클라이언트에서 직접 못 하는 이유: firestore.rules 의 create 는
+ * `requestedBy.uid == request.auth.uid` 를 요구하므로 admin 이 원 신청자 이름으로
+ * 문서를 만들 수 없고, update 는 모든 전이가 affectedKeys().hasOnly() 로 잠겨 있어
+ * `items` 를 어떤 경로로도 수정할 수 없다.
+ *
+ * 금액은 클라이언트에서 받지 않는다. 서버가 원본 문서에서 직접 재계산한다.
+ */
+export const splitCorporateCardRequest = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be logged in')
+  const uid = request.auth.uid
+
+  const { requestId, corporateItemIndexes, corporateReceiptPaths } =
+    request.data as SplitCorporateCardInput
+
+  if (!requestId || typeof requestId !== 'string') {
+    throw new HttpsError('invalid-argument', 'requestId is required')
+  }
+  if (!Array.isArray(corporateItemIndexes) || !Array.isArray(corporateReceiptPaths)) {
+    throw new HttpsError('invalid-argument', 'corporateItemIndexes and corporateReceiptPaths must be arrays')
+  }
+
+  const db = admin.firestore()
+  const reqRef = db.doc(`requests/${requestId}`)
+  // 새 법인카드 문서 ref 는 트랜잭션 밖에서 만든다 — 경합 시 Firestore 가 콜백을
+  // 재시도할 수 있는데, 안에서 만들면 재시도마다 새 id 가 발급되어 버린다.
+  const newRef = db.collection('requests').doc()
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(reqRef)
+    if (!snap.exists) throw new HttpsError('not-found', 'Request not found')
+    const data = snap.data()!
+
+    // 권한 확인을 상태/유형 확인보다 먼저 한다 — 그렇지 않으면 프로젝트에 아무 역할도
+    // 없는 사용자도 임의의 requestId 로 상태와 법인카드 여부를 알아낼 수 있다.
+    // 역할 조회는 일반 읽기로 남긴다 — 멤버십은 스냅샷 격리가 필요 없고, 트랜잭션에
+    // 넣으면 경합 범위만 불필요하게 넓어진다.
+    const role = await callerProjectRole(data.projectId, uid)
+    if (!canSplitRequest(role, data.committee)) {
+      throw new HttpsError('permission-denied', 'SPLIT_FORBIDDEN')
+    }
+
+    if (data.status !== 'pending' && data.status !== 'reviewed') {
+      throw new HttpsError('failed-precondition', 'SPLIT_STATUS_NOT_ALLOWED')
+    }
+    if (data.isCorporateCard === true) {
+      throw new HttpsError('failed-precondition', 'SPLIT_ALREADY_CORPORATE_CARD')
+    }
+
+    // 운영예산 편입 항목은 {requestId, itemIndex} 로 신청서를 참조한다. 분리는 items
+    // 인덱스를 밀어버리므로 편입이 하나라도 있으면 거부한다.
+    const inclusionsQuery = db
+      .collection(`projects/${data.projectId}/opsBudgetInclusions`)
+      .where('requestId', '==', requestId)
+      .limit(1)
+    const inclusions = await tx.get(inclusionsQuery)
+    if (!inclusions.empty) {
+      throw new HttpsError('failed-precondition', 'SPLIT_OPS_BUDGET_INCLUDED')
+    }
+
+    // IIFE 로 감싼다 — try 범위를 splitCorporateCard 호출 하나로 좁게 유지하고,
+    // 그 안에서 던져진 검증 에러를 던진 지점에서 바로 HttpsError 로 변환하기 위함이다.
+    const split = (() => {
+      try {
+        return splitCorporateCard({
+          items: data.items ?? [],
+          receipts: data.receipts ?? [],
+          receiptDisplaySizes: data.receiptDisplaySizes,
+          corporateItemIndexes,
+          corporateReceiptPaths
+        })
+      } catch (e) {
+        if (e instanceof SplitValidationError) throw new HttpsError('invalid-argument', e.reason)
+        throw e
+      }
+    })()
+
+    // 원본: 남은 항목만 남기고 결재 상태를 pending 으로 되돌린다. 금액이 바뀌면
+    // 승인 권한 기준(directorApprovalThreshold)도 바뀌므로 재검토를 강제한다.
+    const originalUpdate: Record<string, unknown> = {
+      items: split.original.items,
+      receipts: split.original.receipts,
+      totalAmount: split.original.totalAmount,
+      totalAmountUsd:
+        split.original.totalAmountUsd !== undefined
+          ? split.original.totalAmountUsd
+          : FieldValue.delete(),
+      status: 'pending',
+      reviewedBy: null,
+      reviewedAt: null,
+      approvedBy: null,
+      approvedAt: null,
+      approvalSignature: null,
+      rejectionReason: null
+    }
+    if (split.original.receiptDisplaySizes !== undefined) {
+      originalUpdate.receiptDisplaySizes = split.original.receiptDisplaySizes
+    }
+    tx.update(reqRef, originalUpdate)
+
+    // 신규: 신원 필드만 복사한다. isVendorRequest/vendorBankBook* 는 복사하지 않는다 —
+    // 신청 유형은 일반/거래처/법인카드 중 하나만 고르는 배타적 선택이고, 법인카드로
+    // 결제된 부분은 업체에 송금되지 않는다.
+    const corporateDoc: Record<string, unknown> = {
+      projectId: data.projectId,
+      requestedBy: data.requestedBy,
+      requestedBySignature: data.requestedBySignature ?? null,
+      committee: data.committee,
+      session: data.session,
+      date: data.date,
+      payee: data.payee,
+      phone: data.phone,
+      bankName: data.bankName ?? '',
+      bankAccount: data.bankAccount ?? '',
+      comments: data.comments ?? '',
+      items: split.corporate.items,
+      receipts: split.corporate.receipts,
+      totalAmount: split.corporate.totalAmount,
+      isCorporateCard: true,
+      status: 'pending',
+      reviewedBy: null,
+      reviewedAt: null,
+      approvedBy: null,
+      approvedAt: null,
+      approvalSignature: null,
+      rejectionReason: null,
+      settlementId: null,
+      originalRequestId: null,
+      splitFromRequestId: requestId,
+      createdAt: FieldValue.serverTimestamp()
+    }
+    if (split.corporate.totalAmountUsd !== undefined) {
+      corporateDoc.totalAmountUsd = split.corporate.totalAmountUsd
+    }
+    if (split.corporate.receiptDisplaySizes !== undefined) {
+      corporateDoc.receiptDisplaySizes = split.corporate.receiptDisplaySizes
+    }
+    tx.set(newRef, corporateDoc)
+  })
+
+  return { originalId: requestId, corporateCardId: newRef.id }
 })
 
 
