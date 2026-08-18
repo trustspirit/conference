@@ -11,6 +11,7 @@ import {
   canSplitRequest,
   SplitValidationError
 } from './lib/splitCorporateCard'
+import { resolvePendingSignupRecipients } from './lib/pendingSignupRecipients'
 
 admin.initializeApp()
 
@@ -671,6 +672,9 @@ export const splitCorporateCardRequest = onCall(async (request) => {
     if (data.isCorporateCard === true) {
       throw new HttpsError('failed-precondition', 'SPLIT_ALREADY_CORPORATE_CARD')
     }
+    if (data.isVendorRequest === true) {
+      throw new HttpsError('failed-precondition', 'SPLIT_VENDOR_NOT_ALLOWED')
+    }
 
     // 운영예산 편입 항목은 {requestId, itemIndex} 로 신청서를 참조한다. 분리는 items
     // 인덱스를 밀어버리므로 편입이 하나라도 있으면 거부한다.
@@ -865,6 +869,103 @@ export const onRequestCreated = onDocumentCreated(
         console.log(`New request notification sent to ${email}`)
       } catch (error) {
         console.error(`Failed to send new request notification to ${email}:`, error)
+      }
+    }
+  }
+)
+
+// 신규 가입 → default 대회의 admin 에게 승인 대기 알림
+export const onUserCreatedNotifyAdmins = onDocumentCreated(
+  {
+    document: 'users/{uid}',
+    secrets: [gmailUser, gmailAppPassword]
+  },
+  async (event) => {
+    const data = event.data?.data()
+    if (!data) return
+
+    // 정상 가입은 항상 assignedProjectCount: 0 으로 생성된다(AuthContext.tsx:110).
+    // 필드 자체가 없는 문서(레거시/시드 등)도 안전한 기본값으로 간주해 대기 상태로 처리한다.
+    // 이미 0이 아닌 값을 가진 문서만 건너뛴다.
+    const assigned = data.assignedProjectCount
+    if (assigned !== 0 && assigned !== undefined && assigned !== null) return
+
+    const db = admin.firestore()
+
+    const settingsSnap = await db.doc('settings/global').get()
+    const defaultProjectId = (settingsSnap.data()?.defaultProjectId as string | undefined) ?? null
+
+    let memberRoles: Record<string, string> | null = null
+    if (defaultProjectId) {
+      const projSnap = await db.doc(`projects/${defaultProjectId}`).get()
+      memberRoles = projSnap.exists
+        ? ((projSnap.data()?.memberRoles ?? {}) as Record<string, string>)
+        : null
+    }
+
+    const superAdminSnap = await db
+      .collection('users')
+      .where('systemRole', '==', 'super_admin')
+      .get()
+    const superAdminUids = superAdminSnap.docs.map((d) => d.id)
+
+    const recipientUids = resolvePendingSignupRecipients(
+      defaultProjectId,
+      memberRoles,
+      superAdminUids
+    )
+
+    if (recipientUids.length === 0) {
+      console.error('No recipient for pending signup notification', {
+        newUserUid: event.params.uid,
+        defaultProjectId
+      })
+      return
+    }
+
+    // 신규 가입자 본인이 수신자 목록에 있으면 제외한다(첫 super_admin 시딩 등).
+    const targets = recipientUids.filter((uid) => uid !== event.params.uid)
+    if (targets.length === 0) {
+      console.log('Pending signup notification skipped: new user is the only recipient', {
+        newUserUid: event.params.uid
+      })
+      return
+    }
+
+    const transporter = createTransporter()
+
+    // AppUser 에는 createdAt 필드가 없다(AuthContext.tsx:100-111). 문서에서 읽으면
+    // 항상 비므로 이벤트 발생 시각을 쓴다.
+    const signedUpAt = formatDate(new Date(event.time))
+    const name = (data.displayName as string) || (data.name as string) || '(이름 미입력)'
+    const email = (data.email as string) || '-'
+
+    const recipientDocs = await Promise.all(targets.map((uid) => db.doc(`users/${uid}`).get()))
+    for (const userDoc of recipientDocs) {
+      const to = userDoc.data()?.email as string | undefined
+      if (!to) continue
+
+      try {
+        await transporter.sendMail({
+          from: `지불/환불 시스템 <${gmailUser.value()}>`,
+          to,
+          subject: '[지불/환불] 새 사용자 가입 승인 대기',
+          html: `
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+              <h2 style="color: #2563eb; margin-bottom: 16px;">새 사용자가 가입해 배정을 기다리고 있습니다</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr><td style="padding: 8px 0; color: #6b7280;">이름</td><td style="padding: 8px 0;">${escapeHtml(name)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">이메일</td><td style="padding: 8px 0;">${escapeHtml(email)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">가입 시각</td><td style="padding: 8px 0;">${signedUpAt}</td></tr>
+              </table>
+              <p style="color: #6b7280; font-size: 13px;">설정 화면의 <strong>멤버 관리</strong> 탭에서 이 사용자를 프로젝트에 추가할 수 있습니다.</p>
+              <p style="margin-top: 20px;"><a href="${APP_URL}/settings" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">멤버 관리로 이동</a></p>
+            </div>
+          `
+        })
+        console.log(`Pending signup notification sent to ${to}`)
+      } catch (error) {
+        console.error(`Failed to send pending signup notification to ${to}:`, error)
       }
     }
   }

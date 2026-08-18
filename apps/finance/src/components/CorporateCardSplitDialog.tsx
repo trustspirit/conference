@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialog, Button } from 'trust-ui-react'
 import type { RequestItem, Receipt } from '../types'
 import { getItemCurrency, sumByCurrency, formatAmount, formatTotals } from '../lib/currency'
+import { isCarOnly } from '../lib/splitRequestByCurrency'
 import ReceiptThumb from './ReceiptThumb'
 
 interface CorporateCardSplitDialogProps {
@@ -56,8 +57,16 @@ export default function CorporateCardSplitDialog({
   const corporateReceiptCount = receipts.filter((r) => receiptPaths.has(r.storagePath)).length
   const originalReceiptCount = receipts.length - corporateReceiptCount
 
+  // 항목이 있고, 전부 차량 이동비는 아니며, 배정된 영수증이 0개인 쪽이 있으면 막는다.
+  // 신청서 전체에 영수증이 하나도 없다면(옮길 대상 자체가 없으므로) 양쪽 다 면제한다.
+  const missingReceipts =
+    receipts.length > 0 &&
+    ((corporateItems.length > 0 && !isCarOnly(corporateItems) && corporateReceiptCount === 0) ||
+      (originalItems.length > 0 && !isCarOnly(originalItems) && originalReceiptCount === 0))
+
   // 최소 1개는 선택해야 하고, 전부 선택하면 원본이 비게 되므로 둘 다 막는다.
-  const canConfirm = itemIndexes.size > 0 && itemIndexes.size < items.length && !submitting
+  const selectionValid = itemIndexes.size > 0 && itemIndexes.size < items.length
+  const canConfirm = selectionValid && !missingReceipts && !submitting
 
   return (
     <Dialog open={open} onClose={onCancel} size="md">
@@ -151,6 +160,12 @@ export default function CorporateCardSplitDialog({
             </div>
           </div>
         </div>
+
+        {selectionValid && missingReceipts && (
+          <p className="mt-3 text-xs text-finance-danger">
+            {t('corporateCardSplit.missingReceipts')}
+          </p>
+        )}
       </Dialog.Content>
       <Dialog.Actions>
         <Button variant="outline" onClick={onCancel} disabled={submitting}>

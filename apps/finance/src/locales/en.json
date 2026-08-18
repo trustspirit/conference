@@ -177,6 +177,7 @@
     "originalRequest": "Original request",
     "corporateRequest": "Corporate card request",
     "receiptCount": "{{count}} receipt(s)",
+    "missingReceipts": "Assign at least one receipt to each side that needs one. (Car-transport-only sides are exempt.)",
     "confirm": "Split",
     "cancel": "Cancel",
     "splitFrom": "This request was created by a split",
@@ -188,6 +189,7 @@
     "errorUNKNOWN_RECEIPT_PATH": "The selected receipt is no longer valid. Refresh and try again.",
     "errorSPLIT_STATUS_NOT_ALLOWED": "Only pending or reviewed requests can be split.",
     "errorSPLIT_ALREADY_CORPORATE_CARD": "This is already a corporate card request.",
+    "errorSPLIT_VENDOR_NOT_ALLOWED": "Vendor requests cannot be split.",
     "errorSPLIT_FORBIDDEN": "You do not have permission to split this request.",
     "errorSPLIT_OPS_BUDGET_INCLUDED": "This request is included in the operations budget. Remove the inclusion before splitting.",
     "errorUnknown": "The split failed. Please try again."
