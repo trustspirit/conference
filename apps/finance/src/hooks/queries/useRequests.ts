@@ -129,16 +129,26 @@ export function useInfiniteRequests(
   projectId: string | undefined,
   status?: RequestStatus | RequestStatus[],
   sort?: { field: string; dir: 'asc' | 'desc' },
-  committee?: 'operations' | 'preparation'
+  committee?: 'operations' | 'preparation',
+  corporateCardOnly?: boolean
 ) {
-  const sortField = sort?.field ?? 'createdAt'
-  const sortDir = sort?.dir ?? 'desc'
+  // 법인카드 필터는 정렬을 createdAt desc 로 고정한다. 정렬 축을 전부 열면
+  // projectId × status × committee × isCorporateCard × 정렬 5종 조합으로
+  // 복합 인덱스가 약 40개 더 필요해진다.
+  const sortField = corporateCardOnly ? 'createdAt' : (sort?.field ?? 'createdAt')
+  const sortDir: 'asc' | 'desc' = corporateCardOnly ? 'desc' : (sort?.dir ?? 'desc')
   const sortKey = `${sortField}-${sortDir}`
 
   const statusKey = Array.isArray(status) ? status.join(',') : status
   const queryKey = statusKey
-    ? queryKeys.requests.infiniteByStatus(projectId!, statusKey, sortKey, committee)
-    : queryKeys.requests.infinite(projectId!, sortKey, committee)
+    ? queryKeys.requests.infiniteByStatus(
+        projectId!,
+        statusKey,
+        sortKey,
+        committee,
+        corporateCardOnly
+      )
+    : queryKeys.requests.infinite(projectId!, sortKey, committee, corporateCardOnly)
 
   return useInfiniteQuery({
     queryKey,
@@ -149,10 +159,16 @@ export function useInfiniteRequests(
           : [where('status', '==', status)]
         : []
       const committeeConstraint = committee ? [where('committee', '==', committee)] : []
+      // isCorporateCard 는 true 일 때만 문서에 기록된다(RequestFormPage.tsx:524).
+      // 따라서 '== true' 는 정상 동작하지만 '== false' 는 필드가 없는 문서를 잡지 못한다.
+      const corporateConstraint = corporateCardOnly
+        ? [where('isCorporateCard', '==', true)]
+        : []
       const constraints: QueryConstraint[] = [
         where('projectId', '==', projectId),
         ...statusConstraint,
         ...committeeConstraint,
+        ...corporateConstraint,
         orderBy(sortField, sortDir)
       ]
       if (pageParam) constraints.push(startAfter(pageParam))
@@ -484,13 +500,23 @@ export function useDeleteRequest() {
       // Run before Storage cleanup so a status-changed race aborts cleanly without
       // touching files. If the transaction fails, no Storage paths are deleted.
       const targetRef = doc(db, 'requests', request.id)
+      // Captured inside the transaction below — must come from the snapshot the
+      // transaction actually read, not from `request` (the caller's React Query
+      // cache copy), because the corporate-card split feature can move receipts/items
+      // to another request after that copy was cached. Reassigned fresh on every
+      // attempt (never appended to) so a retry can't double the list.
+      let deletableReceipts: PaymentRequest['receipts'] = []
+      let deletableItems: PaymentRequest['items'] = []
       await runTransaction(db, async (tx) => {
         const targetSnap = await tx.get(targetRef)
         if (!targetSnap.exists()) throw new Error('not_found')
-        const status = targetSnap.data().status as PaymentRequest['status']
+        const targetData = targetSnap.data()
+        const status = targetData.status as PaymentRequest['status']
         if (!DELETABLE_STATUSES.includes(status)) {
           throw new Error('not_deletable')
         }
+        deletableReceipts = (targetData.receipts as PaymentRequest['receipts']) ?? []
+        deletableItems = (targetData.items as PaymentRequest['items']) ?? []
         for (const childId of resubIds) {
           const childRef = doc(db, 'requests', childId)
           const childSnap = await tx.get(childRef)
@@ -506,10 +532,10 @@ export function useDeleteRequest() {
       // Failures here leave orphan files but the doc is already gone, so future
       // references are impossible. A janitor job can reap orphans later.
       const storagePaths: string[] = []
-      for (const r of request.receipts) {
+      for (const r of deletableReceipts) {
         if (r.storagePath) storagePaths.push(r.storagePath)
       }
-      for (const item of request.items) {
+      for (const item of deletableItems) {
         const p = item.transportDetail?.routeMapImage?.storagePath
         if (p) storagePaths.push(p)
       }

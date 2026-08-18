@@ -48,6 +48,8 @@ import { formatTotals } from '../lib/currency'
 import { Dialog, Button, useToast } from 'trust-ui-react'
 import { REVIEW_CHECKLIST, APPROVAL_CHECKLIST } from '../constants/reviewChecklist'
 import BankBookPreview from '../components/BankBookPreview'
+import CorporateCardSplitDialog from '../components/CorporateCardSplitDialog'
+import { useSplitCorporateCardRequest } from '../hooks/queries/useCloudFunctions'
 
 export default function RequestDetailPage() {
   const { t } = useTranslation()
@@ -203,6 +205,41 @@ export default function RequestDetailPage() {
 
   // Super-admin only: delete request in initial/terminal status
   const canDoDelete = !!request && isSuperAdmin && DELETABLE_STATUSES.includes(request.status)
+
+  // 법인카드 분리 (pending/reviewed, 법인카드가 아닌 신청서, 위원회 권한 보유)
+  // `!!request &&` 를 먼저 두어야 뒤의 request.committee 접근이 타입 좁히기를 통과한다.
+  // 괄호로 묶인 || 뒤에서는 TS 가 request 를 non-null 로 좁혀주지 않는다.
+  const canDoSplit =
+    !!request &&
+    !request.isCorporateCard &&
+    (request.status === 'pending' || request.status === 'reviewed') &&
+    (canReviewCommittee(role, request.committee) ||
+      canFinalApproveCommittee(role, request.committee))
+
+  const [showSplitDialog, setShowSplitDialog] = useState(false)
+  const splitMutation = useSplitCorporateCardRequest(currentProject?.id)
+
+  const handleSplit = async (itemIndexes: number[], receiptPaths: string[]) => {
+    if (!request) return
+    try {
+      await splitMutation.mutateAsync({
+        requestId: request.id,
+        corporateItemIndexes: itemIndexes,
+        corporateReceiptPaths: receiptPaths
+      })
+      setShowSplitDialog(false)
+      toast({ variant: 'success', message: t('corporateCardSplit.title') })
+    } catch (err) {
+      // 서버는 안정적인 reason 문자열을 message 로 던진다. 알 수 없는 값이면 범용 문구.
+      const reason = err instanceof Error ? err.message.replace(/^.*?:\s*/, '') : ''
+      const key = `corporateCardSplit.error${reason}`
+      const translated = t(key)
+      toast({
+        variant: 'danger',
+        message: translated === key ? t('corporateCardSplit.errorUnknown') : translated
+      })
+    }
+  }
 
   // Resubmissions referencing this request (cleaned up on delete)
   const resubmissionCount = useMemo(
@@ -584,13 +621,26 @@ export default function RequestDetailPage() {
               </div>
             )}
 
+            {request.splitFromRequestId && (
+              <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-finance-muted">
+                <span>{t('corporateCardSplit.splitFrom')}</span>
+                <Link
+                  to={`/request/${request.splitFromRequestId}`}
+                  className="text-finance-primary hover:underline"
+                >
+                  {t('corporateCardSplit.viewSource')}
+                </Link>
+              </div>
+            )}
+
             {/* Action buttons: review / approve / reject / force-reject */}
             {(canDoReview ||
               canDoApprove ||
               canDoReject ||
               canDoForceReject ||
               canDoRollback ||
-              canDoDelete) && (
+              canDoDelete ||
+              canDoSplit) && (
               <div className="mb-6 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 {canDoReview && (
                   <Button
@@ -630,6 +680,11 @@ export default function RequestDetailPage() {
                 {canDoDelete && (
                   <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
                     {t('admin.deleteTitle')}
+                  </Button>
+                )}
+                {canDoSplit && (
+                  <Button variant="outline" onClick={() => setShowSplitDialog(true)}>
+                    {t('corporateCardSplit.action')}
                   </Button>
                 )}
                 {remainingCount > 0 && (
@@ -831,6 +886,17 @@ export default function RequestDetailPage() {
         }
         resubmissionCount={resubmissionCount}
       />
+
+      {request && (
+        <CorporateCardSplitDialog
+          open={showSplitDialog}
+          items={request.items}
+          receipts={request.receipts}
+          submitting={splitMutation.isPending}
+          onConfirm={handleSplit}
+          onCancel={() => setShowSplitDialog(false)}
+        />
+      )}
 
       <Dialog open={confirmDialog.open} onClose={closeConfirm} size="sm">
         <Dialog.Title onClose={closeConfirm}>{t('common.confirm')}</Dialog.Title>

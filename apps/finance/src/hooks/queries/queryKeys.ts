@@ -5,10 +5,20 @@ export const queryKeys = {
     detail: (id: string) => ['requests', id] as const,
     byIds: (requestIds: string[]) => ['requests', 'byIds', ...requestIds] as const,
     approved: (projectId: string) => ['requests', projectId, 'approved'] as const,
-    infinite: (projectId: string, sort?: string, committee?: string) =>
-      ['requests', projectId, 'infinite', sort, committee] as const,
-    infiniteByStatus: (projectId: string, status: string, sort?: string, committee?: string) =>
-      ['requests', projectId, 'infinite', status, sort, committee] as const,
+    infinite: (
+      projectId: string,
+      sort?: string,
+      committee?: string,
+      corporateCardOnly?: boolean
+    ) => ['requests', projectId, 'infinite', sort, committee, corporateCardOnly] as const,
+    infiniteByStatus: (
+      projectId: string,
+      status: string,
+      sort?: string,
+      committee?: string,
+      corporateCardOnly?: boolean
+    ) =>
+      ['requests', projectId, 'infinite', status, sort, committee, corporateCardOnly] as const,
     infiniteByUser: (projectId: string, uid: string) =>
       ['requests', projectId, 'infinite', 'user', uid] as const
   },

@@ -168,6 +168,34 @@
     "confirm": "신청서 2개 생성",
     "cancel": "취소"
   },
+  "corporateCardSplit": {
+    "action": "법인카드 분리",
+    "title": "법인카드 분리",
+    "description": "법인카드로 결제된 항목과 영수증을 선택하세요. 선택한 것만 새 법인카드 신청서로 분리되고, 나머지는 원본에 남습니다. 분리 후 두 신청서 모두 검토 대기 상태로 돌아갑니다.",
+    "itemsLabel": "항목",
+    "receiptsLabel": "영수증",
+    "originalRequest": "원본 신청서",
+    "corporateRequest": "법인카드 신청서",
+    "receiptCount": "영수증 {{count}}개",
+    "confirm": "분리하기",
+    "cancel": "취소",
+    "splitFrom": "이 신청서는 분리되어 생성되었습니다",
+    "viewSource": "원본 보기",
+    "errorEMPTY_SELECTION": "법인카드로 분리할 항목을 최소 1개 선택하세요.",
+    "errorFULL_SELECTION": "모든 항목을 분리할 수는 없습니다. 최소 1개는 원본에 남아야 합니다.",
+    "errorINDEX_OUT_OF_RANGE": "선택한 항목이 유효하지 않습니다. 새로고침 후 다시 시도하세요.",
+    "errorDUPLICATE_INDEX": "선택한 항목이 유효하지 않습니다. 새로고침 후 다시 시도하세요.",
+    "errorUNKNOWN_RECEIPT_PATH": "선택한 영수증이 유효하지 않습니다. 새로고침 후 다시 시도하세요.",
+    "errorSPLIT_STATUS_NOT_ALLOWED": "검토 대기 또는 검토 완료 상태에서만 분리할 수 있습니다.",
+    "errorSPLIT_ALREADY_CORPORATE_CARD": "이미 법인카드 신청서입니다.",
+    "errorSPLIT_FORBIDDEN": "이 신청서를 분리할 권한이 없습니다.",
+    "errorSPLIT_OPS_BUDGET_INCLUDED": "운영예산에 편입된 신청서입니다. 편입을 먼저 해제한 뒤 분리하세요.",
+    "errorUnknown": "분리에 실패했습니다. 잠시 후 다시 시도하세요."
+  },
+  "filter": {
+    "corporateCardOnly": "법인카드만",
+    "sortLockedByCorporateCard": "법인카드 필터가 켜져 있어 최신순으로 고정됩니다."
+  },
   "form": {
     "title": "지불 / 환불 신청서",
     "subtitle": "Payment / Reimbursement Request Form",
@@ -201,6 +229,7 @@
     "requestTypeRegular": "일반 신청서",
     "requestTypeVendor": "업체 신청서",
     "requestTypeCorporateCard": "법인카드 정산",
+    "requestTypeCorporateCardShort": "법인카드",
     "bankBookUploadInline": "통장 사본 (프로필에 등록됩니다)",
     "bankBookUploadInlineHint": "통장 사본을 첨부하세요. 제출 시 프로필에 자동 저장됩니다. (PNG, JPG, PDF / 최대 800KB)",
     "signatureInline": "전자 서명 (프로필에 등록됩니다)",

@@ -73,6 +73,10 @@ export default function AdminRequestsPage() {
   )
   const setFilter = (v: RequestStatus | 'all') => updateParam('status', v, 'all')
   const setCommitteeFilter = (v: Committee | 'all') => updateParam('committee', v, 'all')
+  // status/committee 와 직교하는 축이므로 별도 URL 파라미터를 쓴다.
+  const corporateCardOnly = searchParams.get('type') === 'corporate_card'
+  const setCorporateCardOnly = (v: boolean) =>
+    updateParam('type', v ? 'corporate_card' : '', '')
   // Sort field + direction must change together in a single navigation. Calling
   // two separate setSearchParams() in one handler doesn't work: each starts from
   // the same not-yet-committed searchParams, so the second clobbers the first and
@@ -96,7 +100,13 @@ export default function AdminRequestsPage() {
   const firestoreCommittee = committeeFilter === 'all' ? undefined : committeeFilter
 
   const { data, isLoading, isFetching, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useInfiniteRequests(currentProject?.id, firestoreStatus, sortParam, firestoreCommittee)
+    useInfiniteRequests(
+      currentProject?.id,
+      firestoreStatus,
+      sortParam,
+      firestoreCommittee,
+      corporateCardOnly
+    )
 
   const [isExporting, setIsExporting] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
@@ -154,7 +164,10 @@ export default function AdminRequestsPage() {
         } else {
           const all = await fetchAllRequests(currentProject.id, firestoreCommittee)
           toExport = all.filter(
-            (r) => canSeeCommitteeRequests(role, r.committee) && r.status !== 'cancelled'
+            (r) =>
+              canSeeCommitteeRequests(role, r.committee) &&
+              r.status !== 'cancelled' &&
+              (!corporateCardOnly || r.isCorporateCard)
           )
         }
         const columns = [...DEFAULT_CSV_COLUMNS, ...(selectedOptionals as Set<CsvColumnKey>)]
@@ -174,6 +187,7 @@ export default function AdminRequestsPage() {
       currentProject?.id,
       role,
       firestoreCommittee,
+      corporateCardOnly,
       exportMode,
       selectedIds,
       accessible,
@@ -234,6 +248,18 @@ export default function AdminRequestsPage() {
   // Remarks column content
   const renderRemarks = (req: (typeof allRequests)[0]) => {
     const parts: React.ReactNode[] = []
+
+    // 유형이 먼저 읽히도록 재제출 배지보다 앞에 둔다.
+    if (req.isCorporateCard) {
+      parts.push(
+        <span
+          key="corp-card"
+          className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[10px] font-medium"
+        >
+          {t('form.requestTypeCorporateCardShort')}
+        </span>
+      )
+    }
 
     // Resubmission badge + original link
     if (req.originalRequestId) {
@@ -337,6 +363,20 @@ export default function AdminRequestsPage() {
               </button>
             ))}
             <button
+              onClick={() => {
+                setCorporateCardOnly(!corporateCardOnly)
+                setSelectedIds(new Set())
+              }}
+              aria-pressed={corporateCardOnly}
+              className={`px-3 py-1.5 rounded text-sm font-semibold border transition-colors ${
+                corporateCardOnly
+                  ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                  : 'bg-white text-finance-muted border-finance-border hover:text-finance-primary hover:bg-finance-primary-subtle'
+              }`}
+            >
+              {t('filter.corporateCardOnly')}
+            </button>
+            <button
               onClick={() => setExportDialogOpen(true)}
               className="finance-secondary-button w-full px-4 py-1.5 text-sm rounded font-semibold transition-colors sm:w-auto"
             >
@@ -373,6 +413,11 @@ export default function AdminRequestsPage() {
         <>
           {/* Desktop table view */}
           <div className="hidden sm:block">
+            {corporateCardOnly && (
+              <p className="mb-2 text-xs text-finance-muted">
+                {t('filter.sortLockedByCorporateCard')}
+              </p>
+            )}
             <FinanceTable>
               <FinanceTable.Head>
                 <tr>
@@ -406,14 +451,16 @@ export default function AdminRequestsPage() {
                       key={i}
                       align={col.align}
                       className={`select-none ${
-                        col.key
+                        col.key && !corporateCardOnly
                           ? `finance-table-th-sortable ${sortKey === col.key ? 'finance-table-th-active' : ''}`
                           : ''
                       }`}
-                      onClick={col.key ? () => handleSort(col.key!) : undefined}
+                      onClick={
+                        col.key && !corporateCardOnly ? () => handleSort(col.key!) : undefined
+                      }
                     >
                       {col.label}
-                      {col.key && (
+                      {col.key && !corporateCardOnly && (
                         <SortIcon columnKey={col.key} sortKey={sortKey} sortDir={sortDir} />
                       )}
                     </FinanceTable.Th>
@@ -466,25 +513,31 @@ export default function AdminRequestsPage() {
 
           {/* Mobile: sort selector + card view */}
           <div className="sm:hidden">
-            <div className="flex items-center gap-2 mb-3">
-              <Select
-                options={[
-                  { value: 'date-desc', label: `${t('field.date')} \u2193` },
-                  { value: 'date-asc', label: `${t('field.date')} \u2191` },
-                  { value: 'payee-asc', label: `${t('field.payee')} \u2191` },
-                  { value: 'payee-desc', label: `${t('field.payee')} \u2193` },
-                  { value: 'totalAmount-desc', label: `${t('field.totalAmount')} \u2193` },
-                  { value: 'totalAmount-asc', label: `${t('field.totalAmount')} \u2191` },
-                  { value: 'status-asc', label: `${t('status.label')} \u2191` },
-                  { value: 'status-desc', label: `${t('status.label')} \u2193` }
-                ]}
-                value={`${sortKey}-${sortDir}`}
-                onChange={(v) => {
-                  const [k, d] = (v as string).split('-') as [SortKey, SortDir]
-                  setSort(k, d)
-                }}
-              />
-            </div>
+            {corporateCardOnly ? (
+              <p className="mb-3 text-xs text-finance-muted">
+                {t('filter.sortLockedByCorporateCard')}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2 mb-3">
+                <Select
+                  options={[
+                    { value: 'date-desc', label: `${t('field.date')} \u2193` },
+                    { value: 'date-asc', label: `${t('field.date')} \u2191` },
+                    { value: 'payee-asc', label: `${t('field.payee')} \u2191` },
+                    { value: 'payee-desc', label: `${t('field.payee')} \u2193` },
+                    { value: 'totalAmount-desc', label: `${t('field.totalAmount')} \u2193` },
+                    { value: 'totalAmount-asc', label: `${t('field.totalAmount')} \u2191` },
+                    { value: 'status-asc', label: `${t('status.label')} \u2191` },
+                    { value: 'status-desc', label: `${t('status.label')} \u2193` }
+                  ]}
+                  value={`${sortKey}-${sortDir}`}
+                  onChange={(v) => {
+                    const [k, d] = (v as string).split('-') as [SortKey, SortDir]
+                    setSort(k, d)
+                  }}
+                />
+              </div>
+            )}
 
             <div
               className={`space-y-3 transition-opacity ${isFetching && !isFetchingNextPage ? 'opacity-40' : ''}`}

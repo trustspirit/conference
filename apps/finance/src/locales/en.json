@@ -168,6 +168,34 @@
     "confirm": "Create 2 requests",
     "cancel": "Cancel"
   },
+  "corporateCardSplit": {
+    "action": "Split corporate card",
+    "title": "Split corporate card",
+    "description": "Select the items and receipts paid by corporate card. Only those move to a new corporate card request; the rest stay on the original. Both requests return to pending review after the split.",
+    "itemsLabel": "Items",
+    "receiptsLabel": "Receipts",
+    "originalRequest": "Original request",
+    "corporateRequest": "Corporate card request",
+    "receiptCount": "{{count}} receipt(s)",
+    "confirm": "Split",
+    "cancel": "Cancel",
+    "splitFrom": "This request was created by a split",
+    "viewSource": "View source",
+    "errorEMPTY_SELECTION": "Select at least one item to move to the corporate card request.",
+    "errorFULL_SELECTION": "You cannot move every item. At least one must stay on the original.",
+    "errorINDEX_OUT_OF_RANGE": "The selection is no longer valid. Refresh and try again.",
+    "errorDUPLICATE_INDEX": "The selection is no longer valid. Refresh and try again.",
+    "errorUNKNOWN_RECEIPT_PATH": "The selected receipt is no longer valid. Refresh and try again.",
+    "errorSPLIT_STATUS_NOT_ALLOWED": "Only pending or reviewed requests can be split.",
+    "errorSPLIT_ALREADY_CORPORATE_CARD": "This is already a corporate card request.",
+    "errorSPLIT_FORBIDDEN": "You do not have permission to split this request.",
+    "errorSPLIT_OPS_BUDGET_INCLUDED": "This request is included in the operations budget. Remove the inclusion before splitting.",
+    "errorUnknown": "The split failed. Please try again."
+  },
+  "filter": {
+    "corporateCardOnly": "Corp. Card only",
+    "sortLockedByCorporateCard": "Sorted by newest while the corporate card filter is on."
+  },
   "form": {
     "title": "Payment / Reimbursement Request Form",
     "subtitle": "Payment / Reimbursement Request Form",
@@ -201,6 +229,7 @@
     "requestTypeRegular": "Regular Request",
     "requestTypeVendor": "Vendor Request",
     "requestTypeCorporateCard": "Corporate Card",
+    "requestTypeCorporateCardShort": "Corp. Card",
     "bankBookUploadInline": "Bank Book (will be saved to your profile)",
     "bankBookUploadInlineHint": "Attach your bank book. It will be automatically saved to your profile on submission. (PNG, JPG, PDF / max 800KB)",
     "signatureInline": "Signature (will be saved to your profile)",
