@@ -212,6 +212,7 @@ export default function RequestDetailPage() {
   const canDoSplit =
     !!request &&
     !request.isCorporateCard &&
+    !request.isVendorRequest &&
     (request.status === 'pending' || request.status === 'reviewed') &&
     (canReviewCommittee(role, request.committee) ||
       canFinalApproveCommittee(role, request.committee))

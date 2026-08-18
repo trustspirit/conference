@@ -15,7 +15,7 @@ export function hasMixedCurrency(items: RequestItem[]): boolean {
 }
 
 /** A side needs a receipt unless every one of its items is car transport. */
-function isCarOnly(items: RequestItem[]): boolean {
+export function isCarOnly(items: RequestItem[]): boolean {
   return items.length > 0 && items.every((i) => i.transportDetail?.transportType === 'car')
 }
 

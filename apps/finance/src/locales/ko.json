@@ -177,6 +177,7 @@
     "originalRequest": "원본 신청서",
     "corporateRequest": "법인카드 신청서",
     "receiptCount": "영수증 {{count}}개",
+    "missingReceipts": "영수증이 필요한 쪽에 최소 1개의 영수증을 배정하세요. (차량 이동비만 있는 쪽은 제외)",
     "confirm": "분리하기",
     "cancel": "취소",
     "splitFrom": "이 신청서는 분리되어 생성되었습니다",
@@ -188,6 +189,7 @@
     "errorUNKNOWN_RECEIPT_PATH": "선택한 영수증이 유효하지 않습니다. 새로고침 후 다시 시도하세요.",
     "errorSPLIT_STATUS_NOT_ALLOWED": "검토 대기 또는 검토 완료 상태에서만 분리할 수 있습니다.",
     "errorSPLIT_ALREADY_CORPORATE_CARD": "이미 법인카드 신청서입니다.",
+    "errorSPLIT_VENDOR_NOT_ALLOWED": "거래처 신청서는 분리할 수 없습니다.",
     "errorSPLIT_FORBIDDEN": "이 신청서를 분리할 권한이 없습니다.",
     "errorSPLIT_OPS_BUDGET_INCLUDED": "운영예산에 편입된 신청서입니다. 편입을 먼저 해제한 뒤 분리하세요.",
     "errorUnknown": "분리에 실패했습니다. 잠시 후 다시 시도하세요."
