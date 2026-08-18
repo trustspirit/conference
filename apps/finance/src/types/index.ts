@@ -213,6 +213,8 @@ export interface PaymentRequest {
   comments: string
   isVendorRequest?: boolean
   isCorporateCard?: boolean
+  /** 다른 신청서에서 법인카드 분리로 생성된 경우 원본 신청서 id. */
+  splitFromRequestId?: string
   vendorBankBookPath?: string
   vendorBankBookUrl?: string
 }

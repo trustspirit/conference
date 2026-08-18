@@ -3,7 +3,9 @@
   "scripts": {
     "build": "tsc && rm -rf lib/ai/context && cp -r src/ai/context lib/ai/context",
     "serve": "npm run build && firebase emulators:start --only functions",
-    "deploy": "firebase deploy --only functions"
+    "deploy": "firebase deploy --only functions",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "main": "lib/index.js",
   "dependencies": {
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "@types/nodemailer": "^6.4.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.10"
   }
 }

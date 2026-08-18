@@ -4,6 +4,7 @@ import { Dialog, Button } from 'trust-ui-react'
 import type { RequestItem, Receipt } from '../types'
 import { getItemCurrency, sumByCurrency, formatAmount } from '../lib/currency'
 import { missingReceiptCurrencies } from '../lib/splitRequestByCurrency'
+import ReceiptThumb from './ReceiptThumb'
 
 interface CurrencySplitDialogProps {
   open: boolean
@@ -12,27 +13,6 @@ interface CurrencySplitDialogProps {
   submitting: boolean
   onConfirm: (usdReceiptPaths: Set<string>) => void
   onCancel: () => void
-}
-
-/** Receipt thumbnail with a graceful fallback for PDFs and load failures. */
-function ReceiptThumb({ url, fileName }: { url: string; fileName: string }) {
-  const [failed, setFailed] = useState(false)
-  const isPdf = /\.pdf$/i.test(fileName)
-  if (isPdf || failed) {
-    return (
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-finance-surface text-[10px] font-semibold text-finance-muted">
-        {isPdf ? 'PDF' : 'FILE'}
-      </span>
-    )
-  }
-  return (
-    <img
-      src={url}
-      alt={fileName}
-      onError={() => setFailed(true)}
-      className="h-11 w-11 shrink-0 rounded object-cover bg-finance-surface"
-    />
-  )
 }
 
 export default function CurrencySplitDialog({
