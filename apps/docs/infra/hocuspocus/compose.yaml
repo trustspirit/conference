@@ -1,0 +1,34 @@
+services:
+  hocuspocus:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: 1234
+      SQLITE_PATH: /data/loom-docs.sqlite
+      HOCUSPOCUS_SECRET: ${HOCUSPOCUS_SECRET}
+      DATABASE_URL: ${DATABASE_URL:-}
+    volumes:
+      - hocuspocus_data:/data
+    networks: [collab]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      COLLAB_DOMAIN: ${COLLAB_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [hocuspocus]
+    networks: [collab]
+
+networks:
+  collab:
+volumes:
+  hocuspocus_data:
+  caddy_data:
+  caddy_config:

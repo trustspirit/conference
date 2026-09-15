@@ -1,0 +1,4 @@
+{$COLLAB_DOMAIN} {
+  reverse_proxy hocuspocus:1234
+  encode zstd gzip
+}
