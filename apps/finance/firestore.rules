@@ -37,6 +37,23 @@ service cloud.firestore {
       return effectiveProjectRole(projectId, request.auth.uid);
     }
 
+    // A rejection undoes every stage the request had passed, so all review and
+    // approval fields must be reset and the rejecter recorded separately.
+    function rejectionKeys() {
+      return ['status', 'reviewedBy', 'reviewedAt', 'approvedBy', 'approvedAt',
+              'approvalSignature', 'rejectedBy', 'rejectedAt',
+              'rejectionReason'];
+    }
+
+    function clearsPassedStages() {
+      return request.resource.data.reviewedBy == null
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.approvedBy == null
+        && request.resource.data.approvedAt == null
+        && request.resource.data.approvalSignature == null
+        && request.resource.data.rejectedBy.uid == request.auth.uid;
+    }
+
     function hasProjectRole(projectId, allowed) {
       return callerProjectRole(projectId) in allowed;
     }
@@ -96,9 +113,18 @@ service cloud.firestore {
           // --- Reviewer transitions (pending → reviewed | rejected) ---
           (
             resource.data.status == 'pending'
-            && request.resource.data.status in ['reviewed', 'rejected']
             && request.auth.uid != resource.data.requestedBy.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt', 'rejectionReason'])
+            && (
+              (
+                request.resource.data.status == 'reviewed'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt', 'rejectionReason'])
+              )
+              || (
+                request.resource.data.status == 'rejected'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(rejectionKeys())
+                && clearsPassedStages()
+              )
+            )
             && (
               (callerProjectRole(resource.data.projectId) == 'finance_ops' && resource.data.committee == 'operations')
               || callerProjectRole(resource.data.projectId) in ['finance_prep', 'admin']
@@ -110,7 +136,8 @@ service cloud.firestore {
             resource.data.status == 'reviewed'
             && request.resource.data.status == 'rejected'
             && request.auth.uid != resource.data.requestedBy.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'approvalSignature', 'rejectionReason'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(rejectionKeys())
+            && clearsPassedStages()
             // Director-filed request: only executive/admin may reject
             && (
               !(
@@ -168,7 +195,8 @@ service cloud.firestore {
           || (
             resource.data.status == 'approved'
             && request.resource.data.status == 'force_rejected'
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'rejectionReason', 'forceRejectedBy', 'forceRejectedAt'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(rejectionKeys())
+            && clearsPassedStages()
             && callerProjectRole(resource.data.projectId) in ['finance_prep', 'admin']
           )
           // --- Requester cancel: pending → cancelled (own request only) ---

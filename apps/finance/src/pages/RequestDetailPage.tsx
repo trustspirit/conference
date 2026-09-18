@@ -464,7 +464,7 @@ export default function RequestDetailPage() {
               <StatusBadge status={request.status} />
             </div>
 
-            <StatusProgress status={request.status} hasReview={!!request.reviewedBy} />
+            <StatusProgress status={request.status} />
 
             {/* Requester actions: resubmit / cancel — shown prominently at top */}
             {(request.status === 'rejected' ||
@@ -719,12 +719,21 @@ export default function RequestDetailPage() {
                       }
                     ]
                   : []),
-                {
-                  label: t('field.approvedBy'),
-                  value: request.approvedBy
-                    ? `${request.approvedBy.name} (${request.approvedBy.email})`
-                    : '-'
-                }
+                ...(request.rejectedBy
+                  ? [
+                      {
+                        label: t('approval.rejectedBy'),
+                        value: `${request.rejectedBy.name} (${request.rejectedBy.email})`
+                      }
+                    ]
+                  : [
+                      {
+                        label: t('field.approvedBy'),
+                        value: request.approvedBy
+                          ? `${request.approvedBy.name} (${request.approvedBy.email})`
+                          : '-'
+                      }
+                    ])
               ]}
             />
 

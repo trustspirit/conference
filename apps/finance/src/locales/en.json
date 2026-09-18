@@ -291,6 +291,7 @@
     "rejectionReason": "Rejection Reason",
     "forceRejectionReason": "Rejection Reason",
     "reviewedBy": "Reviewed by",
+    "rejectedBy": "Rejected by",
     "approvalSignature": "Approval Signature",
     "resubmit": "Edit & Resubmit",
     "resubmitTitle": "Edit & Resubmit",

@@ -50,6 +50,7 @@ export type CsvColumnKey =
   | 'requestedBy'
   | 'reviewedBy'
   | 'approvedBy'
+  | 'rejectedBy'
   | 'rejectionReason'
   | 'itemDescriptions'
 
@@ -72,6 +73,7 @@ export const OPTIONAL_CSV_COLUMNS: CsvColumnKey[] = [
   'requestedBy',
   'reviewedBy',
   'approvedBy',
+  'rejectedBy',
   'rejectionReason',
   'itemDescriptions'
 ]
@@ -143,6 +145,7 @@ export function getCsvColumnLabel(key: CsvColumnKey): string {
     requestedBy: i18n.t('field.requestedBy'),
     reviewedBy: i18n.t('approval.reviewedByLabel', i18n.t('approval.reviewedBy', 'Reviewed By')),
     approvedBy: i18n.t('field.approvedBy'),
+    rejectedBy: i18n.t('approval.rejectedBy', 'Rejected By'),
     rejectionReason: i18n.t('approval.rejectionReason', 'Rejection Reason'),
     itemDescriptions: i18n.t('field.items')
   }
@@ -181,6 +184,8 @@ function getCsvCellValue(req: PaymentRequest, key: CsvColumnKey): string {
       return req.reviewedBy?.name || ''
     case 'approvedBy':
       return req.approvedBy?.name || ''
+    case 'rejectedBy':
+      return req.rejectedBy?.name || ''
     case 'rejectionReason':
       return req.rejectionReason || ''
     case 'itemDescriptions':
@@ -227,6 +232,8 @@ function getBudgetCodeCsvCellValue(flattened: FlattenedItem, key: CsvColumnKey):
       return req.reviewedBy?.name || ''
     case 'approvedBy':
       return req.approvedBy?.name || ''
+    case 'rejectedBy':
+      return req.rejectedBy?.name || ''
     case 'rejectionReason':
       return req.rejectionReason || ''
     default: {

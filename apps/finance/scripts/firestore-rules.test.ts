@@ -141,6 +141,140 @@ describe('firestore.rules — new-shape', () => {
     }))
   })
 
+  it('rejecting a reviewed request CAN clear the review and approval fields', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/appr'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { appr: 'approver_ops' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' },
+        reviewedBy: { uid: 'fin' }, reviewedAt: new Date(),
+        approvedBy: null, approvedAt: null, approvalSignature: null
+      })
+    })
+    const ctx = env.authenticatedContext('appr')
+    await assertSucceeds(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'rejected',
+      reviewedBy: null, reviewedAt: null,
+      approvedBy: null, approvedAt: null, approvalSignature: null,
+      rejectedBy: { uid: 'appr' }, rejectedAt: new Date(),
+      rejectionReason: 'over budget'
+    }))
+  })
+
+  it('rejecting CANNOT leave the request looking reviewed', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/appr'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { appr: 'approver_ops' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' },
+        reviewedBy: { uid: 'fin' }, reviewedAt: new Date(),
+        approvedBy: null, approvedAt: null, approvalSignature: null
+      })
+    })
+    const ctx = env.authenticatedContext('appr')
+    // The old shape: rejecter written into approvedBy, review left standing.
+    await assertFails(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'rejected',
+      approvedBy: { uid: 'appr' }, approvedAt: new Date(), approvalSignature: null,
+      rejectionReason: 'over budget'
+    }))
+  })
+
+  it('rejecting CANNOT attribute the rejection to somebody else', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/appr'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { appr: 'approver_ops' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' },
+        reviewedBy: { uid: 'fin' }, reviewedAt: new Date(),
+        approvedBy: null, approvedAt: null, approvalSignature: null
+      })
+    })
+    const ctx = env.authenticatedContext('appr')
+    await assertFails(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'rejected',
+      reviewedBy: null, reviewedAt: null,
+      approvedBy: null, approvedAt: null, approvalSignature: null,
+      rejectedBy: { uid: 'someone-else' }, rejectedAt: new Date(),
+      rejectionReason: 'over budget'
+    }))
+  })
+
+  it('rejecting CANNOT write extra fields beyond the rejection shape', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/appr'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { appr: 'approver_ops' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'reviewed', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' },
+        reviewedBy: { uid: 'fin' }, reviewedAt: new Date(),
+        approvedBy: null, approvedAt: null, approvalSignature: null
+      })
+    })
+    const ctx = env.authenticatedContext('appr')
+    // The rejection shape is closed: a rejection records who and why, nothing
+    // else. Smuggling in another key must be refused.
+    await assertFails(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'rejected',
+      reviewedBy: null, reviewedAt: null,
+      approvedBy: null, approvedAt: null, approvalSignature: null,
+      rejectedBy: { uid: 'appr' }, rejectedAt: new Date(),
+      rejectionReason: 'over budget',
+      totalAmount: 1
+    }))
+  })
+
+  it('force rejecting an approved request CAN clear the approval fields', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/fin'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { fin: 'finance_prep' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'approved', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' },
+        reviewedBy: { uid: 'rev' }, reviewedAt: new Date(),
+        approvedBy: { uid: 'appr' }, approvedAt: new Date(), approvalSignature: 'sig'
+      })
+    })
+    const ctx = env.authenticatedContext('fin')
+    await assertSucceeds(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'force_rejected',
+      reviewedBy: null, reviewedAt: null,
+      approvedBy: null, approvedAt: null, approvalSignature: null,
+      rejectedBy: { uid: 'fin' }, rejectedAt: new Date(),
+      rejectionReason: 'duplicate'
+    }))
+  })
+
+  it('reviewing a pending request still works and is unaffected', async () => {
+    await seed(env, async (db) => {
+      await setDoc(doc(db, 'users/fin'), { systemRole: 'member' })
+      await setDoc(doc(db, 'projects/p1'), {
+        memberRoles: { fin: 'finance_ops' }, directorApprovalThreshold: 100000
+      })
+      await setDoc(doc(db, 'requests/r1'), {
+        projectId: 'p1', status: 'pending', committee: 'operations',
+        totalAmount: 50000, requestedBy: { uid: 'someone' }
+      })
+    })
+    const ctx = env.authenticatedContext('fin')
+    await assertSucceeds(updateDoc(doc(ctx.firestore(), 'requests/r1'), {
+      status: 'reviewed', reviewedBy: { uid: 'fin' }, reviewedAt: new Date()
+    }))
+  })
+
   it('executive CAN approve a director\'s request', async () => {
     await seed(env, async (db) => {
       await setDoc(doc(db, 'users/dirA'), { systemRole: 'member' })

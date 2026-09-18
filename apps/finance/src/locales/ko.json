@@ -291,6 +291,7 @@
     "rejectionReason": "반려 사유",
     "forceRejectionReason": "반려 사유",
     "reviewedBy": "검토자",
+    "rejectedBy": "반려자",
     "approvalSignature": "승인 서명",
     "resubmit": "수정 후 재신청",
     "resubmitTitle": "수정 후 재신청",

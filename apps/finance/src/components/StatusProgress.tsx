@@ -3,10 +3,9 @@ import type { RequestStatus } from '../types'
 
 interface StatusProgressProps {
   status: RequestStatus
-  hasReview?: boolean
 }
 
-export default function StatusProgress({ status, hasReview }: StatusProgressProps) {
+export default function StatusProgress({ status }: StatusProgressProps) {
   const { t } = useTranslation()
 
   const isRejected = status === 'rejected' || status === 'force_rejected'
@@ -19,12 +18,15 @@ export default function StatusProgress({ status, hasReview }: StatusProgressProp
     reviewed: 2,
     approved: 3,
     settled: 4,
-    rejected: hasReview ? 2 : 1,
-    force_rejected: 3,
     cancelled: 0
   }
 
-  const activeStep = statusToStep[status] ?? 0
+  // A rejection always marks the review step, whichever stage actually denied it:
+  // the request is submitted, and it did not get past review. Which reviewer or
+  // approver turned it down is shown by the rejection reason, not the bar.
+  const REJECTED_STEP = 1
+
+  const activeStep = isRejected ? REJECTED_STEP : (statusToStep[status] ?? 0)
 
   const steps = [
     { label: t('statusStep.submitted'), key: 'submitted' },

@@ -207,6 +207,8 @@ export interface PaymentRequest {
   requestedBySignature: string | null
   approvalSignature: string | null
   approvedAt: Date | null
+  rejectedBy?: { uid: string; name: string; email: string } | null
+  rejectedAt?: Date | null
   rejectionReason: string | null
   settlementId: string | null
   originalRequestId: string | null

@@ -28,6 +28,7 @@ import {
 import { getStorage, ref as storageRef, deleteObject } from 'firebase/storage'
 import { db, app } from '@conference/firebase'
 import { DELETABLE_STATUSES } from '../../lib/roles'
+import { buildRejectUpdate, buildForceRejectUpdate } from '../../lib/rejectUpdate'
 import { queryKeys } from './queryKeys'
 import type { PaymentRequest, ReceiptDisplaySizes, RequestStatus } from '../../types'
 
@@ -359,22 +360,10 @@ export function useRejectRequest() {
         if (status !== 'pending' && status !== 'reviewed') {
           throw new Error('already_processed')
         }
-        if (status === 'pending') {
-          tx.update(ref, {
-            status: 'rejected',
-            reviewedBy: params.approver,
-            reviewedAt: serverTimestamp(),
-            rejectionReason: params.rejectionReason
-          })
-        } else {
-          tx.update(ref, {
-            status: 'rejected',
-            approvedBy: params.approver,
-            approvalSignature: null,
-            approvedAt: serverTimestamp(),
-            rejectionReason: params.rejectionReason
-          })
-        }
+        tx.update(
+          ref,
+          buildRejectUpdate(status, params.approver, params.rejectionReason, serverTimestamp())
+        )
       })
     },
     onSuccess: (_data, variables) => {
@@ -400,12 +389,10 @@ export function useForceRejectRequest() {
         if (!snap.exists() || snap.data().status !== 'approved') {
           throw new Error('already_processed')
         }
-        tx.update(ref, {
-          status: 'force_rejected',
-          rejectionReason: params.rejectionReason,
-          forceRejectedBy: params.approver,
-          forceRejectedAt: serverTimestamp()
-        })
+        tx.update(
+          ref,
+          buildForceRejectUpdate(params.approver, params.rejectionReason, serverTimestamp())
+        )
       })
     },
     onSuccess: (_data, variables) => {

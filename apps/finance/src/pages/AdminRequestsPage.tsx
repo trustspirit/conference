@@ -301,11 +301,11 @@ export default function AdminRequestsPage() {
         />
       )
     }
-    if (req.approvedBy && req.status === 'rejected' && req.rejectionReason) {
+    if (req.rejectedBy && req.status === 'rejected' && req.rejectionReason) {
       parts.push(
         <Tooltip
           key="rejected"
-          text={`${req.approvedBy.name}: ${req.rejectionReason}`}
+          text={`${req.rejectedBy.name}: ${req.rejectionReason}`}
           maxWidth="160px"
           className="text-red-500"
         />
@@ -315,7 +315,11 @@ export default function AdminRequestsPage() {
       parts.push(
         <Tooltip
           key="force"
-          text={req.rejectionReason}
+          text={
+            req.rejectedBy
+              ? `${req.rejectedBy.name}: ${req.rejectionReason}`
+              : req.rejectionReason
+          }
           maxWidth="160px"
           className="text-orange-600"
         />
