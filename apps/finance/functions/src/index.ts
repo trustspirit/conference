@@ -1224,13 +1224,15 @@ export const weeklyApproverDigest = onSchedule(
       const projectData = projDoc.data()
       const projectName = (projectData.name as string | undefined) || projectId
 
-      // 이 프로젝트의 수신자 (uid -> 프로젝트 내 역할, super_admin은 멤버 역할이 없으면 'admin')
+      // 이 프로젝트 멤버 중 수신자 (uid -> 프로젝트 내 역할, 관련 역할이 없는 super_admin 멤버는 'admin')
       const recipientMap = new Map<string, string>()
       for (const [uid, role] of Object.entries((projectData.memberRoles ?? {}) as Record<string, string>)) {
         if (relevantRoles.includes(role)) recipientMap.set(uid, role)
       }
+      // super_admin도 해당 프로젝트 멤버인 경우에만 수신 (속하지 않은 프로젝트 알림 제외)
+      const memberRoles = (projectData.memberRoles ?? {}) as Record<string, string>
       for (const uid of superUids) {
-        if (!recipientMap.has(uid)) recipientMap.set(uid, 'admin')
+        if (memberRoles[uid] != null && !recipientMap.has(uid)) recipientMap.set(uid, 'admin')
       }
       if (recipientMap.size === 0) continue
 
