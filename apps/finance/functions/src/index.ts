@@ -1145,6 +1145,7 @@ export const onRequestStatusChange = onDocumentUpdated(
 
 function buildWeeklyDigestEmail(
   userName: string,
+  projectName: string,
   sections: { label: string; count: number }[]
 ): { subject: string; html: string } {
   const totalCount = sections.reduce((sum, s) => sum + s.count, 0)
@@ -1154,10 +1155,11 @@ function buildWeeklyDigestEmail(
     .join('')
 
   return {
-    subject: `[지불/환불] 처리 대기 ${totalCount}건`,
+    subject: `[지불/환불] ${projectName} 처리 대기 ${totalCount}건`,
     html: `
       <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #2563eb; margin-bottom: 16px;">주간 처리 현황</h2>
+        <p style="margin-bottom: 8px; color: #6b7280;">프로젝트: <strong>${escapeHtml(projectName)}</strong></p>
         <p style="margin-bottom: 16px;">${escapeHtml(userName)}님, 처리가 필요한 건이 있습니다.</p>
         <ul style="margin-bottom: 20px; padding-left: 20px;">${sectionHtml}</ul>
         <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">확인하기</a></p>
@@ -1166,7 +1168,7 @@ function buildWeeklyDigestEmail(
   }
 }
 
-// 매주 일요일 09:00 KST 처리 대기 알림
+// 매주 일요일 09:00 KST 처리 대기 알림 (프로젝트별로 별도 메일 발송)
 export const weeklyApproverDigest = onSchedule(
   {
     // UTC 일요일 00:00 = KST 일요일 09:00 (한국은 DST 없음).
@@ -1177,7 +1179,6 @@ export const weeklyApproverDigest = onSchedule(
   async () => {
     const db = admin.firestore()
 
-    // 관련 역할 사용자 조회 (프로젝트 범위: 모든 프로젝트에서 집계)
     const relevantRoles = [
       'finance_ops',
       'finance_prep',
@@ -1188,121 +1189,111 @@ export const weeklyApproverDigest = onSchedule(
       'executive'
     ]
 
-    // Collect recipients across all projects (uid -> project-scoped role, first match wins)
+    // 비활성/삭제된 프로젝트는 제외
     const projectsSnap = await db.collection('projects').get()
-    // 비활성/삭제된 프로젝트의 잔여 신청서는 집계에서 제외 (정산 완료 후에도 알림이 계속 가는 문제 방지)
     const activeProjectDocs = projectsSnap.docs.filter((p) => {
       const data = p.data()
       return data.isActive !== false && !data.deletedAt
     })
-    const activeProjectIds = new Set(activeProjectDocs.map((p) => p.id))
-    const recipientMap = new Map<string, string>()  // uid -> role
-    for (const projDoc of activeProjectDocs) {
-      const perProject = await uidsWithProjectRoles(projDoc.id, relevantRoles)
-      for (const { uid, role } of perProject) {
-        if (!recipientMap.has(uid)) recipientMap.set(uid, role)
-      }
+    if (activeProjectDocs.length === 0) {
+      console.log('No active projects')
+      return
     }
 
     // super_admin은 개별 신청/상태변경 알림은 받지 않지만, 주간 다이제스트는 받음
     const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get()
-    for (const d of superSnap.docs) {
-      if (!recipientMap.has(d.id)) recipientMap.set(d.id, 'admin')
-    }
-
-    if (recipientMap.size === 0) {
-      console.log('No relevant users found')
-      return
-    }
-
-    // pending 신청서 (검토 대상) - 위원회별 집계
-    const inActiveProject = (d: FirebaseFirestore.QueryDocumentSnapshot) =>
-      activeProjectIds.has(d.data().projectId as string)
-    const pendingSnapshot = await db.collection('requests').where('status', '==', 'pending').get()
-
-    let opsPendingCount = 0
-    let prepPendingCount = 0
-    for (const doc of pendingSnapshot.docs.filter(inActiveProject)) {
-      const committee = doc.data().committee as string
-      if (committee === 'operations') opsPendingCount++
-      else if (committee === 'preparation') prepPendingCount++
-    }
-
-    // reviewed 신청서 (승인 대상) - 위원회별 집계
-    const reviewedSnapshot = await db.collection('requests').where('status', '==', 'reviewed').get()
-
-    let opsReviewedCount = 0
-    let prepReviewedCount = 0
-    const activeReviewedDocs = reviewedSnapshot.docs.filter(inActiveProject)
-    for (const doc of activeReviewedDocs) {
-      const committee = doc.data().committee as string
-      if (committee === 'operations') opsReviewedCount++
-      else if (committee === 'preparation') prepReviewedCount++
-    }
-    const totalReviewedCount = activeReviewedDocs.length
-
-    // approved 미정산 건수
-    const approvedSnapshot = await db.collection('requests').where('status', '==', 'approved').get()
-
-    const totalApprovedUnsettledCount = approvedSnapshot.docs.filter(inActiveProject).length
+    const superUids = superSnap.docs.map((d) => d.id)
 
     const transporter = createTransporter()
-
-    const recipients = [...recipientMap.entries()].map(([uid, role]) => ({ uid, role }))
-    const recipientUserDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()))
-
-    for (let i = 0; i < recipients.length; i++) {
-      const r = recipients[i]
-      const role = r.role
-      const userDoc = recipientUserDocs[i]
-      const user = userDoc.data()
-      const email = user?.email as string | undefined
-      const name = ((user?.displayName || user?.name || '') as string)
-
-      if (!email) continue
-
-      const sections: { label: string; count: number }[] = []
-
-      if (role === 'finance_ops') {
-        // 운영위 재정: 운영위 검토 대상
-        sections.push({ label: '운영위 검토 대기', count: opsPendingCount })
-      } else if (role === 'finance_prep') {
-        // 준비위 재정(총괄): 준비위 검토 대상 + 승인건 중 미정산
-        sections.push({ label: '준비위 검토 대기', count: prepPendingCount })
-        sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount })
-      } else if (role === 'approver_ops') {
-        // 운영위 승인자: 운영위 승인 대기
-        sections.push({ label: '운영위 승인 대기', count: opsReviewedCount })
-      } else if (role === 'approver_prep') {
-        // 준비위 승인자: 준비위 승인 대기
-        sections.push({ label: '준비위 승인 대기', count: prepReviewedCount })
-      } else if (role === 'session_director') {
-        // 운영 위원장: 운영위 승인 대기
-        sections.push({ label: '운영위 승인 대기', count: opsReviewedCount })
-      } else if (role === 'logistic_admin') {
-        // 준비 위원장: 준비위 승인 대기
-        sections.push({ label: '준비위 승인 대기', count: prepReviewedCount })
-      } else if (role === 'executive' || role === 'admin') {
-        // 대회장 / super_admin: 전체 승인 대기 + 미정산
-        sections.push({ label: '승인 대기', count: totalReviewedCount })
-        sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount })
+    const userCache = new Map<string, { email?: string; name: string }>()
+    const getUser = async (uid: string) => {
+      let cached = userCache.get(uid)
+      if (!cached) {
+        const data = (await db.doc(`users/${uid}`).get()).data()
+        cached = {
+          email: data?.email as string | undefined,
+          name: ((data?.displayName || data?.name || '') as string)
+        }
+        userCache.set(uid, cached)
       }
+      return cached
+    }
 
-      const totalCount = sections.reduce((sum, s) => sum + s.count, 0)
-      if (totalCount === 0) continue
+    for (const projDoc of activeProjectDocs) {
+      const projectId = projDoc.id
+      const projectData = projDoc.data()
+      const projectName = (projectData.name as string | undefined) || projectId
 
-      const { subject, html } = buildWeeklyDigestEmail(name, sections)
+      // 이 프로젝트의 수신자 (uid -> 프로젝트 내 역할, super_admin은 멤버 역할이 없으면 'admin')
+      const recipientMap = new Map<string, string>()
+      for (const [uid, role] of Object.entries((projectData.memberRoles ?? {}) as Record<string, string>)) {
+        if (relevantRoles.includes(role)) recipientMap.set(uid, role)
+      }
+      for (const uid of superUids) {
+        if (!recipientMap.has(uid)) recipientMap.set(uid, 'admin')
+      }
+      if (recipientMap.size === 0) continue
 
-      try {
-        await transporter.sendMail({
-          from: `지불/환불 시스템 <${gmailUser.value()}>`,
-          to: email,
-          subject,
-          html
-        })
-        console.log(`Weekly digest sent to ${email}: ${totalCount} items`)
-      } catch (error) {
-        console.error(`Failed to send weekly digest to ${email}:`, error)
+      const [pendingSnap, reviewedSnap, approvedSnap] = await Promise.all(
+        (['pending', 'reviewed', 'approved'] as const).map((status) =>
+          db.collection('requests').where('projectId', '==', projectId).where('status', '==', status).get()
+        )
+      )
+      const byCommittee = (docs: FirebaseFirestore.QueryDocumentSnapshot[], committee: string) =>
+        docs.filter((d) => d.data().committee === committee).length
+
+      const opsPendingCount = byCommittee(pendingSnap.docs, 'operations')
+      const prepPendingCount = byCommittee(pendingSnap.docs, 'preparation')
+      const opsReviewedCount = byCommittee(reviewedSnap.docs, 'operations')
+      const prepReviewedCount = byCommittee(reviewedSnap.docs, 'preparation')
+      const totalReviewedCount = reviewedSnap.size
+      const totalApprovedUnsettledCount = approvedSnap.size
+
+      for (const [uid, role] of recipientMap) {
+        const { email, name } = await getUser(uid)
+        if (!email) continue
+
+        const sections: { label: string; count: number }[] = []
+
+        if (role === 'finance_ops') {
+          // 운영위 재정: 운영위 검토 대상
+          sections.push({ label: '운영위 검토 대기', count: opsPendingCount })
+        } else if (role === 'finance_prep') {
+          // 준비위 재정(총괄): 준비위 검토 대상 + 승인건 중 미정산
+          sections.push({ label: '준비위 검토 대기', count: prepPendingCount })
+          sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount })
+        } else if (role === 'approver_ops') {
+          sections.push({ label: '운영위 승인 대기', count: opsReviewedCount })
+        } else if (role === 'approver_prep') {
+          sections.push({ label: '준비위 승인 대기', count: prepReviewedCount })
+        } else if (role === 'session_director') {
+          // 운영 위원장: 운영위 승인 대기
+          sections.push({ label: '운영위 승인 대기', count: opsReviewedCount })
+        } else if (role === 'logistic_admin') {
+          // 준비 위원장: 준비위 승인 대기
+          sections.push({ label: '준비위 승인 대기', count: prepReviewedCount })
+        } else if (role === 'executive' || role === 'admin') {
+          // 대회장 / super_admin: 전체 승인 대기 + 미정산
+          sections.push({ label: '승인 대기', count: totalReviewedCount })
+          sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount })
+        }
+
+        const totalCount = sections.reduce((sum, s) => sum + s.count, 0)
+        if (totalCount === 0) continue
+
+        const { subject, html } = buildWeeklyDigestEmail(name, projectName, sections)
+
+        try {
+          await transporter.sendMail({
+            from: `지불/환불 시스템 <${gmailUser.value()}>`,
+            to: email,
+            subject,
+            html
+          })
+          console.log(`Weekly digest sent to ${email} [${projectId}]: ${totalCount} items`)
+        } catch (error) {
+          console.error(`Failed to send weekly digest to ${email} [${projectId}]:`, error)
+        }
       }
     }
   }
