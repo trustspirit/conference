@@ -1190,8 +1190,14 @@ export const weeklyApproverDigest = onSchedule(
 
     // Collect recipients across all projects (uid -> project-scoped role, first match wins)
     const projectsSnap = await db.collection('projects').get()
+    // 비활성/삭제된 프로젝트의 잔여 신청서는 집계에서 제외 (정산 완료 후에도 알림이 계속 가는 문제 방지)
+    const activeProjectDocs = projectsSnap.docs.filter((p) => {
+      const data = p.data()
+      return data.isActive !== false && !data.deletedAt
+    })
+    const activeProjectIds = new Set(activeProjectDocs.map((p) => p.id))
     const recipientMap = new Map<string, string>()  // uid -> role
-    for (const projDoc of projectsSnap.docs) {
+    for (const projDoc of activeProjectDocs) {
       const perProject = await uidsWithProjectRoles(projDoc.id, relevantRoles)
       for (const { uid, role } of perProject) {
         if (!recipientMap.has(uid)) recipientMap.set(uid, role)
@@ -1210,11 +1216,13 @@ export const weeklyApproverDigest = onSchedule(
     }
 
     // pending 신청서 (검토 대상) - 위원회별 집계
+    const inActiveProject = (d: FirebaseFirestore.QueryDocumentSnapshot) =>
+      activeProjectIds.has(d.data().projectId as string)
     const pendingSnapshot = await db.collection('requests').where('status', '==', 'pending').get()
 
     let opsPendingCount = 0
     let prepPendingCount = 0
-    for (const doc of pendingSnapshot.docs) {
+    for (const doc of pendingSnapshot.docs.filter(inActiveProject)) {
       const committee = doc.data().committee as string
       if (committee === 'operations') opsPendingCount++
       else if (committee === 'preparation') prepPendingCount++
@@ -1225,17 +1233,18 @@ export const weeklyApproverDigest = onSchedule(
 
     let opsReviewedCount = 0
     let prepReviewedCount = 0
-    for (const doc of reviewedSnapshot.docs) {
+    const activeReviewedDocs = reviewedSnapshot.docs.filter(inActiveProject)
+    for (const doc of activeReviewedDocs) {
       const committee = doc.data().committee as string
       if (committee === 'operations') opsReviewedCount++
       else if (committee === 'preparation') prepReviewedCount++
     }
-    const totalReviewedCount = reviewedSnapshot.size
+    const totalReviewedCount = activeReviewedDocs.length
 
     // approved 미정산 건수
     const approvedSnapshot = await db.collection('requests').where('status', '==', 'approved').get()
 
-    const totalApprovedUnsettledCount = approvedSnapshot.size
+    const totalApprovedUnsettledCount = approvedSnapshot.docs.filter(inActiveProject).length
 
     const transporter = createTransporter()
 
