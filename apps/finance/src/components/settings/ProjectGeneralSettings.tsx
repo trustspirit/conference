@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Project, ReceiptDisplaySize } from '../../types'
@@ -162,13 +163,14 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
       </div>
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={handleSave}
           disabled={saving || !dirty}
-          className="finance-primary-button text-sm px-4 py-1.5 rounded disabled:bg-gray-300"
         >
           {saving ? t('common.saving') : t('common.save')}
-        </button>
+        </Button>
         {saved && <span className="finance-success-text text-xs">{t('common.saved')}</span>}
       </div>
     </div>

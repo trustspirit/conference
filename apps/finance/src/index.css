@@ -16,6 +16,17 @@ html {
 /* Fix: Select dropdown (z-1000) renders behind Dialog (z-1050) on mobile Safari */
 :root {
   --tui-z-dropdown: 1100;
+  /* trust-ui-react theme -> finance brand */
+  --tui-primary: var(--finance-primary);
+  --tui-primary-hover: var(--finance-primary-hover);
+  --tui-primary-active: var(--finance-primary-active);
+  --tui-primary-gradient: var(--finance-primary);
+  --tui-primary-subtle: var(--finance-primary-surface);
+  --tui-primary-subtle-hover: var(--finance-primary-surface-hover);
+  --tui-danger: var(--finance-danger);
+  --tui-danger-hover: var(--finance-danger-hover);
+  --tui-danger-subtle: var(--finance-danger-bg);
+  --tui-border-focus: var(--finance-selected-ring);
   --finance-primary: #002c5f;
   --finance-primary-hover: #001f43;
   --finance-primary-active: #001832;

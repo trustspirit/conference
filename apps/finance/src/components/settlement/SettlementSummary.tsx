@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { PaymentRequest } from '../../types'
 import ProcessingOverlay from '../ProcessingOverlay'
@@ -84,19 +85,22 @@ export default function SettlementSummary({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onBack}
-          className="finance-secondary-button px-4 py-2 text-sm rounded transition-colors"
         >
           {t('settlement.backToSelect')}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           onClick={onSettle}
           disabled={reviewedCount === 0 || processing}
-          className="flex-1 finance-primary-button px-4 py-2 rounded text-sm font-semibold disabled:bg-gray-400"
+          className="flex-1"
         >
           {processing ? t('settlement.processing') : t('settlement.finalSettle')}
-        </button>
+        </Button>
       </div>
 
       <ProcessingOverlay open={processing} text={t('common.processingMessage')} />

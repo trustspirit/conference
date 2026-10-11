@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast } from 'trust-ui-react'
+import { useToast, Button } from 'trust-ui-react'
 import FinanceTable from '../table/FinanceTable'
 import {
   paletteColor,
@@ -525,12 +525,14 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                       >
                         {t('common.cancel')}
                       </button>
-                      <button
-                        className="finance-primary-button flex-1 rounded py-2 text-sm"
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="flex-1"
                         onClick={handleSaveEdit}
                       >
                         {t('common.save')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -654,12 +656,14 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                 >
                   {t('common.cancel')}
                 </button>
-                <button
-                  className="finance-primary-button flex-1 rounded py-2 text-sm"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
                   onClick={handleAdd}
                 >
                   {t('common.save')}
-                </button>
+                </Button>
               </div>
             </div>
           )}

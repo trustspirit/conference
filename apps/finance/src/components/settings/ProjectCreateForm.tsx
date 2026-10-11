@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { collection, doc, serverTimestamp } from 'firebase/firestore'
@@ -74,13 +75,14 @@ export default function ProjectCreateForm({
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={handleCreate}
           disabled={saving || !name.trim()}
-          className="finance-primary-button text-sm px-4 py-1.5 rounded disabled:bg-gray-400"
         >
           {saving ? t('common.saving') : t('project.create')}
-        </button>
+        </Button>
         <button
           onClick={onCancel}
           disabled={saving}

@@ -18,7 +18,7 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast } from 'trust-ui-react'
+import { useToast, Button } from 'trust-ui-react'
 import {
   useOpsBudgetIncludableItems,
   useOpsBudgetAllOperationsItems,
@@ -945,7 +945,9 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
               {t('dashboard.opsBudget.pickerHintGlobal')}
             </p>
           </div>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleAddSelected}
             disabled={
               selected.size === 0 ||
@@ -955,10 +957,10 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
               !!pendingNewCategory ||
               !!disambig
             }
-            className="finance-primary-button text-sm px-3 py-1.5 rounded disabled:opacity-50 whitespace-nowrap shrink-0"
+            className="whitespace-nowrap"
           >
             {t('dashboard.opsBudget.addSelected', { count: selected.size })}
-          </button>
+          </Button>
         </div>
 
         {/* Filters row */}

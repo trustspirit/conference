@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { PaymentRequest } from '../../types'
 import Spinner from '../Spinner'
@@ -36,13 +37,15 @@ export default function SettlementSelectTable({
           <h2 className="text-xl font-bold text-finance-primary">{t('settlement.title')}</h2>
           <p className="text-sm text-finance-muted mt-1">{t('settlement.description')}</p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={onStartReview}
           disabled={selected.size === 0}
-          className="finance-primary-button w-full px-4 py-2 rounded text-sm font-semibold disabled:bg-gray-400 sm:w-auto"
+          className="w-full sm:w-auto"
         >
           {t('settlement.startReview', { count: selected.size })}
-        </button>
+        </Button>
       </div>
 
       <BudgetWarningBanner budgetUsage={budgetUsage} className="mb-4" />

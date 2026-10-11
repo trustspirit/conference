@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
@@ -107,13 +108,14 @@ export default function BudgetSettingsSection({
               >
                 {t('common.cancel')}
               </button>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSaveBudget}
                 disabled={savingBudget}
-                className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
               >
                 {savingBudget ? t('common.saving') : t('common.save')}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -269,13 +271,14 @@ export default function BudgetSettingsSection({
               >
                 {t('common.cancel')}
               </button>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSaveDocNo}
                 disabled={savingDocNo}
-                className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
               >
                 {savingDocNo ? t('common.saving') : t('common.save')}
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -321,13 +324,14 @@ export default function BudgetSettingsSection({
                 >
                   {t('common.cancel')}
                 </button>
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={handleSaveRate}
                   disabled={savingRate}
-                  className="finance-primary-button text-sm px-3 py-1 rounded disabled:bg-gray-400"
                 >
                   {savingRate ? t('common.saving') : t('common.save')}
-                </button>
+                </Button>
               </div>
             )
           )}

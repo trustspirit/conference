@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useToast } from 'trust-ui-react'
+import { useToast, Button } from 'trust-ui-react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
 import { useProject } from '../contexts/ProjectContext'
@@ -232,10 +232,12 @@ export default function ReceiptsPage() {
         ))}
 
         {someSelected && (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleDownload}
             disabled={downloading}
-            className="flex w-full items-center justify-center gap-1.5 rounded px-4 py-1.5 text-sm font-semibold finance-primary-button disabled:bg-gray-400 sm:ml-auto sm:w-auto"
+            className="flex w-full items-center justify-center gap-1.5 sm:ml-auto sm:w-auto"
           >
             <DownloadIcon className="w-4 h-4" />
             {downloading
@@ -243,7 +245,7 @@ export default function ReceiptsPage() {
               : selected.size === 1
                 ? t('receipts.download')
                 : t('receipts.downloadZip', { count: selected.size })}
-          </button>
+          </Button>
         )}
       </div>
 

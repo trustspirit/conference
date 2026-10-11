@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { PaymentRequest, AppUser } from '../../types'
 import InfoGrid from '../InfoGrid'
@@ -172,12 +173,14 @@ export default function SettlementReviewStep({
             >
               {t('approval.reject')}
             </button>
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={onInclude}
-              className="finance-primary-button flex-1 px-4 py-2 rounded text-sm font-medium"
+              className="flex-1"
             >
               {t('settlement.confirmInclude')}
-            </button>
+            </Button>
           </div>
         </div>
 

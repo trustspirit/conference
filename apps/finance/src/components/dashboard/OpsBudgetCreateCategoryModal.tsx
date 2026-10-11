@@ -1,3 +1,4 @@
+import { Button } from 'trust-ui-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -106,14 +107,15 @@ export default function OpsBudgetCreateCategoryModal({
           >
             {t('common.cancel')}
           </button>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             type="button"
             disabled={!canSubmit || isSubmitting}
             onClick={handleConfirm}
-            className="finance-primary-button text-sm px-3 py-1.5 rounded disabled:opacity-50"
           >
             {t('common.next')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

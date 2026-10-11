@@ -246,13 +246,15 @@ export default function SettlementReportPage() {
                 {t('settlement.includeBankBooks')}
               </label>
             )}
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleExportPdf}
               disabled={exporting}
-              className="finance-primary-button w-full px-4 py-2 rounded text-sm font-medium disabled:bg-gray-400 whitespace-nowrap sm:w-auto"
+              className="w-full whitespace-nowrap sm:w-auto"
             >
               {exporting ? t('settlement.exporting') : t('settlement.exportPdf')}
-            </button>
+            </Button>
             {isSuperAdmin && (
               <button
                 onClick={() => setRevertConfirmOpen(true)}
