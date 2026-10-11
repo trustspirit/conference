@@ -103,7 +103,14 @@ export default function SettlementSelectTable({
                           : t('committee.preparationShort')}
                       </span>
                     </div>
-                    <div className="text-sm font-medium">{req.payee}</div>
+                    <div className="text-sm font-medium">
+                      {req.payee}
+                      {req.isCorporateCard && (
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-finance-primary-surface text-finance-primary">
+                          {t('form.requestTypeCorporateCard')}
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-1 flex items-center justify-between gap-3 text-sm">
                       <span className="text-finance-muted">
                         {t('form.itemCount', { count: req.items.length })}
@@ -157,7 +164,14 @@ export default function SettlementSelectTable({
                       />
                     </FinanceTable.Td>
                     <FinanceTable.Td>{req.date}</FinanceTable.Td>
-                    <FinanceTable.Td>{req.payee}</FinanceTable.Td>
+                    <FinanceTable.Td>
+                      {req.payee}
+                      {req.isCorporateCard && (
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-finance-primary-surface text-finance-primary">
+                          {t('form.requestTypeCorporateCard')}
+                        </span>
+                      )}
+                    </FinanceTable.Td>
                     <FinanceTable.Td>
                       {req.committee === 'operations'
                         ? t('committee.operationsShort')
