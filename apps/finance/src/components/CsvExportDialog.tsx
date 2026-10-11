@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, Radio } from 'trust-ui-react'
 
 interface Props {
   open: boolean
@@ -45,17 +45,14 @@ export default function CsvExportDialog({
           <div className="mb-4">
             <div className="flex gap-4">
               {(['byRequest', 'byBudgetCode'] as const).map((mode) => (
-                <label key={mode} className="flex items-center gap-1.5 cursor-pointer text-sm">
-                  <input
-                    type="radio"
-                    name="exportMode"
-                    value={mode}
-                    checked={exportMode === mode}
-                    onChange={() => onExportModeChange(mode)}
-                    className="finance-radio"
-                  />
-                  {t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
-                </label>
+                <Radio
+                  key={mode}
+                  name="exportMode"
+                  value={mode}
+                  checked={exportMode === mode}
+                  onChange={() => onExportModeChange(mode)}
+                  label={t(`common.export${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
+                />
               ))}
             </div>
           </div>

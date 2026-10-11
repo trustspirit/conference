@@ -1,4 +1,4 @@
-import { Button } from 'trust-ui-react'
+import { Button, TextField } from 'trust-ui-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -60,13 +60,13 @@ export default function OpsBudgetCreateCategoryModal({
         <div className="space-y-3 mb-4">
           <label className="block">
             <span className="block text-xs text-finance-muted mb-1">{t('dashboard.opsBudget.colName')}</span>
-            <input
+            <TextField
+              size="sm"
+              fullWidth
               autoFocus
-              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('dashboard.opsBudget.namePlaceholder')}
-              className="border border-finance-border rounded px-2 py-1.5 text-sm w-full"
             />
           </label>
           <div>

@@ -1,3 +1,4 @@
+import { Checkbox } from 'trust-ui-react'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Project } from '../../types'
@@ -46,11 +47,9 @@ export default function MemberManagement({ project }: { project: Project }) {
             key={u.uid}
             className="flex items-center gap-2 text-sm cursor-pointer hover:bg-finance-primary-subtle px-2 py-1.5 rounded"
           >
-            <input
-              type="checkbox"
+            <Checkbox
               checked={memberUids.has(u.uid)}
               onChange={(e) => handleToggle(u.uid, e.target.checked)}
-              className="finance-checkbox"
             />
             <span className="font-medium">{u.displayName || u.name}</span>
             <span className="text-xs text-gray-400">{u.email}</span>

@@ -18,7 +18,7 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast, Button } from 'trust-ui-react'
+import { useToast, Button, Checkbox, TextField, Select } from 'trust-ui-react'
 import {
   useOpsBudgetIncludableItems,
   useOpsBudgetAllOperationsItems,
@@ -220,8 +220,7 @@ function DisambiguateModal({
           ))}
         </ul>
         <label className="flex items-center gap-2 text-xs text-finance-muted mb-4 cursor-pointer">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={applyToAll}
             onChange={(e) => setApplyToAll(e.target.checked)}
           />
@@ -965,28 +964,26 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
 
         {/* Filters row */}
         <div className="flex flex-wrap gap-2 items-center mb-3">
-          <input
+          <TextField
+            size="sm"
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('dashboard.opsBudget.searchPlaceholder')}
             aria-label={t('dashboard.opsBudget.searchPlaceholder')}
-            className="border border-finance-border rounded px-2 py-1 text-sm flex-1 min-w-[160px]"
+            className="flex-1 min-w-[160px]"
           />
-          <select
+          <Select
+            size="sm"
+            options={[
+              { value: '__all__', label: t('dashboard.opsBudget.sessionFilterAll') },
+              ...sessions.map((s) => ({ value: s, label: s }))
+            ]}
             value={sessionFilter}
-            onChange={(e) => setSessionFilter(e.target.value)}
-            aria-label={t('dashboard.opsBudget.sessionFilterAll')}
-            className="border border-finance-border rounded px-2 py-1 text-sm"
-          >
-            <option value="__all__">{t('dashboard.opsBudget.sessionFilterAll')}</option>
-            {sessions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={(v) => setSessionFilter(v as string)}
+          />
           <label className="text-xs flex items-center gap-1 text-finance-muted cursor-pointer select-none">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={showIncluded}
               onChange={(e) => {
                 setShowIncluded(e.target.checked)
@@ -1046,8 +1043,7 @@ export default function OpsBudgetItemPicker({ project, currentUser }: Props) {
                     {isIncluded ? (
                       <span className="w-5" />
                     ) : (
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selected.has(id)}
                         onChange={() => toggle(id)}
                         aria-label={`${it.snapshot.submitterName || it.snapshot.payee} - ${it.snapshot.description}`}

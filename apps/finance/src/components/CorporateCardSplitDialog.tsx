@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, Checkbox } from 'trust-ui-react'
 import type { RequestItem, Receipt } from '../types'
 import { getItemCurrency, sumByCurrency, formatAmount, formatTotals } from '../lib/currency'
 import { isCarOnly } from '../lib/splitRequestByCurrency'
@@ -89,9 +89,8 @@ export default function CorporateCardSplitDialog({
                       : 'border-finance-border hover:bg-finance-surface'
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    className="finance-checkbox shrink-0"
+                  <Checkbox
+                    className="shrink-0"
                     aria-label={item.description}
                     checked={selected}
                     onChange={() => toggleItem(i)}
@@ -123,9 +122,8 @@ export default function CorporateCardSplitDialog({
                           : 'border-finance-border hover:bg-finance-surface'
                       }`}
                     >
-                      <input
-                        type="checkbox"
-                        className="finance-checkbox shrink-0"
+                      <Checkbox
+                        className="shrink-0"
                         aria-label={r.fileName}
                         checked={selected}
                         onChange={() => togglePath(r.storagePath)}

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useToast, Button } from 'trust-ui-react'
+import { useToast, Button, Checkbox } from 'trust-ui-react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@conference/firebase'
 import { useProject } from '../contexts/ProjectContext'
@@ -265,11 +265,9 @@ export default function ReceiptsPage() {
               <FinanceTable.Head>
                 <tr>
                   <FinanceTable.Th className="w-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={allSelected}
                       onChange={toggleAll}
-                      className="finance-checkbox"
                     />
                   </FinanceTable.Th>
                   <FinanceTable.Th>{t('field.receipts')}</FinanceTable.Th>
@@ -286,11 +284,9 @@ export default function ReceiptsPage() {
                   return (
                     <FinanceTable.Row key={key} selected={selected.has(key)}>
                       <FinanceTable.Td>
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selected.has(key)}
                           onChange={() => toggleOne(key)}
-                          className="finance-checkbox"
                         />
                       </FinanceTable.Td>
                       <FinanceTable.Td>
@@ -355,12 +351,10 @@ export default function ReceiptsPage() {
                   className={`finance-panel rounded-lg p-3 flex items-center gap-3 ${selected.has(key) ? 'ring-2 ring-finance-selected-ring' : ''}`}
                   onClick={() => toggleOne(key)}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={selected.has(key)}
                     onChange={() => toggleOne(key)}
                     onClick={(e) => e.stopPropagation()}
-                    className="finance-checkbox"
                   />
                   {imgUrl &&
                     (isPdf(row.receipt.fileName) ? (

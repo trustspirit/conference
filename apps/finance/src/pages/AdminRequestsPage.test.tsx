@@ -63,6 +63,9 @@ vi.mock('trust-ui-react', () => ({
       ))}
     </select>
   ),
+  Checkbox: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input type="checkbox" {...props} />
+  ),
   useToast: () => ({ toast: vi.fn() })
 }))
 

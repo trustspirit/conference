@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button, Dialog, useToast } from 'trust-ui-react'
+import { Button, Dialog, useToast, Checkbox } from 'trust-ui-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useProject } from '../contexts/ProjectContext'
 import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
@@ -237,11 +237,9 @@ export default function SettlementReportPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             {!isCorporateCard && (
               <label className="flex items-center gap-1.5 text-xs text-finance-muted cursor-pointer whitespace-nowrap">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={includeBankBooks}
                   onChange={(e) => setIncludeBankBooks(e.target.checked)}
-                  className="finance-checkbox"
                 />
                 {t('settlement.includeBankBooks')}
               </label>

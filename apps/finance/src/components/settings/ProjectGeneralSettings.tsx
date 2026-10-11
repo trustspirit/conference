@@ -1,4 +1,4 @@
-import { Button } from 'trust-ui-react'
+import { Button, TextField, Select } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Project, ReceiptDisplaySize } from '../../types'
@@ -64,40 +64,42 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
     <div className="space-y-3">
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('project.name')}</label>
-        <input
-          type="text"
+        <TextField
+          size="sm"
+          fullWidth
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
         />
       </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('project.description')}</label>
-        <input
-          type="text"
+        <TextField
+          size="sm"
+          fullWidth
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
         />
       </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('dashboard.documentNo')}</label>
-        <input
-          type="text"
+        <TextField
+          size="sm"
+          fullWidth
           value={documentNo}
           onChange={(e) => setDocumentNo(e.target.value)}
-          className="w-full border border-finance-border rounded px-3 py-2 text-sm font-mono focus:border-finance-primary focus:outline-none"
+          className="font-mono"
         />
       </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('project.directorThreshold')}</label>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">₩</span>
-          <input
+          <TextField
+            size="sm"
+            fullWidth
             type="number"
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value) || 0)}
-            className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
             step="10000"
             min="0"
           />
@@ -107,11 +109,12 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('budget.warningThreshold')}</label>
         <div className="flex items-center gap-2">
-          <input
+          <TextField
+            size="sm"
+            fullWidth
             type="number"
             value={warningPct}
             onChange={(e) => setWarningPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-            className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
             step="5"
             min="0"
             max="100"
@@ -124,11 +127,12 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
         <label className="block text-xs text-gray-500 mb-1">{t('project.perKmRate')}</label>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">₩</span>
-          <input
+          <TextField
+            size="sm"
+            fullWidth
             type="number"
             value={perKmRate}
             onChange={(e) => setPerKmRate(Number(e.target.value) || 0)}
-            className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
             step="10"
             min="0"
           />
@@ -140,25 +144,27 @@ export default function ProjectGeneralSettings({ project }: { project: Project }
         <label className="block text-xs text-gray-500 mb-1">
           {t('project.corporateCardReportTitle')}
         </label>
-        <input
-          type="text"
+        <TextField
+          size="sm"
+          fullWidth
           value={ccReportTitle}
           onChange={(e) => setCcReportTitle(e.target.value)}
           placeholder={t('settlement.corporateCardReport')}
-          className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
         />
         <p className="text-xs text-gray-400 mt-1">{t('project.corporateCardReportTitleHint')}</p>
       </div>
       <div>
         <label className="block text-xs text-gray-500 mb-1">{t('project.defaultReceiptSize')}</label>
-        <select
+        <Select
+          size="sm"
+          fullWidth
+          options={[
+            { value: 'normal', label: t('project.receiptSizeNormal') },
+            { value: 'large', label: t('project.receiptSizeLarge') }
+          ]}
           value={receiptSize}
-          onChange={(e) => setReceiptSize(e.target.value as ReceiptDisplaySize)}
-          className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
-        >
-          <option value="normal">{t('project.receiptSizeNormal')}</option>
-          <option value="large">{t('project.receiptSizeLarge')}</option>
-        </select>
+          onChange={(v) => setReceiptSize(v as ReceiptDisplaySize)}
+        />
         <p className="text-xs text-gray-400 mt-1">{t('project.defaultReceiptSizeHint')}</p>
       </div>
 

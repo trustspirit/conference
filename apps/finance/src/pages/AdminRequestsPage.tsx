@@ -11,7 +11,7 @@ import InfiniteScrollSentinel from '../components/InfiniteScrollSentinel'
 import Tooltip from '../components/Tooltip'
 import FinanceTable from '../components/table/FinanceTable'
 import { useTranslation } from 'react-i18next'
-import { Select, useToast } from 'trust-ui-react'
+import { Select, useToast, Checkbox } from 'trust-ui-react'
 import { canSeeCommitteeRequests, DEFAULT_APPROVAL_THRESHOLD } from '../lib/roles'
 import { useInfiniteRequests, fetchAllRequests } from '../hooks/queries/useRequests'
 import {
@@ -426,11 +426,9 @@ export default function AdminRequestsPage() {
               <FinanceTable.Head>
                 <tr>
                   <FinanceTable.Th className="w-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={allSelected}
                       onChange={toggleAll}
-                      className="finance-checkbox"
                     />
                   </FinanceTable.Th>
                   {(
@@ -477,11 +475,9 @@ export default function AdminRequestsPage() {
                 {accessible.map((req) => (
                   <FinanceTable.Row key={req.id}>
                     <FinanceTable.Td>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedIds.has(req.id)}
                         onChange={() => toggleOne(req.id)}
-                        className="finance-checkbox"
                       />
                     </FinanceTable.Td>
                     <FinanceTable.Td>
@@ -550,11 +546,10 @@ export default function AdminRequestsPage() {
                 const remarks = renderRemarks(req)
                 return (
                   <div key={req.id} className="finance-panel flex items-start gap-3 rounded-lg p-4">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedIds.has(req.id)}
                       onChange={() => toggleOne(req.id)}
-                      className="finance-checkbox mt-0.5"
+                      className="mt-0.5"
                     />
                     <Link
                       to={`/request/${req.id}`}

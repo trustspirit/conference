@@ -1,3 +1,4 @@
+import { Select } from 'trust-ui-react'
 import { useMemo } from 'react'
 import { useUsers, useUpdateSystemRole, useDeleteUser } from '../../hooks/queries/useUsers'
 import { useProjects } from '../../hooks/queries/useProjects'
@@ -40,14 +41,16 @@ export default function AllUsersTab() {
             <td className="py-2">{u.displayName || u.name}</td>
             <td>{u.email}</td>
             <td>
-              <select
+              <Select
+                size="sm"
+                options={[
+                  { value: 'member', label: 'member' },
+                  { value: 'admin', label: 'admin' }
+                ]}
                 value={u.systemRole ?? 'member'}
                 disabled={u.systemRole === 'super_admin'}
-                onChange={(e) => updateSys.mutate({ uid: u.uid, systemRole: e.target.value as SystemRole })}
-              >
-                <option value="member">member</option>
-                <option value="admin">admin</option>
-              </select>
+                onChange={(v) => updateSys.mutate({ uid: u.uid, systemRole: v as SystemRole })}
+              />
             </td>
             <td>
               {(projectsByUser[u.uid] ?? []).map((p) => (

@@ -1,3 +1,4 @@
+import { Radio } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { Committee } from '../types'
 
@@ -16,28 +17,20 @@ export default function CommitteeSelect({ value, onChange, name = 'committee', l
         {label ?? t('committee.label')} <span className="text-red-500">*</span>
       </label>
       <div className="flex gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name={name}
-            value="operations"
-            checked={value === 'operations'}
-            onChange={() => onChange('operations')}
-            className="finance-radio"
-          />
-          <span className="text-sm">{t('committee.operations')}</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name={name}
-            value="preparation"
-            checked={value === 'preparation'}
-            onChange={() => onChange('preparation')}
-            className="finance-radio"
-          />
-          <span className="text-sm">{t('committee.preparation')}</span>
-        </label>
+        <Radio
+          name={name}
+          value="operations"
+          checked={value === 'operations'}
+          onChange={() => onChange('operations')}
+          label={t('committee.operations')}
+        />
+        <Radio
+          name={name}
+          value="preparation"
+          checked={value === 'preparation'}
+          onChange={() => onChange('preparation')}
+          label={t('committee.preparation')}
+        />
       </div>
     </div>
   )

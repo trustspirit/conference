@@ -1,3 +1,4 @@
+import { TextField } from 'trust-ui-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -86,12 +87,12 @@ export default function BudgetCodeItemList({ requests, usdToKrwRate }: Props) {
       </div>
 
       {/* Search */}
-      <input
-        type="text"
+      <TextField
+        size="sm"
+        fullWidth
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={t('dashboard.budgetCodeItemList.searchPlaceholder')}
-        className="w-full mb-3 px-3 py-1.5 text-sm border border-finance-border-soft rounded bg-transparent placeholder:text-finance-muted focus:outline-none focus:ring-1 focus:ring-finance-primary"
       />
 
       {allRows.length === 0 ? (

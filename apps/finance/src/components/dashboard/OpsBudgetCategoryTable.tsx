@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast, Button } from 'trust-ui-react'
+import { useToast, Button, TextField, Select } from 'trust-ui-react'
 import FinanceTable from '../table/FinanceTable'
 import {
   paletteColor,
@@ -65,6 +65,10 @@ type RedistributeState =
 
 export default function OpsBudgetCategoryTable({ project, inclusions, currentUser }: Props) {
   const { t } = useTranslation()
+  const BUDGET_OPTIONS = UNIQUE_BUDGET_CODES.map((c) => ({
+    value: String(c),
+    label: `${c} — ${t(`budgetCode.${c}`)}`
+  }))
   const { toast } = useToast()
   const update = useUpdateOpsBudgetCategories()
   const deleteCategory = useDeleteCategoryWithInclusions()
@@ -400,13 +404,14 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
             <p className="text-xs text-finance-muted">{t('dashboard.opsBudget.opsTotalBudget')}</p>
             {editingTotal ? (
               <div className="flex items-center gap-2 mt-1">
-                <input
+                <TextField
+                  size="sm"
                   type="number"
                   min={0}
                   value={tempTotal || ''}
                   onChange={(e) => setTempTotal(Number(e.target.value) || 0)}
                   autoFocus
-                  className="border border-finance-border rounded px-2 py-1 text-sm w-40"
+                  className="w-40"
                 />
                 <button onClick={handleSaveTotal} className="text-xs text-finance-primary">
                   {t('common.save')}
@@ -478,41 +483,37 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                       <span className="text-xs text-finance-muted">
                         {t('dashboard.opsBudget.colName')}
                       </span>
-                      <input
+                      <TextField
+                        size="sm"
+                        fullWidth
                         value={draft!.name}
                         onChange={(e) => setDraft({ ...draft!, name: e.target.value })}
-                        className="mt-1 w-full border rounded px-2 py-2 text-base"
                       />
                     </label>
                     <label className="block">
                       <span className="text-xs text-finance-muted">
                         {t('dashboard.opsBudget.colBudgetCode')}
                       </span>
-                      <select
-                        value={draft!.budgetCode}
-                        onChange={(e) =>
-                          setDraft({ ...draft!, budgetCode: Number(e.target.value) })
-                        }
-                        className="mt-1 w-full border rounded px-2 py-2 text-base"
-                      >
-                        {UNIQUE_BUDGET_CODES.map((c) => (
-                          <option key={c} value={c}>
-                            {c} — {t(`budgetCode.${c}`)}
-                          </option>
-                        ))}
-                      </select>
+                      <Select
+                        options={BUDGET_OPTIONS}
+                        value={String(draft!.budgetCode)}
+                        onChange={(v) => setDraft({ ...draft!, budgetCode: Number(v) })}
+                        fullWidth
+                      />
                     </label>
                     <label className="block">
                       <span className="text-xs text-finance-muted">
                         {t('dashboard.opsBudget.colAllocated')}
                       </span>
-                      <input
+                      <TextField
+                        size="sm"
+                        fullWidth
                         type="number"
                         value={draft!.allocatedKrw || ''}
                         onChange={(e) =>
                           setDraft({ ...draft!, allocatedKrw: Number(e.target.value) || 0 })
                         }
-                        className="mt-1 w-full border rounded px-2 py-2 text-base text-right"
+                        className="text-right"
                       />
                     </label>
                     <div className="flex gap-2">
@@ -612,38 +613,36 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                 <span className="text-xs text-finance-muted">
                   {t('dashboard.opsBudget.colName')}
                 </span>
-                <input
+                <TextField
+                  size="sm"
+                  fullWidth
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder={t('dashboard.opsBudget.namePlaceholder')}
-                  className="mt-1 w-full border rounded px-2 py-2 text-base"
                 />
               </label>
               <label className="block">
                 <span className="text-xs text-finance-muted">
                   {t('dashboard.opsBudget.colBudgetCode')}
                 </span>
-                <select
-                  value={newCode}
-                  onChange={(e) => setNewCode(Number(e.target.value))}
-                  className="mt-1 w-full border rounded px-2 py-2 text-base"
-                >
-                  {UNIQUE_BUDGET_CODES.map((c) => (
-                    <option key={c} value={c}>
-                      {c} — {t(`budgetCode.${c}`)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={BUDGET_OPTIONS}
+                  value={String(newCode)}
+                  onChange={(v) => setNewCode(Number(v))}
+                  fullWidth
+                />
               </label>
               <label className="block">
                 <span className="text-xs text-finance-muted">
                   {t('dashboard.opsBudget.colAllocated')}
                 </span>
-                <input
+                <TextField
+                  size="sm"
+                  fullWidth
                   type="number"
                   value={newAlloc || ''}
                   onChange={(e) => setNewAlloc(Number(e.target.value) || 0)}
-                  className="mt-1 w-full border rounded px-2 py-2 text-base text-right"
+                  className="text-right"
                 />
               </label>
               <div className="flex gap-2">
@@ -744,12 +743,12 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                         style={{ backgroundColor: cat.color ?? paletteColor(cat.sortIndex) }}
                       />
                       {editing ? (
-                        <input
+                        <TextField
+                          size="sm"
                           value={draft!.name}
                           onChange={(e) => setDraft({ ...draft!, name: e.target.value })}
                           onClick={(e) => e.stopPropagation()}
                           aria-label={t('dashboard.opsBudget.colName')}
-                          className="border rounded px-1 py-0.5 text-sm"
                         />
                       ) : (
                         <span className="font-medium">{cat.name}</span>
@@ -757,28 +756,22 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                     </FinanceTable.Td>
                     <FinanceTable.Td size="compact">
                       {editing ? (
-                        <select
-                          value={draft!.budgetCode}
-                          onChange={(e) =>
-                            setDraft({ ...draft!, budgetCode: Number(e.target.value) })
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={t('dashboard.opsBudget.colBudgetCode')}
-                          className="border rounded px-1 py-0.5 text-sm"
-                        >
-                          {UNIQUE_BUDGET_CODES.map((c) => (
-                            <option key={c} value={c}>
-                              {c} — {t(`budgetCode.${c}`)}
-                            </option>
-                          ))}
-                        </select>
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            size="sm"
+                            options={BUDGET_OPTIONS}
+                            value={String(draft!.budgetCode)}
+                            onChange={(v) => setDraft({ ...draft!, budgetCode: Number(v) })}
+                          />
+                        </span>
                       ) : (
                         <span className="font-mono">{cat.budgetCode}</span>
                       )}
                     </FinanceTable.Td>
                     <FinanceTable.Td size="compact" align="right">
                       {editing ? (
-                        <input
+                        <TextField
+                          size="sm"
                           type="number"
                           value={draft!.allocatedKrw || ''}
                           onChange={(e) =>
@@ -786,7 +779,7 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
                           }
                           onClick={(e) => e.stopPropagation()}
                           aria-label={t('dashboard.opsBudget.colAllocated')}
-                          className="border rounded px-1 py-0.5 text-sm w-28 text-right"
+                          className="w-28 text-right"
                         />
                       ) : (
                         `₩${cat.allocatedKrw.toLocaleString('en-US')}`
@@ -855,39 +848,36 @@ export default function OpsBudgetCategoryTable({ project, inclusions, currentUse
               {adding && (
                 <FinanceTable.Row hover={false}>
                   <FinanceTable.Td size="compact">
-                    <input
+                    <TextField
+                      size="sm"
+                      fullWidth
                       autoFocus
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                       aria-label={t('dashboard.opsBudget.colName')}
                       placeholder={t('dashboard.opsBudget.namePlaceholder')}
-                      className="border rounded px-1 py-0.5 text-sm w-full"
                     />
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact">
-                    <select
-                      value={newCode}
-                      onChange={(e) => setNewCode(Number(e.target.value))}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={t('dashboard.opsBudget.colBudgetCode')}
-                      className="border rounded px-1 py-0.5 text-sm"
-                    >
-                      {UNIQUE_BUDGET_CODES.map((c) => (
-                        <option key={c} value={c}>
-                          {c} — {t(`budgetCode.${c}`)}
-                        </option>
-                      ))}
-                    </select>
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        size="sm"
+                        options={BUDGET_OPTIONS}
+                        value={String(newCode)}
+                        onChange={(v) => setNewCode(Number(v))}
+                      />
+                    </span>
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" align="right">
-                    <input
+                    <TextField
+                      size="sm"
                       type="number"
                       value={newAlloc || ''}
                       onChange={(e) => setNewAlloc(Number(e.target.value) || 0)}
                       onClick={(e) => e.stopPropagation()}
                       aria-label={t('dashboard.opsBudget.colAllocated')}
-                      className="border rounded px-1 py-0.5 text-sm w-28 text-right"
+                      className="w-28 text-right"
                     />
                   </FinanceTable.Td>
                   <FinanceTable.Td size="compact" colSpan={4} />

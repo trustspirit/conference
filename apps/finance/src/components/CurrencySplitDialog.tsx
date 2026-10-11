@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, Checkbox } from 'trust-ui-react'
 import type { RequestItem, Receipt } from '../types'
 import { getItemCurrency, sumByCurrency, formatAmount } from '../lib/currency'
 import { missingReceiptCurrencies } from '../lib/splitRequestByCurrency'
@@ -67,9 +67,8 @@ export default function CurrencySplitDialog({
                       : 'border-finance-border hover:bg-finance-surface'
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    className="finance-checkbox shrink-0"
+                  <Checkbox
+                    className="shrink-0"
                     aria-label={r.fileName}
                     checked={selected}
                     onChange={() => toggle(r.storagePath)}

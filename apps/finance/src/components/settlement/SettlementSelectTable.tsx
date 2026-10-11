@@ -1,4 +1,4 @@
-import { Button } from 'trust-ui-react'
+import { Button, Checkbox } from 'trust-ui-react'
 import { useTranslation } from 'react-i18next'
 import { PaymentRequest } from '../../types'
 import Spinner from '../Spinner'
@@ -65,11 +65,9 @@ export default function SettlementSelectTable({
           {/* Mobile card list */}
           <div className="sm:hidden">
             <label className="finance-panel mb-3 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-finance-text-secondary">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={requests.length > 0 && selected.size === requests.length}
                 onChange={onToggleAll}
-                className="finance-checkbox"
               />
               {t('settlement.selectAll')}
             </label>
@@ -134,11 +132,9 @@ export default function SettlementSelectTable({
               <FinanceTable.Head>
                 <tr>
                   <FinanceTable.Th className="w-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={requests.length > 0 && selected.size === requests.length}
                       onChange={onToggleAll}
-                      className="finance-checkbox"
                     />
                   </FinanceTable.Th>
                   <FinanceTable.Th>{t('field.date')}</FinanceTable.Th>
@@ -157,13 +153,11 @@ export default function SettlementSelectTable({
                     onClick={(e) => onRowClick(req.id, index, e)}
                   >
                     <FinanceTable.Td onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selected.has(req.id)}
                         onChange={(e) =>
                           onRowClick(req.id, index, e as unknown as React.MouseEvent)
                         }
-                        className="finance-checkbox"
                       />
                     </FinanceTable.Td>
                     <FinanceTable.Td>{req.date}</FinanceTable.Td>

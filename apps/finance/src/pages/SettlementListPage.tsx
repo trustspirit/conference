@@ -1,3 +1,4 @@
+import { Checkbox } from 'trust-ui-react'
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -241,11 +242,9 @@ export default function SettlementListPage() {
               <FinanceTable.Head>
                 <tr>
                   <FinanceTable.Th className="w-10">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={allBatchesSelected}
                       onChange={toggleAllBatches}
-                      className="finance-checkbox"
                     />
                   </FinanceTable.Th>
                   <FinanceTable.Th>{t('settlement.settlementDate')}</FinanceTable.Th>
@@ -260,11 +259,9 @@ export default function SettlementListPage() {
                 {batches.map((b) => (
                   <FinanceTable.Row key={b.batchId}>
                     <FinanceTable.Td>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedBatchIds.has(b.batchId)}
                         onChange={() => toggleBatch(b.batchId)}
-                        className="finance-checkbox"
                       />
                     </FinanceTable.Td>
                     <FinanceTable.Td>{b.date}</FinanceTable.Td>
@@ -301,11 +298,10 @@ export default function SettlementListPage() {
           <div className="sm:hidden space-y-3">
             {batches.map((b) => (
               <div key={b.batchId} className="finance-panel flex items-start gap-3 rounded-lg p-4">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selectedBatchIds.has(b.batchId)}
                   onChange={() => toggleBatch(b.batchId)}
-                  className="finance-checkbox mt-0.5"
+                  className="mt-0.5"
                 />
                 <Link to={`/admin/settlement/${b.firstId}`} className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-2">

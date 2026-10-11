@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { useToast } from 'trust-ui-react'
+import { useToast, TextField } from 'trust-ui-react'
 import { useRemoveInclusion } from '../../hooks/queries/useOpsBudget'
 import type { OpsBudgetCategory, OpsBudgetInclusion, RequestStatus } from '../../types'
 import { effectiveKrwForSnapshot } from './opsBudgetSelectors'
@@ -226,12 +226,12 @@ export default function OpsBudgetIncludedList({
       </div>
 
       {/* Search */}
-      <input
-        type="text"
+      <TextField
+        size="sm"
+        fullWidth
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={t('dashboard.opsBudget.searchAllPlaceholder')}
-        className="w-full mb-3 px-3 py-1.5 text-sm border border-finance-border-soft rounded bg-transparent placeholder:text-finance-muted focus:outline-none focus:ring-1 focus:ring-finance-primary"
       />
 
       {filtered.length === 0 ? (

@@ -1,4 +1,4 @@
-import { Button } from 'trust-ui-react'
+import { Button, TextField } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UNIQUE_BUDGET_CODES } from '../../constants/budgetCodes'
@@ -124,7 +124,9 @@ export default function BudgetSettingsSection({
             {t('dashboard.totalBudget')}
           </label>
           {editingBudget ? (
-            <input
+            <TextField
+              size="sm"
+              fullWidth
               type="number"
               value={tempBudget.totalBudget || ''}
               onChange={(e) =>
@@ -133,7 +135,7 @@ export default function BudgetSettingsSection({
                   totalBudget: parseInt(e.target.value) || 0
                 })
               }
-              className="border border-finance-border rounded px-3 py-2 text-sm w-full sm:w-48 focus:border-finance-primary focus:outline-none"
+              className="sm:w-48"
               placeholder="0"
             />
           ) : (
@@ -164,7 +166,9 @@ export default function BudgetSettingsSection({
                 </FinanceTable.Td>
                 <FinanceTable.Td size="compact" align="right">
                   {editingBudget ? (
-                    <input
+                    <TextField
+                      size="sm"
+                      fullWidth
                       type="number"
                       value={tempBudget.byCode[code] || ''}
                       onChange={(e) =>
@@ -176,7 +180,7 @@ export default function BudgetSettingsSection({
                           }
                         })
                       }
-                      className="border border-finance-border rounded px-2 py-1 text-sm w-full sm:w-36 text-right focus:border-finance-primary focus:outline-none"
+                      className="sm:w-36 text-right"
                       placeholder="0"
                     />
                   ) : (
@@ -287,11 +291,12 @@ export default function BudgetSettingsSection({
             {t('dashboard.documentNo')}
           </label>
           {editingDocNo ? (
-            <input
-              type="text"
+            <TextField
+              size="sm"
+              fullWidth
               value={tempDocNo}
               onChange={(e) => setTempDocNo(e.target.value)}
-              className="border border-finance-border rounded px-3 py-2 text-sm w-full font-mono focus:border-finance-primary focus:outline-none"
+              className="font-mono"
               placeholder="KOR01-6762808-5xxx-KYSA2025KOR"
             />
           ) : (
@@ -347,14 +352,15 @@ export default function BudgetSettingsSection({
           {canEditRate && editingRate && (
             <div className="flex items-center gap-2 mt-2">
               <span className="text-sm text-finance-muted">1 USD =</span>
-              <input
+              <TextField
+                size="sm"
                 type="number"
                 min={0}
                 step="1"
                 value={tempRate || ''}
                 onChange={(e) => setTempRate(Number(e.target.value) || 0)}
                 autoFocus
-                className="border border-finance-border rounded px-3 py-2 text-sm w-36 focus:border-finance-primary focus:outline-none"
+                className="w-36"
                 placeholder="0"
               />
               <span className="text-sm text-finance-muted">KRW</span>

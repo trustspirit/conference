@@ -1,3 +1,4 @@
+import { TextField } from 'trust-ui-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -156,14 +157,15 @@ export default function OpsBudgetRedistributeModal({
                     <td className="px-3 py-2">{p.name}</td>
                     <td className="px-3 py-2 text-right font-mono">{'₩'}{p.allocatedKrw.toLocaleString('en-US')}</td>
                     <td className="px-3 py-2 text-right">
-                      <input
+                      <TextField
+                        size="sm"
                         type="number"
                         min={0}
                         max={cap}
                         value={ded || ''}
                         onChange={(e) => updateDeduction(p.id, Number(e.target.value), cap)}
                         aria-label={`${p.name} ${t('dashboard.opsBudget.takeFrom')}`}
-                        className="border border-finance-border rounded px-2 py-1 text-sm w-28 text-right"
+                        className="w-28 text-right"
                       />
                       {p.maxDeduction !== undefined && p.maxDeduction < p.allocatedKrw && (
                         <p className="text-[10px] text-finance-muted mt-0.5">

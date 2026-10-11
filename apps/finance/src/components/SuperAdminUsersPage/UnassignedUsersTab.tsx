@@ -1,3 +1,4 @@
+import { Select } from 'trust-ui-react'
 import { useState } from 'react'
 import { useUnassignedUsers } from '../../hooks/queries/useUnassignedUsers'
 import { useProjects } from '../../hooks/queries/useProjects'
@@ -30,12 +31,18 @@ export default function UnassignedUsersTab() {
               <div>{u.displayName || u.name}</div>
               <div className="text-xs text-gray-500">{u.email}</div>
             </div>
-            <select value={sel.projectId} onChange={(e) => setAssignTo({ ...assignTo, [u.uid]: { ...sel, projectId: e.target.value } })}>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <select value={sel.role} onChange={(e) => setAssignTo({ ...assignTo, [u.uid]: { ...sel, role: e.target.value as ProjectRole } })}>
-              {PROJECT_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <Select
+              size="sm"
+              options={projects.map((p) => ({ value: p.id, label: p.name }))}
+              value={sel.projectId}
+              onChange={(v) => setAssignTo({ ...assignTo, [u.uid]: { ...sel, projectId: v as string } })}
+            />
+            <Select
+              size="sm"
+              options={PROJECT_ROLES.map((r) => ({ value: r, label: r }))}
+              value={sel.role}
+              onChange={(v) => setAssignTo({ ...assignTo, [u.uid]: { ...sel, role: v as ProjectRole } })}
+            />
             <button
               disabled={updateRole.isPending || !sel.projectId}
               onClick={() => updateRole.mutate({ projectId: sel.projectId, uid: u.uid, role: sel.role })}

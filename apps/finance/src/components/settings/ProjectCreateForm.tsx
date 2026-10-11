@@ -1,4 +1,4 @@
-import { Button } from 'trust-ui-react'
+import { Button, TextField } from 'trust-ui-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { collection, doc, serverTimestamp } from 'firebase/firestore'
@@ -58,20 +58,20 @@ export default function ProjectCreateForm({
 
   return (
     <div className="space-y-2">
-      <input
-        type="text"
+      <TextField
+        size="sm"
+        fullWidth
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder={t('project.name')}
-        className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
         autoFocus
       />
-      <input
-        type="text"
+      <TextField
+        size="sm"
+        fullWidth
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
         placeholder={t('project.description')}
-        className="w-full border border-finance-border rounded px-3 py-2 text-sm focus:border-finance-primary focus:outline-none"
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
