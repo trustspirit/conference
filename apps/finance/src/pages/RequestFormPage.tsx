@@ -14,6 +14,7 @@ import {
 import { useUploadReceipts } from '../hooks/queries/useCloudFunctions'
 import { RequestItem, Receipt, Committee } from '../types'
 import Layout from '../components/Layout'
+import { isProjectClosed } from '../lib/projectClosed'
 import ProcessingOverlay from '../components/ProcessingOverlay'
 import ItemRow from '../components/ItemRow'
 import ErrorAlert from '../components/ErrorAlert'
@@ -562,6 +563,8 @@ export default function RequestFormPage() {
       setSplitOpen(false)
     }
   }
+
+  if (isProjectClosed(currentProject)) return <Layout>{null}</Layout>
 
   return (
     <Layout>

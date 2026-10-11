@@ -54,6 +54,13 @@ service cloud.firestore {
         && request.resource.data.rejectedBy.uid == request.auth.uid;
     }
 
+    // A closed project (closedAt set) is read-only for requests and settlements.
+    // Reopening deletes closedAt via a project update, which stays allowed.
+    function projectOpen(projectId) {
+      return !('closedAt' in projectDoc(projectId))
+        || projectDoc(projectId).closedAt == null;
+    }
+
     function hasProjectRole(projectId, allowed) {
       return callerProjectRole(projectId) in allowed;
     }
@@ -95,6 +102,7 @@ service cloud.firestore {
           || callerProjectRole(resource.data.projectId) != null
         );
       allow create: if request.auth != null
+        && projectOpen(request.resource.data.projectId)
         && request.resource.data.requestedBy.uid == request.auth.uid
         && callerProjectRole(request.resource.data.projectId) != null
         && request.resource.data.status == 'pending'
@@ -109,6 +117,7 @@ service cloud.firestore {
           || get(/databases/$(database)/documents/requests/$(request.resource.data.originalRequestId)).data.requestedBy.uid == request.auth.uid
         );
       allow update: if request.auth != null
+        && projectOpen(resource.data.projectId)
         && (
           // --- Reviewer transitions (pending → reviewed | rejected) ---
           (
@@ -266,6 +275,7 @@ service cloud.firestore {
       allow read: if request.auth != null
         && hasProjectRole(resource.data.projectId, ['admin', 'finance_prep', 'executive', 'session_director', 'logistic_admin', 'approver_ops', 'approver_prep']);
       allow create: if request.auth != null
+        && projectOpen(request.resource.data.projectId)
         && hasProjectRole(request.resource.data.projectId, ['admin', 'finance_prep'])
         && request.resource.data.createdBy.uid == request.auth.uid
         && request.resource.data.keys().hasAll(['projectId', 'batchId', 'payee', 'committee', 'items', 'totalAmount', 'requestIds', 'createdBy', 'createdAt'])
@@ -277,8 +287,8 @@ service cloud.firestore {
         && request.resource.data.batchId is string
         && request.resource.data.projectId is string;
       // Settlements are immutable after creation; only super_admin can correct or delete.
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() && projectOpen(resource.data.projectId);
+      allow delete: if isSuperAdmin() && projectOpen(resource.data.projectId);
     }
     match /projects/{projectId} {
       allow read: if request.auth != null;
@@ -293,7 +303,7 @@ service cloud.firestore {
 
       match /opsBudgetInclusions/{inclusionId} {
         allow read:   if isProjectMember(projectId);
-        allow create: if canManageOpsBudget(projectId)
+        allow create: if projectOpen(projectId) && canManageOpsBudget(projectId)
           && inclusionId == request.resource.data.requestId
                             + '__'
                             + string(request.resource.data.itemIndex)
@@ -307,7 +317,7 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.projectId == projectId
           && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.committee == 'operations'
           && get(/databases/$(database)/documents/requests/$(request.resource.data.requestId)).data.status in ['approved', 'settled'];
-        allow delete: if canManageOpsBudget(projectId);
+        allow delete: if projectOpen(projectId) && canManageOpsBudget(projectId);
         allow update: if false;
       }
     }

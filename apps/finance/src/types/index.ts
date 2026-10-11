@@ -77,6 +77,9 @@ export interface Project {
   memberRoles: Record<string /* uid */, ProjectRole>
   isActive: boolean
   deletedAt?: Date | null
+  /** 설정되면 닫힌 프로젝트: 신청/검토/승인/정산이 모두 중단되고 알림도 가지 않는다. */
+  closedAt?: Date | null
+  closedBy?: { uid: string; name: string; email: string }
   opsBudget?: OpsBudget
   /** USD → KRW rate applied across all dashboards. 0/undefined = USD not converted. */
   usdToKrwRate?: number

@@ -136,6 +136,11 @@ export default function ProjectSelector() {
                 }`}
               >
                 {p.name}
+                {p.closedAt != null && (
+                  <span className="ml-1.5 text-[10px] font-normal text-finance-muted">
+                    {t('project.closedBadge')}
+                  </span>
+                )}
               </button>
             ))}
             {isAdmin && (

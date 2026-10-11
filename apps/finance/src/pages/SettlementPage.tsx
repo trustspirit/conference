@@ -15,6 +15,7 @@ import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
 import { Dialog, Button, useToast } from 'trust-ui-react'
 import Layout from '../components/Layout'
+import { isProjectClosed } from '../lib/projectClosed'
 import SettlementSelectTable from '../components/settlement/SettlementSelectTable'
 import SettlementReviewStep from '../components/settlement/SettlementReviewStep'
 import SettlementSummary from '../components/settlement/SettlementSummary'
@@ -365,6 +366,8 @@ export default function SettlementPage() {
   }
 
   // ── Select phase (default list view) ──
+  if (isProjectClosed(currentProject)) return <Layout>{null}</Layout>
+
   return (
     <Layout>
       <SettlementSelectTable

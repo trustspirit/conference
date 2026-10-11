@@ -283,6 +283,17 @@ async function uidsWithProjectRoles(projectId: string | undefined | null, roles:
   return result
 }
 
+/** 닫힌 프로젝트(closedAt 설정됨)는 알림 및 정산 관련 처리를 모두 중단한다. */
+function isProjectClosedData(data: FirebaseFirestore.DocumentData | undefined): boolean {
+  return data?.closedAt != null
+}
+
+async function isProjectClosed(projectId: string | undefined | null): Promise<boolean> {
+  if (!projectId) return false
+  const snap = await admin.firestore().doc(`projects/${projectId}`).get()
+  return isProjectClosedData(snap.data())
+}
+
 /**
  * 호출자의 이 프로젝트 내 유효 역할. super_admin 은 모든 프로젝트에서 admin 으로
  * 승격된다 — 클라이언트의 useProjectRole 과 같은 규칙이다.
@@ -828,6 +839,11 @@ export const onRequestCreated = onDocumentCreated(
     const payee = data.payee as string
     const projectId = data.projectId as string
 
+    if (await isProjectClosed(projectId)) {
+      console.log('Project closed, skipping new request notification:', projectId)
+      return
+    }
+
     // Find finance reviewers for this committee (project-scoped)
     const db = admin.firestore()
     const reviewerRoles =
@@ -1045,6 +1061,11 @@ export const onRequestStatusChange = onDocumentUpdated(
     const oldStatus = before.status as string
     const newStatus = after.status as string
 
+    if (await isProjectClosed(after.projectId as string | undefined)) {
+      console.log('Project closed, skipping status change notification:', event.params?.requestId)
+      return
+    }
+
     const db = admin.firestore()
     const transporter = createTransporter()
 
@@ -1189,11 +1210,11 @@ export const weeklyApproverDigest = onSchedule(
       'executive'
     ]
 
-    // 비활성/삭제된 프로젝트는 제외
+    // 비활성/삭제/닫힌 프로젝트는 제외
     const projectsSnap = await db.collection('projects').get()
     const activeProjectDocs = projectsSnap.docs.filter((p) => {
       const data = p.data()
-      return data.isActive !== false && !data.deletedAt
+      return data.isActive !== false && !data.deletedAt && !isProjectClosedData(data)
     })
     if (activeProjectDocs.length === 0) {
       console.log('No active projects')

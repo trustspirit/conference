@@ -14,6 +14,7 @@ import {
   useDeleteRequest
 } from '../hooks/queries/useRequests'
 import { useProject } from '../contexts/ProjectContext'
+import { isProjectClosed } from '../lib/projectClosed'
 import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 import { useUser } from '../hooks/queries/useUsers'
 import { useBudgetUsage } from '../hooks/useBudgetUsage'
@@ -172,12 +173,18 @@ export default function RequestDetailPage() {
   const isDirectorRequest =
     requesterProjectRole === 'session_director' || requesterProjectRole === 'logistic_admin'
 
+  const frozen = isProjectClosed(currentProject)
+
   // Review action (pending → reviewed)
   const canDoReview =
-    request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)
+    !frozen &&
+    request?.status === 'pending' &&
+    !isSelf &&
+    canReviewCommittee(role, request.committee)
 
   // Approve action (reviewed → approved)
   const canDoApprove =
+    !frozen &&
     request?.status === 'reviewed' &&
     !isSelf &&
     canFinalApproveRequest(
@@ -191,17 +198,18 @@ export default function RequestDetailPage() {
 
   // Reject action (pending or reviewed) — rejection doesn't require amount threshold
   const canDoReject =
-    (request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)) ||
-    (request?.status === 'reviewed' &&
-      !isSelf &&
-      canFinalApproveCommittee(role, request.committee) &&
-      (!isDirectorRequest || canApproveDirectorRequest(role)))
+    !frozen &&
+    ((request?.status === 'pending' && !isSelf && canReviewCommittee(role, request.committee)) ||
+      (request?.status === 'reviewed' &&
+        !isSelf &&
+        canFinalApproveCommittee(role, request.committee) &&
+        (!isDirectorRequest || canApproveDirectorRequest(role))))
 
   // Force reject action (approved → force_rejected) — finance_prep/admin only
-  const canDoForceReject = request?.status === 'approved' && canForceReject(role)
+  const canDoForceReject = !frozen && request?.status === 'approved' && canForceReject(role)
 
   // Super-admin only: rollback approved → reviewed
-  const canDoRollback = request?.status === 'approved' && isSuperAdmin
+  const canDoRollback = !frozen && request?.status === 'approved' && isSuperAdmin
 
   // Super-admin only: delete request in initial/terminal status
   const canDoDelete = !!request && isSuperAdmin && DELETABLE_STATUSES.includes(request.status)
@@ -210,6 +218,7 @@ export default function RequestDetailPage() {
   // `!!request &&` 를 먼저 두어야 뒤의 request.committee 접근이 타입 좁히기를 통과한다.
   // 괄호로 묶인 || 뒤에서는 TS 가 request 를 non-null 로 좁혀주지 않는다.
   const canDoSplit =
+    !frozen &&
     !!request &&
     !request.isCorporateCard &&
     !request.isVendorRequest &&

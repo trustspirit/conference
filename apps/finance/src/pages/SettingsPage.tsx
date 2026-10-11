@@ -5,11 +5,16 @@ import { useProject } from '../contexts/ProjectContext'
 import { useAuth } from '../contexts/AuthContext'
 import Layout from '../components/Layout'
 import { CheckIcon, StarIcon, TrashIcon } from '../components/Icons'
-import { Dialog, Button } from 'trust-ui-react'
+import { Dialog, Button, useToast } from 'trust-ui-react'
 import ProjectGeneralSettings from '../components/settings/ProjectGeneralSettings'
 import MemberManagement from '../components/settings/MemberManagement'
 import { useGlobalSettings, useUpdateGlobalSettings } from '../hooks/queries/useSettings'
-import { useSoftDeleteProject } from '../hooks/queries/useProjects'
+import {
+  useSoftDeleteProject,
+  useCloseProject,
+  useReopenProject
+} from '../hooks/queries/useProjects'
+import { isProjectClosed } from '../lib/projectClosed'
 import { effectiveSystemRole, useProjectRole } from '../hooks/useProjectRole'
 
 function ProjectManagement() {
@@ -19,6 +24,10 @@ function ProjectManagement() {
   const { data: globalSettings, isLoading: settingsLoading } = useGlobalSettings()
   const updateSettings = useUpdateGlobalSettings()
   const softDelete = useSoftDeleteProject()
+  const closeProject = useCloseProject()
+  const reopenProject = useReopenProject()
+  const { toast } = useToast()
+  const { appUser } = useAuth()
   const defaultProjectId = globalSettings?.defaultProjectId || ''
 
   const [subTab, setSubTab] = useState<'general' | 'members'>('general')
@@ -32,6 +41,43 @@ function ProjectManagement() {
   const selectedProject = currentProject || activeProjects[0]
   const effectiveId = selectedProject?.id || ''
   const isDefault = effectiveId === defaultProjectId
+
+  const closed = isProjectClosed(selectedProject)
+
+  const handleClose = () => {
+    if (!selectedProject || !appUser) return
+    setConfirmDialog({
+      open: true,
+      message: t('project.closeConfirm', { name: selectedProject.name }),
+      onConfirm: async () => {
+        closeConfirm()
+        try {
+          await closeProject.mutateAsync({
+            projectId: effectiveId,
+            closedBy: { uid: appUser.uid, name: appUser.name, email: appUser.email }
+          })
+        } catch {
+          toast({ variant: 'danger', message: t('project.closeFailed') })
+        }
+      }
+    })
+  }
+
+  const handleReopen = () => {
+    if (!selectedProject) return
+    setConfirmDialog({
+      open: true,
+      message: t('project.reopenConfirm', { name: selectedProject.name }),
+      onConfirm: async () => {
+        closeConfirm()
+        try {
+          await reopenProject.mutateAsync(effectiveId)
+        } catch {
+          toast({ variant: 'danger', message: t('project.reopenFailed') })
+        }
+      }
+    })
+  }
 
   const handleDelete = () => {
     if (!selectedProject) return
@@ -53,6 +99,11 @@ function ProjectManagement() {
       {selectedProject && (
         <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900">
           <span className="min-w-0 break-words">{selectedProject.name}</span>
+          {closed && (
+            <span className="inline-flex items-center text-xs bg-gray-100 text-finance-muted px-2 py-0.5 rounded-full">
+              {t('project.closedBadge')}
+            </span>
+          )}
           {isDefault && (
             <span className="inline-flex items-center gap-1 text-xs bg-finance-success-bg text-finance-accent px-2 py-0.5 rounded-full">
               <CheckIcon className="w-3 h-3" />
@@ -78,15 +129,24 @@ function ProjectManagement() {
                   </button>
                 )}
               </div>
-              {!isDefault && (
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={handleDelete}
-                  className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
+                  onClick={closed ? handleReopen : handleClose}
+                  disabled={closeProject.isPending || reopenProject.isPending}
+                  className="inline-flex items-center gap-1 text-xs border border-finance-border text-finance-muted px-2.5 py-1 rounded hover:bg-finance-primary-subtle hover:text-finance-primary transition-colors disabled:opacity-50"
                 >
-                  <TrashIcon className="w-3.5 h-3.5" />
-                  {t('common.delete')}
+                  {closed ? t('project.reopenProject') : t('project.closeProject')}
                 </button>
-              )}
+                {!isDefault && (
+                  <button
+                    onClick={handleDelete}
+                    className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                    {t('common.delete')}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

@@ -138,3 +138,40 @@ export function useUpdateProjectMembers() {
     }
   })
 }
+
+export function useCloseProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: {
+      projectId: string
+      closedBy: { uid: string; name: string; email: string }
+    }) => {
+      await setDoc(
+        doc(db, 'projects', params.projectId),
+        { closedAt: serverTimestamp(), closedBy: params.closedBy },
+        { merge: true }
+      )
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
+    }
+  })
+}
+
+export function useReopenProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      await setDoc(
+        doc(db, 'projects', projectId),
+        { closedAt: deleteField(), closedBy: deleteField() },
+        { merge: true }
+      )
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
+    }
+  })
+}

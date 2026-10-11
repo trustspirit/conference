@@ -11,6 +11,9 @@ import {
 } from '../lib/roles'
 import { useProjectRole, effectiveSystemRole } from '../hooks/useProjectRole'
 import ProjectSelector from './ProjectSelector'
+import ProjectClosedNotice from './ProjectClosedNotice'
+import { useProject } from '../contexts/ProjectContext'
+import { isProjectClosed } from '../lib/projectClosed'
 import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from './Icons'
 import FloatingChatButton from './chat/FloatingChatButton'
 
@@ -179,6 +182,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const projectRole = useProjectRole() ?? 'user'
+  const { currentProject } = useProject()
   // Display label uses systemRole when super_admin (so the badge reads "최고 관리자"
   // rather than the promoted ProjectRole 'admin').
   const sys = effectiveSystemRole(appUser)
@@ -415,6 +419,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
       <main className="max-w-6xl mx-auto px-3 py-4 mt-14 sm:px-4 sm:py-6 print:mt-0">
+        {isProjectClosed(currentProject) && <ProjectClosedNotice className="mb-4" />}
         {children}
       </main>
       <FloatingChatButton />
