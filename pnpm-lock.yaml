@@ -318,8 +318,8 @@ importers:
         specifier: ^3.8.0
         version: 3.8.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@17.0.2)(react@19.2.4)(redux@5.0.1)
       trust-ui-react:
-        specifier: ^0.3.12
-        version: 0.3.12(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^1.0.1
+        version: 1.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@conference/config':
         specifier: workspace:*
@@ -5737,6 +5737,12 @@ packages:
 
   trust-ui-react@0.3.12:
     resolution: {integrity: sha512-111qApFQ9tXaTMpVevJvHL/jMhuxqCxHxsiKphg/6GWDEusalnU/FhzUluWFWGb/VcvNmG0vYK6MfV2fF8eFLw==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+
+  trust-ui-react@1.0.1:
+    resolution: {integrity: sha512-fSDEj0TrANeA4jxvJdYAT62IbvBRcqbCLC/lg6ph5+4uWvqcER1vBVacosntCFRD8hjMq2c+KfziFHaTfyguxw==}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -11728,6 +11734,11 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
+  trust-ui-react@1.0.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   ts-api-utils@2.4.0(typescript@5.9.3):
     dependencies:
       typescript: 5.9.3
@@ -12107,7 +12118,7 @@ snapshots:
       mime-db: 1.54.0
       minimizer-webpack-plugin: 5.10.1(esbuild@0.27.4)(webpack@5.111.0(esbuild@0.27.4))
       schema-utils: 4.5.0
-      tapable: 2.3.0
+      tapable: 2.3.3
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:
