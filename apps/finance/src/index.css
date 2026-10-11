@@ -16,17 +16,29 @@ html {
 /* Fix: Select dropdown (z-1000) renders behind Dialog (z-1050) on mobile Safari */
 :root {
   --tui-z-dropdown: 1100;
-  /* trust-ui-react theme -> finance brand */
-  --tui-primary: var(--finance-primary);
-  --tui-primary-hover: var(--finance-primary-hover);
-  --tui-primary-active: var(--finance-primary-active);
-  --tui-primary-gradient: var(--finance-primary);
-  --tui-primary-subtle: var(--finance-primary-surface);
-  --tui-primary-subtle-hover: var(--finance-primary-surface-hover);
-  --tui-danger: var(--finance-danger);
-  --tui-danger-hover: var(--finance-danger-hover);
-  --tui-danger-subtle: var(--finance-danger-bg);
-  --tui-border-focus: var(--finance-selected-ring);
+  /* trust-ui-react 1.x changed shape/typography tokens; pin the 0.3.x values so
+     components keep the flatter, tighter look the rest of the app is built on. */
+  --tui-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --tui-font-family: var(--tui-font-sans);
+  --tui-font-size-sm: 0.875rem;
+  --tui-font-size-md: 1rem;
+  --tui-font-size-lg: 1.125rem;
+  --tui-font-size-xl: 1.25rem;
+  --tui-letter-tight: 0;
+  --tui-letter-tighter: 0;
+  --tui-spacing-md: 16px;
+  --tui-spacing-lg: 24px;
+  --tui-spacing-xl: 32px;
+  --tui-spacing-2xl: 48px;
+  --tui-radius-sm: 4px;
+  --tui-radius-md: 6px;
+  --tui-radius-lg: 8px;
+  --tui-radius-xl: 12px;
+  --tui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --tui-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --tui-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --tui-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --tui-inset-highlight: none;
   --finance-primary: #002c5f;
   --finance-primary-hover: #001f43;
   --finance-primary-active: #001832;
@@ -126,6 +138,7 @@ html {
   --tui-primary-hover: var(--finance-primary-hover);
   --tui-primary-active: var(--finance-primary-active);
   --tui-primary-subtle: var(--finance-primary-surface);
+  --tui-primary-gradient: var(--finance-primary);
   --tui-secondary: var(--finance-panel);
   --tui-secondary-hover: var(--finance-primary-subtle);
   --tui-secondary-active: var(--finance-primary-surface);
