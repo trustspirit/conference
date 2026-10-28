@@ -32,7 +32,7 @@
   },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs20"
+    "runtime": "nodejs24"
   },
   "storage": {
     "rules": "storage.rules"
