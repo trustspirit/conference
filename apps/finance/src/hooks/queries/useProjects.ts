@@ -190,13 +190,22 @@ export interface ProjectSummary {
   archivedAt?: { toDate?: () => Date; seconds?: number } | null
 }
 
-export function useProjectSummaries(options?: { enabled?: boolean }) {
+export function useProjectSummaries(
+  appUser: AppUser | null,
+  options?: { enabled?: boolean }
+) {
+  const isSuper = !!appUser && effectiveSystemRole(appUser) === 'super_admin'
   return useQuery({
-    queryKey: queryKeys.projectSummaries.all(),
+    queryKey: [...queryKeys.projectSummaries.all(), appUser?.uid ?? 'none'],
     queryFn: async () => {
-      const snap = await getDocs(collection(db, 'projectSummaries'))
+      // Rules only allow super_admin to list everything; others must filter by
+      // memberAdminUids so the query is provably within the allowed scope.
+      const col = collection(db, 'projectSummaries')
+      const snap = await getDocs(
+        isSuper ? col : query(col, where('memberAdminUids', 'array-contains', appUser!.uid))
+      )
       return snap.docs.map((d) => ({ ...d.data(), projectId: d.id }) as ProjectSummary)
     },
-    enabled: options?.enabled
+    enabled: !!appUser && options?.enabled !== false
   })
 }

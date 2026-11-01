@@ -71,7 +71,7 @@ export default function ArchivedReportsPage() {
   const { appUser } = useAuth()
   const sys = effectiveSystemRole(appUser)
   const isAdmin = sys === 'admin' || sys === 'super_admin'
-  const { data: summaries = [], isLoading } = useProjectSummaries({ enabled: isAdmin })
+  const { data: summaries = [], isLoading } = useProjectSummaries(appUser, { enabled: isAdmin })
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   if (appUser && !isAdmin) return <Navigate to="/my-requests" replace />

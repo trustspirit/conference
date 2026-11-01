@@ -293,7 +293,10 @@ service cloud.firestore {
     // Budget-report snapshots preserved when a project is permanently deleted.
     // Written only by Cloud Functions (Admin SDK bypasses rules).
     match /projectSummaries/{projectId} {
-      allow read: if request.auth != null && systemRole() in ['admin', 'super_admin'];
+      // Same scope as the "recently deleted" list: super_admin sees all, others only
+      // projects they administered (memberAdminUids is captured at archive time).
+      allow read: if request.auth != null
+        && (isSuperAdmin() || request.auth.uid in resource.data.memberAdminUids);
       allow write: if false;
     }
     match /projects/{projectId} {
