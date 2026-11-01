@@ -114,8 +114,11 @@ export async function computeProjectStats(
 
 // 리포트에 보존할 항목 상세에 포함되는 상태 (프론트 BUDGET_COUNTED_STATUSES와 동일).
 const SUMMARY_ITEM_STATUSES = ['reviewed', 'approved', 'settled']
-// 문서 1MB 제한을 넘지 않도록 하는 안전 상한.
+// 문서 1MB 제한을 넘지 않도록 하는 안전 상한. 개수뿐 아니라 설명 길이와 총 바이트도 제한한다
+// (품목 설명은 사용자가 입력한 자유 텍스트라 개수만으로는 크기를 보장할 수 없다).
 const MAX_SUMMARY_ITEMS = 5000
+const MAX_DESCRIPTION_CHARS = 200
+const MAX_ITEMS_BYTES = 700 * 1024
 
 export interface SummaryItem {
   date: string
@@ -141,24 +144,34 @@ async function buildSummaryItems(
     .select('status', 'committee', 'items', 'date')
     .get()
 
-  const items: SummaryItem[] = []
+  const all: SummaryItem[] = []
   for (const doc of snap.docs) {
     const d = doc.data()
     for (const item of (d.items as admin.firestore.DocumentData[]) || []) {
-      items.push({
+      all.push({
         date: (d.date as string) || '',
         committee: (d.committee as string) || 'operations',
         budgetCode: item.budgetCode,
         budgetDescKey: item.budgetDescKey ?? null,
-        description: item.description ?? '',
+        description: String(item.description ?? '').slice(0, MAX_DESCRIPTION_CHARS),
         amount: item.amount || 0,
         currency: item.currency || 'KRW',
         status: d.status as string
       })
     }
   }
-  items.sort((a, b) => b.date.localeCompare(a.date))
-  return { items: items.slice(0, MAX_SUMMARY_ITEMS), itemsTruncated: items.length > MAX_SUMMARY_ITEMS }
+  all.sort((a, b) => b.date.localeCompare(a.date))
+
+  // 최근 항목부터 개수/바이트 상한 안에서만 담는다.
+  const items: SummaryItem[] = []
+  let bytes = 0
+  for (const item of all) {
+    const size = Buffer.byteLength(JSON.stringify(item), 'utf8')
+    if (items.length >= MAX_SUMMARY_ITEMS || bytes + size > MAX_ITEMS_BYTES) break
+    items.push(item)
+    bytes += size
+  }
+  return { items, itemsTruncated: items.length < all.length }
 }
 
 // 대회를 삭제(soft delete)하는 즉시 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에
@@ -172,7 +185,7 @@ export async function archiveProjectSummary(
     computeProjectStats(db, projectId, project),
     buildSummaryItems(db, projectId)
   ])
-  await db.doc(`projectSummaries/${projectId}`).set({
+  const summary = {
     projectId,
     name: project.name ?? '',
     description: project.description ?? '',
@@ -185,9 +198,16 @@ export async function archiveProjectSummary(
       .filter(([, role]) => role === 'admin')
       .map(([uid]) => uid),
     stats,
-    items,
-    itemsTruncated,
     archivedAt: admin.firestore.FieldValue.serverTimestamp()
-  })
+  }
+  const ref = db.doc(`projectSummaries/${projectId}`)
+  try {
+    await ref.set({ ...summary, items, itemsTruncated })
+  } catch (err) {
+    // 항목 때문에 저장이 실패해도 핵심 리포트(통계)는 반드시 남긴다. 그렇지 않으면
+    // 정리 작업이 이 대회를 영원히 건너뛰게 된다.
+    console.error(`Saving summary items failed for ${projectId}; saving without items`, err)
+    await ref.set({ ...summary, items: [], itemsTruncated: true })
+  }
 }
 
