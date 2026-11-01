@@ -582,7 +582,7 @@
     "memberCount": "{{count}} members",
     "personalSettings": "Personal Settings",
     "projectSettings": "Project Settings",
-    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? You can restore it within 30 days.",
+    "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? Its budget report is preserved immediately and you can restore it within 10 days. After 10 days, all requests, receipts and other data are permanently deleted.",
     "recentlyDeleted": "Recently Deleted",
     "restore": "Restore",
     "closeProject": "Close project",
@@ -605,7 +605,11 @@
     "defaultReceiptSize": "Default Receipt Size in PDF",
     "defaultReceiptSizeHint": "The size receipts render at by default in PDF exports. Per-receipt overrides take precedence over this default.",
     "receiptSizeNormal": "Normal",
-    "receiptSizeLarge": "Large (one per page)"
+    "receiptSizeLarge": "Large (one per page)",
+    "deleted": "\"{{name}}\" was deleted. Its budget report is available under 'Past Event Reports', and you can restore it within 10 days.",
+    "deleteFailed": "Failed to delete the project.",
+    "deletedBannerTitle": "Projects pending deletion",
+    "deletedBannerHint": "After 10 days, requests, receipts and other detail data are permanently deleted. The budget report (summary) is already preserved under 'Past Event Reports'."
   },
   "budget": {
     "warning": "{{percent}}% of the budget has been used. (Warning threshold: {{threshold}}%)",
@@ -711,7 +715,7 @@
   },
   "archive": {
     "title": "Past Event Reports",
-    "description": "Only the budget report (summary) of deleted events is kept. Requests, receipts and other detail data were permanently deleted.",
+    "description": "Budget reports (summaries) of deleted events. They are created at deletion; requests, receipts and other detail data are permanently deleted 10 days later.",
     "empty": "No archived reports.",
     "archivedAt": "Archived: {{date}}"
   }

@@ -12,6 +12,7 @@ import {
   SplitValidationError
 } from './lib/splitCorporateCard'
 import { resolvePendingSignupRecipients } from './lib/pendingSignupRecipients'
+import { computeProjectStats, archiveProjectSummary } from './lib/projectSummary'
 
 admin.initializeApp()
 
@@ -383,52 +384,49 @@ export const downloadFileV2 = onCall(async (request) => {
   }
 })
 
-// 영구 삭제 직전에 대회의 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에 보존한다.
-// 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
-async function archiveProjectSummary(
-  db: admin.firestore.Firestore,
-  projectDoc: admin.firestore.QueryDocumentSnapshot
-) {
-  const project = projectDoc.data()
-  const stats = await computeProjectStats(db, projectDoc.id, project)
-  await db.doc(`projectSummaries/${projectDoc.id}`).set({
-    projectId: projectDoc.id,
-    name: project.name ?? '',
-    description: project.description ?? '',
-    documentNo: project.documentNo ?? '',
-    projectCreatedAt: project.createdAt ?? null,
-    projectDeletedAt: project.deletedAt ?? null,
-    budgetConfig: project.budgetConfig ?? null,
-    opsBudget: project.opsBudget ?? null,
-    memberAdminUids: Object.entries(project.memberRoles ?? {})
-      .filter(([, role]) => role === 'admin')
-      .map(([uid]) => uid),
-    stats,
-    archivedAt: admin.firestore.FieldValue.serverTimestamp()
-  })
-}
+// 삭제 즉시 리포트를 만들고, 복원되면 리포트를 지운다 (복원된 대회는 '지난 대회'가 아니므로).
+export const onProjectDeletionChange = onDocumentUpdated('projects/{projectId}', async (event) => {
+  const before = event.data?.before.data()
+  const after = event.data?.after.data()
+  if (!before || !after) return
+  const projectId = event.params.projectId
+  const db = admin.firestore()
 
-// 30일 지난 삭제된 프로젝트 자동 정리 (매일 실행)
+  const wasDeleted = before.isActive === false && !!before.deletedAt
+  const isDeleted = after.isActive === false && !!after.deletedAt
+
+  if (!wasDeleted && isDeleted) {
+    await archiveProjectSummary(db, projectId, after)
+  } else if (wasDeleted && !isDeleted) {
+    await db.doc(`projectSummaries/${projectId}`).delete()
+  }
+})
+
+// 삭제 후 이 기간(일)이 지나면 상세 데이터를 영구 삭제한다. 프론트의 PROJECT_DELETION_GRACE_DAYS와 같아야 한다.
+const PROJECT_PURGE_GRACE_DAYS = 10
+
+// 삭제 후 유예 기간이 지난 프로젝트의 상세 데이터 자동 정리 (매일 실행). 리포트는 삭제 시점에 이미 보존됨.
 export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
   const db = admin.firestore()
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - PROJECT_PURGE_GRACE_DAYS)
 
   const snapshot = await db
     .collection('projects')
     .where('isActive', '==', false)
-    .where('deletedAt', '<=', thirtyDaysAgo)
+    .where('deletedAt', '<=', cutoff)
     .get()
 
   for (const projectDoc of snapshot.docs) {
     const projectId = projectDoc.id
     console.log(`Permanently deleting project: ${projectId}`)
 
-    // Preserve the budget report (dashboard summary) BEFORE any data is removed.
-    // If this fails we skip the project entirely so it is retried on the next run
-    // instead of losing the report.
+    // The report is normally created at deletion time (onProjectDeletionChange). Only fall back
+    // to archiving here (e.g. projects deleted before that trigger existed). If that fails we
+    // skip the project so it is retried instead of losing the report.
     try {
-      await archiveProjectSummary(db, projectDoc)
+      const existing = await db.doc(`projectSummaries/${projectId}`).get()
+      if (!existing.exists) await archiveProjectSummary(db, projectId, projectDoc.data())
     } catch (err) {
       console.error(`Failed to archive summary for ${projectId}; skipping deletion`, err)
       continue
@@ -1358,118 +1356,6 @@ export const weeklyApproverDigest = onSchedule(
 )
 
 // --- Dashboard Stats ---
-// Aggregates dashboard statistics for a project. Shared by getDashboardStats and the
-// pre-purge summary snapshot so both always report identical numbers.
-async function computeProjectStats(
-  db: admin.firestore.Firestore,
-  projectId: string,
-  projectData: admin.firestore.DocumentData
-) {
-  const usdToKrwRate =
-    (projectData.usdToKrwRate as number | undefined) ??
-    (projectData.opsBudget?.usdToKrwRate as number | undefined) ?? 0
-
-  const snap = await db
-    .collection('requests')
-    .where('projectId', '==', projectId)
-    .select('status', 'totalAmount', 'totalAmountUsd', 'committee', 'items', 'date', 'createdAt')
-    .get()
-
-  let total = 0
-  let pending = 0
-  let reviewed = 0
-  let approvedOnly = 0
-  let settled = 0
-  let rejected = 0
-  let totalAmount = 0
-  let approvedAmount = 0
-  let approvedOnlyAmount = 0
-  let settledAmount = 0
-  let pendingAmount = 0
-  let reviewedAmount = 0
-  const byCommittee: Record<string, { count: number; amount: number; approvedAmount: number }> = {}
-  const byBudgetCode: Record<number, { count: number; amount: number; approvedAmount: number }> = {}
-  const monthlyTrend: Record<string, number> = {}
-  const monthlyCount: Record<string, number> = {}
-  const dailyTrend: Record<string, number> = {}
-  const dailyCount: Record<string, number> = {}
-
-  snap.forEach((doc) => {
-    const d = doc.data()
-    const status = d.status as string
-    // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
-    // included in all aggregations. When unset (or 0), USD items contribute 0.
-    const amount = (d.totalAmount as number) || 0
-    const amountUsd = (d.totalAmountUsd as number) || 0
-    const effectiveAmount = amount + (usdToKrwRate > 0 ? Math.round(amountUsd * usdToKrwRate) : 0)
-    const committee = (d.committee as string) || 'operations'
-    const items = (d.items as { budgetCode: number; amount: number; currency?: string }[]) || []
-    const date = (d.date as string) || ''
-
-    total++
-    totalAmount += effectiveAmount
-
-    if (status === 'pending') { pending++; pendingAmount += effectiveAmount }
-    else if (status === 'reviewed') { reviewed++; reviewedAmount += effectiveAmount }
-    else if (status === 'approved') { approvedOnly++; approvedOnlyAmount += effectiveAmount }
-    else if (status === 'settled') { settled++; settledAmount += effectiveAmount }
-    else if (status === 'rejected' || status === 'force_rejected') { rejected++ }
-
-    const isApproved = status === 'approved' || status === 'settled'
-    approvedAmount = approvedOnlyAmount + settledAmount
-
-    if (!byCommittee[committee]) byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 }
-    byCommittee[committee].count++
-    byCommittee[committee].amount += effectiveAmount
-    if (isApproved) byCommittee[committee].approvedAmount += effectiveAmount
-
-    for (const item of items) {
-      const code = item.budgetCode
-      if (!byBudgetCode[code]) byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 }
-      byBudgetCode[code].count++
-      // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
-      // included in all aggregations. When unset (or 0), USD items contribute 0.
-      const itemCurrency = item.currency || 'KRW'
-      const itemEffectiveKrw =
-        itemCurrency === 'USD'
-          ? (usdToKrwRate > 0 ? Math.round(item.amount * usdToKrwRate) : 0)
-          : item.amount
-      byBudgetCode[code].amount += itemEffectiveKrw
-      if (isApproved) byBudgetCode[code].approvedAmount += itemEffectiveKrw
-    }
-
-    if (date) {
-      const month = date.substring(0, 7)
-      monthlyTrend[month] = (monthlyTrend[month] || 0) + effectiveAmount
-      dailyTrend[date] = (dailyTrend[date] || 0) + effectiveAmount
-      dailyCount[date] = (dailyCount[date] || 0) + 1
-      monthlyCount[month] = (monthlyCount[month] || 0) + 1
-    }
-  })
-
-  return {
-    total,
-    pending,
-    reviewed,
-    approvedOnly,
-    settled,
-    rejected,
-    totalAmount,
-    approvedAmount,
-    approvedOnlyAmount,
-    settledAmount,
-    pendingAmount,
-    reviewedAmount,
-    byCommittee,
-    byBudgetCode,
-    monthlyTrend,
-    monthlyCount,
-    dailyTrend,
-    dailyCount,
-    usdToKrwRate
-  }
-}
-
 export const getDashboardStats = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Must be logged in')

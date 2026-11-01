@@ -86,11 +86,18 @@ function ProjectManagement() {
       message: t('project.deleteConfirm', { name: selectedProject.name }),
       onConfirm: async () => {
         closeConfirm()
-        await softDelete.mutateAsync(effectiveId)
-        // A deleted project must not stay the default; leave the default unset.
-        if (isDefault) await updateSettings.mutateAsync({ defaultProjectId: '' })
+        const name = selectedProject.name
+        try {
+          await softDelete.mutateAsync(effectiveId)
+          // A deleted project must not stay the default; leave the default unset.
+          if (isDefault) await updateSettings.mutateAsync({ defaultProjectId: '' })
+        } catch {
+          toast({ variant: 'danger', message: t('project.deleteFailed') })
+          return
+        }
         const remaining = activeProjects.filter((p) => p.id !== effectiveId)
         if (remaining.length > 0) setCurrentProject(remaining[0])
+        toast({ variant: 'success', message: t('project.deleted', { name }) })
       }
     })
   }

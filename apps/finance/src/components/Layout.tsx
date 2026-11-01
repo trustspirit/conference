@@ -12,6 +12,7 @@ import {
 import { useProjectRole, effectiveSystemRole } from '../hooks/useProjectRole'
 import ProjectSelector from './ProjectSelector'
 import ProjectClosedNotice from './ProjectClosedNotice'
+import DeletedProjectsBanner from './DeletedProjectsBanner'
 import { useProject } from '../contexts/ProjectContext'
 import { isProjectClosed } from '../lib/projectClosed'
 import { GearIcon, CloseIcon, MenuIcon, ChevronDownIcon } from './Icons'
@@ -419,6 +420,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
       <main className="max-w-6xl mx-auto px-3 py-4 mt-14 sm:px-4 sm:py-6 print:mt-0">
+        <DeletedProjectsBanner className="mb-4" />
         {isProjectClosed(currentProject) && <ProjectClosedNotice className="mb-4" />}
         {children}
       </main>

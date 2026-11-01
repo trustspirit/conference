@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiChat = exports.onProjectMembersWrite = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onUserCreatedNotifyAdmins = exports.onRequestCreated = exports.splitCorporateCardRequest = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.onProjectMembersWrite = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onUserCreatedNotifyAdmins = exports.onRequestCreated = exports.splitCorporateCardRequest = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.onProjectDeletionChange = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -44,6 +44,7 @@ const nodemailer = __importStar(require("nodemailer"));
 const node_crypto_1 = require("node:crypto");
 const splitCorporateCard_1 = require("./lib/splitCorporateCard");
 const pendingSignupRecipients_1 = require("./lib/pendingSignupRecipients");
+const projectSummary_1 = require("./lib/projectSummary");
 admin.initializeApp();
 // --- Email notification secrets & config ---
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
@@ -350,45 +351,45 @@ exports.downloadFileV2 = (0, https_1.onCall)(async (request) => {
         fileName: storagePath.split('/').pop() || 'file'
     };
 });
-// 영구 삭제 직전에 대회의 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에 보존한다.
-// 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
-async function archiveProjectSummary(db, projectDoc) {
-    const project = projectDoc.data();
-    const stats = await computeProjectStats(db, projectDoc.id, project);
-    await db.doc(`projectSummaries/${projectDoc.id}`).set({
-        projectId: projectDoc.id,
-        name: project.name ?? '',
-        description: project.description ?? '',
-        documentNo: project.documentNo ?? '',
-        projectCreatedAt: project.createdAt ?? null,
-        projectDeletedAt: project.deletedAt ?? null,
-        budgetConfig: project.budgetConfig ?? null,
-        opsBudget: project.opsBudget ?? null,
-        memberAdminUids: Object.entries(project.memberRoles ?? {})
-            .filter(([, role]) => role === 'admin')
-            .map(([uid]) => uid),
-        stats,
-        archivedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-}
-// 30일 지난 삭제된 프로젝트 자동 정리 (매일 실행)
+// 삭제 즉시 리포트를 만들고, 복원되면 리포트를 지운다 (복원된 대회는 '지난 대회'가 아니므로).
+exports.onProjectDeletionChange = (0, firestore_1.onDocumentUpdated)('projects/{projectId}', async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after)
+        return;
+    const projectId = event.params.projectId;
+    const db = admin.firestore();
+    const wasDeleted = before.isActive === false && !!before.deletedAt;
+    const isDeleted = after.isActive === false && !!after.deletedAt;
+    if (!wasDeleted && isDeleted) {
+        await (0, projectSummary_1.archiveProjectSummary)(db, projectId, after);
+    }
+    else if (wasDeleted && !isDeleted) {
+        await db.doc(`projectSummaries/${projectId}`).delete();
+    }
+});
+// 삭제 후 이 기간(일)이 지나면 상세 데이터를 영구 삭제한다. 프론트의 PROJECT_DELETION_GRACE_DAYS와 같아야 한다.
+const PROJECT_PURGE_GRACE_DAYS = 10;
+// 삭제 후 유예 기간이 지난 프로젝트의 상세 데이터 자동 정리 (매일 실행). 리포트는 삭제 시점에 이미 보존됨.
 exports.cleanupDeletedProjects = (0, scheduler_1.onSchedule)('every 24 hours', async () => {
     const db = admin.firestore();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - PROJECT_PURGE_GRACE_DAYS);
     const snapshot = await db
         .collection('projects')
         .where('isActive', '==', false)
-        .where('deletedAt', '<=', thirtyDaysAgo)
+        .where('deletedAt', '<=', cutoff)
         .get();
     for (const projectDoc of snapshot.docs) {
         const projectId = projectDoc.id;
         console.log(`Permanently deleting project: ${projectId}`);
-        // Preserve the budget report (dashboard summary) BEFORE any data is removed.
-        // If this fails we skip the project entirely so it is retried on the next run
-        // instead of losing the report.
+        // The report is normally created at deletion time (onProjectDeletionChange). Only fall back
+        // to archiving here (e.g. projects deleted before that trigger existed). If that fails we
+        // skip the project so it is retried instead of losing the report.
         try {
-            await archiveProjectSummary(db, projectDoc);
+            const existing = await db.doc(`projectSummaries/${projectId}`).get();
+            if (!existing.exists)
+                await (0, projectSummary_1.archiveProjectSummary)(db, projectId, projectDoc.data());
         }
         catch (err) {
             console.error(`Failed to archive summary for ${projectId}; skipping deletion`, err);
@@ -1180,119 +1181,6 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
     }
 });
 // --- Dashboard Stats ---
-// Aggregates dashboard statistics for a project. Shared by getDashboardStats and the
-// pre-purge summary snapshot so both always report identical numbers.
-async function computeProjectStats(db, projectId, projectData) {
-    const usdToKrwRate = projectData.usdToKrwRate ??
-        projectData.opsBudget?.usdToKrwRate ?? 0;
-    const snap = await db
-        .collection('requests')
-        .where('projectId', '==', projectId)
-        .select('status', 'totalAmount', 'totalAmountUsd', 'committee', 'items', 'date', 'createdAt')
-        .get();
-    let total = 0;
-    let pending = 0;
-    let reviewed = 0;
-    let approvedOnly = 0;
-    let settled = 0;
-    let rejected = 0;
-    let totalAmount = 0;
-    let approvedAmount = 0;
-    let approvedOnlyAmount = 0;
-    let settledAmount = 0;
-    let pendingAmount = 0;
-    let reviewedAmount = 0;
-    const byCommittee = {};
-    const byBudgetCode = {};
-    const monthlyTrend = {};
-    const monthlyCount = {};
-    const dailyTrend = {};
-    const dailyCount = {};
-    snap.forEach((doc) => {
-        const d = doc.data();
-        const status = d.status;
-        // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
-        // included in all aggregations. When unset (or 0), USD items contribute 0.
-        const amount = d.totalAmount || 0;
-        const amountUsd = d.totalAmountUsd || 0;
-        const effectiveAmount = amount + (usdToKrwRate > 0 ? Math.round(amountUsd * usdToKrwRate) : 0);
-        const committee = d.committee || 'operations';
-        const items = d.items || [];
-        const date = d.date || '';
-        total++;
-        totalAmount += effectiveAmount;
-        if (status === 'pending') {
-            pending++;
-            pendingAmount += effectiveAmount;
-        }
-        else if (status === 'reviewed') {
-            reviewed++;
-            reviewedAmount += effectiveAmount;
-        }
-        else if (status === 'approved') {
-            approvedOnly++;
-            approvedOnlyAmount += effectiveAmount;
-        }
-        else if (status === 'settled') {
-            settled++;
-            settledAmount += effectiveAmount;
-        }
-        else if (status === 'rejected' || status === 'force_rejected') {
-            rejected++;
-        }
-        const isApproved = status === 'approved' || status === 'settled';
-        approvedAmount = approvedOnlyAmount + settledAmount;
-        if (!byCommittee[committee])
-            byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 };
-        byCommittee[committee].count++;
-        byCommittee[committee].amount += effectiveAmount;
-        if (isApproved)
-            byCommittee[committee].approvedAmount += effectiveAmount;
-        for (const item of items) {
-            const code = item.budgetCode;
-            if (!byBudgetCode[code])
-                byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 };
-            byBudgetCode[code].count++;
-            // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
-            // included in all aggregations. When unset (or 0), USD items contribute 0.
-            const itemCurrency = item.currency || 'KRW';
-            const itemEffectiveKrw = itemCurrency === 'USD'
-                ? (usdToKrwRate > 0 ? Math.round(item.amount * usdToKrwRate) : 0)
-                : item.amount;
-            byBudgetCode[code].amount += itemEffectiveKrw;
-            if (isApproved)
-                byBudgetCode[code].approvedAmount += itemEffectiveKrw;
-        }
-        if (date) {
-            const month = date.substring(0, 7);
-            monthlyTrend[month] = (monthlyTrend[month] || 0) + effectiveAmount;
-            dailyTrend[date] = (dailyTrend[date] || 0) + effectiveAmount;
-            dailyCount[date] = (dailyCount[date] || 0) + 1;
-            monthlyCount[month] = (monthlyCount[month] || 0) + 1;
-        }
-    });
-    return {
-        total,
-        pending,
-        reviewed,
-        approvedOnly,
-        settled,
-        rejected,
-        totalAmount,
-        approvedAmount,
-        approvedOnlyAmount,
-        settledAmount,
-        pendingAmount,
-        reviewedAmount,
-        byCommittee,
-        byBudgetCode,
-        monthlyTrend,
-        monthlyCount,
-        dailyTrend,
-        dailyCount,
-        usdToKrwRate
-    };
-}
 exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
@@ -1314,7 +1202,7 @@ exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError('permission-denied', 'Not a member of this project');
     }
     const projectData = projSnap.data() ?? {};
-    return computeProjectStats(db, projectId, projectData);
+    return (0, projectSummary_1.computeProjectStats)(db, projectId, projectData);
 });
 var onProjectMembersWrite_1 = require("./onProjectMembersWrite");
 Object.defineProperty(exports, "onProjectMembersWrite", { enumerable: true, get: function () { return onProjectMembersWrite_1.onProjectMembersWrite; } });

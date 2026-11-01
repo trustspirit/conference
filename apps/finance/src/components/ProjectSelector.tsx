@@ -10,21 +10,14 @@ import { FolderIcon, ChevronDownIcon, CloseIcon, RestoreIcon } from './Icons'
 import ProjectCreateForm from './settings/ProjectCreateForm'
 import { useDeletedProjects, useRestoreProject } from '../hooks/queries/useProjects'
 import { queryKeys } from '../hooks/queries/queryKeys'
+import { getRemainingDeletionDays } from '../lib/projectDeletion'
 import type { Project } from '../types'
-
-function getRemainingDays(deletedAt: unknown): number {
-  if (!deletedAt) return 0
-  const ts = deletedAt as { seconds?: number; toDate?: () => Date }
-  const deletedDate = ts.toDate ? ts.toDate() : new Date((ts.seconds || 0) * 1000)
-  const elapsed = Date.now() - deletedDate.getTime()
-  return Math.max(0, 30 - Math.floor(elapsed / (1000 * 60 * 60 * 24)))
-}
 
 function getAutoDeleteLabel(
   deletedAt: unknown,
   t: (key: string, options?: Record<string, unknown>) => string
 ) {
-  const days = getRemainingDays(deletedAt)
+  const days = getRemainingDeletionDays(deletedAt)
   return days > 0 ? t('project.autoDeleteDays', { days }) : t('project.autoDeletePending')
 }
 

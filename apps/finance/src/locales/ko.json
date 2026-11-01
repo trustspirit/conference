@@ -582,7 +582,7 @@
     "memberCount": "{{count}}명",
     "personalSettings": "내 설정",
     "projectSettings": "프로젝트 설정",
-    "deleteConfirm": "\"{{name}}\" 프로젝트를 삭제하시겠습니까? 30일 이내에 복원할 수 있습니다.",
+    "deleteConfirm": "\"{{name}}\" 프로젝트를 삭제하시겠습니까? 삭제하면 버짓 리포트가 즉시 보존되고, 10일 이내에는 복원할 수 있습니다. 10일이 지나면 신청서·영수증 등 모든 데이터가 영구 삭제됩니다.",
     "recentlyDeleted": "최근 삭제됨",
     "restore": "복원",
     "closeProject": "프로젝트 닫기",
@@ -605,7 +605,11 @@
     "defaultReceiptSize": "영수증 PDF 기본 크기",
     "defaultReceiptSizeHint": "PDF 내보내기에서 영수증이 기본으로 렌더되는 크기입니다. 영수증별로 크기를 따로 지정하면 이 기본값보다 우선합니다.",
     "receiptSizeNormal": "일반",
-    "receiptSizeLarge": "크게 (한 장에 한 개)"
+    "receiptSizeLarge": "크게 (한 장에 한 개)",
+    "deleted": "\"{{name}}\" 프로젝트를 삭제했습니다. 버짓 리포트는 '지난 대회 리포트'에서 볼 수 있고, 10일 이내에 복원할 수 있습니다.",
+    "deleteFailed": "프로젝트 삭제에 실패했습니다.",
+    "deletedBannerTitle": "삭제 대기 중인 프로젝트",
+    "deletedBannerHint": "10일이 지나면 신청서·영수증 등 상세 데이터는 영구 삭제됩니다. 버짓 리포트(요약)는 '지난 대회 리포트'에 보존되어 있습니다."
   },
   "budget": {
     "warning": "예산의 {{percent}}%를 사용했습니다. (경고 기준: {{threshold}}%)",
@@ -711,7 +715,7 @@
   },
   "archive": {
     "title": "지난 대회 리포트",
-    "description": "삭제된 대회의 버짓 리포트(요약)만 보존됩니다. 신청서·영수증 등 상세 데이터는 영구 삭제되었습니다.",
+    "description": "삭제된 대회의 버짓 리포트(요약)입니다. 삭제 즉시 생성되며, 신청서·영수증 등 상세 데이터는 10일 후 영구 삭제됩니다.",
     "empty": "보존된 리포트가 없습니다.",
     "archivedAt": "보존일: {{date}}"
   }
