@@ -290,6 +290,12 @@ service cloud.firestore {
       allow update: if isSuperAdmin() && projectOpen(resource.data.projectId);
       allow delete: if isSuperAdmin() && projectOpen(resource.data.projectId);
     }
+    // Budget-report snapshots preserved when a project is permanently deleted.
+    // Written only by Cloud Functions (Admin SDK bypasses rules).
+    match /projectSummaries/{projectId} {
+      allow read: if request.auth != null && systemRole() in ['admin', 'super_admin'];
+      allow write: if false;
+    }
     match /projects/{projectId} {
       allow read: if request.auth != null;
       allow update: if request.auth != null

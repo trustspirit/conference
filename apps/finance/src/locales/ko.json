@@ -708,5 +708,11 @@
     "deleteConfirm": "삭제",
     "deleteSuccess": "신청서를 삭제했습니다.",
     "deleteFailed": "삭제에 실패했습니다."
+  },
+  "archive": {
+    "title": "지난 대회 리포트",
+    "description": "삭제된 대회의 버짓 리포트(요약)만 보존됩니다. 신청서·영수증 등 상세 데이터는 영구 삭제되었습니다.",
+    "empty": "보존된 리포트가 없습니다.",
+    "archivedAt": "보존일: {{date}}"
   }
 }

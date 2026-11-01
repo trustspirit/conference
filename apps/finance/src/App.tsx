@@ -37,6 +37,7 @@ const SettlementReportPage = lazy(() => import('./pages/SettlementReportPage'))
 const ResubmitPage = lazy(() => import('./pages/ResubmitPage'))
 const ReceiptsPage = lazy(() => import('./pages/ReceiptsPage'))
 const SuperAdminUsersPage = lazy(() => import('./pages/SuperAdminUsersPage'))
+const ArchivedReportsPage = lazy(() => import('./pages/ArchivedReportsPage'))
 
 function AssignmentGuard({ children }: { children: React.ReactNode }) {
   const { appUser, needsDisplayName, needsConsent } = useAuth()
@@ -232,6 +233,14 @@ const router = createBrowserRouter([
             ]}
           >
             <SettlementReportPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/admin/archived-reports',
+        element: (
+          <ProtectedRoute>
+            <ArchivedReportsPage />
           </ProtectedRoute>
         )
       },

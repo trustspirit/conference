@@ -22,6 +22,9 @@ export const queryKeys = {
     infiniteByUser: (projectId: string, uid: string) =>
       ['requests', projectId, 'infinite', 'user', uid] as const
   },
+  projectSummaries: {
+    all: () => ['projectSummaries'] as const
+  },
   projects: {
     root: () => ['projects'] as const,
     all: (uid: string) => ['projects', uid] as const,

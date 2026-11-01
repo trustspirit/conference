@@ -383,6 +383,31 @@ export const downloadFileV2 = onCall(async (request) => {
   }
 })
 
+// 영구 삭제 직전에 대회의 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에 보존한다.
+// 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
+async function archiveProjectSummary(
+  db: admin.firestore.Firestore,
+  projectDoc: admin.firestore.QueryDocumentSnapshot
+) {
+  const project = projectDoc.data()
+  const stats = await computeProjectStats(db, projectDoc.id, project)
+  await db.doc(`projectSummaries/${projectDoc.id}`).set({
+    projectId: projectDoc.id,
+    name: project.name ?? '',
+    description: project.description ?? '',
+    documentNo: project.documentNo ?? '',
+    projectCreatedAt: project.createdAt ?? null,
+    projectDeletedAt: project.deletedAt ?? null,
+    budgetConfig: project.budgetConfig ?? null,
+    opsBudget: project.opsBudget ?? null,
+    memberAdminUids: Object.entries(project.memberRoles ?? {})
+      .filter(([, role]) => role === 'admin')
+      .map(([uid]) => uid),
+    stats,
+    archivedAt: admin.firestore.FieldValue.serverTimestamp()
+  })
+}
+
 // 30일 지난 삭제된 프로젝트 자동 정리 (매일 실행)
 export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
   const db = admin.firestore()
@@ -398,6 +423,16 @@ export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
   for (const projectDoc of snapshot.docs) {
     const projectId = projectDoc.id
     console.log(`Permanently deleting project: ${projectId}`)
+
+    // Preserve the budget report (dashboard summary) BEFORE any data is removed.
+    // If this fails we skip the project entirely so it is retried on the next run
+    // instead of losing the report.
+    try {
+      await archiveProjectSummary(db, projectDoc)
+    } catch (err) {
+      console.error(`Failed to archive summary for ${projectId}; skipping deletion`, err)
+      continue
+    }
 
     // Collect all storage paths to delete
     const storagePaths: string[] = []
@@ -460,8 +495,8 @@ export const cleanupDeletedProjects = onSchedule('every 24 hours', async () => {
       )
     )
 
-    // Delete the project document
-    await projectDoc.ref.delete()
+    // Delete the project document together with its subcollections (opsBudgetInclusions)
+    await db.recursiveDelete(projectDoc.ref)
     console.log(
       `Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`
     )
@@ -1323,30 +1358,13 @@ export const weeklyApproverDigest = onSchedule(
 )
 
 // --- Dashboard Stats ---
-export const getDashboardStats = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'Must be logged in')
-  }
-
-  const { projectId } = request.data as { projectId: string }
-  if (!projectId || typeof projectId !== 'string') {
-    throw new HttpsError('invalid-argument', 'projectId is required')
-  }
-
-  const db = admin.firestore()
-  const callerUid = request.auth.uid
-  const [callerSnap, projSnap] = await Promise.all([
-    db.doc(`users/${callerUid}`).get(),
-    db.doc(`projects/${projectId}`).get()
-  ])
-  const callerSystemRole = getSystemRole(callerSnap.data())
-  const isSuperAdmin = callerSystemRole === 'super_admin'
-  const isMember = projSnap.data()?.memberRoles?.[callerUid] != null
-  if (!isSuperAdmin && !isMember) {
-    throw new HttpsError('permission-denied', 'Not a member of this project')
-  }
-
-  const projectData = projSnap.data() ?? {}
+// Aggregates dashboard statistics for a project. Shared by getDashboardStats and the
+// pre-purge summary snapshot so both always report identical numbers.
+async function computeProjectStats(
+  db: admin.firestore.Firestore,
+  projectId: string,
+  projectData: admin.firestore.DocumentData
+) {
   const usdToKrwRate =
     (projectData.usdToKrwRate as number | undefined) ??
     (projectData.opsBudget?.usdToKrwRate as number | undefined) ?? 0
@@ -1450,6 +1468,33 @@ export const getDashboardStats = onCall(async (request) => {
     dailyCount,
     usdToKrwRate
   }
+}
+
+export const getDashboardStats = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in')
+  }
+
+  const { projectId } = request.data as { projectId: string }
+  if (!projectId || typeof projectId !== 'string') {
+    throw new HttpsError('invalid-argument', 'projectId is required')
+  }
+
+  const db = admin.firestore()
+  const callerUid = request.auth.uid
+  const [callerSnap, projSnap] = await Promise.all([
+    db.doc(`users/${callerUid}`).get(),
+    db.doc(`projects/${projectId}`).get()
+  ])
+  const callerSystemRole = getSystemRole(callerSnap.data())
+  const isSuperAdmin = callerSystemRole === 'super_admin'
+  const isMember = projSnap.data()?.memberRoles?.[callerUid] != null
+  if (!isSuperAdmin && !isMember) {
+    throw new HttpsError('permission-denied', 'Not a member of this project')
+  }
+
+  const projectData = projSnap.data() ?? {}
+  return computeProjectStats(db, projectId, projectData)
 })
 
 export { onProjectMembersWrite } from './onProjectMembersWrite'

@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.aiChat = exports.onProjectMembersWrite = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onRequestCreated = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
+exports.aiChat = exports.onProjectMembersWrite = exports.getDashboardStats = exports.weeklyApproverDigest = exports.onRequestStatusChange = exports.onUserCreatedNotifyAdmins = exports.onRequestCreated = exports.splitCorporateCardRequest = exports.calculateDistance = exports.deleteUserAccount = exports.cleanupDeletedProjects = exports.downloadFileV2 = exports.deleteStorageFiles = exports.uploadRouteMap = exports.uploadVendorBankBook = exports.uploadBankBookV2 = exports.uploadReceiptsV2 = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -42,6 +42,8 @@ const admin = __importStar(require("firebase-admin"));
 const firestore_2 = require("firebase-admin/firestore");
 const nodemailer = __importStar(require("nodemailer"));
 const node_crypto_1 = require("node:crypto");
+const splitCorporateCard_1 = require("./lib/splitCorporateCard");
+const pendingSignupRecipients_1 = require("./lib/pendingSignupRecipients");
 admin.initializeApp();
 // --- Email notification secrets & config ---
 const gmailUser = (0, params_1.defineSecret)('GMAIL_USER');
@@ -81,7 +83,13 @@ function detectMimeFromMagic(buffer) {
 }
 // Strip directory separators / NUL / control chars to keep storagePath predictable.
 function sanitizeFilename(name) {
-    return name.replace(/[\x00-\x1f/\\]/g, '_').slice(0, 200) || 'file';
+    // Replace control chars and path separators, and collapse runs of dots so
+    // saved-webpage names (e.g. Coupang "...card-receipt_view..pdf") never put a
+    // ".." into the storage path. Keeps download path-traversal validation happy.
+    return (name
+        .replace(/[\x00-\x1f/\\]/g, '_')
+        .replace(/\.{2,}/g, '.')
+        .slice(0, 200) || 'file');
 }
 async function uploadFileToStorage(file, storagePath) {
     if (!file?.data || typeof file.data !== 'string' || !file.data.startsWith('data:')) {
@@ -254,14 +262,43 @@ async function uidsWithProjectRoles(projectId, roles) {
     }
     return result;
 }
+/** 닫힌 프로젝트(closedAt 설정됨)는 알림 및 정산 관련 처리를 모두 중단한다. */
+function isProjectClosedData(data) {
+    return data?.closedAt != null;
+}
+async function isProjectClosed(projectId) {
+    if (!projectId)
+        return false;
+    const snap = await admin.firestore().doc(`projects/${projectId}`).get();
+    return isProjectClosedData(snap.data());
+}
+/**
+ * 호출자의 이 프로젝트 내 유효 역할. super_admin 은 모든 프로젝트에서 admin 으로
+ * 승격된다 — 클라이언트의 useProjectRole 과 같은 규칙이다.
+ */
+async function callerProjectRole(projectId, uid) {
+    const db = admin.firestore();
+    const userDoc = await db.doc(`users/${uid}`).get();
+    if (userDoc.data()?.systemRole === 'super_admin')
+        return 'admin';
+    if (!projectId)
+        return null;
+    const projDoc = await db.doc(`projects/${projectId}`).get();
+    const roles = (projDoc.data()?.memberRoles ?? {});
+    return roles[uid] ?? null;
+}
 function getSystemRole(d) {
     if (!d)
         return null;
     return d.systemRole ?? null;
 }
 async function assertCanReadStoragePath(uid, storagePath) {
-    // Reject path traversal and absolute paths up front.
-    if (storagePath.includes('..') || storagePath.startsWith('/')) {
+    // Reject path traversal and absolute paths up front. We check for a standalone
+    // ".." path *segment* rather than a bare ".." substring: filenames are sanitized
+    // at upload (slashes/backslashes replaced), so ".." inside a filename
+    // (e.g. "card-receipt_view..pdf") can never escape its directory and is legitimate.
+    const segments = storagePath.split('/');
+    if (storagePath.startsWith('/') || segments.some((s) => s === '..')) {
         throw new https_1.HttpsError('invalid-argument', 'Invalid storage path');
     }
     const isStaff = await hasStaffRoleAnywhere(uid);
@@ -313,6 +350,27 @@ exports.downloadFileV2 = (0, https_1.onCall)(async (request) => {
         fileName: storagePath.split('/').pop() || 'file'
     };
 });
+// 영구 삭제 직전에 대회의 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에 보존한다.
+// 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
+async function archiveProjectSummary(db, projectDoc) {
+    const project = projectDoc.data();
+    const stats = await computeProjectStats(db, projectDoc.id, project);
+    await db.doc(`projectSummaries/${projectDoc.id}`).set({
+        projectId: projectDoc.id,
+        name: project.name ?? '',
+        description: project.description ?? '',
+        documentNo: project.documentNo ?? '',
+        projectCreatedAt: project.createdAt ?? null,
+        projectDeletedAt: project.deletedAt ?? null,
+        budgetConfig: project.budgetConfig ?? null,
+        opsBudget: project.opsBudget ?? null,
+        memberAdminUids: Object.entries(project.memberRoles ?? {})
+            .filter(([, role]) => role === 'admin')
+            .map(([uid]) => uid),
+        stats,
+        archivedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+}
 // 30일 지난 삭제된 프로젝트 자동 정리 (매일 실행)
 exports.cleanupDeletedProjects = (0, scheduler_1.onSchedule)('every 24 hours', async () => {
     const db = admin.firestore();
@@ -326,6 +384,16 @@ exports.cleanupDeletedProjects = (0, scheduler_1.onSchedule)('every 24 hours', a
     for (const projectDoc of snapshot.docs) {
         const projectId = projectDoc.id;
         console.log(`Permanently deleting project: ${projectId}`);
+        // Preserve the budget report (dashboard summary) BEFORE any data is removed.
+        // If this fails we skip the project entirely so it is retried on the next run
+        // instead of losing the report.
+        try {
+            await archiveProjectSummary(db, projectDoc);
+        }
+        catch (err) {
+            console.error(`Failed to archive summary for ${projectId}; skipping deletion`, err);
+            continue;
+        }
         // Collect all storage paths to delete
         const storagePaths = [];
         // Delete requests + collect receipt paths
@@ -371,8 +439,8 @@ exports.cleanupDeletedProjects = (0, scheduler_1.onSchedule)('every 24 hours', a
         await Promise.all(orphanedRouteMaps.map((f) => f.delete().catch(() => {
             /* ignore */
         })));
-        // Delete the project document
-        await projectDoc.ref.delete();
+        // Delete the project document together with its subcollections (opsBudgetInclusions)
+        await db.recursiveDelete(projectDoc.ref);
         console.log(`Deleted project ${projectId}: ${requests.size} requests, ${settlements.size} settlements, ${storagePaths.length + orphanedFiles.length + orphanedRouteMaps.length} files`);
     }
 });
@@ -503,6 +571,144 @@ exports.calculateDistance = (0, https_1.onCall)({ secrets: [kakaoMobilityKey] },
     }
     return { distanceMeters, routePath: simplifyPath(routePath) };
 });
+/**
+ * 제출된 신청서의 일부 항목을 법인카드 신청서로 분리한다.
+ *
+ * 클라이언트에서 직접 못 하는 이유: firestore.rules 의 create 는
+ * `requestedBy.uid == request.auth.uid` 를 요구하므로 admin 이 원 신청자 이름으로
+ * 문서를 만들 수 없고, update 는 모든 전이가 affectedKeys().hasOnly() 로 잠겨 있어
+ * `items` 를 어떤 경로로도 수정할 수 없다.
+ *
+ * 금액은 클라이언트에서 받지 않는다. 서버가 원본 문서에서 직접 재계산한다.
+ */
+exports.splitCorporateCardRequest = (0, https_1.onCall)(async (request) => {
+    if (!request.auth)
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    const uid = request.auth.uid;
+    const { requestId, corporateItemIndexes, corporateReceiptPaths } = request.data;
+    if (!requestId || typeof requestId !== 'string') {
+        throw new https_1.HttpsError('invalid-argument', 'requestId is required');
+    }
+    if (!Array.isArray(corporateItemIndexes) || !Array.isArray(corporateReceiptPaths)) {
+        throw new https_1.HttpsError('invalid-argument', 'corporateItemIndexes and corporateReceiptPaths must be arrays');
+    }
+    const db = admin.firestore();
+    const reqRef = db.doc(`requests/${requestId}`);
+    // 새 법인카드 문서 ref 는 트랜잭션 밖에서 만든다 — 경합 시 Firestore 가 콜백을
+    // 재시도할 수 있는데, 안에서 만들면 재시도마다 새 id 가 발급되어 버린다.
+    const newRef = db.collection('requests').doc();
+    await db.runTransaction(async (tx) => {
+        const snap = await tx.get(reqRef);
+        if (!snap.exists)
+            throw new https_1.HttpsError('not-found', 'Request not found');
+        const data = snap.data();
+        // 권한 확인을 상태/유형 확인보다 먼저 한다 — 그렇지 않으면 프로젝트에 아무 역할도
+        // 없는 사용자도 임의의 requestId 로 상태와 법인카드 여부를 알아낼 수 있다.
+        // 역할 조회는 일반 읽기로 남긴다 — 멤버십은 스냅샷 격리가 필요 없고, 트랜잭션에
+        // 넣으면 경합 범위만 불필요하게 넓어진다.
+        const role = await callerProjectRole(data.projectId, uid);
+        if (!(0, splitCorporateCard_1.canSplitRequest)(role, data.committee)) {
+            throw new https_1.HttpsError('permission-denied', 'SPLIT_FORBIDDEN');
+        }
+        if (data.status !== 'pending' && data.status !== 'reviewed') {
+            throw new https_1.HttpsError('failed-precondition', 'SPLIT_STATUS_NOT_ALLOWED');
+        }
+        if (data.isCorporateCard === true) {
+            throw new https_1.HttpsError('failed-precondition', 'SPLIT_ALREADY_CORPORATE_CARD');
+        }
+        if (data.isVendorRequest === true) {
+            throw new https_1.HttpsError('failed-precondition', 'SPLIT_VENDOR_NOT_ALLOWED');
+        }
+        // 운영예산 편입 항목은 {requestId, itemIndex} 로 신청서를 참조한다. 분리는 items
+        // 인덱스를 밀어버리므로 편입이 하나라도 있으면 거부한다.
+        const inclusionsQuery = db
+            .collection(`projects/${data.projectId}/opsBudgetInclusions`)
+            .where('requestId', '==', requestId)
+            .limit(1);
+        const inclusions = await tx.get(inclusionsQuery);
+        if (!inclusions.empty) {
+            throw new https_1.HttpsError('failed-precondition', 'SPLIT_OPS_BUDGET_INCLUDED');
+        }
+        // IIFE 로 감싼다 — try 범위를 splitCorporateCard 호출 하나로 좁게 유지하고,
+        // 그 안에서 던져진 검증 에러를 던진 지점에서 바로 HttpsError 로 변환하기 위함이다.
+        const split = (() => {
+            try {
+                return (0, splitCorporateCard_1.splitCorporateCard)({
+                    items: data.items ?? [],
+                    receipts: data.receipts ?? [],
+                    receiptDisplaySizes: data.receiptDisplaySizes,
+                    corporateItemIndexes,
+                    corporateReceiptPaths
+                });
+            }
+            catch (e) {
+                if (e instanceof splitCorporateCard_1.SplitValidationError)
+                    throw new https_1.HttpsError('invalid-argument', e.reason);
+                throw e;
+            }
+        })();
+        // 원본: 남은 항목만 남기고 결재 상태를 pending 으로 되돌린다. 금액이 바뀌면
+        // 승인 권한 기준(directorApprovalThreshold)도 바뀌므로 재검토를 강제한다.
+        const originalUpdate = {
+            items: split.original.items,
+            receipts: split.original.receipts,
+            totalAmount: split.original.totalAmount,
+            totalAmountUsd: split.original.totalAmountUsd !== undefined
+                ? split.original.totalAmountUsd
+                : firestore_2.FieldValue.delete(),
+            status: 'pending',
+            reviewedBy: null,
+            reviewedAt: null,
+            approvedBy: null,
+            approvedAt: null,
+            approvalSignature: null,
+            rejectionReason: null
+        };
+        if (split.original.receiptDisplaySizes !== undefined) {
+            originalUpdate.receiptDisplaySizes = split.original.receiptDisplaySizes;
+        }
+        tx.update(reqRef, originalUpdate);
+        // 신규: 신원 필드만 복사한다. isVendorRequest/vendorBankBook* 는 복사하지 않는다 —
+        // 신청 유형은 일반/거래처/법인카드 중 하나만 고르는 배타적 선택이고, 법인카드로
+        // 결제된 부분은 업체에 송금되지 않는다.
+        const corporateDoc = {
+            projectId: data.projectId,
+            requestedBy: data.requestedBy,
+            requestedBySignature: data.requestedBySignature ?? null,
+            committee: data.committee,
+            session: data.session,
+            date: data.date,
+            payee: data.payee,
+            phone: data.phone,
+            bankName: data.bankName ?? '',
+            bankAccount: data.bankAccount ?? '',
+            comments: data.comments ?? '',
+            items: split.corporate.items,
+            receipts: split.corporate.receipts,
+            totalAmount: split.corporate.totalAmount,
+            isCorporateCard: true,
+            status: 'pending',
+            reviewedBy: null,
+            reviewedAt: null,
+            approvedBy: null,
+            approvedAt: null,
+            approvalSignature: null,
+            rejectionReason: null,
+            settlementId: null,
+            originalRequestId: null,
+            splitFromRequestId: requestId,
+            createdAt: firestore_2.FieldValue.serverTimestamp()
+        };
+        if (split.corporate.totalAmountUsd !== undefined) {
+            corporateDoc.totalAmountUsd = split.corporate.totalAmountUsd;
+        }
+        if (split.corporate.receiptDisplaySizes !== undefined) {
+            corporateDoc.receiptDisplaySizes = split.corporate.receiptDisplaySizes;
+        }
+        tx.set(newRef, corporateDoc);
+    });
+    return { originalId: requestId, corporateCardId: newRef.id };
+});
 // --- Email Notification Functions ---
 const COMMITTEE_LABELS = {
     operations: '운영위원회',
@@ -553,6 +759,10 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
     const requestedBy = data.requestedBy;
     const payee = data.payee;
     const projectId = data.projectId;
+    if (await isProjectClosed(projectId)) {
+        console.log('Project closed, skipping new request notification:', projectId);
+        return;
+    }
     // Find finance reviewers for this committee (project-scoped)
     const db = admin.firestore();
     const reviewerRoles = committee === 'operations' ? ['finance_ops', 'finance_prep'] : ['finance_prep'];
@@ -590,6 +800,87 @@ exports.onRequestCreated = (0, firestore_1.onDocumentCreated)({
         }
         catch (error) {
             console.error(`Failed to send new request notification to ${email}:`, error);
+        }
+    }
+});
+// 신규 가입 → default 대회의 admin 에게 승인 대기 알림
+exports.onUserCreatedNotifyAdmins = (0, firestore_1.onDocumentCreated)({
+    document: 'users/{uid}',
+    secrets: [gmailUser, gmailAppPassword]
+}, async (event) => {
+    const data = event.data?.data();
+    if (!data)
+        return;
+    // 정상 가입은 항상 assignedProjectCount: 0 으로 생성된다(AuthContext.tsx:110).
+    // 필드 자체가 없는 문서(레거시/시드 등)도 안전한 기본값으로 간주해 대기 상태로 처리한다.
+    // 이미 0이 아닌 값을 가진 문서만 건너뛴다.
+    const assigned = data.assignedProjectCount;
+    if (assigned !== 0 && assigned !== undefined && assigned !== null)
+        return;
+    const db = admin.firestore();
+    const settingsSnap = await db.doc('settings/global').get();
+    const defaultProjectId = settingsSnap.data()?.defaultProjectId ?? null;
+    let memberRoles = null;
+    if (defaultProjectId) {
+        const projSnap = await db.doc(`projects/${defaultProjectId}`).get();
+        memberRoles = projSnap.exists
+            ? (projSnap.data()?.memberRoles ?? {})
+            : null;
+    }
+    const superAdminSnap = await db
+        .collection('users')
+        .where('systemRole', '==', 'super_admin')
+        .get();
+    const superAdminUids = superAdminSnap.docs.map((d) => d.id);
+    const recipientUids = (0, pendingSignupRecipients_1.resolvePendingSignupRecipients)(defaultProjectId, memberRoles, superAdminUids);
+    if (recipientUids.length === 0) {
+        console.error('No recipient for pending signup notification', {
+            newUserUid: event.params.uid,
+            defaultProjectId
+        });
+        return;
+    }
+    // 신규 가입자 본인이 수신자 목록에 있으면 제외한다(첫 super_admin 시딩 등).
+    const targets = recipientUids.filter((uid) => uid !== event.params.uid);
+    if (targets.length === 0) {
+        console.log('Pending signup notification skipped: new user is the only recipient', {
+            newUserUid: event.params.uid
+        });
+        return;
+    }
+    const transporter = createTransporter();
+    // AppUser 에는 createdAt 필드가 없다(AuthContext.tsx:100-111). 문서에서 읽으면
+    // 항상 비므로 이벤트 발생 시각을 쓴다.
+    const signedUpAt = formatDate(new Date(event.time));
+    const name = data.displayName || data.name || '(이름 미입력)';
+    const email = data.email || '-';
+    const recipientDocs = await Promise.all(targets.map((uid) => db.doc(`users/${uid}`).get()));
+    for (const userDoc of recipientDocs) {
+        const to = userDoc.data()?.email;
+        if (!to)
+            continue;
+        try {
+            await transporter.sendMail({
+                from: `지불/환불 시스템 <${gmailUser.value()}>`,
+                to,
+                subject: '[지불/환불] 새 사용자 가입 승인 대기',
+                html: `
+            <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+              <h2 style="color: #2563eb; margin-bottom: 16px;">새 사용자가 가입해 배정을 기다리고 있습니다</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr><td style="padding: 8px 0; color: #6b7280;">이름</td><td style="padding: 8px 0;">${escapeHtml(name)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">이메일</td><td style="padding: 8px 0;">${escapeHtml(email)}</td></tr>
+                <tr><td style="padding: 8px 0; color: #6b7280;">가입 시각</td><td style="padding: 8px 0;">${signedUpAt}</td></tr>
+              </table>
+              <p style="color: #6b7280; font-size: 13px;">설정 화면의 <strong>멤버 관리</strong> 탭에서 이 사용자를 프로젝트에 추가할 수 있습니다.</p>
+              <p style="margin-top: 20px;"><a href="${APP_URL}/settings" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">멤버 관리로 이동</a></p>
+            </div>
+          `
+            });
+            console.log(`Pending signup notification sent to ${to}`);
+        }
+        catch (error) {
+            console.error(`Failed to send pending signup notification to ${to}:`, error);
         }
     }
 });
@@ -656,6 +947,10 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
         return;
     const oldStatus = before.status;
     const newStatus = after.status;
+    if (await isProjectClosed(after.projectId)) {
+        console.log('Project closed, skipping status change notification:', event.params?.requestId);
+        return;
+    }
     const db = admin.firestore();
     const transporter = createTransporter();
     // 1) pending → reviewed: 해당 위원회 승인자에게 승인 요청 알림
@@ -743,17 +1038,18 @@ exports.onRequestStatusChange = (0, firestore_1.onDocumentUpdated)({
         console.error('Failed to send status change email:', error);
     }
 });
-function buildWeeklyDigestEmail(userName, sections) {
+function buildWeeklyDigestEmail(userName, projectName, sections) {
     const totalCount = sections.reduce((sum, s) => sum + s.count, 0);
     const sectionHtml = sections
         .filter((s) => s.count > 0)
         .map((s) => `<li>${s.label}: <strong>${s.count}건</strong></li>`)
         .join('');
     return {
-        subject: `[지불/환불] 처리 대기 ${totalCount}건`,
+        subject: `[지불/환불] ${projectName} 처리 대기 ${totalCount}건`,
         html: `
       <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #2563eb; margin-bottom: 16px;">주간 처리 현황</h2>
+        <p style="margin-bottom: 8px; color: #6b7280;">프로젝트: <strong>${escapeHtml(projectName)}</strong></p>
         <p style="margin-bottom: 16px;">${escapeHtml(userName)}님, 처리가 필요한 건이 있습니다.</p>
         <ul style="margin-bottom: 20px; padding-left: 20px;">${sectionHtml}</ul>
         <p style="margin-top: 20px;"><a href="${APP_URL}/admin/requests" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">확인하기</a></p>
@@ -761,7 +1057,7 @@ function buildWeeklyDigestEmail(userName, sections) {
     `
     };
 }
-// 매주 일요일 09:00 KST 처리 대기 알림
+// 매주 일요일 09:00 KST 처리 대기 알림 (프로젝트별로 별도 메일 발송)
 exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
     // UTC 일요일 00:00 = KST 일요일 09:00 (한국은 DST 없음).
     schedule: 'every sunday 00:00',
@@ -769,7 +1065,6 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
     secrets: [gmailUser, gmailAppPassword]
 }, async () => {
     const db = admin.firestore();
-    // 관련 역할 사용자 조회 (프로젝트 범위: 모든 프로젝트에서 집계)
     const relevantRoles = [
         'finance_ops',
         'finance_prep',
@@ -779,138 +1074,121 @@ exports.weeklyApproverDigest = (0, scheduler_1.onSchedule)({
         'logistic_admin',
         'executive'
     ];
-    // Collect recipients across all projects (uid -> project-scoped role, first match wins)
+    // 비활성/삭제/닫힌 프로젝트는 제외
     const projectsSnap = await db.collection('projects').get();
-    const recipientMap = new Map(); // uid -> role
-    for (const projDoc of projectsSnap.docs) {
-        const perProject = await uidsWithProjectRoles(projDoc.id, relevantRoles);
-        for (const { uid, role } of perProject) {
-            if (!recipientMap.has(uid))
-                recipientMap.set(uid, role);
-        }
+    const activeProjectDocs = projectsSnap.docs.filter((p) => {
+        const data = p.data();
+        return data.isActive !== false && !data.deletedAt && !isProjectClosedData(data);
+    });
+    if (activeProjectDocs.length === 0) {
+        console.log('No active projects');
+        return;
     }
     // super_admin은 개별 신청/상태변경 알림은 받지 않지만, 주간 다이제스트는 받음
     const superSnap = await db.collection('users').where('systemRole', '==', 'super_admin').get();
-    for (const d of superSnap.docs) {
-        if (!recipientMap.has(d.id))
-            recipientMap.set(d.id, 'admin');
-    }
-    if (recipientMap.size === 0) {
-        console.log('No relevant users found');
-        return;
-    }
-    // pending 신청서 (검토 대상) - 위원회별 집계
-    const pendingSnapshot = await db.collection('requests').where('status', '==', 'pending').get();
-    let opsPendingCount = 0;
-    let prepPendingCount = 0;
-    for (const doc of pendingSnapshot.docs) {
-        const committee = doc.data().committee;
-        if (committee === 'operations')
-            opsPendingCount++;
-        else if (committee === 'preparation')
-            prepPendingCount++;
-    }
-    // reviewed 신청서 (승인 대상) - 위원회별 집계
-    const reviewedSnapshot = await db.collection('requests').where('status', '==', 'reviewed').get();
-    let opsReviewedCount = 0;
-    let prepReviewedCount = 0;
-    for (const doc of reviewedSnapshot.docs) {
-        const committee = doc.data().committee;
-        if (committee === 'operations')
-            opsReviewedCount++;
-        else if (committee === 'preparation')
-            prepReviewedCount++;
-    }
-    const totalReviewedCount = reviewedSnapshot.size;
-    // approved 미정산 건수
-    const approvedSnapshot = await db.collection('requests').where('status', '==', 'approved').get();
-    const totalApprovedUnsettledCount = approvedSnapshot.size;
+    const superUids = superSnap.docs.map((d) => d.id);
     const transporter = createTransporter();
-    const recipients = [...recipientMap.entries()].map(([uid, role]) => ({ uid, role }));
-    const recipientUserDocs = await Promise.all(recipients.map(r => db.doc(`users/${r.uid}`).get()));
-    for (let i = 0; i < recipients.length; i++) {
-        const r = recipients[i];
-        const role = r.role;
-        const userDoc = recipientUserDocs[i];
-        const user = userDoc.data();
-        const email = user?.email;
-        const name = (user?.displayName || user?.name || '');
-        if (!email)
+    const userCache = new Map();
+    const getUser = async (uid) => {
+        let cached = userCache.get(uid);
+        if (!cached) {
+            const data = (await db.doc(`users/${uid}`).get()).data();
+            cached = {
+                email: data?.email,
+                name: (data?.displayName || data?.name || '')
+            };
+            userCache.set(uid, cached);
+        }
+        return cached;
+    };
+    for (const projDoc of activeProjectDocs) {
+        const projectId = projDoc.id;
+        const projectData = projDoc.data();
+        const projectName = projectData.name || projectId;
+        // 이 프로젝트 멤버 중 수신자 (uid -> 프로젝트 내 역할, 관련 역할이 없는 super_admin 멤버는 'admin')
+        const recipientMap = new Map();
+        for (const [uid, role] of Object.entries((projectData.memberRoles ?? {}))) {
+            if (relevantRoles.includes(role))
+                recipientMap.set(uid, role);
+        }
+        // super_admin도 해당 프로젝트 멤버인 경우에만 수신 (속하지 않은 프로젝트 알림 제외)
+        const memberRoles = (projectData.memberRoles ?? {});
+        for (const uid of superUids) {
+            if (memberRoles[uid] != null && !recipientMap.has(uid))
+                recipientMap.set(uid, 'admin');
+        }
+        if (recipientMap.size === 0)
             continue;
-        const sections = [];
-        if (role === 'finance_ops') {
-            // 운영위 재정: 운영위 검토 대상
-            sections.push({ label: '운영위 검토 대기', count: opsPendingCount });
-        }
-        else if (role === 'finance_prep') {
-            // 준비위 재정(총괄): 준비위 검토 대상 + 승인건 중 미정산
-            sections.push({ label: '준비위 검토 대기', count: prepPendingCount });
-            sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount });
-        }
-        else if (role === 'approver_ops') {
-            // 운영위 승인자: 운영위 승인 대기
-            sections.push({ label: '운영위 승인 대기', count: opsReviewedCount });
-        }
-        else if (role === 'approver_prep') {
-            // 준비위 승인자: 준비위 승인 대기
-            sections.push({ label: '준비위 승인 대기', count: prepReviewedCount });
-        }
-        else if (role === 'session_director') {
-            // 운영 위원장: 운영위 승인 대기
-            sections.push({ label: '운영위 승인 대기', count: opsReviewedCount });
-        }
-        else if (role === 'logistic_admin') {
-            // 준비 위원장: 준비위 승인 대기
-            sections.push({ label: '준비위 승인 대기', count: prepReviewedCount });
-        }
-        else if (role === 'executive' || role === 'admin') {
-            // 대회장 / super_admin: 전체 승인 대기 + 미정산
-            sections.push({ label: '승인 대기', count: totalReviewedCount });
-            sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount });
-        }
-        const totalCount = sections.reduce((sum, s) => sum + s.count, 0);
-        if (totalCount === 0)
-            continue;
-        const { subject, html } = buildWeeklyDigestEmail(name, sections);
-        try {
-            await transporter.sendMail({
-                from: `지불/환불 시스템 <${gmailUser.value()}>`,
-                to: email,
-                subject,
-                html
-            });
-            console.log(`Weekly digest sent to ${email}: ${totalCount} items`);
-        }
-        catch (error) {
-            console.error(`Failed to send weekly digest to ${email}:`, error);
+        const [pendingSnap, reviewedSnap, approvedSnap] = await Promise.all(['pending', 'reviewed', 'approved'].map((status) => db.collection('requests').where('projectId', '==', projectId).where('status', '==', status).get()));
+        const byCommittee = (docs, committee) => docs.filter((d) => d.data().committee === committee).length;
+        const opsPendingCount = byCommittee(pendingSnap.docs, 'operations');
+        const prepPendingCount = byCommittee(pendingSnap.docs, 'preparation');
+        const opsReviewedCount = byCommittee(reviewedSnap.docs, 'operations');
+        const prepReviewedCount = byCommittee(reviewedSnap.docs, 'preparation');
+        const totalReviewedCount = reviewedSnap.size;
+        const totalApprovedUnsettledCount = approvedSnap.size;
+        for (const [uid, role] of recipientMap) {
+            const { email, name } = await getUser(uid);
+            if (!email)
+                continue;
+            const sections = [];
+            if (role === 'finance_ops') {
+                // 운영위 재정: 운영위 검토 대상
+                sections.push({ label: '운영위 검토 대기', count: opsPendingCount });
+            }
+            else if (role === 'finance_prep') {
+                // 준비위 재정(총괄): 준비위 검토 대상 + 승인건 중 미정산
+                sections.push({ label: '준비위 검토 대기', count: prepPendingCount });
+                sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount });
+            }
+            else if (role === 'approver_ops') {
+                sections.push({ label: '운영위 승인 대기', count: opsReviewedCount });
+            }
+            else if (role === 'approver_prep') {
+                sections.push({ label: '준비위 승인 대기', count: prepReviewedCount });
+            }
+            else if (role === 'session_director') {
+                // 운영 위원장: 운영위 승인 대기
+                sections.push({ label: '운영위 승인 대기', count: opsReviewedCount });
+            }
+            else if (role === 'logistic_admin') {
+                // 준비 위원장: 준비위 승인 대기
+                sections.push({ label: '준비위 승인 대기', count: prepReviewedCount });
+            }
+            else if (role === 'executive' || role === 'admin') {
+                // 대회장 / super_admin: 전체 승인 대기 + 미정산
+                sections.push({ label: '승인 대기', count: totalReviewedCount });
+                sections.push({ label: '승인 미정산', count: totalApprovedUnsettledCount });
+            }
+            const totalCount = sections.reduce((sum, s) => sum + s.count, 0);
+            if (totalCount === 0)
+                continue;
+            const { subject, html } = buildWeeklyDigestEmail(name, projectName, sections);
+            try {
+                await transporter.sendMail({
+                    from: `지불/환불 시스템 <${gmailUser.value()}>`,
+                    to: email,
+                    subject,
+                    html
+                });
+                console.log(`Weekly digest sent to ${email} [${projectId}]: ${totalCount} items`);
+            }
+            catch (error) {
+                console.error(`Failed to send weekly digest to ${email} [${projectId}]:`, error);
+            }
         }
     }
 });
 // --- Dashboard Stats ---
-exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
-    if (!request.auth) {
-        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
-    }
-    const { projectId } = request.data;
-    if (!projectId || typeof projectId !== 'string') {
-        throw new https_1.HttpsError('invalid-argument', 'projectId is required');
-    }
-    const db = admin.firestore();
-    const callerUid = request.auth.uid;
-    const [callerSnap, projSnap] = await Promise.all([
-        db.doc(`users/${callerUid}`).get(),
-        db.doc(`projects/${projectId}`).get()
-    ]);
-    const callerSystemRole = getSystemRole(callerSnap.data());
-    const isSuperAdmin = callerSystemRole === 'super_admin';
-    const isMember = projSnap.data()?.memberRoles?.[callerUid] != null;
-    if (!isSuperAdmin && !isMember) {
-        throw new https_1.HttpsError('permission-denied', 'Not a member of this project');
-    }
+// Aggregates dashboard statistics for a project. Shared by getDashboardStats and the
+// pre-purge summary snapshot so both always report identical numbers.
+async function computeProjectStats(db, projectId, projectData) {
+    const usdToKrwRate = projectData.usdToKrwRate ??
+        projectData.opsBudget?.usdToKrwRate ?? 0;
     const snap = await db
         .collection('requests')
         .where('projectId', '==', projectId)
-        .select('status', 'totalAmount', 'committee', 'items', 'date', 'createdAt')
+        .select('status', 'totalAmount', 'totalAmountUsd', 'committee', 'items', 'date', 'createdAt')
         .get();
     let total = 0;
     let pending = 0;
@@ -933,29 +1211,31 @@ exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
     snap.forEach((doc) => {
         const d = doc.data();
         const status = d.status;
-        // KRW-only by design — totalAmount excludes USD items (USD is tracked separately in
-        // totalAmountUsd and not aggregated into dashboard/budget statistics).
+        // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
+        // included in all aggregations. When unset (or 0), USD items contribute 0.
         const amount = d.totalAmount || 0;
+        const amountUsd = d.totalAmountUsd || 0;
+        const effectiveAmount = amount + (usdToKrwRate > 0 ? Math.round(amountUsd * usdToKrwRate) : 0);
         const committee = d.committee || 'operations';
         const items = d.items || [];
         const date = d.date || '';
         total++;
-        totalAmount += amount;
+        totalAmount += effectiveAmount;
         if (status === 'pending') {
             pending++;
-            pendingAmount += amount;
+            pendingAmount += effectiveAmount;
         }
         else if (status === 'reviewed') {
             reviewed++;
-            reviewedAmount += amount;
+            reviewedAmount += effectiveAmount;
         }
         else if (status === 'approved') {
             approvedOnly++;
-            approvedOnlyAmount += amount;
+            approvedOnlyAmount += effectiveAmount;
         }
         else if (status === 'settled') {
             settled++;
-            settledAmount += amount;
+            settledAmount += effectiveAmount;
         }
         else if (status === 'rejected' || status === 'force_rejected') {
             rejected++;
@@ -965,25 +1245,28 @@ exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
         if (!byCommittee[committee])
             byCommittee[committee] = { count: 0, amount: 0, approvedAmount: 0 };
         byCommittee[committee].count++;
-        byCommittee[committee].amount += amount;
+        byCommittee[committee].amount += effectiveAmount;
         if (isApproved)
-            byCommittee[committee].approvedAmount += amount;
+            byCommittee[committee].approvedAmount += effectiveAmount;
         for (const item of items) {
             const code = item.budgetCode;
             if (!byBudgetCode[code])
                 byBudgetCode[code] = { count: 0, amount: 0, approvedAmount: 0 };
             byBudgetCode[code].count++;
-            // Aggregate KRW only — project budgets and dashboards are KRW-based; USD is tracked separately.
-            if ((item.currency || 'KRW') !== 'USD') {
-                byBudgetCode[code].amount += item.amount;
-                if (isApproved)
-                    byBudgetCode[code].approvedAmount += item.amount;
-            }
+            // When project.opsBudget.usdToKrwRate is set, USD items are converted to KRW and
+            // included in all aggregations. When unset (or 0), USD items contribute 0.
+            const itemCurrency = item.currency || 'KRW';
+            const itemEffectiveKrw = itemCurrency === 'USD'
+                ? (usdToKrwRate > 0 ? Math.round(item.amount * usdToKrwRate) : 0)
+                : item.amount;
+            byBudgetCode[code].amount += itemEffectiveKrw;
+            if (isApproved)
+                byBudgetCode[code].approvedAmount += itemEffectiveKrw;
         }
         if (date) {
             const month = date.substring(0, 7);
-            monthlyTrend[month] = (monthlyTrend[month] || 0) + amount;
-            dailyTrend[date] = (dailyTrend[date] || 0) + amount;
+            monthlyTrend[month] = (monthlyTrend[month] || 0) + effectiveAmount;
+            dailyTrend[date] = (dailyTrend[date] || 0) + effectiveAmount;
             dailyCount[date] = (dailyCount[date] || 0) + 1;
             monthlyCount[month] = (monthlyCount[month] || 0) + 1;
         }
@@ -1006,8 +1289,32 @@ exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
         monthlyTrend,
         monthlyCount,
         dailyTrend,
-        dailyCount
+        dailyCount,
+        usdToKrwRate
     };
+}
+exports.getDashboardStats = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError('unauthenticated', 'Must be logged in');
+    }
+    const { projectId } = request.data;
+    if (!projectId || typeof projectId !== 'string') {
+        throw new https_1.HttpsError('invalid-argument', 'projectId is required');
+    }
+    const db = admin.firestore();
+    const callerUid = request.auth.uid;
+    const [callerSnap, projSnap] = await Promise.all([
+        db.doc(`users/${callerUid}`).get(),
+        db.doc(`projects/${projectId}`).get()
+    ]);
+    const callerSystemRole = getSystemRole(callerSnap.data());
+    const isSuperAdmin = callerSystemRole === 'super_admin';
+    const isMember = projSnap.data()?.memberRoles?.[callerUid] != null;
+    if (!isSuperAdmin && !isMember) {
+        throw new https_1.HttpsError('permission-denied', 'Not a member of this project');
+    }
+    const projectData = projSnap.data() ?? {};
+    return computeProjectStats(db, projectId, projectData);
 });
 var onProjectMembersWrite_1 = require("./onProjectMembersWrite");
 Object.defineProperty(exports, "onProjectMembersWrite", { enumerable: true, get: function () { return onProjectMembersWrite_1.onProjectMembersWrite; } });

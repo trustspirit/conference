@@ -157,6 +157,17 @@ export default function ProjectSelector() {
                 </button>
               </>
             )}
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setOpen(false)
+                  navigate('/admin/archived-reports')
+                }}
+                className="w-full text-left px-4 py-2.5 text-sm text-finance-text-secondary hover:bg-finance-primary-subtle transition-colors sm:py-2"
+              >
+                {t('archive.title')}
+              </button>
+            )}
             {showDeletedSection && (
               <>
                 <div className="border-t border-finance-border-soft my-1" />

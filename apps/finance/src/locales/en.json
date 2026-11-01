@@ -708,5 +708,11 @@
     "deleteConfirm": "Delete",
     "deleteSuccess": "Request deleted.",
     "deleteFailed": "Failed to delete."
+  },
+  "archive": {
+    "title": "Past Event Reports",
+    "description": "Only the budget report (summary) of deleted events is kept. Requests, receipts and other detail data were permanently deleted.",
+    "empty": "No archived reports.",
+    "archivedAt": "Archived: {{date}}"
   }
 }

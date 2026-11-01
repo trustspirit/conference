@@ -13,6 +13,7 @@ import {
 import { db } from '@conference/firebase'
 import { queryKeys } from './queryKeys'
 import type { AppUser, Project } from '../../types'
+import type { DashboardStats } from './useCloudFunctions'
 import { effectiveSystemRole } from '../useProjectRole'
 
 async function fetchProjects(appUser: AppUser): Promise<Project[]> {
@@ -173,5 +174,29 @@ export function useReopenProject() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.projects.root() })
     }
+  })
+}
+
+/** 영구 삭제된 대회의 버짓 리포트 스냅샷 (cleanupDeletedProjects가 생성). */
+export interface ProjectSummary {
+  projectId: string
+  name: string
+  description: string
+  documentNo: string
+  budgetConfig: Project['budgetConfig'] | null
+  opsBudget: Project['opsBudget'] | null
+  stats: DashboardStats
+  projectDeletedAt?: { toDate?: () => Date; seconds?: number } | null
+  archivedAt?: { toDate?: () => Date; seconds?: number } | null
+}
+
+export function useProjectSummaries(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.projectSummaries.all(),
+    queryFn: async () => {
+      const snap = await getDocs(collection(db, 'projectSummaries'))
+      return snap.docs.map((d) => ({ ...d.data(), projectId: d.id }) as ProjectSummary)
+    },
+    enabled: options?.enabled
   })
 }
