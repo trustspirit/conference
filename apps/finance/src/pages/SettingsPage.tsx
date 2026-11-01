@@ -87,6 +87,8 @@ function ProjectManagement() {
       onConfirm: async () => {
         closeConfirm()
         await softDelete.mutateAsync(effectiveId)
+        // A deleted project must not stay the default; leave the default unset.
+        if (isDefault) await updateSettings.mutateAsync({ defaultProjectId: '' })
         const remaining = activeProjects.filter((p) => p.id !== effectiveId)
         if (remaining.length > 0) setCurrentProject(remaining[0])
       }
@@ -137,15 +139,13 @@ function ProjectManagement() {
                 >
                   {closed ? t('project.reopenProject') : t('project.closeProject')}
                 </button>
-                {!isDefault && (
-                  <button
-                    onClick={handleDelete}
-                    className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    <TrashIcon className="w-3.5 h-3.5" />
-                    {t('common.delete')}
-                  </button>
-                )}
+                <button
+                  onClick={handleDelete}
+                  className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  {t('common.delete')}
+                </button>
               </div>
             </div>
           )}
