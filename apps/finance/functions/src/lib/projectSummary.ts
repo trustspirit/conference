@@ -112,6 +112,55 @@ export async function computeProjectStats(
   }
 }
 
+// 리포트에 보존할 항목 상세에 포함되는 상태 (프론트 BUDGET_COUNTED_STATUSES와 동일).
+const SUMMARY_ITEM_STATUSES = ['reviewed', 'approved', 'settled']
+// 문서 1MB 제한을 넘지 않도록 하는 안전 상한.
+const MAX_SUMMARY_ITEMS = 5000
+
+export interface SummaryItem {
+  date: string
+  committee: string
+  budgetCode: number
+  budgetDescKey: string | null
+  /** 지출 목적(품목 설명) */
+  description: string
+  amount: number
+  currency: string
+  status: string
+}
+
+// 코드별 상세 목록용 항목 스냅샷. 제출자/수취인/계좌/영수증/이동 상세 등은 의도적으로 제외한다.
+async function buildSummaryItems(
+  db: admin.firestore.Firestore,
+  projectId: string
+): Promise<{ items: SummaryItem[]; itemsTruncated: boolean }> {
+  const snap = await db
+    .collection('requests')
+    .where('projectId', '==', projectId)
+    .where('status', 'in', SUMMARY_ITEM_STATUSES)
+    .select('status', 'committee', 'items', 'date')
+    .get()
+
+  const items: SummaryItem[] = []
+  for (const doc of snap.docs) {
+    const d = doc.data()
+    for (const item of (d.items as admin.firestore.DocumentData[]) || []) {
+      items.push({
+        date: (d.date as string) || '',
+        committee: (d.committee as string) || 'operations',
+        budgetCode: item.budgetCode,
+        budgetDescKey: item.budgetDescKey ?? null,
+        description: item.description ?? '',
+        amount: item.amount || 0,
+        currency: item.currency || 'KRW',
+        status: d.status as string
+      })
+    }
+  }
+  items.sort((a, b) => b.date.localeCompare(a.date))
+  return { items: items.slice(0, MAX_SUMMARY_ITEMS), itemsTruncated: items.length > MAX_SUMMARY_ITEMS }
+}
+
 // 대회를 삭제(soft delete)하는 즉시 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에
 // 저장한다. 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
 export async function archiveProjectSummary(
@@ -119,7 +168,10 @@ export async function archiveProjectSummary(
   projectId: string,
   project: admin.firestore.DocumentData
 ) {
-  const stats = await computeProjectStats(db, projectId, project)
+  const [stats, { items, itemsTruncated }] = await Promise.all([
+    computeProjectStats(db, projectId, project),
+    buildSummaryItems(db, projectId)
+  ])
   await db.doc(`projectSummaries/${projectId}`).set({
     projectId,
     name: project.name ?? '',
@@ -133,6 +185,8 @@ export async function archiveProjectSummary(
       .filter(([, role]) => role === 'admin')
       .map(([uid]) => uid),
     stats,
+    items,
+    itemsTruncated,
     archivedAt: admin.firestore.FieldValue.serverTimestamp()
   })
 }

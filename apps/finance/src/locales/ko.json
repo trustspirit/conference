@@ -717,6 +717,28 @@
     "title": "지난 대회 리포트",
     "description": "삭제된 대회의 버짓 리포트(요약)입니다. 삭제 즉시 생성되며, 신청서·영수증 등 상세 데이터는 10일 후 영구 삭제됩니다.",
     "empty": "보존된 리포트가 없습니다.",
-    "archivedAt": "보존일: {{date}}"
+    "archivedAt": "보존일: {{date}}",
+    "codeTable": {
+      "title": "예산 코드별 현황",
+      "code": "코드",
+      "budget": "예산",
+      "count": "건수",
+      "requested": "신청 금액",
+      "approved": "승인 금액",
+      "remaining": "잔액",
+      "rate": "집행률",
+      "total": "합계"
+    },
+    "itemList": {
+      "title": "예산 코드별 상세 항목",
+      "searchPlaceholder": "지출 목적 검색",
+      "date": "날짜",
+      "committee": "위원회",
+      "code": "예산 코드",
+      "purpose": "지출 목적",
+      "amount": "금액",
+      "status": "상태",
+      "truncated": "항목이 많아 일부만 보존되었습니다."
+    }
   }
 }

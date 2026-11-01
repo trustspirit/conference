@@ -149,10 +149,44 @@ async function computeProjectStats(db, projectId, projectData) {
         usdToKrwRate
     };
 }
+// 리포트에 보존할 항목 상세에 포함되는 상태 (프론트 BUDGET_COUNTED_STATUSES와 동일).
+const SUMMARY_ITEM_STATUSES = ['reviewed', 'approved', 'settled'];
+// 문서 1MB 제한을 넘지 않도록 하는 안전 상한.
+const MAX_SUMMARY_ITEMS = 5000;
+// 코드별 상세 목록용 항목 스냅샷. 제출자/수취인/계좌/영수증/이동 상세 등은 의도적으로 제외한다.
+async function buildSummaryItems(db, projectId) {
+    const snap = await db
+        .collection('requests')
+        .where('projectId', '==', projectId)
+        .where('status', 'in', SUMMARY_ITEM_STATUSES)
+        .select('status', 'committee', 'items', 'date')
+        .get();
+    const items = [];
+    for (const doc of snap.docs) {
+        const d = doc.data();
+        for (const item of d.items || []) {
+            items.push({
+                date: d.date || '',
+                committee: d.committee || 'operations',
+                budgetCode: item.budgetCode,
+                budgetDescKey: item.budgetDescKey ?? null,
+                description: item.description ?? '',
+                amount: item.amount || 0,
+                currency: item.currency || 'KRW',
+                status: d.status
+            });
+        }
+    }
+    items.sort((a, b) => b.date.localeCompare(a.date));
+    return { items: items.slice(0, MAX_SUMMARY_ITEMS), itemsTruncated: items.length > MAX_SUMMARY_ITEMS };
+}
 // 대회를 삭제(soft delete)하는 즉시 버짓 리포트(대시보드 통계 + 예산 설정)를 projectSummaries에
 // 저장한다. 개별 신청서/영수증/계좌 정보 등 개인 정보는 포함하지 않는다.
 async function archiveProjectSummary(db, projectId, project) {
-    const stats = await computeProjectStats(db, projectId, project);
+    const [stats, { items, itemsTruncated }] = await Promise.all([
+        computeProjectStats(db, projectId, project),
+        buildSummaryItems(db, projectId)
+    ]);
     await db.doc(`projectSummaries/${projectId}`).set({
         projectId,
         name: project.name ?? '',
@@ -166,6 +200,8 @@ async function archiveProjectSummary(db, projectId, project) {
             .filter(([, role]) => role === 'admin')
             .map(([uid]) => uid),
         stats,
+        items,
+        itemsTruncated,
         archivedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 }

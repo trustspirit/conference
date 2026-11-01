@@ -9,6 +9,8 @@ import Spinner from '../components/Spinner'
 import StatCard from '../components/StatCard'
 import BudgetRingGauge from '../components/dashboard/BudgetRingGauge'
 import TabbedCharts from '../components/dashboard/TabbedCharts'
+import ArchivedItemList from '../components/dashboard/ArchivedItemList'
+import BudgetCodeSummaryTable from '../components/dashboard/BudgetCodeSummaryTable'
 import { formatAmount } from '../lib/currency'
 
 function toDate(ts: ProjectSummary['archivedAt']): Date | null {
@@ -52,6 +54,7 @@ function SummaryView({ summary }: { summary: ProjectSummary }) {
           pendingAmount={stats.pendingAmount}
         />
       </div>
+      <BudgetCodeSummaryTable byBudgetCode={stats.byBudgetCode} budgetByCode={budget.byCode} />
       <TabbedCharts
         byCommittee={stats.byCommittee}
         byBudgetCode={stats.byBudgetCode}
@@ -62,6 +65,13 @@ function SummaryView({ summary }: { summary: ProjectSummary }) {
         dailyTrend={stats.dailyTrend}
         dailyCount={stats.dailyCount}
       />
+      {summary.items && summary.items.length > 0 && (
+        <ArchivedItemList
+          items={summary.items}
+          truncated={summary.itemsTruncated}
+          usdToKrwRate={stats.usdToKrwRate ?? 0}
+        />
+      )}
     </>
   )
 }

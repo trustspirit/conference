@@ -178,6 +178,17 @@ export function useReopenProject() {
 }
 
 /** 영구 삭제된 대회의 버짓 리포트 스냅샷 (cleanupDeletedProjects가 생성). */
+export interface ArchivedSummaryItem {
+  date: string
+  committee: string
+  budgetCode: number
+  budgetDescKey: string | null
+  description: string
+  amount: number
+  currency: string
+  status: string
+}
+
 export interface ProjectSummary {
   projectId: string
   name: string
@@ -186,6 +197,9 @@ export interface ProjectSummary {
   budgetConfig: Project['budgetConfig'] | null
   opsBudget: Project['opsBudget'] | null
   stats: DashboardStats
+  /** 코드별 상세 목록용 항목 스냅샷 (제출자/영수증 등은 포함하지 않음). 구버전 리포트에는 없을 수 있다. */
+  items?: ArchivedSummaryItem[]
+  itemsTruncated?: boolean
   projectDeletedAt?: { toDate?: () => Date; seconds?: number } | null
   archivedAt?: { toDate?: () => Date; seconds?: number } | null
 }

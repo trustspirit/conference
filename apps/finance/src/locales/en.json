@@ -717,6 +717,28 @@
     "title": "Past Event Reports",
     "description": "Budget reports (summaries) of deleted events. They are created at deletion; requests, receipts and other detail data are permanently deleted 10 days later.",
     "empty": "No archived reports.",
-    "archivedAt": "Archived: {{date}}"
+    "archivedAt": "Archived: {{date}}",
+    "codeTable": {
+      "title": "By Budget Code",
+      "code": "Code",
+      "budget": "Budget",
+      "count": "Count",
+      "requested": "Requested",
+      "approved": "Approved",
+      "remaining": "Remaining",
+      "rate": "Used",
+      "total": "Total"
+    },
+    "itemList": {
+      "title": "Items by Budget Code",
+      "searchPlaceholder": "Search purpose",
+      "date": "Date",
+      "committee": "Committee",
+      "code": "Budget code",
+      "purpose": "Purpose",
+      "amount": "Amount",
+      "status": "Status",
+      "truncated": "Only part of the items was preserved because there were too many."
+    }
   }
 }
